@@ -5,6 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard - SBR Putra</title>
     <style>
+        /* --- PENGATURAN VARIABEL WARNA (TEMA) --- */
+        :root {
+            --bg-color: #f4f7f6;          /* Background halaman siang */
+            --text-main: #333333;         /* Warna judul siang */
+            --text-sub: #666666;          /* Warna sub-judul siang */
+            --box-bg: #ffffff;            /* Background kotak menu siang */
+            --box-active: #e5e7eb;        /* Warna kotak saat ditekan siang */
+            --shadow-color: rgba(0,0,0,0.05);
+        }
+
+        /* 1. Tema Gelap Otomatis dari Sistem HP */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #111827;      /* Background halaman malam */
+                --text-main: #f9fafb;     /* Warna judul malam */
+                --text-sub: #9ca3af;      /* Warna sub-judul malam */
+                --box-bg: #1f2937;        /* Background kotak menu malam */
+                --box-active: #374151;    /* Warna kotak saat ditekan malam */
+                --shadow-color: rgba(0,0,0,0.25);
+            }
+        }
+
+        /* 2. Tema Gelap Berdasarkan Jam (Diaktifkan via JavaScript) */
+        body.dark-theme-time {
+            --bg-color: #111827;
+            --text-main: #f9fafb;
+            --text-sub: #9ca3af;
+            --box-bg: #1f2937;
+            --box-active: #374151;
+            --shadow-color: rgba(0,0,0,0.25);
+        }
+
+        /* --- STYLING UTAMA --- */
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent; 
@@ -12,16 +45,18 @@
         
         body { 
             font-family: sans-serif; 
-            background-color: #f4f7f6; 
+            background-color: var(--bg-color); 
+            color: var(--text-main);
             margin: 0; 
             padding: 20px; 
             overflow-x: hidden; 
+            /* Transisi halus saat perpindahan tema */
+            transition: background-color 0.4s ease, color 0.4s ease;
         }
 
-        /* Pembungkus utama agar tidak terlalu melar di layar PC */
         .container {
             max-width: 800px; 
-            margin: 0 auto; /* Memposisikan konten di tengah (center) pada PC */
+            margin: 0 auto; 
         }
         
         .header { 
@@ -29,10 +64,21 @@
             margin-bottom: 30px; 
             padding-top: 10px;
         }
-        .header h2 { color: #333; margin: 0 0 5px 0; font-size: 24px; }
-        .header p { color: #666; margin: 0; font-size: 14px; }
         
-        /* Layout Default (Untuk HP: 2 Kolom) */
+        .header h2 { 
+            color: var(--text-main); 
+            margin: 0 0 5px 0; 
+            font-size: 24px; 
+            transition: color 0.4s ease;
+        }
+        
+        .header p { 
+            color: var(--text-sub); 
+            margin: 0; 
+            font-size: 14px; 
+            transition: color 0.4s ease;
+        }
+        
         .menu-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
@@ -40,13 +86,13 @@
         }
         
         .menu-box { 
-            background: white; 
+            background: var(--box-bg); 
             padding: 15px 10px; 
             border-radius: 12px; 
             text-align: center; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            box-shadow: 0 4px 6px var(--shadow-color); 
             text-decoration: none; 
-            color: #333; 
+            color: var(--text-main); 
             font-weight: bold; 
             font-size: 13px; 
             display: flex;
@@ -54,11 +100,11 @@
             align-items: center;
             justify-content: center;
             aspect-ratio: 1 / 1; 
-            transition: transform 0.1s ease, background-color 0.1s ease;
+            transition: transform 0.1s ease, background-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
         }
         
         .menu-box:active { 
-            background: #e5e7eb; 
+            background: var(--box-active); 
             transform: scale(0.95); 
         }
         
@@ -70,34 +116,35 @@
         .logout-btn {
             display: block;
             width: 100%;
-            max-width: 400px; /* Batas lebar tombol logout */
-            margin: 30px auto 0 auto; /* Posisikan tombol di tengah */
+            max-width: 400px; 
+            margin: 30px auto 0 auto; 
             padding: 15px; 
-            background: #dc2626;
+            background: #dc2626; /* Tetap merah agar menonjol */
             color: white;
             text-align: center;
             text-decoration: none;
             border-radius: 8px;
             font-weight: bold;
             font-size: 15px;
-            transition: background-color 0.1s ease;
+            transition: background-color 0.1s ease, transform 0.1s ease;
         }
 
         .logout-btn:active {
             background: #b91c1c; 
+            transform: scale(0.98);
         }
 
-        /* --- MEDIA QUERY: ATURAN KHUSUS UNTUK LAYAR PC/TABLET --- */
+        /* --- MEDIA QUERY: LAYAR PC/TABLET --- */
         @media (min-width: 768px) {
             .menu-grid {
-                grid-template-columns: repeat(4, 1fr); /* Berubah jadi 4 kolom sejajar di PC */
+                grid-template-columns: repeat(4, 1fr); 
                 gap: 20px;
             }
             .menu-box {
-                font-size: 15px; /* Ukuran teks menu sedikit dibesarkan */
+                font-size: 15px; 
             }
             .icon {
-                font-size: 40px; /* Ikon sedikit dibesarkan di PC */
+                font-size: 40px; 
             }
         }
     </style>
@@ -128,7 +175,7 @@
                 Belum Tersedia
             </a>
             <a href="empit.html" class="menu-box">
-                <span class="icon">💖 </span>
+                <span class="icon">💖</span>
                 Catatan Empit
             </a>
         </div>
@@ -137,9 +184,32 @@
     </div>
 
     <script>
+        // Script mendeteksi akses langsung (bawaan sebelumnya)
         if(document.referrer === "") {
             console.log("Halaman diakses langsung.");
         }
+
+        // Script mengatur tema gelap berdasarkan jam
+        function aturTemaOtomatis() {
+            const jamSekarang = new Date().getHours();
+            
+            // Tentukan batas waktu malam (Jam 18:00 sore sampai Jam 06:00 pagi)
+            const mulaiMalam = 18;
+            const mulaiPagi = 6;
+            
+            if (jamSekarang >= mulaiMalam || jamSekarang < mulaiPagi) {
+                // Tambahkan class khusus untuk memaksa tema gelap jika malam hari
+                document.body.classList.add('dark-theme-time');
+                console.log("Mode Malam Diaktifkan: Berdasarkan Jam");
+            } else {
+                // Hapus class jika siang hari (mengikuti setelan default/HP)
+                document.body.classList.remove('dark-theme-time');
+                console.log("Mode Siang Diaktifkan");
+            }
+        }
+
+        // Jalankan saat halaman selesai dimuat
+        window.addEventListener('DOMContentLoaded', aturTemaOtomatis);
     </script>
 </body>
 </html>
