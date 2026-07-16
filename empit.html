@@ -143,8 +143,19 @@
         #printModal .modal-header { padding: 15px; background: var(--bg-table-head); margin-bottom: 0; }
         #printModal .modal-body { flex: 1; padding: 15px; background: var(--bg-body); overflow-x: auto; overflow-y: auto; }
         #modalPreviewContent { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 380px; margin: 0 auto; }
-        #printModal .modal-footer { padding: 15px; border-top: 1px solid var(--border-color); background: var(--bg-container); display: flex; gap: 10px; }
-        #printModal .modal-footer button { flex: 1; }
+        
+        /* FOOTER MODAL CETAK */
+        #printModal .modal-footer { 
+            padding: 15px; border-top: 1px solid var(--border-color); background: var(--bg-container); 
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .footer-settings {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .footer-buttons {
+            display: flex; gap: 8px; width: 100%;
+        }
+        .footer-buttons button { flex: 1; padding: 8px 5px; font-size: 13px; }
 
         @media print {
             body * { visibility: hidden; }
@@ -303,8 +314,19 @@
             <div id="modalPreviewContent"></div>
         </div>
         <div class="modal-footer">
-            <button type="button" id="btnModalSavePng" class="btn-png">📸 Simpan Gambar</button>
-            <button type="button" id="btnConfirmPrint" class="btn-print">🖨️ Cetak Kertas</button>
+            <div class="footer-settings">
+                <label style="font-size: 13px; font-weight: bold;">Ukuran Kertas:</label>
+                <select id="paperSize" style="padding: 5px; font-size: 13px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main);">
+                    <option value="32">58mm (Kecil)</option>
+                    <option value="48">80mm (Besar)</option>
+                </select>
+            </div>
+            
+            <div class="footer-buttons">
+                <button type="button" id="btnBluetoothPrint" style="background-color: #007bff; color: white; flex: 1.2;">📶 Bluetooth</button>
+                <button type="button" id="btnModalSavePng" class="btn-png">📸 Gambar</button>
+                <button type="button" id="btnConfirmPrint" class="btn-print">🖨️ Kertas</button>
+            </div>
         </div>
     </div>
 </div>
@@ -352,7 +374,6 @@
     // --- FITUR AUTO DARK MODE ---
     function checkTheme() {
         const hour = new Date().getHours();
-        // Cek jam (18:00 sampai 05:59) ATAU cek preferensi tema HP/PC
         const isNightTime = hour >= 18 || hour < 6;
         const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -363,9 +384,7 @@
         }
     }
     
-    // Jalankan saat web dibuka
     checkTheme();
-    // Pantau jika tema HP berubah saat web sedang terbuka
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', checkTheme);
     // ----------------------------
 
@@ -658,14 +677,13 @@
         printModal.classList.remove('active');
     });
 
-    // --- UPDATE SCRIPT SIMPAN PNG DAN NOTIFIKASI ---
+    // SIMPAN PNG
     document.getElementById('btnModalSavePng').addEventListener('click', () => {
         const hiddenReceiptElement = document.getElementById('receiptTemplate');
         const btnSave = document.getElementById('btnModalSavePng');
         const originalText = btnSave.innerHTML;
         
-        // Ubah teks tombol sementara
-        btnSave.innerHTML = '⏳ Menyimpan...';
+        btnSave.innerHTML = '⏳ Tunggu...';
         btnSave.disabled = true;
         
         html2canvas(hiddenReceiptElement, { 
@@ -675,31 +693,162 @@
             windowWidth: 380 
         }).then(canvas => {
             const link = document.createElement('a');
-            
-            // Simpan dengan format .png
             link.download = `Laporan_Keuangan_Fitria_${new Date().getTime()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
             
-            // Kembalikan tombol seperti semula
             btnSave.innerHTML = originalText;
             btnSave.disabled = false;
             
-            // Tampilkan notifikasi setelah sedikit jeda
             setTimeout(() => {
-                alert('Berhasil! Gambar laporan (PNG) telah tersimpan di perangkat Anda.');
+                alert('Gambar struk laporan (PNG) telah tersimpan!');
             }, 300);
             
         }).catch(err => {
             btnSave.innerHTML = originalText;
             btnSave.disabled = false;
             alert('Terjadi kesalahan saat menyimpan gambar!');
-            console.error('Error html2canvas:', err);
         });
     });
 
+    // CETAK KERTAS (BROWSER DEFAULT)
     document.getElementById('btnConfirmPrint').addEventListener('click', () => {
         window.print();
+    });
+
+    // ==========================================
+    // LOGIKA CETAK PRINTER BLUETOOTH THERMAL
+    // ==========================================
+    document.getElementById('btnBluetoothPrint').addEventListener('click', async () => {
+        if (!navigator.bluetooth) {
+            alert("Browser tidak mendukung Web Bluetooth. Pastikan Anda menggunakan Google Chrome di Android/PC dan web dibuka menggunakan koneksi yang aman (HTTPS).");
+            return;
+        }
+
+        try {
+            const paperWidth = parseInt(document.getElementById('paperSize').value); // 32 untuk 58mm, 48 untuk 80mm
+            
+            // --- 1. Fungsi Pembantu Membentuk Layout Struk (Plain Text) ---
+            const newLine = "\n";
+            const divider = "-".repeat(paperWidth) + newLine;
+            
+            // Pusatkan Teks
+            const centerText = (text) => {
+                const spaces = Math.max(0, Math.floor((paperWidth - text.length) / 2));
+                return " ".repeat(spaces) + text;
+            };
+
+            // Ratakan Kiri & Kanan dalam 1 baris
+            const formatLine = (left, right) => {
+                let spaces = paperWidth - left.length - right.length;
+                if (spaces < 1) spaces = 1; 
+                return left + " ".repeat(spaces) + right;
+            };
+
+            // --- 2. Menyusun Teks Struk ---
+            let textToPrint = "";
+            
+            textToPrint += centerText("LAPORAN KEUANGAN") + newLine;
+            textToPrint += centerText("Fitria") + newLine;
+            const period = document.getElementById('receiptPeriod').innerText;
+            if(period) textToPrint += centerText(period) + newLine;
+            textToPrint += divider;
+
+            // Loop Data dari Tabel Preview
+            const rows = document.querySelectorAll('#receiptTableBody tr');
+            rows.forEach(tr => {
+                const cols = tr.querySelectorAll('td');
+                if (cols.length === 3) {
+                    const tgl = cols[0].innerText.trim();
+                    const ket = cols[1].innerText.replace(/\n/g, ' ').trim();
+                    const jml = cols[2].innerText.trim();
+                    
+                    textToPrint += tgl + newLine; // Tanggal di baris sendiri
+                    
+                    // Potong keterangan jika terlalu panjang agar nominal uang tidak turun
+                    let maxKet = paperWidth - jml.length - 1;
+                    let safeKet = ket.length > maxKet ? ket.substring(0, maxKet - 3) + "..." : ket;
+                    
+                    textToPrint += formatLine(safeKet, jml) + newLine; // Keterangan dan Jumlah sebaris
+                }
+            });
+
+            textToPrint += divider;
+            const tMasuk = document.getElementById('rcTotalMasuk').innerText;
+            const tKeluar = document.getElementById('rcTotalKeluar').innerText;
+            const tSaldo = document.getElementById('rcSaldoAkhir').innerText;
+
+            textToPrint += formatLine("Total Masuk:", tMasuk) + newLine;
+            textToPrint += formatLine("Total Keluar:", tKeluar) + newLine;
+            textToPrint += divider;
+            textToPrint += formatLine("Sisa Saldo:", tSaldo) + newLine;
+            textToPrint += divider;
+            textToPrint += centerText("-- Dicetak via Web --") + newLine + newLine + newLine;
+
+            // --- 3. Proses Sambungan & Pengiriman Data Bluetooth ---
+            const encoder = new TextEncoder();
+            const textBytes = encoder.encode(textToPrint);
+            
+            // Inisialisasi awal printer (ESC @) agar rapi
+            const initCmd = new Uint8Array([27, 64]); 
+            
+            const payload = new Uint8Array(initCmd.length + textBytes.length);
+            payload.set(initCmd, 0);
+            payload.set(textBytes, initCmd.length);
+
+            // Membuka Jendela Pemilihan Perangkat Bluetooth
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: [
+                    '000018f0-0000-1000-8000-00805f9b34fb', // Standard generic printer
+                    'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Umum untuk mini printer Android
+                    '0000ae30-0000-1000-8000-00805f9b34fb', // Serial port
+                    '49535343-fe7d-4ae5-8fa9-9fafd205e455'  // Serial port alternative
+                ]
+            });
+            
+            const server = await device.gatt.connect();
+            const services = await server.getPrimaryServices();
+            
+            let printCharacteristic = null;
+
+            // Mencari karakteristik printer yang dapat ditulis (writeable)
+            for (const service of services) {
+                const characteristics = await service.getCharacteristics();
+                for (const char of characteristics) {
+                    if (char.properties.writeWithoutResponse || char.properties.write) {
+                        printCharacteristic = char;
+                        break;
+                    }
+                }
+                if (printCharacteristic) break;
+            }
+
+            if (!printCharacteristic) {
+                throw new Error("Gagal menemukan alur tulis (characteristic) pada printer ini.");
+            }
+
+            // Kirim data ke printer dalam bentuk antrean potongan (chunking) 
+            // karena printer thermal umumnya punya buffer memory kecil
+            const CHUNK_SIZE = 256; 
+            for (let i = 0; i < payload.length; i += CHUNK_SIZE) {
+                const chunk = payload.slice(i, i + CHUNK_SIZE);
+                if (printCharacteristic.properties.writeWithoutResponse) {
+                    await printCharacteristic.writeValueWithoutResponse(chunk);
+                } else {
+                    await printCharacteristic.writeValue(chunk);
+                }
+            }
+
+            alert("Struk berhasil dikirim ke printer Bluetooth!");
+
+        } catch (err) {
+            // Hindari notifikasi error jika user menekan tombol batal/cancel (NotFoundError)
+            if (err.name !== 'NotFoundError') {
+                alert("Gagal mencetak: " + err.message);
+                console.error("Bluetooth Error: ", err);
+            }
+        }
     });
 
     supabase.channel('custom-all-channel')
