@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBR Putra Food - Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: sans-serif; 
+            background-color: #f4f7f6; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .login-container { 
+            background: white; 
+            padding: 30px 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            text-align: center; 
+            width: 90%; 
+            max-width: 350px; 
+        }
+        h2 { margin-top: 0; color: #333; }
+        .pin-input { 
+            font-size: 32px; 
+            text-align: center; 
+            width: 120px; 
+            padding: 10px; 
+            margin: 20px 0; 
+            letter-spacing: 10px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+        }
+        .btn-login { 
+            background: #2563eb; 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: bold;
+            cursor: pointer; 
+            width: 100%; 
+        }
+        .btn-login:active { background: #1d4ed8; }
+        #pesan-error { color: red; margin-top: 10px; display: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Masukkan PIN</h2>
+        <input type="password" id="inputPin" class="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*">
+        <button class="btn-login" onclick="cekLogin()">Masuk</button>
+        <p id="pesan-error">PIN yang Anda masukkan salah!</p>
+    </div>
+
+    <script>
+        // Inisialisasi Supabase
+        const supabaseUrl = 'https://acpkdnktanrucyfyhckw.supabase.co';
+        const supabaseKey = 'sb_publishable_CJT5MhIGYNKOGOcyab_F2Q_e9qGV3Bk';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function cekLogin() {
+            const pin = document.getElementById('inputPin').value;
+            const pesanError = document.getElementById('pesan-error');
+            pesanError.style.display = 'none';
+
+            if (pin.length !== 4) {
+                pesanError.innerText = "PIN harus 4 digit!";
+                pesanError.style.display = 'block';
+                return;
+            }
+
+            // Mengecek apakah PIN ada di database Supabase
+            const { data, error } = await supabase
+                .from('akses_login')
+                .select('*')
+                .eq('pin', pin)
+                .single();
+
+            if (data) {
+                // Jika berhasil, arahkan ke dashboard
+                window.location.href = 'dashboard.html';
+            } else {
+                // Jika gagal
+                pesanError.innerText = "PIN yang Anda masukkan salah!";
+                pesanError.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
