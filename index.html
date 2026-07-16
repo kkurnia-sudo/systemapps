@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBR Putra Food - Login</title>
+    <title>Login - SBR Putra Food</title>
+    <!-- Memuat Supabase dari CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; }
@@ -55,16 +56,19 @@
 
     <div class="login-container">
         <h2>Masukkan PIN</h2>
+        <!-- Input dibatasi maksimal 4 karakter angka -->
         <input type="password" id="inputPin" class="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*">
         <button class="btn-login" onclick="cekLogin()">Masuk</button>
         <p id="pesan-error">PIN yang Anda masukkan salah!</p>
     </div>
 
     <script>
-        // Inisialisasi Supabase
+        // Inisialisasi Supabase (GANTI BAGIAN INI)
         const supabaseUrl = 'https://acpkdnktanrucyfyhckw.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U'; 
+        
+        // Menggunakan supabaseClient agar tidak error SyntaxError
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         async function cekLogin() {
             const pin = document.getElementById('inputPin').value;
@@ -77,18 +81,22 @@
                 return;
             }
 
-            // Mengecek apakah PIN ada di database Supabase
-            const { data, error } = await supabase
-                .from('akses_login')
-                .select('*')
-                .eq('pin', pin)
-                .single();
+            try {
+                // Mengecek ke tabel akses_login
+                const { data, error } = await supabaseClient
+                    .from('akses_login')
+                    .select('*')
+                    .eq('pin', pin)
+                    .single();
 
-            if (data) {
-                // Jika berhasil, arahkan ke dashboard
-                window.location.href = 'dashboard.html';
-            } else {
-                // Jika gagal
+                if (error) throw error;
+
+                if (data) {
+                    // Jika PIN ditemukan, arahkan ke dashboard.html
+                    window.location.href = 'dashboard.html';
+                }
+            } catch (err) {
+                console.error("Error pencarian data:", err.message);
                 pesanError.innerText = "PIN yang Anda masukkan salah!";
                 pesanError.style.display = 'block';
             }
