@@ -114,7 +114,7 @@
         .receipt-preview .summary-section div { display: flex; justify-content: space-between; padding: 2px 0; }
 
         /* =========================================
-           MODAL UMUM (OVERLAY) - SUPER CEPAT
+           MODAL UMUM (OVERLAY)
            ========================================= */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -397,17 +397,18 @@
     const PIN_AKSES = "5000";
     let activeEditId = null;
 
+    // --- VARIABEL GLOBAL UNTUK MENCEGAH DATA PRINT GANDA ---
+    let globalReceiptData = [];
+    let globalTotalMasuk = 0;
+    let globalTotalKeluar = 0;
+
     // --- FITUR AUTO DARK MODE ---
     function checkTheme() {
         const hour = new Date().getHours();
         const isNightTime = hour >= 18 || hour < 6;
         const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-        if (isNightTime || prefersDarkMode) {
-            document.body.classList.add('dark-theme');
-        } else {
-            document.body.classList.remove('dark-theme');
-        }
+        if (isNightTime || prefersDarkMode) document.body.classList.add('dark-theme');
+        else document.body.classList.remove('dark-theme');
     }
     
     checkTheme();
@@ -415,7 +416,6 @@
     // ----------------------------
 
     const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-    
     const parseDateSafe = (dateStr) => {
         if (!dateStr) return new Date();
         const formattedStr = dateStr.includes(' ') ? dateStr.replace(' ', 'T') : dateStr;
@@ -489,7 +489,6 @@
         if (filterStartDate && filterEndDate) {
             const startLimit = new Date(`${filterStartDate}T00:00:00`);
             const endLimit = new Date(`${filterEndDate}T23:59:59`);
-            
             data = data.filter(tx => {
                 const txDate = parseDateSafe(tx.created_at);
                 return txDate >= startLimit && txDate <= endLimit;
@@ -505,7 +504,6 @@
         
         let totalMasuk = 0;
         let totalKeluar = 0;
-
         const displayData = [...data].reverse();
 
         displayData.forEach(tx => {
@@ -544,21 +542,26 @@
     }
 
     function buildVirtualReceipt(data, tMasuk, tKeluar) {
+        // MENYIMPAN KE VARIABEL GLOBAL AGAR TIDAK BISA DOBEL
+        globalReceiptData = data;
+        globalTotalMasuk = tMasuk;
+        globalTotalKeluar = tKeluar;
+
         const rcBody = document.getElementById('receiptTableBody');
         const rcPeriod = document.getElementById('receiptPeriod');
-        rcBody.innerHTML = '';
+        
+        if(rcBody) rcBody.innerHTML = '';
 
         if(filterStartDate && filterEndDate) {
-            rcPeriod.innerText = `Periode: ${formatDate(filterStartDate)} s/d ${formatDate(filterEndDate)}`;
+            if(rcPeriod) rcPeriod.innerText = `Periode: ${formatDate(filterStartDate)} s/d ${formatDate(filterEndDate)}`;
         } else {
-            rcPeriod.innerText = `Semua Periode Catatan`;
+            if(rcPeriod) rcPeriod.innerText = `Semua Periode Catatan`;
         }
 
         data.forEach(tx => {
             const tr = document.createElement('tr');
             const amt = parseFloat(tx.amount);
             const prefix = tx.type === 'masuk' ? '(+) ' : '(-) ';
-            
             const formatAngka = formatRupiah(amt).replace('Rp', '').trim();
             const metodeTeks = tx.metode ? `[${tx.metode}]` : '[Cash]';
 
@@ -567,12 +570,15 @@
                 <td class="col-ket">${tx.description}<br><small style="color:#555">${metodeTeks}</small></td>
                 <td class="col-jml">${prefix}${formatAngka}</td>
             `;
-            rcBody.appendChild(tr);
+            if(rcBody) rcBody.appendChild(tr);
         });
 
-        document.getElementById('rcTotalMasuk').innerText = formatRupiah(tMasuk);
-        document.getElementById('rcTotalKeluar').innerText = formatRupiah(tKeluar);
-        document.getElementById('rcSaldoAkhir').innerText = formatRupiah(tMasuk - tKeluar);
+        const rcMasuk = document.getElementById('rcTotalMasuk');
+        const rcKeluar = document.getElementById('rcTotalKeluar');
+        const rcSaldo = document.getElementById('rcSaldoAkhir');
+        if(rcMasuk) rcMasuk.innerText = formatRupiah(tMasuk);
+        if(rcKeluar) rcKeluar.innerText = formatRupiah(tKeluar);
+        if(rcSaldo) rcSaldo.innerText = formatRupiah(tMasuk - tKeluar);
     }
 
     const actionModal = document.getElementById('actionModal');
@@ -595,9 +601,6 @@
         actionModal.classList.remove('active');
     });
 
-    // =========================================
-    // FUNGSI CUSTOM MODAL PIN (Promise Based)
-    // =========================================
     function mintaPin(pesan) {
         return new Promise((resolve) => {
             const pinModal = document.getElementById('pinModal');
@@ -646,7 +649,6 @@
         actionModal.classList.remove('active'); 
         
         const pin = await mintaPin("Masukkan 4 digit PIN untuk menghapus data:");
-        
         if (pin !== PIN_AKSES) return alert("PIN Salah atau dibatalkan!");
         if (!confirm("Yakin hapus data ini?")) return;
         
@@ -660,7 +662,6 @@
         actionModal.classList.remove('active'); 
         
         const pin = await mintaPin("Masukkan 4 digit PIN untuk mengedit data:");
-        
         if (pin !== PIN_AKSES) return alert("PIN Salah atau dibatalkan!");
 
         activeEditId = currentDataObj.id;
@@ -684,14 +685,10 @@
         const newAmt = newAmtInput.replace(/[^0-9]/g, '');
 
         const { error } = await supabase.from('transactions').update({ 
-            description: newDesc, 
-            amount: newAmt,
-            metode: newMetode
+            description: newDesc, amount: newAmt, metode: newMetode
         }).eq('id', activeEditId);
 
-        if (error) {
-            alert("Gagal mengedit data!");
-        } else {
+        if (error) alert("Gagal mengedit data!"); else {
             editModal.classList.remove('active');
             fetchTransactions();
         }
@@ -727,9 +724,7 @@
         }
 
         const { error } = await supabase.from('transactions').insert(insertPayload);
-        if (error) {
-            alert('Gagal menyimpan data!');
-        } else {
+        if (error) alert('Gagal menyimpan data!'); else {
             document.getElementById('amount').value = '';
             document.getElementById('amountCash').value = '';
             document.getElementById('amountTransfer').value = '';
@@ -745,8 +740,14 @@
     const printModal = document.getElementById('printModal');
     
     document.getElementById('btnShowPrintPreview').addEventListener('click', () => {
-        const receiptHtml = document.getElementById('receiptTemplate').outerHTML;
-        document.getElementById('modalPreviewContent').innerHTML = receiptHtml;
+        const templateEl = document.getElementById('receiptTemplate');
+        if(!templateEl) return;
+        const receiptHtml = templateEl.outerHTML;
+        
+        // Mencegah duplikasi ID yang menyebabkan Bug Javascript
+        const safeHtml = receiptHtml.replace(/id="[^"]*"/g, ''); 
+        
+        document.getElementById('modalPreviewContent').innerHTML = safeHtml;
         printModal.classList.add('active');
     });
 
@@ -764,23 +765,15 @@
         btnSave.disabled = true;
         
         html2canvas(hiddenReceiptElement, { 
-            scale: 3, 
-            backgroundColor: "#ffffff",
-            width: 380, 
-            windowWidth: 380 
+            scale: 3, backgroundColor: "#ffffff", width: 380, windowWidth: 380 
         }).then(canvas => {
             const link = document.createElement('a');
             link.download = `Laporan_Keuangan_Fitria_${new Date().getTime()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-            
             btnSave.innerHTML = originalText;
             btnSave.disabled = false;
-            
-            setTimeout(() => {
-                alert('Gambar struk laporan (PNG) telah tersimpan!');
-            }, 300);
-            
+            setTimeout(() => alert('Gambar struk laporan (PNG) telah tersimpan!'), 300);
         }).catch(err => {
             btnSave.innerHTML = originalText;
             btnSave.disabled = false;
@@ -788,17 +781,14 @@
         });
     });
 
-    // CETAK KERTAS (BROWSER DEFAULT)
-    document.getElementById('btnConfirmPrint').addEventListener('click', () => {
-        window.print();
-    });
+    document.getElementById('btnConfirmPrint').addEventListener('click', () => window.print());
 
     // ==========================================
     // LOGIKA CETAK PRINTER BLUETOOTH THERMAL
     // ==========================================
     document.getElementById('btnBluetoothPrint').addEventListener('click', async function() {
         if (!navigator.bluetooth) {
-            alert("Browser tidak mendukung Web Bluetooth. Pastikan Anda menggunakan Google Chrome (HTTPS).");
+            alert("Browser tidak mendukung Web Bluetooth. Pastikan menggunakan Chrome (HTTPS).");
             return;
         }
 
@@ -813,9 +803,7 @@
             
             const sanitize = (text) => {
                 if(!text) return '';
-                return text.replace(/[\u00A0\u202F]/g, ' ') 
-                           .replace(/[^\x20-\x7E]/g, '')    
-                           .trim();
+                return text.replace(/[\u00A0\u202F]/g, ' ').replace(/[^\x20-\x7E]/g, '').trim();
             };
 
             const newLine = "\n";
@@ -830,55 +818,46 @@
             const formatLine = (leftText, rightText) => {
                 const left = sanitize(leftText);
                 const right = sanitize(rightText);
-                
                 let spaceCount = paperWidth - left.length - right.length;
-                
                 if (spaceCount < 1) {
                     const maxLeft = paperWidth - right.length - 2; 
                     return left.substring(0, maxLeft) + ".. " + right;
                 }
-                
                 return left + " ".repeat(spaceCount) + right;
             };
 
-            // --- MENYUSUN TEKS STRUK ---
+            // --- FUNGSI MENCETAK LANGSUNG DARI MEMORI (Bukan dari HTML) ---
             let textToPrint = "";
-            
             textToPrint += centerText("LAPORAN KEUANGAN") + newLine;
             textToPrint += centerText("Fitria") + newLine;
             
-            const period = document.getElementById('receiptPeriod').innerText;
-            if(period) textToPrint += centerText(period) + newLine;
-            
+            let periodText = "Semua Periode Catatan";
+            if (filterStartDate && filterEndDate) {
+                periodText = `Periode: ${formatDate(filterStartDate)} s/d ${formatDate(filterEndDate)}`;
+            }
+            textToPrint += centerText(periodText) + newLine;
             textToPrint += divider;
 
-            // KUNCI PERBAIKAN: Hanya mengambil tabel dari container utama yang disembunyikan
-            // bukan dari keseluruhan dokumen yang sudah digandakan oleh pop-up pratinjau
-            const originalContainer = document.getElementById('receiptCaptureContainer');
-            const rows = originalContainer.querySelectorAll('tbody tr');
-            
-            rows.forEach(tr => {
-                const cols = tr.querySelectorAll('td');
-                if (cols.length === 3) {
-                    const tgl = cols[0].innerText;
-                    const ket = cols[1].innerText.replace(/\n/g, ' '); 
-                    const jml = cols[2].innerText;
-                    
-                    textToPrint += sanitize(tgl) + newLine; 
-                    textToPrint += formatLine(ket, jml) + newLine; 
-                }
+            // Menyusun baris transaksi dari variabel, dipastikan 100% akurat tanpa ganda
+            globalReceiptData.forEach(tx => {
+                const amt = parseFloat(tx.amount);
+                const prefix = tx.type === 'masuk' ? '(+) ' : '(-) ';
+                const formatAngka = formatRupiah(amt).replace('Rp', '').trim();
+                const metodeTeks = tx.metode ? tx.metode : 'Cash';
+                
+                const tgl = formatDate(tx.created_at);
+                const ket = `${tx.description} [${metodeTeks}]`;
+                const jml = `${prefix}${formatAngka}`;
+                
+                textToPrint += sanitize(tgl) + newLine; 
+                textToPrint += formatLine(ket, jml) + newLine; 
             });
 
             textToPrint += divider;
-            
-            const tMasuk = originalContainer.querySelector('#rcTotalMasuk').innerText;
-            const tKeluar = originalContainer.querySelector('#rcTotalKeluar').innerText;
-            const tSaldo = originalContainer.querySelector('#rcSaldoAkhir').innerText;
-
-            textToPrint += formatLine("Total Masuk:", tMasuk) + newLine;
-            textToPrint += formatLine("Total Keluar:", tKeluar) + newLine;
+            textToPrint += formatLine("Total Masuk:", formatRupiah(globalTotalMasuk)) + newLine;
+            textToPrint += formatLine("Total Keluar:", formatRupiah(globalTotalKeluar)) + newLine;
             textToPrint += divider;
-            textToPrint += formatLine("Sisa Saldo:", tSaldo) + newLine;
+            textToPrint += formatLine("Sisa Saldo:", formatRupiah(globalTotalMasuk - globalTotalKeluar)) + newLine;
             textToPrint += divider;
             textToPrint += centerText("-- Dicetak via Web --") + newLine + newLine + newLine;
 
@@ -903,7 +882,6 @@
             
             const server = await device.gatt.connect();
             const services = await server.getPrimaryServices();
-            
             let printCharacteristic = null;
 
             for (const service of services) {
@@ -917,9 +895,7 @@
                 if (printCharacteristic) break;
             }
 
-            if (!printCharacteristic) {
-                throw new Error("Gagal menemukan alur tulis pada printer ini.");
-            }
+            if (!printCharacteristic) throw new Error("Gagal menemukan alur tulis pada printer ini.");
 
             const CHUNK_SIZE = 128; 
             for (let i = 0; i < payload.length; i += CHUNK_SIZE) {
