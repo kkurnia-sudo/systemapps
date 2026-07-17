@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rekap Pengiriman - SBR Putra Food</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'media',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- html2canvas for PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        .receipt-scroll::-webkit-scrollbar { width: 4px; }
+        .receipt-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .receipt-scroll::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        
+        /* Smooth transitions */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen relative pb-28 transition-colors duration-300">
+
+    <div class="max-w-md mx-auto p-5 space-y-6">
+        
+        <!-- Header -->
+        <div class="text-center pb-3 border-b border-gray-200 dark:border-gray-700">
+            <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">SBR Putra Food</h1>
+            <h2 class="text-md font-medium text-gray-500 dark:text-gray-400">Rekap Pengiriman Harian</h2>
+        </div>
+
+        <!-- Date Input -->
+        <div class="flex items-center space-x-3 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <label for="tanggal" class="font-semibold whitespace-nowrap text-sm">Tanggal :</label>
+            <input type="date" id="tanggal" class="flex-1 px-3 py-1.5 bg-transparent border-b-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:border-primary text-sm font-medium">
+        </div>
+
+        <!-- Input Form Section -->
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Agen</label>
+                    <select id="agen" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Driver</label>
+                    <select id="driver" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Co-Driver</label>
+                    <select id="codriver" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mobil</label>
+                    <select id="mobil" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
+                </div>
+            </div>
+
+            <button onclick="tambahKiriman()" class="w-full flex items-center justify-center space-x-2 py-2.5 border-2 border-dashed border-primary text-primary hover:bg-blue-50 dark:hover:bg-gray-700 rounded-lg font-bold text-sm transition-colors active:scale-[0.98]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                <span>Tambah Kiriman</span>
+            </button>
+        </div>
+
+        <!-- History Section -->
+        <div class="pt-2">
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Riwayat</h2>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs text-gray-400">Filter:</span>
+                    <select id="filterHari" class="text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none font-medium text-gray-600 dark:text-gray-300 pb-0.5">
+                        <option value="hari-ini" class="dark:bg-gray-800">Hari ini</option>
+                        <option value="kemarin" class="dark:bg-gray-800">Kemarin</option>
+                        <option value="semua" class="dark:bg-gray-800">Semua</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="riwayatContainer" class="space-y-3 max-h-64 overflow-y-auto receipt-scroll pr-1">
+                <!-- Riwayat items will be injected here -->
+                <div id="emptyRiwayat" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
+                    <p class="text-sm text-gray-400 italic">Belum ada data pengiriman hari ini.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Action Button -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 p-4 pb-6 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10">
+        <div class="max-w-md mx-auto">
+            <button onclick="tampilkanPratinjau()" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition transform active:scale-[0.98] flex items-center justify-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <span>Simpan / Cetak Pratinjau</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Pratinjau & Cetak -->
+    <div id="modalPreview" class="fixed inset-0 bg-black/80 z-50 hidden flex-col justify-end opacity-0 transition-opacity duration-300">
+        <div class="bg-gray-100 dark:bg-gray-900 w-full rounded-t-3xl pt-5 pb-8 px-4 flex flex-col h-[85vh] transform translate-y-full transition-transform duration-300" id="modalContent">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <h3 class="font-bold text-lg">Pratinjau Rekap</h3>
+                <button onclick="tutupPratinjau()" class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Receipt Area (Styled like a thermal print) -->
+            <div class="flex-1 overflow-y-auto receipt-scroll flex justify-center mb-6">
+                <div id="areaStruk" class="bg-white p-5 shadow-md w-[320px] text-black font-mono text-xs leading-tight relative rounded-sm">
+                    <div class="text-center border-b-2 border-black pb-3 mb-3 border-dashed">
+                        <h2 class="text-lg font-bold uppercase tracking-widest">SBR Putra Food</h2>
+                        <p class="font-semibold mt-1">REKAP PENGIRIMAN</p>
+                    </div>
+                    <div class="mb-3 font-bold flex justify-between">
+                        <span>TANGGAL:</span>
+                        <span id="strukTanggal"></span>
+                    </div>
+                    <div class="border-t-2 border-b-2 border-black py-2 mb-3 border-dashed">
+                        <div id="strukDaftarKiriman" class="space-y-3">
+                            <!-- Items go here -->
+                        </div>
+                    </div>
+                    <div class="text-center mt-6 pt-2">
+                        <p class="mb-8">Mengetahui,</p>
+                        <p class="font-bold border-b border-black inline-block px-4 pb-1">Admin / Logistik</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-3 shrink-0 px-2">
+                <button onclick="simpanPNG()" class="col-span-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-md flex items-center justify-center space-x-2 transition active:scale-[0.98]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span>Simpan sebagai Gambar (PNG)</span>
+                </button>
+                <button onclick="cetakBluetooth(32)" class="bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 text-white font-bold py-3 rounded-xl shadow-md transition active:scale-[0.98] text-sm">
+                    Cetak BT (58mm)
+                </button>
+                <button onclick="cetakBluetooth(48)" class="bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 text-white font-bold py-3 rounded-xl shadow-md transition active:scale-[0.98] text-sm">
+                    Cetak BT (80mm)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. SETUP SUPABASE ---
+        // Ganti dengan URL dan Anon Key dari dashboard Supabase Anda
+        const SUPABASE_URL = 'https://acpkdnktanrucyfyhckw.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U';
+        
+        let supabase;
+        try {
+            // supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch(e) {
+            console.warn("Supabase SDK init error");
+        }
+
+        // Set Default Date
+        document.getElementById('tanggal').valueAsDate = new Date();
+
+        // State penyimpan baris rekapan pengiriman
+        let listRekapan = [];
+
+        // --- 2. FETCH DATA ---
+        async function loadDataDropdown() {
+            // Karena belum ada kredensial asli, kita pakai dummy data untuk visualisasi
+            isiDropdownDummy();
+            
+            /* CONTOH PENGGUNAAN ASLI:
+            try {
+                const { data: agen } = await supabase.from('data-agen').select('nama');
+                populateSelect('agen', agen, 'nama', 'Pilih Agen...');
+
+                const { data: driver } = await supabase.from('driver-list').select('nama');
+                populateSelect('driver', driver, 'nama', 'Pilih Driver...');
+                populateSelect('codriver', driver, 'nama', 'Pilih Co-Driver... (Opsional)');
+
+                const { data: mobil } = await supabase.from('data-kendaraan').select('plat_nomor');
+                populateSelect('mobil', mobil, 'plat_nomor', 'Pilih Mobil...');
+            } catch (error) {
+                console.error("Error loading data:", error);
+            }
+            */
+        }
+
+        function populateSelect(id, data, key, placeholder) {
+            const select = document.getElementById(id);
+            select.innerHTML = `<option value="">${placeholder}</option>`;
+            if(data) {
+                data.forEach(item => {
+                    select.innerHTML += `<option value="${item[key]}">${item[key]}</option>`;
+                });
+            }
+        }
+
+        function isiDropdownDummy() {
+            populateSelect('agen', [{nama: 'Agen Lembang'}, {nama: 'Agen Setiabudi'}, {nama: 'Agen Cimahi'}], 'nama', 'Pilih Agen...');
+            populateSelect('driver', [{nama: 'Agus'}, {nama: 'Budi'}, {nama: 'Cipto'}], 'nama', 'Pilih Driver...');
+            populateSelect('codriver', [{nama: 'Agus'}, {nama: 'Budi'}, {nama: 'Cipto'}, {nama: '- Kosong -'}], 'nama', 'Pilih Co-Driver...');
+            populateSelect('mobil', [{plat_nomor: 'D 1234 XY (Brio)'}, {plat_nomor: 'D 5678 ZA'}, {plat_nomor: 'D 9999 AA'}], 'plat_nomor', 'Pilih Mobil...');
+        }
+
+        // --- 3. LOGIC REKAPAN PENGIRIMAN ---
+        function tambahKiriman() {
+            const agen = document.getElementById('agen').value;
+            const driver = document.getElementById('driver').value;
+            const codriver = document.getElementById('codriver').value;
+            const mobil = document.getElementById('mobil').value;
+            const tanggal = document.getElementById('tanggal').value;
+            
+            if(!agen || !driver || !mobil) {
+                alert('Agen, Driver, dan Mobil harus diisi!');
+                return;
+            }
+
+            // Tambahkan baris data ke array
+            const record = {
+                id: Date.now(),
+                tanggal: tanggal,
+                agen: agen,
+                driver: driver,
+                codriver: codriver === '- Kosong -' ? '' : codriver,
+                mobil: mobil
+            };
+
+            listRekapan.push(record);
+            renderRiwayat();
+
+            // Reset form (kecuali tanggal)
+            document.getElementById('agen').value = '';
+            document.getElementById('driver').value = '';
+            document.getElementById('codriver').value = '';
+            document.getElementById('mobil').value = '';
+        }
+
+        function hapusKiriman(id) {
+            listRekapan = listRekapan.filter(item => item.id !== id);
+            renderRiwayat();
+        }
+
+        function renderRiwayat() {
+            const container = document.getElementById('riwayatContainer');
+            
+            if(listRekapan.length === 0) {
+                container.innerHTML = `
+                    <div id="emptyRiwayat" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-center fade-in">
+                        <p class="text-sm text-gray-400 italic">Belum ada data pengiriman ditambahkan.</p>
+                    </div>`;
+                return;
+            }
+            
+            container.innerHTML = '';
+            listRekapan.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 fade-in relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+                        <div class="flex justify-between items-start pl-2">
+                            <div class="space-y-1 w-full">
+                                <div class="flex justify-between">
+                                    <span class="font-bold text-sm text-gray-800 dark:text-gray-100">${index + 1}. ${item.agen}</span>
+                                    <button onclick="hapusKiriman(${item.id})" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1 rounded transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-1 text-xs text-gray-600 dark:text-gray-400">
+                                    <p>Drv: <span class="font-medium text-gray-900 dark:text-gray-200">${item.driver}</span></p>
+                                    <p>Mbl: <span class="font-medium text-gray-900 dark:text-gray-200">${item.mobil}</span></p>
+                                    <p class="col-span-2">Co: <span class="font-medium text-gray-900 dark:text-gray-200">${item.codriver || '-'}</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- 4. LOGIC PRATINJAU & SIMPAN/CETAK ---
+        function tampilkanPratinjau() {
+            if(listRekapan.length === 0) {
+                alert('Tambahkan minimal 1 baris pengiriman terlebih dahulu!');
+                return;
+            }
+
+            // Format tanggal Indonesia
+            const tgl = new Date(document.getElementById('tanggal').value);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('strukTanggal').innerText = tgl.toLocaleDateString('id-ID', options);
+
+            const containerStruk = document.getElementById('strukDaftarKiriman');
+            containerStruk.innerHTML = '';
+            
+            listRekapan.forEach((item, i) => {
+                containerStruk.innerHTML += `
+                    <div class="mb-2 ${i !== listRekapan.length - 1 ? 'border-b border-black border-dotted pb-2' : ''}">
+                        <div class="font-bold">${i + 1}. AGEN: ${item.agen.toUpperCase()}</div>
+                        <div class="pl-3">
+                            <table class="w-full text-xs">
+                                <tr><td class="w-12">Driver</td><td>: ${item.driver}</td></tr>
+                                <tr><td>Co-Drv</td><td>: ${item.codriver || '-'}</td></tr>
+                                <tr><td>Mobil</td><td>: ${item.mobil}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Animasi Tampil Modal
+            const modal = document.getElementById('modalPreview');
+            const content = document.getElementById('modalContent');
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function tutupPratinjau() {
+            const modal = document.getElementById('modalPreview');
+            const content = document.getElementById('modalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('translate-y-full');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.style.display = '';
+            }, 300);
+        }
+
+        // Simpan PNG menggunakan html2canvas
+        function simpanPNG() {
+            const struk = document.getElementById('areaStruk');
+            // Sedikit style tambahan khusus saat di capture agar border rapi
+            struk.style.border = "1px solid #ccc";
+            
+            html2canvas(struk, { scale: 3, backgroundColor: "#ffffff" }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Rekap_Pengiriman_${document.getElementById('tanggal').value}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                struk.style.border = "none";
+            });
+        }
+
+        // --- 5. LOGIC BLUETOOTH PRINTING (Web Bluetooth API) ---
+        async function cetakBluetooth(maxChars = 32) {
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }],
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+                }).catch(e => {
+                    return navigator.bluetooth.requestDevice({
+                        acceptAllDevices: true,
+                        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+                    });
+                });
+
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+                const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb'); 
+
+                // Format teks
+                const tglString = new Date(document.getElementById('tanggal').value).toLocaleDateString('id-ID');
+                let text = "SBR PUTRA FOOD
+";
+                text += "REKAP PENGIRIMAN
+";
+                text += "-".repeat(maxChars) + "
+";
+                text += `TGL: ${tglString}
+`;
+                text += "-".repeat(maxChars) + "
+";
+                
+                listRekapan.forEach((item, i) => {
+                    text += `${i+1}. AGEN: ${item.agen.toUpperCase()}
+`;
+                    text += `   Drv : ${item.driver}
+`;
+                    text += `   Co  : ${item.codriver || '-'}
+`;
+                    text += `   Mbl : ${item.mobil}
+`;
+                    if(i !== listRekapan.length - 1) {
+                        text += "   " + "-".repeat(maxChars - 3) + "
+";
+                    }
+                });
+                
+                text += "-".repeat(maxChars) + "
+";
+                text += "       Mengetahui,
+
+
+";
+                text += "    Admin / Logistik
+
+
+
+";
+
+                let encoder = new TextEncoder();
+                let data = encoder.encode(text);
+                await characteristic.writeValue(data);
+                
+                alert('Berhasil mengirim ke printer!');
+            } catch (error) {
+                console.error(error);
+                alert('Gagal cetak Bluetooth: ' + error.message);
+            }
+        }
+
+        window.onload = loadDataDropdown;
+    </script>
+</body>
+</html>
