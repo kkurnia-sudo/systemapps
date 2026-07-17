@@ -119,8 +119,6 @@
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;
-            
-            /* Menggunakan trik opacity agar transisi super cepat dan tidak nge-lag */
             display: flex; visibility: hidden; opacity: 0; 
             transition: opacity 0.1s ease-out, visibility 0.1s ease-out;
         }
@@ -131,8 +129,6 @@
             background: var(--bg-modal); border-radius: 8px; width: 95%; max-width: 420px;
             max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 20px;
             box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            
-            /* Animasi scale pop-up 0.1 detik agar snappy */
             transform: scale(0.9);
             transition: transform 0.1s ease-out;
         }
@@ -163,20 +159,12 @@
 
         /* STYLE KHUSUS INPUT PIN */
         #pinInput {
-            text-align: center;
-            font-size: 28px;
-            letter-spacing: 12px;
-            font-weight: bold;
-            padding: 12px;
-            border: 2px solid #3498db;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            background-color: var(--input-bg);
-            color: var(--text-main);
+            text-align: center; font-size: 28px; letter-spacing: 12px; font-weight: bold;
+            padding: 12px; border: 2px solid #3498db; border-radius: 8px; margin-bottom: 20px;
+            background-color: var(--input-bg); color: var(--text-main);
         }
         #pinInput:focus {
-            outline: none;
-            box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+            outline: none; box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
         }
 
         @media print {
@@ -307,10 +295,7 @@
     <div class="modal-content" style="max-width: 320px; text-align: center;">
         <h3 style="margin-top:0; color:var(--text-heading); font-size: 18px;">Otorisasi PIN</h3>
         <p style="font-size: 13px; color:var(--text-muted); margin-bottom: 15px;" id="pinMessage">Masukkan 4 digit PIN</p>
-        
-        <!-- Menggunakan type="password" agar tersamar dan inputmode="numeric" untuk memanggil keyboard angka di HP -->
         <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pinInput" placeholder="••••">
-        
         <div style="display: flex; gap: 10px;">
             <button type="button" id="btnCancelPin" class="btn-cancel">Batal</button>
             <button type="button" id="btnConfirmPin" style="background-color: #3498db;">Konfirmasi</button>
@@ -625,10 +610,8 @@
             pinInput.value = '';
             pinModal.classList.add('active');
             
-            // Waktu panggil keyboard dipercepat
             setTimeout(() => pinInput.focus(), 10);
 
-            // Fungsi pembersihan event listener ketika selesai
             const cleanup = () => {
                 pinModal.classList.remove('active');
                 btnConfirm.removeEventListener('click', onConfirm);
@@ -646,7 +629,6 @@
                 resolve(null);
             };
 
-            // Tangkap event Enter di keyboard agar langsung submit tanpa pencet tombol OK
             const onKeyPress = (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -663,7 +645,6 @@
     document.getElementById('btnTriggerDelete').addEventListener('click', async () => {
         actionModal.classList.remove('active'); 
         
-        // Memanggil modal custom PIN
         const pin = await mintaPin("Masukkan 4 digit PIN untuk menghapus data:");
         
         if (pin !== PIN_AKSES) return alert("PIN Salah atau dibatalkan!");
@@ -678,7 +659,6 @@
     document.getElementById('btnTriggerEdit').addEventListener('click', async () => {
         actionModal.classList.remove('active'); 
         
-        // Memanggil modal custom PIN
         const pin = await mintaPin("Masukkan 4 digit PIN untuk mengedit data:");
         
         if (pin !== PIN_AKSES) return alert("PIN Salah atau dibatalkan!");
@@ -826,18 +806,15 @@
         const originalText = btn.innerHTML;
         
         try {
-            // Mencegah double-click yang membuat print ganda
             btn.innerHTML = '⏳ Sabar...';
             btn.disabled = true;
 
-            const paperWidth = parseInt(document.getElementById('paperSize').value); // 32 untuk 58mm, 48 untuk 80mm
+            const paperWidth = parseInt(document.getElementById('paperSize').value); 
             
-            // --- FUNGSI PEMBERSIH TEKS (ANTI BERANTAKAN) ---
-            // Menghapus spasi aneh (NBSP) dan karakter yang tidak dikenali printer thermal
             const sanitize = (text) => {
                 if(!text) return '';
-                return text.replace(/[\u00A0\u202F]/g, ' ') // Ubah spasi aneh jadi spasi normal
-                           .replace(/[^\x20-\x7E]/g, '')    // Hapus karakter non-ASCII (emoji/simbol aneh)
+                return text.replace(/[\u00A0\u202F]/g, ' ') 
+                           .replace(/[^\x20-\x7E]/g, '')    
                            .trim();
             };
 
@@ -856,7 +833,6 @@
                 
                 let spaceCount = paperWidth - left.length - right.length;
                 
-                // Jika teks terlalu panjang, potong keterangan sebelah kiri agar nominal tetap rata kanan
                 if (spaceCount < 1) {
                     const maxLeft = paperWidth - right.length - 2; 
                     return left.substring(0, maxLeft) + ".. " + right;
@@ -876,12 +852,16 @@
             
             textToPrint += divider;
 
-            const rows = document.querySelectorAll('#receiptTableBody tr');
+            // KUNCI PERBAIKAN: Hanya mengambil tabel dari container utama yang disembunyikan
+            // bukan dari keseluruhan dokumen yang sudah digandakan oleh pop-up pratinjau
+            const originalContainer = document.getElementById('receiptCaptureContainer');
+            const rows = originalContainer.querySelectorAll('tbody tr');
+            
             rows.forEach(tr => {
                 const cols = tr.querySelectorAll('td');
                 if (cols.length === 3) {
                     const tgl = cols[0].innerText;
-                    const ket = cols[1].innerText.replace(/\n/g, ' '); // Gabungkan baris baru menjadi spasi
+                    const ket = cols[1].innerText.replace(/\n/g, ' '); 
                     const jml = cols[2].innerText;
                     
                     textToPrint += sanitize(tgl) + newLine; 
@@ -891,9 +871,9 @@
 
             textToPrint += divider;
             
-            const tMasuk = document.getElementById('rcTotalMasuk').innerText;
-            const tKeluar = document.getElementById('rcTotalKeluar').innerText;
-            const tSaldo = document.getElementById('rcSaldoAkhir').innerText;
+            const tMasuk = originalContainer.querySelector('#rcTotalMasuk').innerText;
+            const tKeluar = originalContainer.querySelector('#rcTotalKeluar').innerText;
+            const tSaldo = originalContainer.querySelector('#rcSaldoAkhir').innerText;
 
             textToPrint += formatLine("Total Masuk:", tMasuk) + newLine;
             textToPrint += formatLine("Total Keluar:", tKeluar) + newLine;
@@ -906,7 +886,6 @@
             const encoder = new TextEncoder();
             const textBytes = encoder.encode(textToPrint);
             
-            // Inisialisasi printer (ESC @) untuk mereset memori printer
             const initCmd = new Uint8Array([27, 64]); 
             const payload = new Uint8Array(initCmd.length + textBytes.length);
             payload.set(initCmd, 0);
@@ -942,7 +921,6 @@
                 throw new Error("Gagal menemukan alur tulis pada printer ini.");
             }
 
-            // Mengirim data per 128 bytes agar printer mini tidak error (buffer overload)
             const CHUNK_SIZE = 128; 
             for (let i = 0; i < payload.length; i += CHUNK_SIZE) {
                 const chunk = payload.slice(i, i + CHUNK_SIZE);
@@ -954,12 +932,11 @@
             }
 
         } catch (err) {
-            if (err.name !== 'NotFoundError') { // Abaikan error jika user menekan 'Cancel' saat pilih bluetooth
+            if (err.name !== 'NotFoundError') { 
                 alert("Gagal mencetak: " + err.message);
                 console.error("Bluetooth Error: ", err);
             }
         } finally {
-            // Kembalikan tombol seperti semula setelah selesai atau error
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
