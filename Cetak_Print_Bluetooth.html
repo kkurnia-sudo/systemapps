@@ -64,7 +64,7 @@
             margin-bottom: 16px;
         }
 
-        .form-group label {
+        .form-group label.main-label {
             display: block;
             font-size: 0.875rem;
             font-weight: 600;
@@ -90,6 +90,31 @@
         textarea.form-control {
             resize: vertical;
             min-height: 100px;
+        }
+
+        .split-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .split-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .split-col:first-child {
+            flex: 2;
+        }
+
+        .split-col:last-child {
+            flex: 1;
+        }
+
+        .split-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: block;
         }
 
         .paper-selector {
@@ -151,6 +176,7 @@
             font-family: 'Courier New', Courier, monospace;
             color: black;
             transition: width 0.3s ease;
+            min-height: 100px;
         }
 
         .receipt-box.size-58 {
@@ -182,8 +208,29 @@
         }
 
         .receipt-body {
-            white-space: pre-wrap;
             margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .receipt-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .receipt-item-text {
+            text-align: left;
+            flex: 1;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .receipt-price-text {
+            text-align: right;
+            margin-left: 8px;
+            white-space: nowrap;
         }
 
         .receipt-footer {
@@ -214,21 +261,10 @@
             color: white;
         }
 
-        .btn-png {
-            background-color: var(--success);
-        }
-
-        .btn-png:hover {
-            background-color: var(--success-hover);
-        }
-
-        .btn-print {
-            background-color: var(--primary);
-        }
-
-        .btn-print:hover {
-            background-color: var(--primary-hover);
-        }
+        .btn-png { background-color: var(--success); }
+        .btn-png:hover { background-color: var(--success-hover); }
+        .btn-print { background-color: var(--primary); }
+        .btn-print:hover { background-color: var(--primary-hover); }
 
         .icon {
             width: 20px;
@@ -239,6 +275,12 @@
         @media (max-width: 400px) {
             .app-container {
                 padding: 16px;
+            }
+            .split-input {
+                flex-direction: column;
+            }
+            .split-col:last-child {
+                flex: auto;
             }
         }
     </style>
@@ -263,22 +305,31 @@
         </div>
 
         <div class="form-group">
-            <label for="input-date">Tanggal</label>
+            <label class="main-label" for="input-date">Tanggal</label>
             <input type="date" id="input-date" class="form-control" onchange="updatePreview()">
         </div>
 
         <div class="form-group">
-            <label for="input-header">Header (Nama Toko / Judul)</label>
+            <label class="main-label" for="input-header">Header (Nama Toko / Judul)</label>
             <input type="text" id="input-header" class="form-control" placeholder="NAMA TOKO" oninput="updatePreview()">
         </div>
 
         <div class="form-group">
-            <label for="input-body">Isi Struk (Item & Harga)</label>
-            <textarea id="input-body" class="form-control" placeholder="isi apa saja disini &#10; isi apa saja disini" oninput="updatePreview()"> </textarea>
+            <label class="main-label">Isi Struk (Item & Harga)</label>
+            <div class="split-input">
+                <div class="split-col">
+                    <span class="split-label">Keterangan (Kiri)</span>
+                    <textarea id="input-item" class="form-control" placeholder="1x Nasi Goreng&#10;2x Es Teh" oninput="updatePreview()"></textarea>
+                </div>
+                <div class="split-col">
+                    <span class="split-label">Harga (Kanan)</span>
+                    <textarea id="input-price" class="form-control" placeholder="15.000&#10;10.000" oninput="updatePreview()" style="text-align: right;"></textarea>
+                </div>
+            </div>
         </div>
 
         <div class="form-group">
-            <label for="input-footer">Footer (Pesan Penutup)</label>
+            <label class="main-label" for="input-footer">Footer (Pesan Penutup)</label>
             <input type="text" id="input-footer" class="form-control" placeholder="Terima Kasih" oninput="updatePreview()">
         </div>
 
@@ -286,13 +337,14 @@
             <div class="preview-label">Live Preview:</div>
             
             <div id="receipt-capture" class="receipt-box size-58">
-                <div id="prev-header" class="receipt-header">NAMA TOKO</div>
+                <div id="prev-header" class="receipt-header"></div>
                 <div id="prev-date" class="receipt-date"></div>
                 <div class="receipt-divider"></div>
-                <div id="prev-body" class="receipt-body">1x Nasi Goreng  15.000
-2x Es Teh       10.000</div>
+                <div id="prev-body" class="receipt-body">
+                    <!-- Data dimasukkan via Javascript -->
+                </div>
                 <div class="receipt-divider"></div>
-                <div id="prev-footer" class="receipt-footer">Terima Kasih</div>
+                <div id="prev-footer" class="receipt-footer"></div>
             </div>
         </div>
 
@@ -309,17 +361,28 @@
     </div>
 
     <script>
-        // Set default date to today on load
         window.onload = function() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('input-date').value = today;
             updatePreview();
         };
 
-        // Function to format date into "Kamis, 17-Jul-26"
+        // Fungsi baru untuk mereset form ke kondisi kosong
+        function resetForm() {
+            document.getElementById('input-header').value = "";
+            document.getElementById('input-item').value = "";
+            document.getElementById('input-price').value = "";
+            document.getElementById('input-footer').value = "";
+            
+            // Kembalikan tanggal ke hari ini
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('input-date').value = today;
+            
+            updatePreview();
+        }
+
         function formatCustomDate(dateString) {
             if (!dateString) return "";
-            
             const date = new Date(dateString);
             const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -327,23 +390,40 @@
             const dayName = days[date.getDay()];
             const day = String(date.getDate()).padStart(2, '0');
             const monthName = months[date.getMonth()];
-            const year = String(date.getFullYear()).slice(-2); // get last 2 digits of year
+            const year = String(date.getFullYear()).slice(-2);
             
             return `${dayName}, ${day}-${monthName}-${year}`;
         }
 
-        // Update live preview based on input
         function updatePreview() {
             document.getElementById('prev-header').innerText = document.getElementById('input-header').value;
             
             const rawDate = document.getElementById('input-date').value;
             document.getElementById('prev-date').innerText = formatCustomDate(rawDate);
             
-            document.getElementById('prev-body').innerText = document.getElementById('input-body').value;
+            const items = document.getElementById('input-item').value.split('\n');
+            const prices = document.getElementById('input-price').value.split('\n');
+            let bodyHTML = '';
+            const maxLines = Math.max(items.length, prices.length);
+
+            for (let i = 0; i < maxLines; i++) {
+                const item = items[i] || '';
+                const price = prices[i] || '';
+
+                if (item.trim() === '' && price.trim() === '') {
+                    bodyHTML += `<div style="height: 14px;"></div>`; 
+                } else {
+                    bodyHTML += `
+                    <div class="receipt-line">
+                        <div class="receipt-item-text">${item}</div>
+                        <div class="receipt-price-text">${price}</div>
+                    </div>`;
+                }
+            }
+            document.getElementById('prev-body').innerHTML = bodyHTML;
             document.getElementById('prev-footer').innerText = document.getElementById('input-footer').value;
         }
 
-        // Change paper size representation
         function updatePaperSize() {
             const is80 = document.getElementById('paper-80').checked;
             const receipt = document.getElementById('receipt-capture');
@@ -356,27 +436,38 @@
             }
         }
 
-        // Save preview as PNG
         function saveAsPNG() {
             const receiptEl = document.getElementById('receipt-capture');
             const originalBorder = receiptEl.style.border;
-            
-            // Temporary styling for better image export
             receiptEl.style.border = '1px solid #ddd';
 
             html2canvas(receiptEl, { scale: 3 }).then(canvas => {
-                receiptEl.style.border = originalBorder; // restore
-                
+                receiptEl.style.border = originalBorder; 
                 const link = document.createElement('a');
                 link.download = 'struk_' + new Date().getTime() + '.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
+                
+                // Panggil fungsi reset setelah berhasil download
+                resetForm();
             }).catch(err => {
                 alert("Gagal menyimpan gambar: " + err);
             });
         }
 
-        // Web Bluetooth API for Direct Thermal Printing
+        function formatPrintLine(item, price, maxChars) {
+            if (!price) return item + '\n';
+            if (!item) return ' '.repeat(Math.max(0, maxChars - price.length)) + price + '\n';
+
+            if (item.length + price.length + 1 > maxChars) {
+                let priceLine = ' '.repeat(Math.max(0, maxChars - price.length)) + price;
+                return item + '\n' + priceLine + '\n';
+            } else {
+                let spaces = maxChars - item.length - price.length;
+                return item + ' '.repeat(spaces) + price + '\n';
+            }
+        }
+
         async function printBluetooth() {
             if (!navigator.bluetooth) {
                 alert('Browser Anda tidak mendukung Web Bluetooth API. Harap gunakan Google Chrome di Android/PC dan pastikan Anda mengakses via HTTPS.');
@@ -384,25 +475,20 @@
             }
 
             try {
-                // Minta izin koneksi ke perangkat bluetooth (Mencari UUID printer generik)
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: [
-                        '000018f0-0000-1000-8000-00805f9b34fb', // Standard BLE Printer
-                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Generic Printer Service
-                        '49535343-fe7d-4ae5-8fa9-9fafd205e455'  // Serial Port Profile over BLE
+                        '000018f0-0000-1000-8000-00805f9b34fb', 
+                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2', 
+                        '49535343-fe7d-4ae5-8fa9-9fafd205e455'  
                     ]
                 });
 
                 console.log('Menghubungkan ke GATT Server...');
                 const server = await device.gatt.connect();
-                
-                console.log('Mendapatkan Services...');
                 const services = await server.getPrimaryServices();
-                
                 let printCharacteristic = null;
 
-                // Cari karakteristik yang bisa di-write
                 for (const service of services) {
                     const characteristics = await service.getCharacteristics();
                     for (const char of characteristics) {
@@ -418,27 +504,37 @@
                     throw new Error('Tidak menemukan layanan print (Write Characteristic) pada perangkat ini.');
                 }
 
-                // Siapkan data struk
+                const is80 = document.getElementById('paper-80').checked;
+                const maxChars = is80 ? 48 : 32;
+
                 const headerText = document.getElementById('input-header').value + '\n';
                 const rawDate = document.getElementById('input-date').value;
                 const dateText = formatCustomDate(rawDate) + '\n';
-                const bodyText = document.getElementById('input-body').value + '\n';
-                const footerText = document.getElementById('input-footer').value + '\n\n\n\n'; // Extra feed
+                
+                const items = document.getElementById('input-item').value.split('\n');
+                const prices = document.getElementById('input-price').value.split('\n');
+                let bodyText = '';
+                const maxLines = Math.max(items.length, prices.length);
 
-                // ESC/POS Commands
+                for(let i = 0; i < maxLines; i++) {
+                    let item = (items[i] || '').replace(/\r/g, '');
+                    let price = (prices[i] || '').replace(/\r/g, '');
+                    bodyText += formatPrintLine(item, price, maxChars);
+                }
+                
+                const footerText = '\n' + document.getElementById('input-footer').value + '\n\n\n\n';
+
                 const encoder = new TextEncoder();
-                const initPrinter = new Uint8Array([0x1B, 0x40]); // Initialize
-                const alignCenter = new Uint8Array([0x1B, 0x61, 0x01]); // Align Center
-                const alignLeft = new Uint8Array([0x1B, 0x61, 0x00]);   // Align Left
-                const boldOn = new Uint8Array([0x1B, 0x45, 0x01]);      // Bold On
-                const boldOff = new Uint8Array([0x1B, 0x45, 0x00]);     // Bold Off
-				const doubleHeight = new Uint8Array([0x1D, 0x21, 0x01]); // Teks mulur/lebar ke bawah saja
-				const doubleWidth = new Uint8Array([0x1D, 0x21, 0x10]);  // Teks melebar ke samping saja
+                const initPrinter = new Uint8Array([0x1B, 0x40]); 
+                const alignCenter = new Uint8Array([0x1B, 0x61, 0x01]); 
+                const alignLeft = new Uint8Array([0x1B, 0x61, 0x00]);   
+                const boldOn = new Uint8Array([0x1B, 0x45, 0x01]);      
+                const boldOff = new Uint8Array([0x1B, 0x45, 0x00]);     
+                const doubleHeight = new Uint8Array([0x1D, 0x21, 0x01]); 
+                const doubleWidth = new Uint8Array([0x1D, 0x21, 0x10]);  
 				const bigText = new Uint8Array([0x1D, 0x21, 0x11]);      // Teks besar (Double tinggi + lebar)
-				const normalText = new Uint8Array([0x1D, 0x21, 0x00]);   // Reset teks ke ukuran normal
-				// ----------------------------------
+                const normalText = new Uint8Array([0x1D, 0x21, 0x00]);   
 
-                // Function untuk mengirim chunk data (karena batas BLE max 20-512 bytes per kirim)
                 async function sendData(data) {
                     const CHUNK_SIZE = 20; 
                     for (let i = 0; i < data.length; i += CHUNK_SIZE) {
@@ -447,45 +543,43 @@
                     }
                 }
 
-                // Kirim perintah print secara berurutan
                 await sendData(initPrinter);
                 
-                // Cetak Header (Center, Bold)
                 await sendData(alignCenter);
-                await sendData(boldOn);
-				await sendData(doubleWidth);
+                await sendData(bigText);
                 await sendData(encoder.encode(headerText));
                 await sendData(boldOff);
-				await sendData(normalText);
+                await sendData(normalText);
                 
-                // Cetak Tanggal (Center)
                 await sendData(alignCenter);
+				await sendData(doubleHeight);
                 await sendData(encoder.encode(dateText));
 
-                // Garis putus-putus
-                const divider = "--------------------------------\n";
+                const divider = "-".repeat(maxChars) + "\n";
                 await sendData(encoder.encode(divider));
 
-                // Cetak Body (Left)
                 await sendData(alignLeft);
-				await sendData(doubleHeight); // <--- AKTIFKAN TEKS MULUR KE BAWAH UNTUK BODY
+                await sendData(doubleHeight); 
                 await sendData(encoder.encode(bodyText));
-                await sendData(normalText); // <--- KEMBALIKAN KE NORMAL AGAR FOOTER TIDAK IKUT Melar
+                await sendData(normalText); 
+                
                 await sendData(alignCenter);
                 await sendData(encoder.encode(divider));
 
-                // Cetak Footer (Center)
                 await sendData(alignCenter);
                 await sendData(encoder.encode(footerText));
 
                 alert('Berhasil mengirim data ke printer bluetooth!');
+                
+                // Panggil fungsi reset setelah print berhasil
+                resetForm();
 
             } catch (error) {
                 console.error(error);
                 if (error.name === 'NotFoundError') {
                     console.log('Pemilihan perangkat dibatalkan pengguna.');
                 } else {
-                    alert('Gagal mencetak: ' + error.message + '\n\nPastikan printer bluetooth menyala, sudah di-pairing, dan mendukung Web Bluetooth (BLE).');
+                    alert('Gagal mencetak: ' + error.message + '\n\nPastikan printer menyala, sudah di-pairing, dan mendukung Web Bluetooth (BLE).');
                 }
             }
         }
