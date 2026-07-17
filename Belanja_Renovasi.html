@@ -848,26 +848,40 @@
                 const metodeTeks = tx.metode ? tx.metode : 'Cash';
                 
                 const tgl = formatDate(tx.created_at);
-                const ket = `${tx.description} [${metodeTeks}]`;
                 const jml = `${prefix}${formatAngka}`;
+                const metodeLabel = `[${metodeTeks}]`;
                 
-                // 1. Cetak Keterangan Item di baris pertama (Word Wrap Rapi ke bawah kalau panjang)
-                let remainingKet = sanitize(ket);
+                // 1. Cetak Tanggal di baris pertama (rata kiri)
+                textToPrint += sanitize(tgl) + newLine;
+
+                // 2. Cetak Keterangan Item dengan indentasi (2 spasi) agar rapi
+                let indent = "  ";
+                let remainingKet = sanitize(tx.description);
+                let maxKetWidth = paperWidth - indent.length;
+                
                 while(remainingKet.length > 0) {
-                    if(remainingKet.length <= paperWidth) {
-                        textToPrint += remainingKet + newLine;
+                    if(remainingKet.length <= maxKetWidth) {
+                        textToPrint += indent + remainingKet + newLine;
                         break;
                     } else {
-                        let breakPoint = remainingKet.lastIndexOf(' ', paperWidth);
-                        if(breakPoint === -1) breakPoint = paperWidth; 
+                        let breakPoint = remainingKet.lastIndexOf(' ', maxKetWidth);
+                        if(breakPoint === -1) breakPoint = maxKetWidth; 
                         
-                        textToPrint += remainingKet.substring(0, breakPoint) + newLine;
+                        textToPrint += indent + remainingKet.substring(0, breakPoint) + newLine;
                         remainingKet = remainingKet.substring(breakPoint).trim();
                     }
                 }
 
-                // 2. Cetak Tanggal (di kiri) dan Nominal (di kanan) di baris bawahnya
-                textToPrint += formatLine(tgl, jml) + newLine; 
+                // 3. Cetak Metode Pembayaran (kiri) & Nominal (kanan) dengan indentasi
+                const rightText = sanitize(jml);
+                const leftText = indent + sanitize(metodeLabel);
+                const spaceCount = paperWidth - leftText.length - rightText.length;
+                
+                if (spaceCount > 0) {
+                    textToPrint += leftText + " ".repeat(spaceCount) + rightText + newLine;
+                } else {
+                    textToPrint += leftText + " " + rightText + newLine;
+                }
             });
 
             textToPrint += divider;
