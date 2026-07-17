@@ -111,7 +111,10 @@
         .receipt-preview th, .receipt-preview td { padding: 6px 2px; border: none; border-bottom: 1px dashed #ccc !important; vertical-align: top; }
         
         .col-tgl { width: 22%; }
+        
+        /* DIKEMBALIKAN KE VERSI AWAL: Tanpa pembatas 2 baris untuk pratinjau */
         .col-ket { width: 43%; word-wrap: break-word; }
+        
         .col-jml { width: 35%; text-align: right; white-space: nowrap; } 
         
         .receipt-preview .summary-section { margin-top: 10px; font-weight: bold; }
@@ -786,6 +789,7 @@
 
     document.getElementById('btnConfirmPrint').addEventListener('click', () => window.print());
 
+    // PEMBARUAN: STRUKTUR CETAK ALA SISTEM KASIR POS UNTUK BLUETOOTH
     document.getElementById('btnBluetoothPrint').addEventListener('click', async function() {
         if (!navigator.bluetooth) {
             alert("Browser tidak mendukung Web Bluetooth. Pastikan menggunakan Chrome (HTTPS).");
@@ -818,12 +822,12 @@
             const formatLine = (leftText, rightText) => {
                 const left = sanitize(leftText);
                 const right = sanitize(rightText);
-                let spaceCount = paperWidth - left.length - right.length;
-                if (spaceCount < 1) {
-                    const maxLeft = paperWidth - right.length - 2; 
-                    return left.substring(0, maxLeft) + ".. " + right;
+                const spaceCount = paperWidth - left.length - right.length;
+                if (spaceCount > 0) {
+                    return left + " ".repeat(spaceCount) + right;
+                } else {
+                    return left + " " + right; 
                 }
-                return left + " ".repeat(spaceCount) + right;
             };
 
             let textToPrint = "";
@@ -847,8 +851,23 @@
                 const ket = `${tx.description} [${metodeTeks}]`;
                 const jml = `${prefix}${formatAngka}`;
                 
-                textToPrint += sanitize(tgl) + newLine; 
-                textToPrint += formatLine(ket, jml) + newLine; 
+                // 1. Cetak Keterangan Item di baris pertama (Word Wrap Rapi ke bawah kalau panjang)
+                let remainingKet = sanitize(ket);
+                while(remainingKet.length > 0) {
+                    if(remainingKet.length <= paperWidth) {
+                        textToPrint += remainingKet + newLine;
+                        break;
+                    } else {
+                        let breakPoint = remainingKet.lastIndexOf(' ', paperWidth);
+                        if(breakPoint === -1) breakPoint = paperWidth; 
+                        
+                        textToPrint += remainingKet.substring(0, breakPoint) + newLine;
+                        remainingKet = remainingKet.substring(breakPoint).trim();
+                    }
+                }
+
+                // 2. Cetak Tanggal (di kiri) dan Nominal (di kanan) di baris bawahnya
+                textToPrint += formatLine(tgl, jml) + newLine; 
             });
 
             textToPrint += divider;
