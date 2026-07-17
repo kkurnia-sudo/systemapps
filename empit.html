@@ -89,12 +89,6 @@
         .btn-delete { background-color: #e74c3c; margin-bottom: 10px; }
         .btn-cancel { background-color: var(--border-color); color: var(--btn-cancel-text); }
 
-        .export-row { margin-top: 15px; }
-        .btn-print { background-color: #2c3e50; }
-        .btn-print:hover { background-color: #1a252f; }
-        .btn-png { background-color: #8e44ad; }
-        .btn-png:hover { background-color: #732d91; }
-
         /* =========================================
            STYLE VIRTUAL STRUK (TETAP PUTIH)
            ========================================= */
@@ -120,18 +114,32 @@
         .receipt-preview .summary-section div { display: flex; justify-content: space-between; padding: 2px 0; }
 
         /* =========================================
-           MODAL UMUM (OVERLAY)
+           MODAL UMUM (OVERLAY) - SUPER CEPAT
            ========================================= */
         .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;
+            
+            /* Menggunakan trik opacity agar transisi super cepat dan tidak nge-lag */
+            display: flex; visibility: hidden; opacity: 0; 
+            transition: opacity 0.1s ease-out, visibility 0.1s ease-out;
         }
-        .modal-overlay.active { display: flex; }
+        .modal-overlay.active { 
+            visibility: visible; opacity: 1; 
+        }
         .modal-content {
             background: var(--bg-modal); border-radius: 8px; width: 95%; max-width: 420px;
-            max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 15px;
-            box-sizing: border-box;
+            max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 20px;
+            box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            
+            /* Animasi scale pop-up 0.1 detik agar snappy */
+            transform: scale(0.9);
+            transition: transform 0.1s ease-out;
         }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
         .modal-header {
             display: flex; justify-content: space-between; align-items: center;
             padding-bottom: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px;
@@ -149,13 +157,27 @@
             padding: 15px; border-top: 1px solid var(--border-color); background: var(--bg-container); 
             display: flex; flex-direction: column; gap: 12px;
         }
-        .footer-settings {
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .footer-buttons {
-            display: flex; gap: 8px; width: 100%;
-        }
+        .footer-settings { display: flex; justify-content: space-between; align-items: center; }
+        .footer-buttons { display: flex; gap: 8px; width: 100%; }
         .footer-buttons button { flex: 1; padding: 8px 5px; font-size: 13px; }
+
+        /* STYLE KHUSUS INPUT PIN */
+        #pinInput {
+            text-align: center;
+            font-size: 28px;
+            letter-spacing: 12px;
+            font-weight: bold;
+            padding: 12px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: var(--input-bg);
+            color: var(--text-main);
+        }
+        #pinInput:focus {
+            outline: none;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+        }
 
         @media print {
             body * { visibility: hidden; }
@@ -266,10 +288,11 @@
     </div>
     
     <div class="export-row">
-        <button type="button" id="btnShowPrintPreview" class="btn-print">🖨️ Cetak / Simpan Struk</button>
+        <button type="button" id="btnShowPrintPreview" class="btn-print" style="margin-top: 15px;">🖨️ Cetak / Simpan Struk</button>
     </div>
 </div>
 
+<!-- MODAL PILIH AKSI -->
 <div id="actionModal" class="modal-overlay">
     <div class="modal-content" style="max-width: 280px; text-align: center;">
         <h3 style="margin-top:0; margin-bottom: 15px; color:var(--text-heading);">Pilih Aksi</h3>
@@ -279,6 +302,23 @@
     </div>
 </div>
 
+<!-- MODAL INPUT PIN KHUSUS -->
+<div id="pinModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 320px; text-align: center;">
+        <h3 style="margin-top:0; color:var(--text-heading); font-size: 18px;">Otorisasi PIN</h3>
+        <p style="font-size: 13px; color:var(--text-muted); margin-bottom: 15px;" id="pinMessage">Masukkan 4 digit PIN</p>
+        
+        <!-- Menggunakan type="password" agar tersamar dan inputmode="numeric" untuk memanggil keyboard angka di HP -->
+        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pinInput" placeholder="••••">
+        
+        <div style="display: flex; gap: 10px;">
+            <button type="button" id="btnCancelPin" class="btn-cancel">Batal</button>
+            <button type="button" id="btnConfirmPin" style="background-color: #3498db;">Konfirmasi</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDIT -->
 <div id="editModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
@@ -304,6 +344,7 @@
     </div>
 </div>
 
+<!-- MODAL PRINT -->
 <div id="printModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
@@ -569,9 +610,62 @@
         actionModal.classList.remove('active');
     });
 
+    // =========================================
+    // FUNGSI CUSTOM MODAL PIN (Promise Based)
+    // =========================================
+    function mintaPin(pesan) {
+        return new Promise((resolve) => {
+            const pinModal = document.getElementById('pinModal');
+            const pinInput = document.getElementById('pinInput');
+            const pinMessage = document.getElementById('pinMessage');
+            const btnConfirm = document.getElementById('btnConfirmPin');
+            const btnCancel = document.getElementById('btnCancelPin');
+            
+            pinMessage.innerText = pesan;
+            pinInput.value = '';
+            pinModal.classList.add('active');
+            
+            // Waktu panggil keyboard dipercepat
+            setTimeout(() => pinInput.focus(), 10);
+
+            // Fungsi pembersihan event listener ketika selesai
+            const cleanup = () => {
+                pinModal.classList.remove('active');
+                btnConfirm.removeEventListener('click', onConfirm);
+                btnCancel.removeEventListener('click', onCancel);
+                pinInput.removeEventListener('keypress', onKeyPress);
+            };
+
+            const onConfirm = () => {
+                cleanup();
+                resolve(pinInput.value);
+            };
+
+            const onCancel = () => {
+                cleanup();
+                resolve(null);
+            };
+
+            // Tangkap event Enter di keyboard agar langsung submit tanpa pencet tombol OK
+            const onKeyPress = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    onConfirm();
+                }
+            };
+
+            btnConfirm.addEventListener('click', onConfirm);
+            btnCancel.addEventListener('click', onCancel);
+            pinInput.addEventListener('keypress', onKeyPress);
+        });
+    }
+
     document.getElementById('btnTriggerDelete').addEventListener('click', async () => {
         actionModal.classList.remove('active'); 
-        const pin = prompt("Masukkan 4 digit PIN untuk menghapus:");
+        
+        // Memanggil modal custom PIN
+        const pin = await mintaPin("Masukkan 4 digit PIN untuk menghapus data:");
+        
         if (pin !== PIN_AKSES) return alert("PIN Salah atau dibatalkan!");
         if (!confirm("Yakin hapus data ini?")) return;
         
@@ -581,9 +675,12 @@
 
     const editModal = document.getElementById('editModal');
     
-    document.getElementById('btnTriggerEdit').addEventListener('click', () => {
+    document.getElementById('btnTriggerEdit').addEventListener('click', async () => {
         actionModal.classList.remove('active'); 
-        const pin = prompt("Masukkan 4 digit PIN untuk mengedit:");
+        
+        // Memanggil modal custom PIN
+        const pin = await mintaPin("Masukkan 4 digit PIN untuk mengedit data:");
+        
         if (pin !== PIN_AKSES) return alert("PIN Salah atau dibatalkan!");
 
         activeEditId = currentDataObj.id;
@@ -719,61 +816,81 @@
     // ==========================================
     // LOGIKA CETAK PRINTER BLUETOOTH THERMAL
     // ==========================================
-    document.getElementById('btnBluetoothPrint').addEventListener('click', async () => {
+    document.getElementById('btnBluetoothPrint').addEventListener('click', async function() {
         if (!navigator.bluetooth) {
-            alert("Browser tidak mendukung Web Bluetooth. Pastikan Anda menggunakan Google Chrome di Android/PC dan web dibuka menggunakan koneksi yang aman (HTTPS).");
+            alert("Browser tidak mendukung Web Bluetooth. Pastikan Anda menggunakan Google Chrome (HTTPS).");
             return;
         }
 
+        const btn = this;
+        const originalText = btn.innerHTML;
+        
         try {
+            // Mencegah double-click yang membuat print ganda
+            btn.innerHTML = '⏳ Sabar...';
+            btn.disabled = true;
+
             const paperWidth = parseInt(document.getElementById('paperSize').value); // 32 untuk 58mm, 48 untuk 80mm
             
-            // --- 1. Fungsi Pembantu Membentuk Layout Struk (Plain Text) ---
+            // --- FUNGSI PEMBERSIH TEKS (ANTI BERANTAKAN) ---
+            // Menghapus spasi aneh (NBSP) dan karakter yang tidak dikenali printer thermal
+            const sanitize = (text) => {
+                if(!text) return '';
+                return text.replace(/[\u00A0\u202F]/g, ' ') // Ubah spasi aneh jadi spasi normal
+                           .replace(/[^\x20-\x7E]/g, '')    // Hapus karakter non-ASCII (emoji/simbol aneh)
+                           .trim();
+            };
+
             const newLine = "\n";
             const divider = "-".repeat(paperWidth) + newLine;
             
-            // Pusatkan Teks
             const centerText = (text) => {
-                const spaces = Math.max(0, Math.floor((paperWidth - text.length) / 2));
-                return " ".repeat(spaces) + text;
+                const clean = sanitize(text);
+                const spaces = Math.max(0, Math.floor((paperWidth - clean.length) / 2));
+                return " ".repeat(spaces) + clean;
             };
 
-            // Ratakan Kiri & Kanan dalam 1 baris
-            const formatLine = (left, right) => {
-                let spaces = paperWidth - left.length - right.length;
-                if (spaces < 1) spaces = 1; 
-                return left + " ".repeat(spaces) + right;
+            const formatLine = (leftText, rightText) => {
+                const left = sanitize(leftText);
+                const right = sanitize(rightText);
+                
+                let spaceCount = paperWidth - left.length - right.length;
+                
+                // Jika teks terlalu panjang, potong keterangan sebelah kiri agar nominal tetap rata kanan
+                if (spaceCount < 1) {
+                    const maxLeft = paperWidth - right.length - 2; 
+                    return left.substring(0, maxLeft) + ".. " + right;
+                }
+                
+                return left + " ".repeat(spaceCount) + right;
             };
 
-            // --- 2. Menyusun Teks Struk ---
+            // --- MENYUSUN TEKS STRUK ---
             let textToPrint = "";
             
             textToPrint += centerText("LAPORAN KEUANGAN") + newLine;
             textToPrint += centerText("Fitria") + newLine;
+            
             const period = document.getElementById('receiptPeriod').innerText;
             if(period) textToPrint += centerText(period) + newLine;
+            
             textToPrint += divider;
 
-            // Loop Data dari Tabel Preview
             const rows = document.querySelectorAll('#receiptTableBody tr');
             rows.forEach(tr => {
                 const cols = tr.querySelectorAll('td');
                 if (cols.length === 3) {
-                    const tgl = cols[0].innerText.trim();
-                    const ket = cols[1].innerText.replace(/\n/g, ' ').trim();
-                    const jml = cols[2].innerText.trim();
+                    const tgl = cols[0].innerText;
+                    const ket = cols[1].innerText.replace(/\n/g, ' '); // Gabungkan baris baru menjadi spasi
+                    const jml = cols[2].innerText;
                     
-                    textToPrint += tgl + newLine; // Tanggal di baris sendiri
-                    
-                    // Potong keterangan jika terlalu panjang agar nominal uang tidak turun
-                    let maxKet = paperWidth - jml.length - 1;
-                    let safeKet = ket.length > maxKet ? ket.substring(0, maxKet - 3) + "..." : ket;
-                    
-                    textToPrint += formatLine(safeKet, jml) + newLine; // Keterangan dan Jumlah sebaris
+                    textToPrint += sanitize(tgl) + newLine; 
+                    textToPrint += formatLine(ket, jml) + newLine; 
                 }
             });
 
             textToPrint += divider;
+            
             const tMasuk = document.getElementById('rcTotalMasuk').innerText;
             const tKeluar = document.getElementById('rcTotalKeluar').innerText;
             const tSaldo = document.getElementById('rcSaldoAkhir').innerText;
@@ -785,25 +902,23 @@
             textToPrint += divider;
             textToPrint += centerText("-- Dicetak via Web --") + newLine + newLine + newLine;
 
-            // --- 3. Proses Sambungan & Pengiriman Data Bluetooth ---
+            // --- PROSES KIRIM BLUETOOTH ---
             const encoder = new TextEncoder();
             const textBytes = encoder.encode(textToPrint);
             
-            // Inisialisasi awal printer (ESC @) agar rapi
+            // Inisialisasi printer (ESC @) untuk mereset memori printer
             const initCmd = new Uint8Array([27, 64]); 
-            
             const payload = new Uint8Array(initCmd.length + textBytes.length);
             payload.set(initCmd, 0);
             payload.set(textBytes, initCmd.length);
 
-            // Membuka Jendela Pemilihan Perangkat Bluetooth
             const device = await navigator.bluetooth.requestDevice({
                 acceptAllDevices: true,
                 optionalServices: [
-                    '000018f0-0000-1000-8000-00805f9b34fb', // Standard generic printer
-                    'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Umum untuk mini printer Android
-                    '0000ae30-0000-1000-8000-00805f9b34fb', // Serial port
-                    '49535343-fe7d-4ae5-8fa9-9fafd205e455'  // Serial port alternative
+                    '000018f0-0000-1000-8000-00805f9b34fb', 
+                    'e7810a71-73ae-499d-8c15-faa9aef0c3f2', 
+                    '0000ae30-0000-1000-8000-00805f9b34fb', 
+                    '49535343-fe7d-4ae5-8fa9-9fafd205e455'  
                 ]
             });
             
@@ -812,7 +927,6 @@
             
             let printCharacteristic = null;
 
-            // Mencari karakteristik printer yang dapat ditulis (writeable)
             for (const service of services) {
                 const characteristics = await service.getCharacteristics();
                 for (const char of characteristics) {
@@ -825,12 +939,11 @@
             }
 
             if (!printCharacteristic) {
-                throw new Error("Gagal menemukan alur tulis (characteristic) pada printer ini.");
+                throw new Error("Gagal menemukan alur tulis pada printer ini.");
             }
 
-            // Kirim data ke printer dalam bentuk antrean potongan (chunking) 
-            // karena printer thermal umumnya punya buffer memory kecil
-            const CHUNK_SIZE = 256; 
+            // Mengirim data per 128 bytes agar printer mini tidak error (buffer overload)
+            const CHUNK_SIZE = 128; 
             for (let i = 0; i < payload.length; i += CHUNK_SIZE) {
                 const chunk = payload.slice(i, i + CHUNK_SIZE);
                 if (printCharacteristic.properties.writeWithoutResponse) {
@@ -840,14 +953,15 @@
                 }
             }
 
-            alert("Struk berhasil dikirim ke printer Bluetooth!");
-
         } catch (err) {
-            // Hindari notifikasi error jika user menekan tombol batal/cancel (NotFoundError)
-            if (err.name !== 'NotFoundError') {
+            if (err.name !== 'NotFoundError') { // Abaikan error jika user menekan 'Cancel' saat pilih bluetooth
                 alert("Gagal mencetak: " + err.message);
                 console.error("Bluetooth Error: ", err);
             }
+        } finally {
+            // Kembalikan tombol seperti semula setelah selesai atau error
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     });
 
