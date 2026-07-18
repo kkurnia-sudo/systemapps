@@ -22,10 +22,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- html2canvas for PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Flatpickr (Untuk format kalender DD/MM/YYYY) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
     <style>
-        .receipt-scroll::-webkit-scrollbar { width: 4px; }
-        .receipt-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
-        .receipt-scroll::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        .receipt-scroll::-webkit-scrollbar { width: 5px; }
+        .receipt-scroll::-webkit-scrollbar-track { background: transparent; }
+        .receipt-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .receipt-scroll::-webkit-scrollbar-thumb { background: #475569; }
         
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn {
@@ -34,7 +39,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen relative pb-28 transition-colors duration-300">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen relative pb-44 transition-colors duration-300">
 
     <div class="max-w-md mx-auto p-5 space-y-6">
         
@@ -45,15 +50,14 @@
         </div>
 
         <!-- Date Input -->
-        <div class="flex items-center space-x-3 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div class="flex items-center space-x-3 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative">
             <label for="tanggal" class="font-semibold whitespace-nowrap text-sm">Tanggal :</label>
-            <input type="date" id="tanggal" class="flex-1 px-3 py-1.5 bg-transparent border-b-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:border-primary text-sm font-medium">
+            <input type="text" id="tanggal" class="flex-1 px-3 py-1.5 bg-transparent border-b-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:border-primary text-sm font-medium">
         </div>
 
         <!-- Input Form Section -->
         <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
             <div class="grid grid-cols-2 gap-4">
-                <!-- Baris 1: Agen & Mobil -->
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Agen</label>
                     <select id="agen" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
@@ -62,8 +66,6 @@
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mobil</label>
                     <select id="mobil" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
                 </div>
-                
-                <!-- Baris 2: Driver & Co-Driver -->
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Driver</label>
                     <select id="driver" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
@@ -80,15 +82,17 @@
             </button>
         </div>
 
-        <!-- Draft Antrean (Muncul jika ada inputan baru) -->
+        <!-- Draft Antrean (Dibuat Flatbox Scrollable) -->
         <div id="draftSection" class="pt-2 hidden">
             <h2 class="text-sm font-bold text-primary mb-2 px-1">Antrean Belum Disimpan</h2>
-            <div id="draftContainer" class="space-y-2 max-h-48 overflow-y-auto receipt-scroll pr-1">
-                <!-- Draft items will be injected here -->
+            <div class="border border-blue-200 dark:border-blue-900/50 bg-blue-50/50 dark:bg-gray-800 rounded-xl p-2">
+                <div id="draftContainer" class="space-y-2 max-h-[220px] overflow-y-auto receipt-scroll pr-2">
+                    <!-- Draft items will be injected here -->
+                </div>
             </div>
         </div>
 
-        <!-- History Section (Dari Database) -->
+        <!-- History Section Dari Database (Dibuat Flatbox Scrollable) -->
         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between mb-3 px-1">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Riwayat</h2>
@@ -100,28 +104,34 @@
                 </select>
             </div>
             
-            <!-- Date Range Inputs -->
             <div id="dateRangeDiv" class="hidden flex-wrap gap-2 mb-4 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                 <div class="flex w-full items-center space-x-2">
-                    <input type="date" id="startDate" class="flex-1 text-xs p-1.5 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 outline-none">
+                    <input type="text" id="startDate" placeholder="Mulai" class="flex-1 text-xs p-1.5 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 outline-none text-center">
                     <span class="text-xs font-bold text-gray-500">sd</span>
-                    <input type="date" id="endDate" class="flex-1 text-xs p-1.5 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 outline-none">
+                    <input type="text" id="endDate" placeholder="Akhir" class="flex-1 text-xs p-1.5 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 outline-none text-center">
                 </div>
                 <button onclick="loadRiwayatDB()" class="w-full bg-primary text-white text-xs py-2 rounded-md font-bold mt-1">Cari Data</button>
             </div>
             
-            <div id="riwayatDbContainer" class="space-y-2 max-h-64 overflow-y-auto receipt-scroll pr-1 pb-4">
-                <p class="text-center text-xs text-gray-500 py-4 italic">Memuat data...</p>
+            <!-- Flatbox Riwayat Database -->
+            <div class="border border-gray-200 dark:border-gray-700 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-2">
+                <div id="riwayatDbContainer" class="space-y-2 max-h-[300px] overflow-y-auto receipt-scroll pr-2">
+                    <p class="text-center text-xs text-gray-500 py-4 italic">Memuat data...</p>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Bottom Action Button -->
     <div class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 p-4 pb-6 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10">
-        <div class="max-w-md mx-auto">
-            <button onclick="tampilkanPratinjau()" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition transform active:scale-[0.98] flex items-center justify-center space-x-2">
+        <div class="max-w-md mx-auto space-y-3">
+            <button onclick="simpanKeDatabase()" id="btnSimpanDB" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition transform active:scale-[0.98] flex items-center justify-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                <span>Simpan Antrean ke Database</span>
+            </button>
+            <button onclick="tampilkanPratinjau()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition transform active:scale-[0.98] flex items-center justify-center space-x-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                <span>Pratinjau & Simpan Database</span>
+                <span>Pratinjau & Cetak Riwayat</span>
             </button>
         </div>
     </div>
@@ -136,16 +146,16 @@
                 </button>
             </div>
             
-            <!-- Receipt Area (Desain Struk Dirapikan) -->
+            <!-- Receipt Area -->
             <div class="flex-1 overflow-y-auto receipt-scroll flex justify-center mb-6">
                 <div id="areaStruk" class="bg-white p-5 shadow-sm w-[340px] text-black font-mono text-[12px] leading-snug relative rounded-sm mx-auto">
                     <div class="text-center pb-2 mb-3 border-b-2 border-black border-dashed">
                         <h2 class="text-[18px] font-extrabold uppercase tracking-widest">SBR Putra Food</h2>
                         <p class="font-bold mt-1 text-[13px]">REKAP PENGIRIMAN</p>
                     </div>
-                    <div class="mb-3 font-bold flex justify-between border-b-2 border-black pb-2">
+                    <div class="mb-3 font-bold flex justify-between border-b-2 border-black pb-2 text-[11px]">
                         <span>TANGGAL:</span>
-                        <span id="strukTanggal"></span>
+                        <span id="strukTanggal" class="text-right"></span>
                     </div>
                     <div id="strukDaftarKiriman" class="space-y-3 pb-2">
                         <!-- Items go here -->
@@ -159,10 +169,6 @@
 
             <!-- Action Buttons -->
             <div class="grid grid-cols-2 gap-3 shrink-0 px-2">
-                <button onclick="simpanKeDatabase()" id="btnSimpanDB" class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md flex items-center justify-center space-x-2 transition active:scale-[0.98]">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                    <span>Simpan Data ke Database</span>
-                </button>
                 <button onclick="simpanPNG()" class="col-span-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-md flex items-center justify-center space-x-2 transition active:scale-[0.98]">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     <span>Simpan sbg Gambar (PNG)</span>
@@ -178,7 +184,7 @@
     </div>
 
     <script>
-        // --- 1. SETUP SUPABASE ---
+        // --- 1. SETUP SUPABASE & VARIABEL ---
         const SUPABASE_URL = 'https://acpkdnktanrucyfyhckw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U';
         
@@ -189,18 +195,24 @@
             console.warn("Supabase tidak dapat diinisialisasi.");
         }
 
-        let listRekapan = [];
+        let listRekapan = []; 
+        let dataRiwayatDB = []; 
 
-        // Fungsi Set Tanggal Hari Ini Otomatis (Format YYYY-MM-DD standar input Date)
-        function setTanggalHariIni() {
-            const d = new Date();
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            document.getElementById('tanggal').value = `${year}-${month}-${day}`;
-        }
+        window.onload = () => {
+            flatpickr("#tanggal", {
+                dateFormat: "Y-m-d",     
+                altInput: true,          
+                altFormat: "d/m/Y",      
+                defaultDate: "today",    
+                disableMobile: true      
+            });
+            flatpickr("#startDate", { dateFormat: "Y-m-d", altInput: true, altFormat: "d/m/Y", disableMobile: true });
+            flatpickr("#endDate", { dateFormat: "Y-m-d", altInput: true, altFormat: "d/m/Y", disableMobile: true });
 
-        // Helper Format Tanggal untuk DB Fetch
+            loadDataDropdown();
+            loadRiwayatDB();
+        };
+
         const formatTglDB = (dateObj) => {
             const year = dateObj.getFullYear();
             const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -262,7 +274,7 @@
             const driver = document.getElementById('driver').value;
             const codriver = document.getElementById('codriver').value;
             const mobil = document.getElementById('mobil').value;
-            const tanggal = document.getElementById('tanggal').value;
+            const tanggal = document.getElementById('tanggal').value; 
             
             if(!agen || !driver || !mobil) {
                 alert('Agen, Driver, dan Mobil harus dipilih!');
@@ -347,7 +359,7 @@
             const container = document.getElementById('riwayatDbContainer');
             container.innerHTML = '<p class="text-center text-xs text-gray-500 py-4 italic">Memuat data...</p>';
 
-            let query = supabaseClient.from('rekap_pengiriman').select('*').order('created_at', { ascending: false });
+            let query = supabaseClient.from('rekap_pengiriman').select('*').order('created_at', { ascending: true });
             const today = new Date();
             
             if (filter === 'hari_ini') {
@@ -366,7 +378,7 @@
                 if(start && end) {
                     query = query.gte('tanggal', start).lte('tanggal', end);
                 } else {
-                    container.innerHTML = '<p class="text-center text-xs text-red-500 py-4">Pilih tanggal mulai dan akhir.</p>';
+                    container.innerHTML = '<p class="text-center text-xs text-red-500 py-4">Pilih tanggal mulai dan akhir terlebih dahulu.</p>';
                     return;
                 }
             }
@@ -377,18 +389,21 @@
                 return;
             }
 
-            if(!data || data.length === 0) {
+            dataRiwayatDB = data || [];
+
+            if(dataRiwayatDB.length === 0) {
                 container.innerHTML = `
-                    <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+                    <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg text-center">
                         <p class="text-sm text-gray-400 italic">Tidak ada pengiriman untuk filter ini.</p>
                     </div>`;
                 return;
             }
 
             container.innerHTML = '';
-            data.forEach((item, index) => {
-                // Konversi tanggal ke format Indonesia yang rapi
-                const tglIndo = new Date(item.tanggal).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
+            let dataForUI = [...dataRiwayatDB].reverse(); 
+            dataForUI.forEach((item) => {
+                const parts = item.tanggal.split('-'); 
+                const tglIndo = `${parts[2]}/${parts[1]}/${parts[0]}`; 
                 container.innerHTML += `
                     <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 fade-in relative overflow-hidden">
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-400"></div>
@@ -408,27 +423,47 @@
             });
         }
 
-        // --- 5. LOGIC PRATINJAU & SIMPAN KE DATABASE ---
+        // --- 5. LOGIC PRATINJAU DARI DATABASE ---
         function tampilkanPratinjau() {
-            if(listRekapan.length === 0) {
-                alert('Tidak ada antrean! Tambahkan minimal 1 baris kiriman dari form atas.');
+            if(dataRiwayatDB.length === 0) {
+                alert('Tidak ada riwayat untuk dicetak. Pastikan antrean sudah Anda simpan ke database, atau pilih rentang waktu yang memiliki data.');
                 return;
             }
 
-            const tgl = new Date(document.getElementById('tanggal').value);
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('strukTanggal').innerText = tgl.toLocaleDateString('id-ID', options);
+            const filter = document.getElementById('filterWaktu').value;
+            let strTgl = "";
+            const tglOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
+
+            if (filter === 'hari_ini') {
+                strTgl = new Date().toLocaleDateString('id-ID', tglOptions);
+            } else if (filter === 'kemarin') {
+                let y = new Date(); y.setDate(y.getDate() - 1);
+                strTgl = y.toLocaleDateString('id-ID', tglOptions);
+            } else if (filter === 'tiga_hari') {
+                strTgl = "3 HARI TERAKHIR";
+            } else if (filter === 'rentang') {
+                const s = document.getElementById('startDate').nextElementSibling.value;
+                const e = document.getElementById('endDate').nextElementSibling.value;
+                strTgl = `${s} s/d ${e}`;
+            }
+            
+            document.getElementById('strukTanggal').innerText = strTgl;
 
             const containerStruk = document.getElementById('strukDaftarKiriman');
             containerStruk.innerHTML = '';
             
-            listRekapan.forEach((item, i) => {
-                // Layout HTML tabel dibikin rapi tanpa border antar kolom
+            dataRiwayatDB.forEach((item, i) => {
+                let infoTambahanTgl = '';
+                if(filter === 'tiga_hari' || filter === 'rentang') {
+                    const p = item.tanggal.split('-'); 
+                    infoTambahanTgl = ` <span class="text-[9px] font-normal">(${p[2]}/${p[1]})</span>`;
+                }
+
                 containerStruk.innerHTML += `
-                    <div class="mb-2 ${i !== listRekapan.length - 1 ? 'border-b border-black border-dotted pb-2' : ''}">
+                    <div class="mb-2 ${i !== dataRiwayatDB.length - 1 ? 'border-b border-black border-dotted pb-2' : ''}">
                         <div class="font-bold flex items-start space-x-1 mb-1">
                             <span class="w-4 text-right">${i + 1}.</span>
-                            <span class="flex-1 uppercase">${item.agen}</span>
+                            <span class="flex-1 uppercase">${item.agen}${infoTambahanTgl}</span>
                         </div>
                         <div class="pl-6 text-[11px] space-y-0.5">
                             <div class="flex"><span class="w-16">Mobil</span><span>: ${item.mobil}</span></div>
@@ -460,7 +495,13 @@
             }, 300);
         }
 
+        // --- 6. SIMPAN KE DATABASE ---
         async function simpanKeDatabase() {
+            if(listRekapan.length === 0) {
+                alert('Tidak ada antrean kiriman baru yang perlu disimpan.');
+                return;
+            }
+
             if(!supabaseClient) {
                 alert('Koneksi database tidak tersedia.');
                 return;
@@ -483,12 +524,11 @@
                 const { data, error } = await supabaseClient.from('rekap_pengiriman').insert(dataToInsert);
                 if (error) throw error;
 
-                alert('Berhasil! Data telah disimpan ke database.');
+                alert('Berhasil! Antrean telah disimpan ke database.');
                 
                 listRekapan = [];
                 renderDraft();
-                tutupPratinjau();
-                loadRiwayatDB(); // Refresh riwayat database otomatis
+                loadRiwayatDB();
 
             } catch (error) {
                 console.error('Error saat menyimpan:', error);
@@ -505,14 +545,15 @@
             
             html2canvas(struk, { scale: 3, backgroundColor: "#ffffff" }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Rekap_Pengiriman_${document.getElementById('tanggal').value}.png`;
+                const safeName = document.getElementById('strukTanggal').innerText.replace(/\//g, '-');
+                link.download = `Rekap_Pengiriman_${safeName}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 struk.style.border = "none";
             });
         }
 
-        // --- 6. LOGIC BLUETOOTH PRINTING (Dirapikan) ---
+        // --- 7. LOGIC BLUETOOTH PRINTING ---
         async function cetakBluetooth(maxChars = 32) {
             try {
                 const device = await navigator.bluetooth.requestDevice({
@@ -529,26 +570,29 @@
                 const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
                 const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb'); 
 
-                const tglString = new Date(document.getElementById('tanggal').value).toLocaleDateString('id-ID');
+                const strTanggal = document.getElementById('strukTanggal').innerText;
+                const filter = document.getElementById('filterWaktu').value;
                 
-                // Pembentukan Teks Thermal yang Rapi
                 let lines = [];
                 lines.push("SBR PUTRA FOOD");
                 lines.push("REKAP PENGIRIMAN");
                 lines.push("-".repeat(maxChars));
-                lines.push(`TGL: ${tglString}`);
+                lines.push(`TGL: ${strTanggal}`);
                 lines.push("-".repeat(maxChars));
                 
-                listRekapan.forEach((item, i) => {
-                    // Batasi panjang nama agen agar tidak merusak layout (wrap jelek di kertas)
+                dataRiwayatDB.forEach((item, i) => {
                     let namaAgen = item.agen.toUpperCase();
+                    
+                    if(filter === 'tiga_hari' || filter === 'rentang') {
+                        const p = item.tanggal.split('-'); 
+                        namaAgen += ` (${p[2]}/${p[1]})`;
+                    }
+
                     if(namaAgen.length > (maxChars - 4)) {
                         namaAgen = namaAgen.substring(0, maxChars - 4);
                     }
                     
                     lines.push(`${i+1}. ${namaAgen}`);
-                    
-                    // Spasi sejajar dengan titik dua
                     lines.push(`   Mobil  : ${item.mobil}`);
                     lines.push(`   Driver : ${item.driver}`);
                     
@@ -556,7 +600,7 @@
                         lines.push(`   Co-Drv : ${item.codriver}`);
                     }
                     
-                    if(i !== listRekapan.length - 1) {
+                    if(i !== dataRiwayatDB.length - 1) {
                         lines.push("   " + "-".repeat(maxChars - 3));
                     }
                 });
@@ -568,7 +612,7 @@
                 lines.push("    Admin / Logistik");
                 lines.push("");
                 lines.push("");
-                lines.push(""); // Spasi roll kertas naik
+                lines.push(""); 
 
                 let text = lines.join("\n");
                 let encoder = new TextEncoder();
@@ -581,13 +625,6 @@
                 alert('Gagal cetak Bluetooth: ' + error.message + '\n\nPastikan GPS/Lokasi menyala dan printer sudah dipairing.');
             }
         }
-
-        // Init
-        window.onload = () => {
-            setTanggalHariIni();
-            loadDataDropdown();
-            loadRiwayatDB();
-        };
     </script>
 </body>
 </html>
