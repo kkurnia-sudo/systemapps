@@ -22,7 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- html2canvas for PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- Flatpickr (Untuk format kalender DD/MM/YYYY) -->
+    <!-- Flatpickr -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
@@ -41,7 +41,7 @@
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen relative pb-44 transition-colors duration-300">
 
-    <div class="max-w-md mx-auto p-5 space-y-6">
+    <div class="max-w-md mx-auto p-5 space-y-5">
         
         <!-- Header -->
         <div class="text-center pb-3 border-b border-gray-200 dark:border-gray-700">
@@ -82,19 +82,19 @@
             </button>
         </div>
 
-        <!-- Draft Antrean (Dibuat Flatbox Scrollable) -->
+        <!-- Draft Antrean -->
         <div id="draftSection" class="pt-2 hidden">
             <h2 class="text-sm font-bold text-primary mb-2 px-1">Antrean Belum Disimpan</h2>
             <div class="border border-blue-200 dark:border-blue-900/50 bg-blue-50/50 dark:bg-gray-800 rounded-xl p-2">
-                <div id="draftContainer" class="space-y-2 max-h-[220px] overflow-y-auto receipt-scroll pr-2">
-                    <!-- Draft items will be injected here -->
+                <div id="draftContainer" class="space-y-2 max-h-[220px] overflow-y-auto receipt-scroll pr-1">
+                    <!-- Draft items -->
                 </div>
             </div>
         </div>
 
-        <!-- History Section Dari Database (Dibuat Flatbox Scrollable) -->
-        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between mb-3 px-1">
+        <!-- History Section Dari Database -->
+        <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-2 px-1">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Riwayat</h2>
                 <select id="filterWaktu" onchange="handleFilterChange()" class="text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 outline-none focus:ring-2 focus:ring-primary text-gray-700 dark:text-gray-300">
                     <option value="hari_ini">Hari Ini</option>
@@ -104,7 +104,7 @@
                 </select>
             </div>
             
-            <div id="dateRangeDiv" class="hidden flex-wrap gap-2 mb-4 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div id="dateRangeDiv" class="hidden flex-wrap gap-2 mb-3 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                 <div class="flex w-full items-center space-x-2">
                     <input type="text" id="startDate" placeholder="Mulai" class="flex-1 text-xs p-1.5 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 outline-none text-center">
                     <span class="text-xs font-bold text-gray-500">sd</span>
@@ -113,9 +113,9 @@
                 <button onclick="loadRiwayatDB()" class="w-full bg-primary text-white text-xs py-2 rounded-md font-bold mt-1">Cari Data</button>
             </div>
             
-            <!-- Flatbox Riwayat Database -->
+            <!-- Flatbox Riwayat Minimalis -->
             <div class="border border-gray-200 dark:border-gray-700 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-2">
-                <div id="riwayatDbContainer" class="space-y-2 max-h-[300px] overflow-y-auto receipt-scroll pr-2">
+                <div id="riwayatDbContainer" class="space-y-1.5 max-h-[300px] overflow-y-auto receipt-scroll pr-1">
                     <p class="text-center text-xs text-gray-500 py-4 italic">Memuat data...</p>
                 </div>
             </div>
@@ -136,6 +136,38 @@
         </div>
     </div>
 
+    <!-- Modal Edit Database -->
+    <div id="modalEdit" class="fixed inset-0 bg-black/70 z-50 hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 px-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-5 transform scale-95 transition-transform duration-300 shadow-2xl" id="modalEditContent">
+            <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Edit / Hapus Data</h3>
+            
+            <div class="space-y-3 mb-6">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Agen</label>
+                    <select id="editAgen" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mobil</label>
+                    <select id="editMobil" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Driver</label>
+                    <select id="editDriver" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Co-Driver</label>
+                    <select id="editCodriver" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"></select>
+                </div>
+            </div>
+
+            <div class="flex flex-col space-y-2.5">
+                <button onclick="simpanEdit()" id="btnSimpanEdit" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md transition active:scale-[0.98]">Simpan Perubahan</button>
+                <button onclick="hapusDataDB()" id="btnHapusDB" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-md transition active:scale-[0.98]">Hapus Data Riwayat</button>
+                <button onclick="tutupEditModal()" class="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-3 rounded-xl transition active:scale-[0.98]">Batal</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Pratinjau & Cetak -->
     <div id="modalPreview" class="fixed inset-0 bg-black/80 z-50 hidden flex-col justify-end opacity-0 transition-opacity duration-300">
         <div class="bg-gray-100 dark:bg-gray-900 w-full rounded-t-3xl pt-5 pb-8 px-4 flex flex-col h-[90vh] transform translate-y-full transition-transform duration-300" id="modalContent">
@@ -146,7 +178,6 @@
                 </button>
             </div>
             
-            <!-- Receipt Area -->
             <div class="flex-1 overflow-y-auto receipt-scroll flex justify-center mb-6">
                 <div id="areaStruk" class="bg-white p-5 shadow-sm w-[340px] text-black font-mono text-[12px] leading-snug relative rounded-sm mx-auto">
                     <div class="text-center pb-2 mb-3 border-b-2 border-black border-dashed">
@@ -167,7 +198,6 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="grid grid-cols-2 gap-3 shrink-0 px-2">
                 <button onclick="simpanPNG()" class="col-span-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-md flex items-center justify-center space-x-2 transition active:scale-[0.98]">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -197,15 +227,10 @@
 
         let listRekapan = []; 
         let dataRiwayatDB = []; 
+        let currentEditId = null; 
 
         window.onload = () => {
-            flatpickr("#tanggal", {
-                dateFormat: "Y-m-d",     
-                altInput: true,          
-                altFormat: "d/m/Y",      
-                defaultDate: "today",    
-                disableMobile: true      
-            });
+            flatpickr("#tanggal", { dateFormat: "Y-m-d", altInput: true, altFormat: "d/m/Y", defaultDate: "today", disableMobile: true });
             flatpickr("#startDate", { dateFormat: "Y-m-d", altInput: true, altFormat: "d/m/Y", disableMobile: true });
             flatpickr("#endDate", { dateFormat: "Y-m-d", altInput: true, altFormat: "d/m/Y", disableMobile: true });
 
@@ -232,23 +257,26 @@
                     if (agen || driver || mobil) {
                         populateSelect('agen', agen, 'nama_agen', 'Pilih Agen...');
                         populateSelect('driver', driver, 'nama_karyawan', 'Pilih Driver...');
-                        populateSelect('codriver', driver, 'nama_karyawan', 'Pilih Co-Driver... (Opsional)');
                         
+                        populateSelect('codriver', driver, 'nama_karyawan', 'Pilih Co-Driver... (Opsional)');
                         const codriverSelect = document.getElementById('codriver');
                         const optionKosong = document.createElement('option');
-                        optionKosong.value = "- Kosong -";
-                        optionKosong.text = "- Kosong -";
+                        optionKosong.value = "- Kosong -"; optionKosong.text = "- Kosong -";
                         codriverSelect.insertBefore(optionKosong, codriverSelect.children[1]);
 
                         populateSelect('mobil', mobil, 'tipe_mobil', 'Pilih Mobil...');
                         dataBerhasilDiambil = true;
                     }
-                } catch (error) {
-                    console.error("Error koneksi:", error);
-                }
+                } catch (error) {}
             }
 
             if (!dataBerhasilDiambil) isiDropdownDummy();
+
+            // Salin daftar opsi ke dropdown modal Edit
+            document.getElementById('editAgen').innerHTML = document.getElementById('agen').innerHTML;
+            document.getElementById('editMobil').innerHTML = document.getElementById('mobil').innerHTML;
+            document.getElementById('editDriver').innerHTML = document.getElementById('driver').innerHTML;
+            document.getElementById('editCodriver').innerHTML = document.getElementById('codriver').innerHTML;
         }
 
         function populateSelect(id, data, key, placeholder) {
@@ -276,27 +304,17 @@
             const mobil = document.getElementById('mobil').value;
             const tanggal = document.getElementById('tanggal').value; 
             
-            if(!agen || !driver || !mobil) {
-                alert('Agen, Driver, dan Mobil harus dipilih!');
-                return;
-            }
+            if(!agen || !driver || !mobil) return alert('Agen, Driver, dan Mobil harus dipilih!');
 
-            const record = {
+            listRekapan.push({
                 id: Date.now(),
-                tanggal: tanggal,
-                agen: agen,
-                driver: driver,
-                codriver: (codriver === '- Kosong -' || !codriver) ? '' : codriver,
-                mobil: mobil
-            };
-
-            listRekapan.push(record);
+                tanggal: tanggal, agen: agen, driver: driver,
+                codriver: (codriver === '- Kosong -' || !codriver) ? '' : codriver, mobil: mobil
+            });
             renderDraft();
 
-            document.getElementById('agen').value = '';
-            document.getElementById('driver').value = '';
-            document.getElementById('codriver').value = '';
-            document.getElementById('mobil').value = '';
+            document.getElementById('agen').value = ''; document.getElementById('driver').value = '';
+            document.getElementById('codriver').value = ''; document.getElementById('mobil').value = '';
         }
 
         function hapusDraft(id) {
@@ -308,30 +326,27 @@
             const section = document.getElementById('draftSection');
             const container = document.getElementById('draftContainer');
             
-            if(listRekapan.length === 0) {
-                section.classList.add('hidden');
-                return;
-            }
+            if(listRekapan.length === 0) return section.classList.add('hidden');
             
             section.classList.remove('hidden');
             container.innerHTML = '';
+            
+            // DESAIN MINIMALIS ANTREAN
             listRekapan.forEach((item, index) => {
                 container.innerHTML += `
-                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl shadow-sm border border-blue-100 dark:border-blue-800 fade-in relative overflow-hidden">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 py-2 px-2.5 rounded-lg shadow-sm border border-blue-100 dark:border-blue-800 fade-in relative overflow-hidden">
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-                        <div class="flex justify-between items-start pl-2">
-                            <div class="space-y-1 w-full">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-sm text-blue-900 dark:text-blue-100">${index + 1}. ${item.agen}</span>
-                                    <button onclick="hapusDraft(${item.id})" class="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 p-1 rounded transition">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
-                                </div>
-                                <div class="grid grid-cols-2 gap-1 text-[11px] text-blue-800 dark:text-blue-300">
-                                    <p>Mbl: <span class="font-bold">${item.mobil}</span></p>
-                                    <p>Drv: <span class="font-bold">${item.driver}</span></p>
-                                    <p class="col-span-2">Co: <span class="font-bold">${item.codriver || '-'}</span></p>
-                                </div>
+                        <div class="pl-1.5 flex flex-col">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <span class="font-bold text-xs text-blue-900 dark:text-blue-100 truncate pr-2">${index + 1}. ${item.agen}</span>
+                                <button onclick="hapusDraft(${item.id})" class="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 p-1 rounded transition shrink-0" title="Hapus">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                            <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-blue-800 dark:text-blue-300 leading-tight">
+                                <p>Mbl: <span class="font-bold">${item.mobil}</span></p>
+                                <p>Drv: <span class="font-bold">${item.driver}</span></p>
+                                <p>Co: <span class="font-bold">${item.codriver || '-'}</span></p>
                             </div>
                         </div>
                     </div>
@@ -343,14 +358,8 @@
         function handleFilterChange() {
             const val = document.getElementById('filterWaktu').value;
             const rangeDiv = document.getElementById('dateRangeDiv');
-            if (val === 'rentang') {
-                rangeDiv.classList.remove('hidden');
-                rangeDiv.style.display = 'flex';
-            } else {
-                rangeDiv.classList.add('hidden');
-                rangeDiv.style.display = 'none';
-                loadRiwayatDB();
-            }
+            if (val === 'rentang') { rangeDiv.classList.remove('hidden'); rangeDiv.style.display = 'flex'; } 
+            else { rangeDiv.classList.add('hidden'); rangeDiv.style.display = 'none'; loadRiwayatDB(); }
         }
 
         async function loadRiwayatDB() {
@@ -362,60 +371,54 @@
             let query = supabaseClient.from('rekap_pengiriman').select('*').order('created_at', { ascending: true });
             const today = new Date();
             
-            if (filter === 'hari_ini') {
-                query = query.eq('tanggal', formatTglDB(today));
-            } else if (filter === 'kemarin') {
-                const yesterday = new Date(today);
-                yesterday.setDate(yesterday.getDate() - 1);
+            if (filter === 'hari_ini') query = query.eq('tanggal', formatTglDB(today));
+            else if (filter === 'kemarin') {
+                let yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
                 query = query.eq('tanggal', formatTglDB(yesterday));
             } else if (filter === 'tiga_hari') {
-                const threeDaysAgo = new Date(today);
-                threeDaysAgo.setDate(threeDaysAgo.getDate() - 2);
+                let threeDaysAgo = new Date(today); threeDaysAgo.setDate(threeDaysAgo.getDate() - 2);
                 query = query.gte('tanggal', formatTglDB(threeDaysAgo)).lte('tanggal', formatTglDB(today));
             } else if (filter === 'rentang') {
                 const start = document.getElementById('startDate').value;
                 const end = document.getElementById('endDate').value;
-                if(start && end) {
-                    query = query.gte('tanggal', start).lte('tanggal', end);
-                } else {
-                    container.innerHTML = '<p class="text-center text-xs text-red-500 py-4">Pilih tanggal mulai dan akhir terlebih dahulu.</p>';
-                    return;
-                }
+                if(start && end) query = query.gte('tanggal', start).lte('tanggal', end);
+                else return container.innerHTML = '<p class="text-center text-xs text-red-500 py-4">Pilih tanggal mulai dan akhir terlebih dahulu.</p>';
             }
 
             const { data, error } = await query;
-            if(error) {
-                container.innerHTML = '<p class="text-center text-xs text-red-500 py-4">Gagal memuat riwayat.</p>';
-                return;
-            }
+            if(error) return container.innerHTML = '<p class="text-center text-xs text-red-500 py-4">Gagal memuat riwayat.</p>';
 
             dataRiwayatDB = data || [];
 
-            if(dataRiwayatDB.length === 0) {
-                container.innerHTML = `
-                    <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg text-center">
-                        <p class="text-sm text-gray-400 italic">Tidak ada pengiriman untuk filter ini.</p>
-                    </div>`;
-                return;
-            }
+            if(dataRiwayatDB.length === 0) return container.innerHTML = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg text-center"><p class="text-sm text-gray-400 italic">Tidak ada pengiriman untuk filter ini.</p></div>`;
 
             container.innerHTML = '';
             let dataForUI = [...dataRiwayatDB].reverse(); 
+            
+            // DESAIN MINIMALIS DATABASE
             dataForUI.forEach((item) => {
                 const parts = item.tanggal.split('-'); 
                 const tglIndo = `${parts[2]}/${parts[1]}/${parts[0]}`; 
+                
                 container.innerHTML += `
-                    <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 fade-in relative overflow-hidden">
+                    <div class="bg-white dark:bg-gray-800 py-2 px-2.5 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 fade-in relative overflow-hidden mb-1.5">
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-400"></div>
-                        <div class="pl-2 flex flex-col">
-                            <div class="flex justify-between items-center mb-1.5">
-                                <span class="font-bold text-sm text-gray-800 dark:text-gray-100">${item.agen}</span>
-                                <span class="text-[10px] bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-700 dark:text-gray-300 font-bold">${tglIndo}</span>
+                        <div class="pl-1.5 flex flex-col">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <span class="font-bold text-xs text-gray-800 dark:text-gray-100 truncate pr-2">${item.agen}</span>
+                                <div class="flex items-center space-x-1.5 shrink-0">
+                                    <span class="text-[9px] bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300 font-bold">${tglIndo}</span>
+                                    <button onclick="bukaEditModal(${item.id})" class="text-primary hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-gray-600 rounded p-1 transition" title="Edit Data">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-y-1 gap-x-2 text-[11px] text-gray-600 dark:text-gray-400">
+                            <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-600 dark:text-gray-400 leading-tight">
                                 <p>Mbl: <span class="font-medium text-gray-900 dark:text-gray-200">${item.mobil}</span></p>
                                 <p>Drv: <span class="font-medium text-gray-900 dark:text-gray-200">${item.driver}</span></p>
-                                <p class="col-span-2">Co: <span class="font-medium text-gray-900 dark:text-gray-200">${item.codriver || '-'}</span></p>
+                                <p>Co: <span class="font-medium text-gray-900 dark:text-gray-200">${item.codriver || '-'}</span></p>
                             </div>
                         </div>
                     </div>
@@ -423,25 +426,78 @@
             });
         }
 
-        // --- 5. LOGIC PRATINJAU DARI DATABASE ---
+        // --- 5. LOGIC MODAL EDIT & HAPUS ---
+        function bukaEditModal(id) {
+            currentEditId = id;
+            const item = dataRiwayatDB.find(x => x.id === id);
+            if(!item) return;
+
+            document.getElementById('editAgen').value = item.agen;
+            document.getElementById('editMobil').value = item.mobil;
+            document.getElementById('editDriver').value = item.driver;
+            
+            const editCo = document.getElementById('editCodriver');
+            editCo.value = item.codriver ? item.codriver : "- Kosong -";
+
+            const modal = document.getElementById('modalEdit');
+            const content = document.getElementById('modalEditContent');
+            modal.classList.remove('hidden'); modal.style.display = 'flex';
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        }
+
+        function tutupEditModal() {
+            const modal = document.getElementById('modalEdit');
+            const content = document.getElementById('modalEditContent');
+            modal.classList.add('opacity-0'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.style.display = ''; currentEditId = null; }, 300);
+        }
+
+        async function simpanEdit() {
+            const btn = document.getElementById('btnSimpanEdit');
+            btn.innerHTML = 'Menyimpan...'; btn.disabled = true;
+
+            const agen = document.getElementById('editAgen').value;
+            const mobil = document.getElementById('editMobil').value;
+            const driver = document.getElementById('editDriver').value;
+            const codriverVal = document.getElementById('editCodriver').value;
+            const codriver = (codriverVal === '- Kosong -' || !codriverVal) ? '' : codriverVal;
+
+            try {
+                const { error } = await supabaseClient.from('rekap_pengiriman').update({ agen: agen, mobil: mobil, driver: driver, codriver: codriver }).eq('id', currentEditId);
+                if (error) throw error;
+                tutupEditModal(); loadRiwayatDB(); 
+            } catch (error) { alert('Gagal mengedit data: ' + error.message); } 
+            finally { btn.innerHTML = 'Simpan Perubahan'; btn.disabled = false; }
+        }
+
+        async function hapusDataDB() {
+            const confirmHapus = confirm("Apakah Anda yakin ingin menghapus data riwayat ini permanen?");
+            if (!confirmHapus) return;
+
+            const btn = document.getElementById('btnHapusDB');
+            btn.innerHTML = 'Menghapus...'; btn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient.from('rekap_pengiriman').delete().eq('id', currentEditId);
+                if (error) throw error;
+                tutupEditModal(); loadRiwayatDB(); 
+            } catch (error) { alert('Gagal menghapus data: ' + error.message); } 
+            finally { btn.innerHTML = 'Hapus Data Riwayat'; btn.disabled = false; }
+        }
+
+        // --- 6. LOGIC PRATINJAU DARI DATABASE ---
         function tampilkanPratinjau() {
-            if(dataRiwayatDB.length === 0) {
-                alert('Tidak ada riwayat untuk dicetak. Pastikan antrean sudah Anda simpan ke database, atau pilih rentang waktu yang memiliki data.');
-                return;
-            }
+            if(dataRiwayatDB.length === 0) return alert('Tidak ada riwayat untuk dicetak. Pastikan antrean sudah Anda simpan ke database.');
 
             const filter = document.getElementById('filterWaktu').value;
             let strTgl = "";
             const tglOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
-            if (filter === 'hari_ini') {
-                strTgl = new Date().toLocaleDateString('id-ID', tglOptions);
-            } else if (filter === 'kemarin') {
-                let y = new Date(); y.setDate(y.getDate() - 1);
-                strTgl = y.toLocaleDateString('id-ID', tglOptions);
-            } else if (filter === 'tiga_hari') {
-                strTgl = "3 HARI TERAKHIR";
-            } else if (filter === 'rentang') {
+            if (filter === 'hari_ini') strTgl = new Date().toLocaleDateString('id-ID', tglOptions);
+            else if (filter === 'kemarin') {
+                let y = new Date(); y.setDate(y.getDate() - 1); strTgl = y.toLocaleDateString('id-ID', tglOptions);
+            } else if (filter === 'tiga_hari') strTgl = "3 HARI TERAKHIR";
+            else if (filter === 'rentang') {
                 const s = document.getElementById('startDate').nextElementSibling.value;
                 const e = document.getElementById('endDate').nextElementSibling.value;
                 strTgl = `${s} s/d ${e}`;
@@ -455,8 +511,7 @@
             dataRiwayatDB.forEach((item, i) => {
                 let infoTambahanTgl = '';
                 if(filter === 'tiga_hari' || filter === 'rentang') {
-                    const p = item.tanggal.split('-'); 
-                    infoTambahanTgl = ` <span class="text-[9px] font-normal">(${p[2]}/${p[1]})</span>`;
+                    const p = item.tanggal.split('-'); infoTambahanTgl = ` <span class="text-[9px] font-normal">(${p[2]}/${p[1]})</span>`;
                 }
 
                 containerStruk.innerHTML += `
@@ -476,66 +531,41 @@
 
             const modal = document.getElementById('modalPreview');
             const content = document.getElementById('modalContent');
-            modal.classList.remove('hidden');
-            modal.style.display = 'flex';
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                content.classList.remove('translate-y-full');
-            }, 10);
+            modal.classList.remove('hidden'); modal.style.display = 'flex';
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('translate-y-full'); }, 10);
         }
 
         function tutupPratinjau() {
             const modal = document.getElementById('modalPreview');
             const content = document.getElementById('modalContent');
-            modal.classList.add('opacity-0');
-            content.classList.add('translate-y-full');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.style.display = '';
-            }, 300);
+            modal.classList.add('opacity-0'); content.classList.add('translate-y-full');
+            setTimeout(() => { modal.classList.add('hidden'); modal.style.display = ''; }, 300);
         }
 
-        // --- 6. SIMPAN KE DATABASE ---
+        // --- 7. SIMPAN KE DATABASE ---
         async function simpanKeDatabase() {
-            if(listRekapan.length === 0) {
-                alert('Tidak ada antrean kiriman baru yang perlu disimpan.');
-                return;
-            }
-
-            if(!supabaseClient) {
-                alert('Koneksi database tidak tersedia.');
-                return;
-            }
+            if(listRekapan.length === 0) return alert('Tidak ada antrean kiriman baru yang perlu disimpan.');
+            if(!supabaseClient) return alert('Koneksi database tidak tersedia.');
 
             const btn = document.getElementById('btnSimpanDB');
             const originalText = btn.innerHTML;
-            btn.innerHTML = 'Menyimpan...';
-            btn.disabled = true;
+            btn.innerHTML = 'Menyimpan...'; btn.disabled = true;
 
             try {
                 const dataToInsert = listRekapan.map(item => ({
-                    tanggal: item.tanggal,
-                    agen: item.agen,
-                    driver: item.driver,
-                    codriver: item.codriver,
-                    mobil: item.mobil
+                    tanggal: item.tanggal, agen: item.agen,
+                    driver: item.driver, codriver: item.codriver, mobil: item.mobil
                 }));
 
                 const { data, error } = await supabaseClient.from('rekap_pengiriman').insert(dataToInsert);
                 if (error) throw error;
 
                 alert('Berhasil! Antrean telah disimpan ke database.');
-                
-                listRekapan = [];
-                renderDraft();
-                loadRiwayatDB();
-
+                listRekapan = []; renderDraft(); loadRiwayatDB();
             } catch (error) {
-                console.error('Error saat menyimpan:', error);
                 alert('Gagal menyimpan data: ' + error.message);
             } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                btn.innerHTML = originalText; btn.disabled = false;
             }
         }
 
@@ -547,13 +577,12 @@
                 const link = document.createElement('a');
                 const safeName = document.getElementById('strukTanggal').innerText.replace(/\//g, '-');
                 link.download = `Rekap_Pengiriman_${safeName}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+                link.href = canvas.toDataURL('image/png'); link.click();
                 struk.style.border = "none";
             });
         }
 
-        // --- 7. LOGIC BLUETOOTH PRINTING ---
+        // --- 8. LOGIC BLUETOOTH PRINTING ---
         async function cetakBluetooth(maxChars = 32) {
             try {
                 const device = await navigator.bluetooth.requestDevice({
@@ -561,8 +590,7 @@
                     optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
                 }).catch(e => {
                     return navigator.bluetooth.requestDevice({
-                        acceptAllDevices: true,
-                        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+                        acceptAllDevices: true, optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
                     });
                 });
 
@@ -574,54 +602,33 @@
                 const filter = document.getElementById('filterWaktu').value;
                 
                 let lines = [];
-                lines.push("SBR PUTRA FOOD");
-                lines.push("REKAP PENGIRIMAN");
-                lines.push("-".repeat(maxChars));
-                lines.push(`TGL: ${strTanggal}`);
-                lines.push("-".repeat(maxChars));
+                lines.push("SBR PUTRA FOOD"); lines.push("REKAP PENGIRIMAN");
+                lines.push("-".repeat(maxChars)); lines.push(`TGL: ${strTanggal}`); lines.push("-".repeat(maxChars));
                 
                 dataRiwayatDB.forEach((item, i) => {
                     let namaAgen = item.agen.toUpperCase();
-                    
                     if(filter === 'tiga_hari' || filter === 'rentang') {
-                        const p = item.tanggal.split('-'); 
-                        namaAgen += ` (${p[2]}/${p[1]})`;
+                        const p = item.tanggal.split('-'); namaAgen += ` (${p[2]}/${p[1]})`;
                     }
-
-                    if(namaAgen.length > (maxChars - 4)) {
-                        namaAgen = namaAgen.substring(0, maxChars - 4);
-                    }
+                    if(namaAgen.length > (maxChars - 4)) namaAgen = namaAgen.substring(0, maxChars - 4);
                     
                     lines.push(`${i+1}. ${namaAgen}`);
                     lines.push(`   Mobil  : ${item.mobil}`);
                     lines.push(`   Driver : ${item.driver}`);
                     
-                    if(item.codriver) {
-                        lines.push(`   Co-Drv : ${item.codriver}`);
-                    }
-                    
-                    if(i !== dataRiwayatDB.length - 1) {
-                        lines.push("   " + "-".repeat(maxChars - 3));
-                    }
+                    if(item.codriver) lines.push(`   Co-Drv : ${item.codriver}`);
+                    if(i !== dataRiwayatDB.length - 1) lines.push("   " + "-".repeat(maxChars - 3));
                 });
                 
-                lines.push("-".repeat(maxChars));
-                lines.push("       Mengetahui,");
-                lines.push("");
-                lines.push("");
-                lines.push("    Admin / Logistik");
-                lines.push("");
-                lines.push("");
-                lines.push(""); 
+                lines.push("-".repeat(maxChars)); lines.push("       Mengetahui,");
+                lines.push(""); lines.push(""); lines.push("    Admin / Logistik");
+                lines.push(""); lines.push(""); lines.push(""); 
 
-                let text = lines.join("\n");
-                let encoder = new TextEncoder();
-                let data = encoder.encode(text);
-                await characteristic.writeValue(data);
+                let text = lines.join("\n"); let encoder = new TextEncoder();
+                await characteristic.writeValue(encoder.encode(text));
                 
                 alert('Berhasil mengirim perintah ke printer Bluetooth!');
             } catch (error) {
-                console.error(error);
                 alert('Gagal cetak Bluetooth: ' + error.message + '\n\nPastikan GPS/Lokasi menyala dan printer sudah dipairing.');
             }
         }
