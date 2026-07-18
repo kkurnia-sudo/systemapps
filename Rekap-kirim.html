@@ -27,7 +27,6 @@
         .receipt-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .receipt-scroll::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
         
-        /* Smooth transitions */
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(5px); }
@@ -54,10 +53,17 @@
         <!-- Input Form Section -->
         <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
             <div class="grid grid-cols-2 gap-4">
+                <!-- Baris 1: Agen & Mobil -->
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Agen</label>
                     <select id="agen" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
                 </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mobil</label>
+                    <select id="mobil" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
+                </div>
+                
+                <!-- Baris 2: Driver & Co-Driver -->
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Driver</label>
                     <select id="driver" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
@@ -65,10 +71,6 @@
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Co-Driver</label>
                     <select id="codriver" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mobil</label>
-                    <select id="mobil" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
                 </div>
             </div>
 
@@ -78,23 +80,38 @@
             </button>
         </div>
 
-        <!-- History Section -->
-        <div class="pt-2">
+        <!-- Draft Antrean (Muncul jika ada inputan baru) -->
+        <div id="draftSection" class="pt-2 hidden">
+            <h2 class="text-sm font-bold text-primary mb-2 px-1">Antrean Belum Disimpan</h2>
+            <div id="draftContainer" class="space-y-2 max-h-48 overflow-y-auto receipt-scroll pr-1">
+                <!-- Draft items will be injected here -->
+            </div>
+        </div>
+
+        <!-- History Section (Dari Database) -->
+        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between mb-3 px-1">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Riwayat</h2>
-                <div class="flex items-center space-x-2 hidden">
-                    <span class="text-xs text-gray-400">Filter:</span>
-                    <select id="filterHari" class="text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none font-medium text-gray-600 dark:text-gray-300 pb-0.5">
-                        <option value="hari-ini" class="dark:bg-gray-800">Hari ini</option>
-                    </select>
-                </div>
+                <select id="filterWaktu" onchange="handleFilterChange()" class="text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 outline-none focus:ring-2 focus:ring-primary text-gray-700 dark:text-gray-300">
+                    <option value="hari_ini">Hari Ini</option>
+                    <option value="kemarin">Kemarin</option>
+                    <option value="tiga_hari">3 Hari Terakhir</option>
+                    <option value="rentang">Pilih Rentang...</option>
+                </select>
             </div>
             
-            <div id="riwayatContainer" class="space-y-3 max-h-64 overflow-y-auto receipt-scroll pr-1">
-                <!-- Riwayat items will be injected here -->
-                <div id="emptyRiwayat" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-                    <p class="text-sm text-gray-400 italic">Belum ada data pengiriman hari ini.</p>
+            <!-- Date Range Inputs -->
+            <div id="dateRangeDiv" class="hidden flex-wrap gap-2 mb-4 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class="flex w-full items-center space-x-2">
+                    <input type="date" id="startDate" class="flex-1 text-xs p-1.5 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 outline-none">
+                    <span class="text-xs font-bold text-gray-500">sd</span>
+                    <input type="date" id="endDate" class="flex-1 text-xs p-1.5 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 outline-none">
                 </div>
+                <button onclick="loadRiwayatDB()" class="w-full bg-primary text-white text-xs py-2 rounded-md font-bold mt-1">Cari Data</button>
+            </div>
+            
+            <div id="riwayatDbContainer" class="space-y-2 max-h-64 overflow-y-auto receipt-scroll pr-1 pb-4">
+                <p class="text-center text-xs text-gray-500 py-4 italic">Memuat data...</p>
             </div>
         </div>
     </div>
@@ -104,49 +121,51 @@
         <div class="max-w-md mx-auto">
             <button onclick="tampilkanPratinjau()" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition transform active:scale-[0.98] flex items-center justify-center space-x-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                <span>Simpan / Cetak Pratinjau</span>
+                <span>Pratinjau & Simpan Database</span>
             </button>
         </div>
     </div>
 
     <!-- Modal Pratinjau & Cetak -->
     <div id="modalPreview" class="fixed inset-0 bg-black/80 z-50 hidden flex-col justify-end opacity-0 transition-opacity duration-300">
-        <div class="bg-gray-100 dark:bg-gray-900 w-full rounded-t-3xl pt-5 pb-8 px-4 flex flex-col h-[85vh] transform translate-y-full transition-transform duration-300" id="modalContent">
+        <div class="bg-gray-100 dark:bg-gray-900 w-full rounded-t-3xl pt-5 pb-8 px-4 flex flex-col h-[90vh] transform translate-y-full transition-transform duration-300" id="modalContent">
             <div class="flex justify-between items-center mb-4 px-2">
-                <h3 class="font-bold text-lg">Pratinjau Rekap</h3>
+                <h3 class="font-bold text-lg">Pratinjau & Aksi</h3>
                 <button onclick="tutupPratinjau()" class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
-            <!-- Receipt Area -->
+            <!-- Receipt Area (Desain Struk Dirapikan) -->
             <div class="flex-1 overflow-y-auto receipt-scroll flex justify-center mb-6">
-                <div id="areaStruk" class="bg-white p-5 shadow-md w-[320px] text-black font-mono text-xs leading-tight relative rounded-sm">
-                    <div class="text-center border-b-2 border-black pb-3 mb-3 border-dashed">
-                        <h2 class="text-lg font-bold uppercase tracking-widest">SBR Putra Food</h2>
-                        <p class="font-semibold mt-1">REKAP PENGIRIMAN</p>
+                <div id="areaStruk" class="bg-white p-5 shadow-sm w-[340px] text-black font-mono text-[12px] leading-snug relative rounded-sm mx-auto">
+                    <div class="text-center pb-2 mb-3 border-b-2 border-black border-dashed">
+                        <h2 class="text-[18px] font-extrabold uppercase tracking-widest">SBR Putra Food</h2>
+                        <p class="font-bold mt-1 text-[13px]">REKAP PENGIRIMAN</p>
                     </div>
-                    <div class="mb-3 font-bold flex justify-between">
+                    <div class="mb-3 font-bold flex justify-between border-b-2 border-black pb-2">
                         <span>TANGGAL:</span>
                         <span id="strukTanggal"></span>
                     </div>
-                    <div class="border-t-2 border-b-2 border-black py-2 mb-3 border-dashed">
-                        <div id="strukDaftarKiriman" class="space-y-3">
-                            <!-- Items go here -->
-                        </div>
+                    <div id="strukDaftarKiriman" class="space-y-3 pb-2">
+                        <!-- Items go here -->
                     </div>
-                    <div class="text-center mt-6 pt-2">
+                    <div class="text-center mt-6 pt-3 border-t-2 border-black border-dashed">
                         <p class="mb-8">Mengetahui,</p>
-                        <p class="font-bold border-b border-black inline-block px-4 pb-1">Admin / Logistik</p>
+                        <p class="font-bold border-b border-black inline-block px-8 pb-1">Admin / Logistik</p>
                     </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="grid grid-cols-2 gap-3 shrink-0 px-2">
+                <button onclick="simpanKeDatabase()" id="btnSimpanDB" class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md flex items-center justify-center space-x-2 transition active:scale-[0.98]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <span>Simpan Data ke Database</span>
+                </button>
                 <button onclick="simpanPNG()" class="col-span-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-md flex items-center justify-center space-x-2 transition active:scale-[0.98]">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    <span>Simpan sebagai Gambar (PNG)</span>
+                    <span>Simpan sbg Gambar (PNG)</span>
                 </button>
                 <button onclick="cetakBluetooth(32)" class="bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 text-white font-bold py-3 rounded-xl shadow-md transition active:scale-[0.98] text-sm">
                     Cetak BT (58mm)
@@ -165,36 +184,44 @@
         
         let supabaseClient = null;
         try {
-            // Inisialisasi aktif agar data ditarik dari database asli Anda
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         } catch(e) {
             console.warn("Supabase tidak dapat diinisialisasi.");
         }
 
-        // Set Default Date
-        document.getElementById('tanggal').valueAsDate = new Date();
         let listRekapan = [];
 
-        // --- 2. FETCH DATA ---
+        // Fungsi Set Tanggal Hari Ini Otomatis (Format YYYY-MM-DD standar input Date)
+        function setTanggalHariIni() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            document.getElementById('tanggal').value = `${year}-${month}-${day}`;
+        }
+
+        // Helper Format Tanggal untuk DB Fetch
+        const formatTglDB = (dateObj) => {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // --- 2. FETCH DATA DROPDOWN ---
         async function loadDataDropdown() {
             let dataBerhasilDiambil = false;
-
             if (supabaseClient) {
                 try {
-                    // Ambil dari Supabase sesuai nama tabel yang Anda sebutkan
-                    const { data: agen, error: errAgen } = await supabaseClient.from('data-agen').select('nama_agen');
-                    const { data: driver, error: errDriver } = await supabaseClient.from('driver-list').select('nama_karyawan');
-                    const { data: mobil, error: errMobil } = await supabaseClient.from('data-kendaraan').select('tipe_mobil');
+                    const { data: agen } = await supabaseClient.from('data-agen').select('nama_agen').order('nama_agen', { ascending: true });
+                    const { data: driver } = await supabaseClient.from('driver-list').select('nama_karyawan').order('nama_karyawan', { ascending: true });
+                    const { data: mobil } = await supabaseClient.from('data-kendaraan').select('tipe_mobil').order('tipe_mobil', { ascending: true });
 
-                    if (!errAgen && !errDriver && !errMobil) {
-                        // Jika berhasil, gunakan data dari tabel
+                    if (agen || driver || mobil) {
                         populateSelect('agen', agen, 'nama_agen', 'Pilih Agen...');
                         populateSelect('driver', driver, 'nama_karyawan', 'Pilih Driver...');
-                        
-                        // Co-Driver menggunakan tabel yang sama dengan driver
                         populateSelect('codriver', driver, 'nama_karyawan', 'Pilih Co-Driver... (Opsional)');
                         
-                        // Menambahkan pilihan kosong untuk Co-driver di awal
                         const codriverSelect = document.getElementById('codriver');
                         const optionKosong = document.createElement('option');
                         optionKosong.value = "- Kosong -";
@@ -203,19 +230,13 @@
 
                         populateSelect('mobil', mobil, 'tipe_mobil', 'Pilih Mobil...');
                         dataBerhasilDiambil = true;
-                    } else {
-                        console.error("Gagal mengambil beberapa data:", errAgen || errDriver || errMobil);
                     }
                 } catch (error) {
-                    console.error("Error network/koneksi:", error);
+                    console.error("Error koneksi:", error);
                 }
             }
 
-            // Fallback: Jika data belum ada / tabel kosong / koneksi gagal, pakai dummy data
-            if (!dataBerhasilDiambil) {
-                console.log("Menggunakan data dummy sebagai fallback...");
-                isiDropdownDummy();
-            }
+            if (!dataBerhasilDiambil) isiDropdownDummy();
         }
 
         function populateSelect(id, data, key, placeholder) {
@@ -223,22 +244,19 @@
             select.innerHTML = `<option value="">${placeholder}</option>`;
             if(data && data.length > 0) {
                 data.forEach(item => {
-                    // Pastikan field eksis
-                    if(item[key]){
-                        select.innerHTML += `<option value="${item[key]}">${item[key]}</option>`;
-                    }
+                    if(item[key]) select.innerHTML += `<option value="${item[key]}">${item[key]}</option>`;
                 });
             }
         }
 
         function isiDropdownDummy() {
-            populateSelect('agen', [{nama: 'Agen Lembang'}, {nama: 'Agen Setiabudi'}, {nama: 'Agen Cimahi'}], 'nama', 'Pilih Agen...');
-            populateSelect('driver', [{nama: 'Agus'}, {nama: 'Budi'}, {nama: 'Cipto'}], 'nama', 'Pilih Driver...');
-            populateSelect('codriver', [{nama: '- Kosong -'}, {nama: 'Agus'}, {nama: 'Budi'}, {nama: 'Cipto'}], 'nama', 'Pilih Co-Driver...');
-            populateSelect('mobil', [{plat_nomor: 'D 1234 XY (Brio)'}, {plat_nomor: 'D 5678 ZA'}, {plat_nomor: 'D 9999 AA'}], 'plat_nomor', 'Pilih Mobil...');
+            populateSelect('agen', [{nama: 'Agen Lembang'}, {nama: 'Agen Cimahi'}], 'nama', 'Pilih Agen...');
+            populateSelect('driver', [{nama: 'Agus'}, {nama: 'Budi'}], 'nama', 'Pilih Driver...');
+            populateSelect('codriver', [{nama: '- Kosong -'}, {nama: 'Agus'}], 'nama', 'Pilih Co-Driver...');
+            populateSelect('mobil', [{plat_nomor: 'D 1234 XY (Brio)'}, {plat_nomor: 'D 5678 ZA'}], 'plat_nomor', 'Pilih Mobil...');
         }
 
-        // --- 3. LOGIC REKAPAN PENGIRIMAN ---
+        // --- 3. LOGIC ANTREAN (DRAFT) ---
         function tambahKiriman() {
             const agen = document.getElementById('agen').value;
             const driver = document.getElementById('driver').value;
@@ -261,7 +279,7 @@
             };
 
             listRekapan.push(record);
-            renderRiwayat();
+            renderDraft();
 
             document.getElementById('agen').value = '';
             document.getElementById('driver').value = '';
@@ -269,39 +287,38 @@
             document.getElementById('mobil').value = '';
         }
 
-        function hapusKiriman(id) {
+        function hapusDraft(id) {
             listRekapan = listRekapan.filter(item => item.id !== id);
-            renderRiwayat();
+            renderDraft();
         }
 
-        function renderRiwayat() {
-            const container = document.getElementById('riwayatContainer');
+        function renderDraft() {
+            const section = document.getElementById('draftSection');
+            const container = document.getElementById('draftContainer');
             
             if(listRekapan.length === 0) {
-                container.innerHTML = `
-                    <div id="emptyRiwayat" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-center fade-in">
-                        <p class="text-sm text-gray-400 italic">Belum ada data pengiriman ditambahkan.</p>
-                    </div>`;
+                section.classList.add('hidden');
                 return;
             }
             
+            section.classList.remove('hidden');
             container.innerHTML = '';
             listRekapan.forEach((item, index) => {
                 container.innerHTML += `
-                    <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 fade-in relative overflow-hidden">
-                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl shadow-sm border border-blue-100 dark:border-blue-800 fade-in relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
                         <div class="flex justify-between items-start pl-2">
                             <div class="space-y-1 w-full">
-                                <div class="flex justify-between">
-                                    <span class="font-bold text-sm text-gray-800 dark:text-gray-100">${index + 1}. ${item.agen}</span>
-                                    <button onclick="hapusKiriman(${item.id})" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1 rounded transition">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-sm text-blue-900 dark:text-blue-100">${index + 1}. ${item.agen}</span>
+                                    <button onclick="hapusDraft(${item.id})" class="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 p-1 rounded transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </div>
-                                <div class="grid grid-cols-2 gap-1 text-xs text-gray-600 dark:text-gray-400">
-                                    <p>Drv: <span class="font-medium text-gray-900 dark:text-gray-200">${item.driver}</span></p>
-                                    <p>Mbl: <span class="font-medium text-gray-900 dark:text-gray-200">${item.mobil}</span></p>
-                                    <p class="col-span-2">Co: <span class="font-medium text-gray-900 dark:text-gray-200">${item.codriver || '-'}</span></p>
+                                <div class="grid grid-cols-2 gap-1 text-[11px] text-blue-800 dark:text-blue-300">
+                                    <p>Mbl: <span class="font-bold">${item.mobil}</span></p>
+                                    <p>Drv: <span class="font-bold">${item.driver}</span></p>
+                                    <p class="col-span-2">Co: <span class="font-bold">${item.codriver || '-'}</span></p>
                                 </div>
                             </div>
                         </div>
@@ -310,10 +327,91 @@
             });
         }
 
-        // --- 4. LOGIC PRATINJAU & SIMPAN/CETAK ---
+        // --- 4. LOGIC RIWAYAT DATABASE & FILTER ---
+        function handleFilterChange() {
+            const val = document.getElementById('filterWaktu').value;
+            const rangeDiv = document.getElementById('dateRangeDiv');
+            if (val === 'rentang') {
+                rangeDiv.classList.remove('hidden');
+                rangeDiv.style.display = 'flex';
+            } else {
+                rangeDiv.classList.add('hidden');
+                rangeDiv.style.display = 'none';
+                loadRiwayatDB();
+            }
+        }
+
+        async function loadRiwayatDB() {
+            if(!supabaseClient) return;
+            const filter = document.getElementById('filterWaktu').value;
+            const container = document.getElementById('riwayatDbContainer');
+            container.innerHTML = '<p class="text-center text-xs text-gray-500 py-4 italic">Memuat data...</p>';
+
+            let query = supabaseClient.from('rekap_pengiriman').select('*').order('created_at', { ascending: false });
+            const today = new Date();
+            
+            if (filter === 'hari_ini') {
+                query = query.eq('tanggal', formatTglDB(today));
+            } else if (filter === 'kemarin') {
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                query = query.eq('tanggal', formatTglDB(yesterday));
+            } else if (filter === 'tiga_hari') {
+                const threeDaysAgo = new Date(today);
+                threeDaysAgo.setDate(threeDaysAgo.getDate() - 2);
+                query = query.gte('tanggal', formatTglDB(threeDaysAgo)).lte('tanggal', formatTglDB(today));
+            } else if (filter === 'rentang') {
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                if(start && end) {
+                    query = query.gte('tanggal', start).lte('tanggal', end);
+                } else {
+                    container.innerHTML = '<p class="text-center text-xs text-red-500 py-4">Pilih tanggal mulai dan akhir.</p>';
+                    return;
+                }
+            }
+
+            const { data, error } = await query;
+            if(error) {
+                container.innerHTML = '<p class="text-center text-xs text-red-500 py-4">Gagal memuat riwayat.</p>';
+                return;
+            }
+
+            if(!data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+                        <p class="text-sm text-gray-400 italic">Tidak ada pengiriman untuk filter ini.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            data.forEach((item, index) => {
+                // Konversi tanggal ke format Indonesia yang rapi
+                const tglIndo = new Date(item.tanggal).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 fade-in relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-400"></div>
+                        <div class="pl-2 flex flex-col">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <span class="font-bold text-sm text-gray-800 dark:text-gray-100">${item.agen}</span>
+                                <span class="text-[10px] bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-700 dark:text-gray-300 font-bold">${tglIndo}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-y-1 gap-x-2 text-[11px] text-gray-600 dark:text-gray-400">
+                                <p>Mbl: <span class="font-medium text-gray-900 dark:text-gray-200">${item.mobil}</span></p>
+                                <p>Drv: <span class="font-medium text-gray-900 dark:text-gray-200">${item.driver}</span></p>
+                                <p class="col-span-2">Co: <span class="font-medium text-gray-900 dark:text-gray-200">${item.codriver || '-'}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- 5. LOGIC PRATINJAU & SIMPAN KE DATABASE ---
         function tampilkanPratinjau() {
             if(listRekapan.length === 0) {
-                alert('Tambahkan minimal 1 baris pengiriman terlebih dahulu!');
+                alert('Tidak ada antrean! Tambahkan minimal 1 baris kiriman dari form atas.');
                 return;
             }
 
@@ -325,15 +423,17 @@
             containerStruk.innerHTML = '';
             
             listRekapan.forEach((item, i) => {
+                // Layout HTML tabel dibikin rapi tanpa border antar kolom
                 containerStruk.innerHTML += `
                     <div class="mb-2 ${i !== listRekapan.length - 1 ? 'border-b border-black border-dotted pb-2' : ''}">
-                        <div class="font-bold">${i + 1}. AGEN: ${item.agen.toUpperCase()}</div>
-                        <div class="pl-3">
-                            <table class="w-full text-xs">
-                                <tr><td class="w-12">Driver</td><td>: ${item.driver}</td></tr>
-                                <tr><td>Co-Drv</td><td>: ${item.codriver || '-'}</td></tr>
-                                <tr><td>Mobil</td><td>: ${item.mobil}</td></tr>
-                            </table>
+                        <div class="font-bold flex items-start space-x-1 mb-1">
+                            <span class="w-4 text-right">${i + 1}.</span>
+                            <span class="flex-1 uppercase">${item.agen}</span>
+                        </div>
+                        <div class="pl-6 text-[11px] space-y-0.5">
+                            <div class="flex"><span class="w-16">Mobil</span><span>: ${item.mobil}</span></div>
+                            <div class="flex"><span class="w-16">Driver</span><span>: ${item.driver}</span></div>
+                            <div class="flex"><span class="w-16">Co-Driver</span><span>: ${item.codriver || '-'}</span></div>
                         </div>
                     </div>
                 `;
@@ -360,6 +460,45 @@
             }, 300);
         }
 
+        async function simpanKeDatabase() {
+            if(!supabaseClient) {
+                alert('Koneksi database tidak tersedia.');
+                return;
+            }
+
+            const btn = document.getElementById('btnSimpanDB');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Menyimpan...';
+            btn.disabled = true;
+
+            try {
+                const dataToInsert = listRekapan.map(item => ({
+                    tanggal: item.tanggal,
+                    agen: item.agen,
+                    driver: item.driver,
+                    codriver: item.codriver,
+                    mobil: item.mobil
+                }));
+
+                const { data, error } = await supabaseClient.from('rekap_pengiriman').insert(dataToInsert);
+                if (error) throw error;
+
+                alert('Berhasil! Data telah disimpan ke database.');
+                
+                listRekapan = [];
+                renderDraft();
+                tutupPratinjau();
+                loadRiwayatDB(); // Refresh riwayat database otomatis
+
+            } catch (error) {
+                console.error('Error saat menyimpan:', error);
+                alert('Gagal menyimpan data: ' + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
         function simpanPNG() {
             const struk = document.getElementById('areaStruk');
             struk.style.border = "1px solid #ccc";
@@ -373,7 +512,7 @@
             });
         }
 
-        // --- 5. LOGIC BLUETOOTH PRINTING ---
+        // --- 6. LOGIC BLUETOOTH PRINTING (Dirapikan) ---
         async function cetakBluetooth(maxChars = 32) {
             try {
                 const device = await navigator.bluetooth.requestDevice({
@@ -392,7 +531,7 @@
 
                 const tglString = new Date(document.getElementById('tanggal').value).toLocaleDateString('id-ID');
                 
-                // PENTING: Penyusunan string menggunakan Array untuk menghindari error syntax minifier saat deploy (Vercel/Netlify dll)
+                // Pembentukan Teks Thermal yang Rapi
                 let lines = [];
                 lines.push("SBR PUTRA FOOD");
                 lines.push("REKAP PENGIRIMAN");
@@ -401,10 +540,22 @@
                 lines.push("-".repeat(maxChars));
                 
                 listRekapan.forEach((item, i) => {
-                    lines.push(`${i+1}. AGEN: ${item.agen.toUpperCase()}`);
-                    lines.push(`   Drv : ${item.driver}`);
-                    lines.push(`   Co  : ${item.codriver || '-'}`);
-                    lines.push(`   Mbl : ${item.mobil}`);
+                    // Batasi panjang nama agen agar tidak merusak layout (wrap jelek di kertas)
+                    let namaAgen = item.agen.toUpperCase();
+                    if(namaAgen.length > (maxChars - 4)) {
+                        namaAgen = namaAgen.substring(0, maxChars - 4);
+                    }
+                    
+                    lines.push(`${i+1}. ${namaAgen}`);
+                    
+                    // Spasi sejajar dengan titik dua
+                    lines.push(`   Mobil  : ${item.mobil}`);
+                    lines.push(`   Driver : ${item.driver}`);
+                    
+                    if(item.codriver) {
+                        lines.push(`   Co-Drv : ${item.codriver}`);
+                    }
+                    
                     if(i !== listRekapan.length - 1) {
                         lines.push("   " + "-".repeat(maxChars - 3));
                     }
@@ -417,11 +568,9 @@
                 lines.push("    Admin / Logistik");
                 lines.push("");
                 lines.push("");
-                lines.push(""); // Spasi agar kertas naik di printer thermal
+                lines.push(""); // Spasi roll kertas naik
 
-                // Menggabungkan array menjadi 1 string menggunakan \n (aman untuk build/publish)
                 let text = lines.join("\n");
-
                 let encoder = new TextEncoder();
                 let data = encoder.encode(text);
                 await characteristic.writeValue(data);
@@ -429,12 +578,16 @@
                 alert('Berhasil mengirim perintah ke printer Bluetooth!');
             } catch (error) {
                 console.error(error);
-                alert('Gagal cetak Bluetooth: ' + error.message + '\n\nPastikan GPS/Lokasi menyala (syarat browser Android) dan printer sudah dipairing.');
+                alert('Gagal cetak Bluetooth: ' + error.message + '\n\nPastikan GPS/Lokasi menyala dan printer sudah dipairing.');
             }
         }
 
         // Init
-        window.onload = loadDataDropdown;
+        window.onload = () => {
+            setTanggalHariIni();
+            loadDataDropdown();
+            loadRiwayatDB();
+        };
     </script>
 </body>
 </html>
