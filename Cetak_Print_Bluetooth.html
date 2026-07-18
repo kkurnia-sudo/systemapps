@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cetak Print Bluetooth</title>
+    <title>Cetak Print Bluetooth SBR Putra Food</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        /* CSS Variables - Default (Light Mode) */
         :root {
             --bg-color: #f0f2f5;
             --card-bg: #ffffff;
@@ -16,6 +17,17 @@
             --text-main: #1f2937;
             --text-muted: #6b7280;
             --border: #d1d5db;
+        }
+
+        /* Otomatis Gelap menyesuaikan Device (Dark Mode) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --card-bg: #1e1e1e;
+                --text-main: #e5e7eb;
+                --text-muted: #9ca3af;
+                --border: #374151;
+            }
         }
 
         * {
@@ -32,6 +44,7 @@
             justify-content: center;
             padding: 20px 15px;
             min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .app-container {
@@ -41,6 +54,7 @@
             border-radius: 16px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             padding: 24px;
+            transition: background-color 0.3s;
         }
 
         .app-header {
@@ -64,12 +78,34 @@
             margin-bottom: 16px;
         }
 
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
         .form-group label.main-label {
-            display: block;
             font-size: 0.875rem;
             font-weight: 600;
-            margin-bottom: 6px;
             color: var(--text-main);
+        }
+
+        /* Desain Opsi Dropdown Style */
+        .style-selector {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            cursor: pointer;
+            outline: none;
+            font-weight: bold;
+        }
+        
+        .style-selector:focus {
+            border-color: var(--primary);
         }
 
         .form-control {
@@ -78,6 +114,8 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 1rem;
+            background-color: var(--card-bg);
+            color: var(--text-main);
             transition: border-color 0.2s;
         }
 
@@ -151,7 +189,7 @@
 
         .preview-section {
             margin-top: 24px;
-            background-color: #f9fafb;
+            background-color: var(--bg-color);
             padding: 20px;
             border-radius: 12px;
             border: 1px dashed var(--border);
@@ -170,40 +208,31 @@
 
         /* Struk Style */
         .receipt-box {
-            background-color: white;
+            background-color: #ffffff;
             padding: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            font-family: 'Courier New', Courier, monospace;
-            color: black;
+            color: #000000; 
             transition: width 0.3s ease;
             min-height: 100px;
+            font-family: 'Courier New', Courier, monospace; 
         }
 
-        .receipt-box.size-58 {
-            width: 200px;
-            font-size: 12px;
-        }
-
-        .receipt-box.size-80 {
-            width: 300px;
-            font-size: 14px;
-        }
+        .receipt-box.size-58 { width: 200px; font-size: 12px; }
+        .receipt-box.size-80 { width: 300px; font-size: 14px; }
 
         .receipt-header {
             text-align: center;
-            font-weight: bold;
             margin-bottom: 5px;
             white-space: pre-wrap;
         }
 
         .receipt-date {
             text-align: center;
-            font-size: 0.9em;
             margin-bottom: 10px;
         }
 
         .receipt-divider {
-            border-top: 1px dashed black;
+            border-top: 1px dashed #000000;
             margin: 8px 0;
         }
 
@@ -238,6 +267,12 @@
             white-space: pre-wrap;
         }
 
+        /* Classes untuk Gaya Teks ESC/POS pada Preview */
+        .style-normal { font-size: 1em; font-weight: normal; }
+        .style-bold { font-size: 1em; font-weight: bold; }
+        .style-tall { font-size: 1.15em; font-weight: 600; }
+        .style-big { font-size: 1.35em; font-weight: bold; }
+
         .action-buttons {
             display: flex;
             flex-direction: column;
@@ -257,14 +292,13 @@
             justify-content: center;
             align-items: center;
             gap: 8px;
-            transition: background-color 0.2s;
+            transition: opacity 0.2s;
             color: white;
         }
 
+        .btn:hover { opacity: 0.9; }
         .btn-png { background-color: var(--success); }
-        .btn-png:hover { background-color: var(--success-hover); }
         .btn-print { background-color: var(--primary); }
-        .btn-print:hover { background-color: var(--primary-hover); }
 
         .icon {
             width: 20px;
@@ -273,15 +307,9 @@
         }
 
         @media (max-width: 400px) {
-            .app-container {
-                padding: 16px;
-            }
-            .split-input {
-                flex-direction: column;
-            }
-            .split-col:last-child {
-                flex: auto;
-            }
+            .app-container { padding: 16px; }
+            .split-input { flex-direction: column; }
+            .split-col:last-child { flex: auto; }
         }
     </style>
 </head>
@@ -304,32 +332,68 @@
             </div>
         </div>
 
+        <!-- TANGGAL -->
         <div class="form-group">
-            <label class="main-label" for="input-date">Tanggal</label>
+            <div class="label-row">
+                <label class="main-label" for="input-date">Tanggal</label>
+                <select id="style-date" class="style-selector" onchange="updatePreview()">
+                    <option value="normal" selected>Normal</option>
+                    <option value="bold">Tebal (Bold)</option>
+                    <option value="tall">Tinggi</option>
+                    <option value="big">Besar</option>
+                </select>
+            </div>
             <input type="date" id="input-date" class="form-control" onchange="updatePreview()">
         </div>
 
+        <!-- HEADER -->
         <div class="form-group">
-            <label class="main-label" for="input-header">Header (Nama Toko / Judul)</label>
-            <input type="text" id="input-header" class="form-control" placeholder="NAMA TOKO" oninput="updatePreview()">
+            <div class="label-row">
+                <label class="main-label" for="input-header">Header (Nama Toko)</label>
+                <select id="style-header" class="style-selector" onchange="updatePreview()">
+                    <option value="normal">Normal</option>
+                    <option value="bold">Tebal (Bold)</option>
+                    <option value="tall" selected=>Tinggi</option>
+                    <option value="big">Besar</option>
+                </select>
+            </div>
+            <input type="text" id="input-header" class="form-control" placeholder="SBR Putra Food" oninput="updatePreview()">
         </div>
 
+        <!-- ISI -->
         <div class="form-group">
-            <label class="main-label">Isi Struk (Item & Harga)</label>
+            <div class="label-row">
+                <label class="main-label">Isi Struk (Item & Harga)</label>
+                <select id="style-body" class="style-selector" onchange="updatePreview()">
+                    <option value="normal">Normal</option>
+                    <option value="bold">Tebal (Bold)</option>
+                    <option value="tall" selected>Tinggi</option>
+                    <option value="big">Besar</option>
+                </select>
+            </div>
             <div class="split-input">
                 <div class="split-col">
                     <span class="split-label">Keterangan (Kiri)</span>
-                    <textarea id="input-item" class="form-control" placeholder="1x Nasi Goreng&#10;2x Es Teh" oninput="updatePreview()"></textarea>
+                    <textarea id="input-item" class="form-control" placeholder="1x Makroni Naruto&#10;1x Aromanis" oninput="updatePreview()"></textarea>
                 </div>
                 <div class="split-col">
                     <span class="split-label">Harga (Kanan)</span>
-                    <textarea id="input-price" class="form-control" placeholder="15.000&#10;10.000" oninput="updatePreview()" style="text-align: right;"></textarea>
+                    <textarea id="input-price" class="form-control" placeholder="30.000&#10;15.000" oninput="updatePreview()" style="text-align: right;"></textarea>
                 </div>
             </div>
         </div>
 
+        <!-- FOOTER -->
         <div class="form-group">
-            <label class="main-label" for="input-footer">Footer (Pesan Penutup)</label>
+            <div class="label-row">
+                <label class="main-label" for="input-footer">Footer (Penutup)</label>
+                <select id="style-footer" class="style-selector" onchange="updatePreview()">
+                    <option value="normal">Normal</option>
+                    <option value="bold" selected>Tebal (Bold)</option>
+                    <option value="tall">Tinggi</option>
+                    <option value="big">Besar</option>
+                </select>
+            </div>
             <input type="text" id="input-footer" class="form-control" placeholder="Terima Kasih" oninput="updatePreview()">
         </div>
 
@@ -340,9 +404,7 @@
                 <div id="prev-header" class="receipt-header"></div>
                 <div id="prev-date" class="receipt-date"></div>
                 <div class="receipt-divider"></div>
-                <div id="prev-body" class="receipt-body">
-                    <!-- Data dimasukkan via Javascript -->
-                </div>
+                <div id="prev-body" class="receipt-body"></div>
                 <div class="receipt-divider"></div>
                 <div id="prev-footer" class="receipt-footer"></div>
             </div>
@@ -367,14 +429,12 @@
             updatePreview();
         };
 
-        // Fungsi baru untuk mereset form ke kondisi kosong
         function resetForm() {
-            document.getElementById('input-header').value = "";
+            document.getElementById('input-header').value = "SBR Putra Food";
             document.getElementById('input-item').value = "";
             document.getElementById('input-price').value = "";
-            document.getElementById('input-footer').value = "";
+            document.getElementById('input-footer').value = "Terima Kasih";
             
-            // Kembalikan tanggal ke hari ini
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('input-date').value = today;
             
@@ -395,12 +455,31 @@
             return `${dayName}, ${day}-${monthName}-${year}`;
         }
 
+        function applyStyleClass(elementId, styleVal) {
+            const el = document.getElementById(elementId);
+            el.classList.remove('style-normal', 'style-bold', 'style-tall', 'style-big');
+            el.classList.add('style-' + styleVal);
+        }
+
         function updatePreview() {
-            document.getElementById('prev-header').innerText = document.getElementById('input-header').value;
-            
+            const elHeader = document.getElementById('prev-header');
+            const elDate = document.getElementById('prev-date');
+            const elBody = document.getElementById('prev-body');
+            const elFooter = document.getElementById('prev-footer');
+
+            // Set Teks
+            elHeader.innerText = document.getElementById('input-header').value;
             const rawDate = document.getElementById('input-date').value;
-            document.getElementById('prev-date').innerText = formatCustomDate(rawDate);
+            elDate.innerText = formatCustomDate(rawDate);
+            elFooter.innerText = document.getElementById('input-footer').value;
+
+            // Set Style Berdasarkan Opsi Dropdown
+            applyStyleClass('prev-header', document.getElementById('style-header').value);
+            applyStyleClass('prev-date', document.getElementById('style-date').value);
+            applyStyleClass('prev-body', document.getElementById('style-body').value);
+            applyStyleClass('prev-footer', document.getElementById('style-footer').value);
             
+            // Proses Isi
             const items = document.getElementById('input-item').value.split('\n');
             const prices = document.getElementById('input-price').value.split('\n');
             let bodyHTML = '';
@@ -409,7 +488,6 @@
             for (let i = 0; i < maxLines; i++) {
                 const item = items[i] || '';
                 const price = prices[i] || '';
-
                 if (item.trim() === '' && price.trim() === '') {
                     bodyHTML += `<div style="height: 14px;"></div>`; 
                 } else {
@@ -420,8 +498,7 @@
                     </div>`;
                 }
             }
-            document.getElementById('prev-body').innerHTML = bodyHTML;
-            document.getElementById('prev-footer').innerText = document.getElementById('input-footer').value;
+            elBody.innerHTML = bodyHTML;
         }
 
         function updatePaperSize() {
@@ -447,9 +524,6 @@
                 link.download = 'struk_' + new Date().getTime() + '.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                
-                // Panggil fungsi reset setelah berhasil download
-                resetForm();
             }).catch(err => {
                 alert("Gagal menyimpan gambar: " + err);
             });
@@ -468,9 +542,19 @@
             }
         }
 
+        // Fungsi untuk mengambil Command HEX printer berdasarkan gaya
+        function getStyleCommands(style) {
+            // Index 0: Bold Command, Index 1: Size Command
+            if (style === 'bold') return [new Uint8Array([0x1B, 0x45, 0x01]), new Uint8Array([0x1D, 0x21, 0x00])];
+            if (style === 'tall') return [new Uint8Array([0x1B, 0x45, 0x00]), new Uint8Array([0x1D, 0x21, 0x01])];
+            if (style === 'big')  return [new Uint8Array([0x1B, 0x45, 0x01]), new Uint8Array([0x1D, 0x21, 0x11])];
+            // default normal
+            return [new Uint8Array([0x1B, 0x45, 0x00]), new Uint8Array([0x1D, 0x21, 0x00])];
+        }
+
         async function printBluetooth() {
             if (!navigator.bluetooth) {
-                alert('Browser Anda tidak mendukung Web Bluetooth API. Harap gunakan Google Chrome di Android/PC dan pastikan Anda mengakses via HTTPS.');
+                alert('Browser Anda tidak mendukung Web Bluetooth API. Harap gunakan Google Chrome di Android/PC.');
                 return;
             }
 
@@ -484,7 +568,6 @@
                     ]
                 });
 
-                console.log('Menghubungkan ke GATT Server...');
                 const server = await device.gatt.connect();
                 const services = await server.getPrimaryServices();
                 let printCharacteristic = null;
@@ -500,17 +583,25 @@
                     if (printCharacteristic) break;
                 }
 
-                if (!printCharacteristic) {
-                    throw new Error('Tidak menemukan layanan print (Write Characteristic) pada perangkat ini.');
-                }
+                if (!printCharacteristic) throw new Error('Tidak menemukan layanan print.');
 
                 const is80 = document.getElementById('paper-80').checked;
-                const maxChars = is80 ? 48 : 32;
+                const defaultMaxChars = is80 ? 48 : 32;
 
                 const headerText = document.getElementById('input-header').value + '\n';
-                const rawDate = document.getElementById('input-date').value;
-                const dateText = formatCustomDate(rawDate) + '\n';
-                
+                const dateText = formatCustomDate(document.getElementById('input-date').value) + '\n';
+                const footerText = '\n' + document.getElementById('input-footer').value + '\n\n\n\n';
+
+                // Ambil Gaya (Styles)
+                const sHeader = document.getElementById('style-header').value;
+                const sDate = document.getElementById('style-date').value;
+                const sBody = document.getElementById('style-body').value;
+                const sFooter = document.getElementById('style-footer').value;
+
+                // Jika style Body = 'big', lebar karakter terpotong separuhnya
+                let bodyMaxChars = defaultMaxChars;
+                if (sBody === 'big') bodyMaxChars = Math.floor(defaultMaxChars / 2);
+
                 const items = document.getElementById('input-item').value.split('\n');
                 const prices = document.getElementById('input-price').value.split('\n');
                 let bodyText = '';
@@ -519,68 +610,73 @@
                 for(let i = 0; i < maxLines; i++) {
                     let item = (items[i] || '').replace(/\r/g, '');
                     let price = (prices[i] || '').replace(/\r/g, '');
-                    bodyText += formatPrintLine(item, price, maxChars);
+                    bodyText += formatPrintLine(item, price, bodyMaxChars);
                 }
-                
-                const footerText = '\n' + document.getElementById('input-footer').value + '\n\n\n\n';
 
                 const encoder = new TextEncoder();
                 const initPrinter = new Uint8Array([0x1B, 0x40]); 
                 const alignCenter = new Uint8Array([0x1B, 0x61, 0x01]); 
                 const alignLeft = new Uint8Array([0x1B, 0x61, 0x00]);   
-                const boldOn = new Uint8Array([0x1B, 0x45, 0x01]);      
-                const boldOff = new Uint8Array([0x1B, 0x45, 0x00]);     
-                const doubleHeight = new Uint8Array([0x1D, 0x21, 0x01]); 
-                const doubleWidth = new Uint8Array([0x1D, 0x21, 0x10]);  
-				const bigText = new Uint8Array([0x1D, 0x21, 0x11]);      // Teks besar (Double tinggi + lebar)
-                const normalText = new Uint8Array([0x1D, 0x21, 0x00]);   
-
+                
                 async function sendData(data) {
                     const CHUNK_SIZE = 20; 
                     for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-                        const chunk = data.slice(i, i + CHUNK_SIZE);
-                        await printCharacteristic.writeValue(chunk);
+                        await printCharacteristic.writeValue(data.slice(i, i + CHUNK_SIZE));
                     }
                 }
 
+                // --- PROSES CETAK ---
                 await sendData(initPrinter);
                 
+                // 1. Header
+                let [hBold, hSize] = getStyleCommands(sHeader);
                 await sendData(alignCenter);
-                await sendData(bigText);
+                await sendData(hBold);
+                await sendData(hSize);
                 await sendData(encoder.encode(headerText));
-                await sendData(boldOff);
-                await sendData(normalText);
                 
+                // 2. Tanggal
+                let [dBold, dSize] = getStyleCommands(sDate);
                 await sendData(alignCenter);
-				await sendData(doubleHeight);
+                await sendData(dBold);
+                await sendData(dSize);
                 await sendData(encoder.encode(dateText));
 
-                const divider = "-".repeat(maxChars) + "\n";
+                // Garis Pemisah (Selalu Normal)
+                let [nBold, nSize] = getStyleCommands('normal');
+                await sendData(nBold);
+                await sendData(nSize);
+                await sendData(alignCenter);
+                const divider = "-".repeat(defaultMaxChars) + "\n";
                 await sendData(encoder.encode(divider));
 
+                // 3. Isi Struk
+                let [bBold, bSize] = getStyleCommands(sBody);
                 await sendData(alignLeft);
-                await sendData(doubleHeight); 
+                await sendData(bBold);
+                await sendData(bSize);
                 await sendData(encoder.encode(bodyText));
-                await sendData(normalText); 
                 
+                // Garis Pemisah (Selalu Normal)
+                await sendData(nBold);
+                await sendData(nSize);
                 await sendData(alignCenter);
                 await sendData(encoder.encode(divider));
 
+                // 4. Footer
+                let [fBold, fSize] = getStyleCommands(sFooter);
                 await sendData(alignCenter);
-				await sendData(doubleHeight);
+                await sendData(fBold);
+                await sendData(fSize);
                 await sendData(encoder.encode(footerText));
 
                 alert('Berhasil mengirim data ke printer bluetooth!');
-                
-                // Panggil fungsi reset setelah print berhasil
                 resetForm();
 
             } catch (error) {
                 console.error(error);
-                if (error.name === 'NotFoundError') {
-                    console.log('Pemilihan perangkat dibatalkan pengguna.');
-                } else {
-                    alert('Gagal mencetak: ' + error.message + '\n\nPastikan printer menyala, sudah di-pairing, dan mendukung Web Bluetooth (BLE).');
+                if (error.name !== 'NotFoundError') {
+                    alert('Gagal mencetak: ' + error.message);
                 }
             }
         }
