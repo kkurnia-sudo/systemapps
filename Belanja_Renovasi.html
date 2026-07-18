@@ -24,6 +24,7 @@
             --bg-modal: #ffffff;
             --bg-split-box: #e8f4f8;
             --btn-cancel-text: #333;
+            --btn-toggle-bg: #dcdde1;
         }
 
         .dark-theme {
@@ -39,6 +40,7 @@
             --bg-modal: #1e1e1e;
             --bg-split-box: #1a3a47;
             --btn-cancel-text: #e0e0e0;
+            --btn-toggle-bg: #353b48;
         }
 
         /* =========================================
@@ -60,11 +62,14 @@
         button:hover { background-color: #2980b9; }
         
         .summary { margin-top: 20px; padding: 15px; background: var(--bg-summary); border-radius: 4px; font-size: 15px; }
-        .summary div { padding: 8px 0; border-bottom: 1px solid var(--border-color); font-weight: bold; }
-        .summary div:last-child { border-bottom: none; }
+        .summary div.main-sum { padding: 8px 0; font-weight: bold; border-bottom: 1px dashed var(--border-color); }
+        .summary div.main-sum:last-child { border-bottom: none; }
         .summary span { float: right; } 
         .masuk { color: #2ecc71; }
         .keluar { color: #e74c3c; }
+
+        .btn-toggle { width: 100%; padding: 6px; margin-top: 10px; font-size: 12px; background-color: var(--btn-toggle-bg); color: var(--text-main); border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-toggle:hover { opacity: 0.8; }
 
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
         .header-container h3 { margin: 0; font-size: 16px; color: var(--text-heading); }
@@ -111,14 +116,14 @@
         .receipt-preview th, .receipt-preview td { padding: 6px 2px; border: none; border-bottom: 1px dashed #ccc !important; vertical-align: top; }
         
         .col-tgl { width: 22%; }
-        
-        /* DIKEMBALIKAN KE VERSI AWAL: Tanpa pembatas 2 baris untuk pratinjau */
         .col-ket { width: 43%; word-wrap: break-word; }
-        
         .col-jml { width: 35%; text-align: right; white-space: nowrap; } 
         
         .receipt-preview .summary-section { margin-top: 10px; font-weight: bold; }
         .receipt-preview .summary-section div { display: flex; justify-content: space-between; padding: 2px 0; }
+        
+        /* Gaya tambahan untuk rincian struk pratinjau */
+        .receipt-preview .summary-detail { font-size: 11px; font-weight: normal; padding-left: 10px; color: #333 !important; }
 
         /* =========================================
            MODAL UMUM (OVERLAY)
@@ -223,7 +228,7 @@
             </div>
             <div class="form-group">
                 <label for="description">Keterangan Item</label>
-                <input type="text" id="description" placeholder="Cth: Semen 3 Sak / Tukang" required>
+                <input type="text" id="description" placeholder="Cth: Semen" required>
             </div>
         </div>
 
@@ -242,9 +247,26 @@
     </form>
 
     <div class="summary">
-        <div>Total Budget Masuk: <span class="masuk" id="totalMasuk">Rp 0</span></div>
-        <div>Total Belanja Keluar: <span class="keluar" id="totalKeluar">Rp 0</span></div>
-        <div>Sisa Saldo Kas: <span id="saldoAkhir">Rp 0</span></div>
+        <div class="main-sum">Total Budget Masuk: <span class="masuk" id="totalMasuk">Rp 0</span></div>
+        <div class="main-sum">Total Belanja Keluar: <span class="keluar" id="totalKeluar">Rp 0</span></div>
+        <div class="main-sum">Sisa Saldo Keseluruhan: <span id="saldoAkhir">Rp 0</span></div>
+        
+        <!-- Tombol Toggle -->
+        <button type="button" id="btnToggleDetail" class="btn-toggle">Tampilkan Rincian Kas & Transfer 🔽</button>
+
+        <!-- Container Rincian yang disembunyikan secara default -->
+        <div id="detailContainer" style="display: none; margin-top: 10px; padding: 10px; background: var(--bg-container); border-radius: 4px; border: 1px solid var(--border-color);">
+            <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">
+                Detail Belanja Keluar:<br>
+                <span style="font-weight: normal;">- Cash: <span class="keluar" id="keluarCash" style="float: right;">Rp 0</span></span><br>
+                <span style="font-weight: normal;">- Transfer: <span class="keluar" id="keluarTransfer" style="float: right;">Rp 0</span></span>
+            </div>
+            <div style="border-top: 1px dashed var(--border-color); margin-top: 8px; padding-top: 8px; font-size: 13px; color: var(--text-muted); font-weight: bold;">
+                Detail Sisa Saldo:<br>
+                Sisa di Tangan (Cash): <span id="sisaCash" style="float: right;">Rp 0</span><br>
+                Sisa di Bank (Transfer): <span id="sisaTransfer" style="float: right;">Rp 0</span>
+            </div>
+        </div>
     </div>
 
     <div class="header-container">
@@ -367,6 +389,7 @@
     </div>
 </div>
 
+<!-- TEMPLATE STRUK UNTUK PRATINJAU -->
 <div id="receiptCaptureContainer">
     <div class="receipt-preview" id="receiptTemplate">
         <h2>Laporan Belanja Renovasi</h2>
@@ -388,8 +411,16 @@
         <div class="summary-section">
             <div><span>Total Budget:</span><span id="rcTotalMasuk">Rp 0</span></div>
             <div><span>Total Belanja:</span><span id="rcTotalKeluar">Rp 0</span></div>
+            <div class="summary-detail">
+                <div style="padding: 1px 0;"><span>- Cash:</span><span id="rcKeluarCash">Rp 0</span></div>
+                <div style="padding: 1px 0;"><span>- Transfer:</span><span id="rcKeluarTransfer">Rp 0</span></div>
+            </div>
             <div style="border-top: 1px dashed #000; margin-top: 5px; padding-top: 5px;">
                 <span>Sisa Kas:</span><span id="rcSaldoAkhir">Rp 0</span>
+            </div>
+            <div class="summary-detail">
+                <div style="padding: 1px 0;"><span>- Cash:</span><span id="rcSisaCash">Rp 0</span></div>
+                <div style="padding: 1px 0;"><span>- Transfer:</span><span id="rcSisaTransfer">Rp 0</span></div>
             </div>
         </div>
         <div class="divider"></div>
@@ -409,9 +440,14 @@
     const PIN_AKSES = "5000";
     let activeEditId = null;
 
+    // Variabel Global untuk Cetak Struk
     let globalReceiptData = [];
     let globalTotalMasuk = 0;
     let globalTotalKeluar = 0;
+    let globalMasukCash = 0;
+    let globalKeluarCash = 0;
+    let globalMasukTransfer = 0;
+    let globalKeluarTransfer = 0;
 
     function checkTheme() {
         const hour = new Date().getHours();
@@ -449,6 +485,18 @@
     setupRupiahInput('amountCash');
     setupRupiahInput('amountTransfer');
     setupRupiahInput('editAmount');
+
+    // LOGIKA UNTUK TOMBOL TOGGLE RINCIAN
+    document.getElementById('btnToggleDetail').addEventListener('click', function() {
+        const detailBox = document.getElementById('detailContainer');
+        if (detailBox.style.display === 'none') {
+            detailBox.style.display = 'block';
+            this.innerHTML = 'Sembunyikan Rincian 🔼';
+        } else {
+            detailBox.style.display = 'none';
+            this.innerHTML = 'Tampilkan Rincian Kas & Transfer 🔽';
+        }
+    });
 
     const tglInput = document.getElementById('tanggal');
     const dateNow = new Date();
@@ -513,6 +561,11 @@
         
         let totalMasuk = 0;
         let totalKeluar = 0;
+
+        // Variabel baru untuk memisahkan kalkulasi per metode
+        let masukCash = 0, keluarCash = 0;
+        let masukTransfer = 0, keluarTransfer = 0;
+
         const displayData = [...data].reverse();
 
         displayData.forEach(tx => {
@@ -535,25 +588,49 @@
             
             if (tx.type === 'masuk') {
                 totalMasuk += amt;
+                if (metodeStr === 'Cash') masukCash += amt;
+                if (metodeStr === 'Transfer') masukTransfer += amt;
+                
                 tr.innerHTML = `<td>${formatDate(tx.created_at)}</td><td>${deskripsiLengkap}</td><td class="masuk">${formatRupiah(amt)}</td><td>-</td>${aksiHtml}`;
             } else {
                 totalKeluar += amt;
+                if (metodeStr === 'Cash') keluarCash += amt;
+                if (metodeStr === 'Transfer') keluarTransfer += amt;
+
                 tr.innerHTML = `<td>${formatDate(tx.created_at)}</td><td>${deskripsiLengkap}</td><td>-</td><td class="keluar">${formatRupiah(amt)}</td>${aksiHtml}`;
             }
             tableBody.appendChild(tr);
         });
 
+        // Update Total Keseluruhan Layar Utama
         document.getElementById('totalMasuk').innerText = formatRupiah(totalMasuk);
         document.getElementById('totalKeluar').innerText = formatRupiah(totalKeluar);
         document.getElementById('saldoAkhir').innerText = formatRupiah(totalMasuk - totalKeluar);
 
-        buildVirtualReceipt(data, totalMasuk, totalKeluar);
+        // Update Tampilan Rincian Metode di Layar Utama
+        const elKeluarCash = document.getElementById('keluarCash');
+        const elKeluarTransfer = document.getElementById('keluarTransfer');
+        const elSisaCash = document.getElementById('sisaCash');
+        const elSisaTransfer = document.getElementById('sisaTransfer');
+
+        if(elKeluarCash) elKeluarCash.innerText = formatRupiah(keluarCash);
+        if(elKeluarTransfer) elKeluarTransfer.innerText = formatRupiah(keluarTransfer);
+        if(elSisaCash) elSisaCash.innerText = formatRupiah(masukCash - keluarCash);
+        if(elSisaTransfer) elSisaTransfer.innerText = formatRupiah(masukTransfer - keluarTransfer);
+
+        // Pass semua data ke fungsi pembuat struk virtual
+        buildVirtualReceipt(data, totalMasuk, totalKeluar, masukCash, keluarCash, masukTransfer, keluarTransfer);
     }
 
-    function buildVirtualReceipt(data, tMasuk, tKeluar) {
+    function buildVirtualReceipt(data, tMasuk, tKeluar, mCash, kCash, mTransfer, kTransfer) {
+        // Set variabel global untuk cetak Bluetooth
         globalReceiptData = data;
         globalTotalMasuk = tMasuk;
         globalTotalKeluar = tKeluar;
+        globalMasukCash = mCash;
+        globalKeluarCash = kCash;
+        globalMasukTransfer = mTransfer;
+        globalKeluarTransfer = kTransfer;
 
         const rcBody = document.getElementById('receiptTableBody');
         const rcPeriod = document.getElementById('receiptPeriod');
@@ -581,12 +658,23 @@
             if(rcBody) rcBody.appendChild(tr);
         });
 
+        // Update Totalan pada Pratinjau Struk (Gambar/PDF)
         const rcMasuk = document.getElementById('rcTotalMasuk');
         const rcKeluar = document.getElementById('rcTotalKeluar');
         const rcSaldo = document.getElementById('rcSaldoAkhir');
+        const rcKeluarCash = document.getElementById('rcKeluarCash');
+        const rcKeluarTransfer = document.getElementById('rcKeluarTransfer');
+        const rcSisaCash = document.getElementById('rcSisaCash');
+        const rcSisaTransfer = document.getElementById('rcSisaTransfer');
+
         if(rcMasuk) rcMasuk.innerText = formatRupiah(tMasuk);
         if(rcKeluar) rcKeluar.innerText = formatRupiah(tKeluar);
         if(rcSaldo) rcSaldo.innerText = formatRupiah(tMasuk - tKeluar);
+        
+        if(rcKeluarCash) rcKeluarCash.innerText = formatRupiah(kCash);
+        if(rcKeluarTransfer) rcKeluarTransfer.innerText = formatRupiah(kTransfer);
+        if(rcSisaCash) rcSisaCash.innerText = formatRupiah(mCash - kCash);
+        if(rcSisaTransfer) rcSisaTransfer.innerText = formatRupiah(mTransfer - kTransfer);
     }
 
     const actionModal = document.getElementById('actionModal');
@@ -789,7 +877,6 @@
 
     document.getElementById('btnConfirmPrint').addEventListener('click', () => window.print());
 
-    // PEMBARUAN: STRUKTUR CETAK ALA SISTEM KASIR POS UNTUK BLUETOOTH
     document.getElementById('btnBluetoothPrint').addEventListener('click', async function() {
         if (!navigator.bluetooth) {
             alert("Browser tidak mendukung Web Bluetooth. Pastikan menggunakan Chrome (HTTPS).");
@@ -851,10 +938,8 @@
                 const jml = `${prefix}${formatAngka}`;
                 const metodeLabel = `[${metodeTeks}]`;
                 
-                // 1. Cetak Tanggal di baris pertama (rata kiri)
                 textToPrint += sanitize(tgl) + newLine;
 
-                // 2. Cetak Keterangan Item dengan indentasi (2 spasi) agar rapi
                 let indent = "  ";
                 let remainingKet = sanitize(tx.description);
                 let maxKetWidth = paperWidth - indent.length;
@@ -872,7 +957,6 @@
                     }
                 }
 
-                // 3. Cetak Metode Pembayaran (kiri) & Nominal (kanan) dengan indentasi
                 const rightText = sanitize(jml);
                 const leftText = indent + sanitize(metodeLabel);
                 const spaceCount = paperWidth - leftText.length - rightText.length;
@@ -884,11 +968,19 @@
                 }
             });
 
+            // PENAMBAHAN RINCIAN KAS DAN TRANSFER PADA HASIL CETAK BLUETOOTH
             textToPrint += divider;
             textToPrint += formatLine("Total Budget:", formatRupiah(globalTotalMasuk)) + newLine;
             textToPrint += formatLine("Total Belanja:", formatRupiah(globalTotalKeluar)) + newLine;
+            textToPrint += formatLine("  - Cash:", formatRupiah(globalKeluarCash)) + newLine;
+            textToPrint += formatLine("  - Transfer:", formatRupiah(globalKeluarTransfer)) + newLine;
+            
             textToPrint += divider;
+            
             textToPrint += formatLine("Sisa Kas:", formatRupiah(globalTotalMasuk - globalTotalKeluar)) + newLine;
+            textToPrint += formatLine("  - Cash:", formatRupiah(globalMasukCash - globalKeluarCash)) + newLine;
+            textToPrint += formatLine("  - Transfer:", formatRupiah(globalMasukTransfer - globalKeluarTransfer)) + newLine;
+            
             textToPrint += divider;
             textToPrint += centerText("-- Dicetak via Web --") + newLine + newLine + newLine;
 
