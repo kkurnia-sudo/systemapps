@@ -634,7 +634,7 @@
             });
         }
 
-        // --- 8. LOGIC BLUETOOTH PRINTING (DIPERBARUI DENGAN CHUNKING & FOOTER) ---
+        // --- 8. LOGIC BLUETOOTH PRINTING ---
         async function cetakBluetooth(maxChars = 32) {
             try {
                 const device = await navigator.bluetooth.requestDevice({
@@ -678,24 +678,24 @@
                 lines.push("\n\n    Admin / Logistik"); 
                 lines.push("-".repeat(maxChars));
                 
-                // Tambahan Footer Akhir Cetak agar rapi di tengah
                 let teksFooter = "*** AKHIR CETAK ***";
                 let spasiKiri = Math.max(0, Math.floor((maxChars - teksFooter.length) / 2));
                 lines.push(" ".repeat(spasiKiri) + teksFooter);
-                lines.push("\n\n\n\n"); // Jeda baris kosong agar gulungan kertas pas untuk disobek
+                lines.push("\n\n\n\n"); 
 
-                // Konversi seluruh baris teks ke format bytes
                 let text = lines.join("\n"); 
                 let encoder = new TextEncoder();
                 let data = encoder.encode(text);
                 
-                // MEKANISME CHUNKING (Pecah data per 100 bytes) agar tidak terpotong
-                let chunkSize = 100; 
+                // MEKANISME CHUNKING SANGAT AMAN (Pecah data per 20 bytes)
+                // Printer Bluetooth portabel memiliki batas MTU 20 bytes per paket data.
+                let chunkSize = 20; 
                 for (let i = 0; i < data.length; i += chunkSize) {
                     let chunk = data.slice(i, i + chunkSize);
                     await characteristic.writeValue(chunk);
-                    // Beri jeda 50 milidetik per potongan agar buffer printer tidak tersedak
-                    await new Promise(resolve => setTimeout(resolve, 50)); 
+                    
+                    // Jeda 100 milidetik agar printer sempat memproses dan mencetak sebelum data berikutnya masuk
+                    await new Promise(resolve => setTimeout(resolve, 100)); 
                 }
                 
                 alert('Berhasil mengirim perintah ke printer Bluetooth!');
