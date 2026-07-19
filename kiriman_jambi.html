@@ -3,38 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Kiriman Barang</title>
+    <title>Form Kiriman Barang - SBR Putra Food</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase JS -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- HTML2Canvas untuk fitur Simpan PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <style>
         body { transition: background-color 0.3s ease, color 0.3s ease; }
         @media (prefers-color-scheme: dark) {
             body { background-color: #111827; color: #f3f4f6; }
             .card-bg { background-color: #1f2937; }
             .input-bg { background-color: #374151; border-color: #4b5563; color: #f3f4f6; }
+            .hover-card:hover { background-color: #374151; }
         }
         @media (prefers-color-scheme: light) {
             body { background-color: #f3f4f6; color: #1f2937; }
             .card-bg { background-color: #ffffff; }
             .input-bg { background-color: #ffffff; border-color: #d1d5db; color: #1f2937; }
+            .hover-card:hover { background-color: #f3f4f6; }
         }
+        
+        /* Gaya khusus struk thermal (Preview) */
+        .thermal-preview {
+            font-family: 'Courier New', Courier, monospace;
+            color: black;
+            background: white;
+            padding: 15px;
+            margin: 0 auto;
+        }
+        .thermal-preview table { width: 100%; font-size: 12px; }
+        .thermal-preview th, .thermal-preview td { padding: 2px 0; text-align: left; vertical-align: top; }
+        .thermal-border { border-bottom: 1px dashed black; margin: 10px 0; }
     </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen">
+<body class="p-4 md:p-8 min-h-screen relative">
 
+    <!-- Form Utama -->
     <div class="max-w-5xl mx-auto card-bg p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
         <h1 class="text-2xl font-extrabold mb-6 flex items-center gap-2">
             <i class="ph ph-truck text-blue-500"></i> Kiriman Untuk Jambi
         </h1>
 
+        <!-- Bagian Input Header -->
         <div class="grid grid-cols-2 gap-4 mb-8">
             <div class="flex flex-col">
                 <label class="text-sm font-semibold mb-1 opacity-80">Hari / Tanggal</label>
-                <input type="text" id="tanggal" readonly class="input-bg border rounded-lg p-2.5 focus:outline-none cursor-not-allowed opacity-80">
+                <input type="date" id="tanggal" class="input-bg border rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold cursor-pointer">
             </div>
             <div class="flex flex-col">
                 <label class="text-sm font-semibold mb-1 opacity-80">Mobil</label>
@@ -42,6 +61,7 @@
             </div>
         </div>
 
+        <!-- Tabel Form Input Barang -->
         <h2 class="text-lg font-bold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">Rincian Barang & Ceklis</h2>
         
         <div class="overflow-x-auto pb-4">
@@ -58,7 +78,7 @@
                     </tr>
                 </thead>
                 <tbody id="item-tbody">
-                    <!-- Baris otomatis masuk ke sini -->
+                    <!-- Baris otomatis -->
                 </tbody>
             </table>
         </div>
@@ -67,77 +87,117 @@
             <i class="ph ph-plus-circle text-lg"></i> Tambah Baris
         </button>
 
-        <div class="mt-10 border-t border-gray-200 dark:border-gray-700 pt-6">
-            <button onclick="simpanData()" id="btn-simpan" type="button" class="w-full md:w-auto md:px-12 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
+        <!-- RIWAYAT PENGIRIMAN -->
+        <div class="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i class="ph ph-clock-counter-clockwise text-blue-500"></i> Riwayat Pengiriman Terakhir
+            </h2>
+            <div id="container-riwayat" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto pr-2">
+                <div class="p-4 rounded-lg border border-gray-300 dark:border-gray-600 text-sm opacity-70 italic text-center col-span-full">
+                    Memuat data riwayat...
+                </div>
+            </div>
+        </div>
+
+        <!-- Tombol Aksi Form -->
+        <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6 flex flex-col sm:flex-row gap-4">
+            <button onclick="simpanData()" id="btn-simpan" type="button" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
                 <i class="ph ph-floppy-disk text-xl"></i> Simpan Data
+            </button>
+            
+            <button onclick="bukaPreviewFormSaatIni()" type="button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
+                <i class="ph ph-printer text-xl"></i> Cetak / Preview Form
             </button>
         </div>
     </div>
 
-    <script>
-        // 1. Konfigurasi Client Supabase
-        const supabaseUrl = 'https://acpkdnktanrucyfyhckw.supabase.co'; 
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U'; 
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+    <!-- DIALOG LOADING (Muncul saat simpan PNG) -->
+    <div id="dialog-loading" class="fixed inset-0 bg-black bg-opacity-80 z-[9999] hidden flex-col items-center justify-center">
+        <div class="bg-white px-8 py-6 rounded-xl shadow-2xl flex flex-col items-center gap-4 text-gray-800">
+            <i class="ph ph-spinner animate-spin text-5xl text-blue-600"></i>
+            <span class="font-extrabold text-lg">Menyimpan gambar...</span>
+            <span class="text-sm opacity-80">Mohon tunggu sebentar</span>
+        </div>
+    </div>
 
-        // 2. Daftar Barang Default (Jika Gagal Tarik Data)
-        let daftarBarang = ["Makroni Naruto", "Aromanis", "Basreng Kiwari"];
-
-        // 3. Set Tanggal Hari Ini Saat Web Dimuat
-        function setTanggalOtomatis() {
-            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-            const d = new Date();
-            const yy = String(d.getFullYear()).slice(-2);
-            const dd = String(d.getDate()).padStart(2, '0');
-            const mmm = months[d.getMonth()];
-            document.getElementById('tanggal').value = `${dd}-${mmm}-${yy}`;
-        }
-
-        // 4. Ambil Data Dari Supabase
-        async function loadBarangDariSupabase() {
-            try {
-                const { data, error } = await supabase.from('barang_jambi').select('nama_barang');
-                if (error) throw error;
+    <!-- MODAL PREVIEW STRUK -->
+    <div id="modal-preview" class="fixed inset-0 bg-black bg-opacity-70 z-[999] hidden overflow-y-auto">
+        <div class="min-h-full flex flex-col items-center justify-center py-10 px-4">
+            
+            <!-- Area Resi/Struk -->
+            <div id="area-struk" class="thermal-preview max-w-[350px] w-full rounded shadow-2xl relative shrink-0">
+                <div class="text-center font-bold text-lg mb-1">SURAT JALAN</div>
+                <div class="text-center text-sm font-bold mb-2">SBR PUTRA FOOD</div>
+                <div class="thermal-border"></div>
                 
-                if (data && data.length > 0) {
-                    daftarBarang = data.map(item => item.nama_barang);
-                }
-            } catch (err) {
-                console.warn("Gagal menarik daftar barang dari Supabase, menggunakan data default.");
-            } finally {
-                // Pastikan tabel tidak kosong saat pertama dibuka
-                tambahBaris();
-            }
-        }
+                <table class="mb-2">
+                    <tr><td width="30%">Tgl</td><td width="5%">:</td><td id="prev-tgl">-</td></tr>
+                    <tr><td>Mobil</td><td>:</td><td id="prev-mobil">-</td></tr>
+                </table>
+                
+                <div class="thermal-border"></div>
+                <div class="font-bold text-xs mb-1">DAFTAR BARANG:</div>
+                
+                <table id="prev-tabel-barang" class="mb-2">
+                    <!-- Data barang masuk sini -->
+                </table>
+                
+                <div class="thermal-border"></div>
+                <div class="text-center text-xs mt-4">Terima Kasih</div>
+                <div class="text-center text-xs">Harap cek barang sebelum supir pergi</div>
+            </div>
 
-        // 5. Fungsi Tambah Baris
+            <!-- Tombol Aksi Modal -->
+            <div class="mt-6 flex flex-wrap justify-center gap-3 w-full max-w-md shrink-0">
+                <button onclick="simpanPNG()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-bold shadow-lg transition transform hover:scale-105">
+                    <i class="ph ph-image text-lg"></i> Simpan PNG
+                </button>
+                <button onclick="cetakThermal('58mm')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-bold shadow-lg transition transform hover:scale-105">
+                    <i class="ph ph-bluetooth text-lg"></i> 58mm
+                </button>
+                <button onclick="cetakThermal('80mm')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-bold shadow-lg transition transform hover:scale-105">
+                    <i class="ph ph-bluetooth text-lg"></i> 80mm
+                </button>
+                <button onclick="tutupPreview()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center justify-center gap-2 text-sm font-bold w-full sm:w-auto mt-2 sm:mt-0 shadow-lg">
+                    Tutup
+                </button>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- LOGIKA JAVASCRIPT -->
+    <script>
+        // --- INISIALISASI DASAR ---
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        document.getElementById('tanggal').value = `${yyyy}-${mm}-${dd}`;
+
+        let daftarBarang = ["Makroni Naruto", "Aromanis", "Basreng Kiwari"];
+        let dataRiwayatGlobal = {}; 
+
+        // --- FUNGSI TABEL FORM ---
         function tambahBaris() {
             const tbody = document.getElementById('item-tbody');
             const tr = document.createElement('tr');
             
             let opsiDropdown = `<option value="">Pilih Barang...</option>`;
-            daftarBarang.forEach(item => {
-                opsiDropdown += `<option value="${item}">${item}</option>`;
-            });
+            daftarBarang.forEach(item => { opsiDropdown += `<option value="${item}">${item}</option>`; });
 
             tr.innerHTML = `
                 <td class="p-2"><select class="inp-nama input-bg border rounded w-full p-2 focus:ring-2 focus:ring-blue-500">${opsiDropdown}</select></td>
                 <td class="p-2"><input type="number" oninput="kalkulasiSisa(this)" class="inp-qty input-bg border rounded w-full p-2 focus:ring-2 focus:ring-blue-500" placeholder="0"></td>
-                <td class="p-2"><input type="text" class="inp-uom input-bg border rounded w-full p-2 focus:ring-2 focus:ring-blue-500" placeholder="pcs/kg"></td>
+                <td class="p-2"><input type="text" class="inp-uom input-bg border rounded w-full p-2 focus:ring-2 focus:ring-blue-500" placeholder="pcs"></td>
                 <td class="p-2"><input type="text" class="inp-ket input-bg border rounded w-full p-2 focus:ring-2 focus:ring-blue-500" placeholder="..."></td>
                 <td class="p-2 border-l-2 border-gray-200 dark:border-gray-700 pl-4"><input type="number" oninput="kalkulasiSisa(this)" class="inp-total input-bg border rounded w-full p-2 focus:ring-2 focus:ring-blue-500" placeholder="0"></td>
                 <td class="p-2"><input type="number" readonly class="inp-sisa input-bg border border-transparent rounded w-full p-2 font-bold opacity-80" placeholder="0"></td>
-                <td class="p-2 text-center text-red-500 cursor-pointer hover:text-red-700" onclick="hapusBaris(this)"><i class="ph ph-trash text-xl"></i></td>
+                <td class="p-2 text-center text-red-500 cursor-pointer hover:text-red-700" onclick="this.closest('tr').remove()"><i class="ph ph-trash text-xl"></i></td>
             `;
             tbody.appendChild(tr);
         }
 
-        // 6. Fungsi Hapus Baris
-        function hapusBaris(elemen) {
-            elemen.closest('tr').remove();
-        }
-
-        // 7. Kalkulasi Sisa
         function kalkulasiSisa(elemen) {
             const baris = elemen.closest('tr');
             const qty = parseFloat(baris.querySelector('.inp-qty').value) || 0;
@@ -145,22 +205,283 @@
             baris.querySelector('.inp-sisa').value = qty - totalTerkirim;
         }
 
-        // 8. Eksekusi Simpan Data
+        for(let i=0; i<5; i++) { tambahBaris(); }
+
+        // --- FUNGSI FORMAT & PREVIEW ---
+        function formatTanggalIndo(tglInput) {
+            if(!tglInput) return "-";
+            const dateObj = new Date(tglInput);
+            const namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+            return `${String(dateObj.getDate()).padStart(2, '0')}-${namaBulan[dateObj.getMonth()]}-${dateObj.getFullYear()}`;
+        }
+
+        function renderItemStruk(nama, qty, uom, ket, terkirim, sisa) {
+            let strKet = ket ? ` | Ket: ${ket}` : ``;
+            return `
+                <tr><td colspan="3" class="font-bold pt-1">- ${nama}</td></tr>
+                <tr>
+                    <td colspan="3" class="pl-3 pb-1">
+                        ${qty} ${uom} <span class="text-xs italic opacity-80 ml-1">(Kirim: ${terkirim} | Sisa: ${sisa}${strKet})</span>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function bukaPreviewFormSaatIni() {
+            const tgl = document.getElementById('tanggal').value;
+            const mbl = document.getElementById('mobil').value || "-";
+            
+            document.getElementById('prev-tgl').innerText = formatTanggalIndo(tgl);
+            document.getElementById('prev-mobil').innerText = mbl;
+
+            const barisTabel = document.querySelectorAll('#item-tbody tr');
+            const targetTabelPrev = document.getElementById('prev-tabel-barang');
+            targetTabelPrev.innerHTML = ""; 
+
+            let adaData = false;
+            barisTabel.forEach(baris => {
+                const nama = baris.querySelector('.inp-nama').value;
+                if (nama !== "") {
+                    adaData = true;
+                    targetTabelPrev.innerHTML += renderItemStruk(
+                        nama,
+                        baris.querySelector('.inp-qty').value || "0",
+                        baris.querySelector('.inp-uom').value || "",
+                        baris.querySelector('.inp-ket').value || "",
+                        baris.querySelector('.inp-total').value || "0",
+                        baris.querySelector('.inp-sisa').value || "0"
+                    );
+                }
+            });
+
+            if(!adaData) targetTabelPrev.innerHTML = "<tr><td class='text-center italic'>Belum ada barang diinput</td></tr>";
+            tampilkanModal();
+        }
+
+        function bukaPreviewDariRiwayat(keyRiwayat) {
+            const dataPilihan = dataRiwayatGlobal[keyRiwayat];
+            if(!dataPilihan || dataPilihan.length === 0) return;
+
+            document.getElementById('prev-tgl').innerText = dataPilihan[0].tanggal;
+            document.getElementById('prev-mobil').innerText = dataPilihan[0].mobil || "-";
+
+            const targetTabelPrev = document.getElementById('prev-tabel-barang');
+            targetTabelPrev.innerHTML = ""; 
+
+            dataPilihan.forEach(item => {
+                targetTabelPrev.innerHTML += renderItemStruk(
+                    item.nama_barang,
+                    item.qty,
+                    item.uom,
+                    item.keterangan,
+                    item.total_terkirim,
+                    item.sisa
+                );
+            });
+
+            tampilkanModal();
+        }
+
+        function tampilkanModal() {
+            document.getElementById('modal-preview').classList.remove('hidden');
+            document.getElementById('modal-preview').classList.add('block');
+        }
+
+        function tutupPreview() {
+            document.getElementById('modal-preview').classList.add('hidden');
+            document.getElementById('modal-preview').classList.remove('block');
+        }
+
+        // --- FUNGSI CETAK & EKSPOR (DIPERBARUI) ---
+        function simpanPNG() {
+            // Munculkan dialog loading
+            const dialogLoading = document.getElementById('dialog-loading');
+            dialogLoading.classList.remove('hidden');
+            dialogLoading.classList.add('flex');
+
+            // Ambil elemen asli
+            const strukAsli = document.getElementById('area-struk');
+            
+            // Gandakan elemen struk ke luar dari batasan pop-up modal 
+            // agar bisa dicapture 100% full tanpa terpotong batas atas/bawah layar HP
+            const strukClone = strukAsli.cloneNode(true);
+            strukClone.style.position = 'absolute';
+            strukClone.style.top = '-9999px'; // Sembunyikan di luar layar
+            strukClone.style.left = '0';
+            strukClone.style.margin = '0';
+            document.body.appendChild(strukClone);
+
+            // Beri jeda sejenak (300ms) agar DOM selesai menyusun clone sebelum dicapture
+            setTimeout(() => {
+                html2canvas(strukClone, { 
+                    scale: 2, 
+                    backgroundColor: "#ffffff",
+                    useCORS: true
+                }).then(canvas => {
+                    let link = document.createElement('a');
+                    const prevTglStr = document.getElementById('prev-tgl').innerText;
+                    link.download = `SBR_Putra_Food_${prevTglStr}.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                    
+                    // Bersihkan clone dan hilangkan loading
+                    document.body.removeChild(strukClone);
+                    dialogLoading.classList.add('hidden');
+                    dialogLoading.classList.remove('flex');
+                }).catch(err => {
+                    alert("Gagal menyimpan gambar: " + err.message);
+                    document.body.removeChild(strukClone);
+                    dialogLoading.classList.add('hidden');
+                    dialogLoading.classList.remove('flex');
+                });
+            }, 300);
+        }
+
+        function cetakThermal(ukuran) {
+            const widthCSS = (ukuran === '58mm') ? '58mm' : '80mm';
+            const htmlStruk = document.getElementById('area-struk').outerHTML;
+            
+            let printWindow = window.open('', '_blank', 'width=400,height=600');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Cetak ${ukuran}</title>
+                    <style>
+                        @page { margin: 0; size: ${widthCSS} auto; }
+                        body { 
+                            margin: 0; padding: 5px; 
+                            font-family: 'Courier New', Courier, monospace;
+                            width: ${widthCSS}; 
+                            color: black; background: white;
+                        }
+                        .thermal-preview { width: 100%; box-sizing: border-box; }
+                        table { width: 100%; font-size: 12px; border-collapse: collapse; }
+                        th, td { padding: 2px 0; text-align: left; vertical-align: top;}
+                        .thermal-border { border-bottom: 1px dashed black; margin: 8px 0; }
+                        .text-center { text-align: center; }
+                        .text-right { text-align: right; }
+                        .font-bold { font-weight: bold; }
+                        .italic { font-style: italic; }
+                        .text-sm { font-size: 14px; }
+                        .text-lg { font-size: 18px; }
+                        .text-xs { font-size: 10px; }
+                        .mb-1 { margin-bottom: 4px; }
+                        .mb-2 { margin-bottom: 8px; }
+                        .mt-4 { margin-top: 16px; }
+                        .pt-1 { padding-top: 4px; }
+                        .pl-3 { padding-left: 12px; }
+                        .pb-1 { padding-bottom: 4px; }
+                        .ml-1 { margin-left: 4px; }
+                    </style>
+                </head>
+                <body>
+                    ${htmlStruk}
+                    <script>
+                        window.onload = function() { window.print(); window.close(); }
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        // --- DATABASE SUPABASE ---
+        const supabaseUrl = 'https://acpkdnktanrucyfyhckw.supabase.co'; 
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U'; 
+        let clientSupabase;
+
+        async function persiapkanDatabase() {
+            try {
+                if (window.supabase) {
+                    clientSupabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+                    
+                    const { data: dataBarang, error: errBarang } = await clientSupabase.from('barang_jambi').select('nama_barang');
+                    if (!errBarang && dataBarang.length > 0) {
+                        daftarBarang = dataBarang.map(item => item.nama_barang);
+                        document.querySelectorAll('.inp-nama').forEach(select => {
+                            if (select.value === "") {
+                                let opsiBaru = `<option value="">Pilih Barang...</option>`;
+                                daftarBarang.forEach(b => opsiBaru += `<option value="${b}">${b}</option>`);
+                                select.innerHTML = opsiBaru;
+                            }
+                        });
+                    }
+
+                    tarikRiwayatPengiriman();
+                }
+            } catch (err) { console.log("Gagal inisialisasi Supabase"); }
+        }
+        setTimeout(persiapkanDatabase, 500);
+
+        async function tarikRiwayatPengiriman() {
+            const wadahRiwayat = document.getElementById('container-riwayat');
+            try {
+                const { data, error } = await clientSupabase
+                    .from('table_kirimanjambi')
+                    .select('*')
+                    .order('id', { ascending: false }); 
+                
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    wadahRiwayat.innerHTML = `<div class="p-4 rounded-lg border border-gray-300 dark:border-gray-600 text-sm opacity-70 italic text-center col-span-full">Belum ada riwayat pengiriman.</div>`;
+                    return;
+                }
+
+                dataRiwayatGlobal = {};
+                data.forEach(row => {
+                    const key = `${row.tanggal}_${row.mobil}`;
+                    if (!dataRiwayatGlobal[key]) {
+                        dataRiwayatGlobal[key] = [];
+                    }
+                    dataRiwayatGlobal[key].push(row);
+                });
+
+                wadahRiwayat.innerHTML = "";
+                Object.keys(dataRiwayatGlobal).forEach(key => {
+                    const info = dataRiwayatGlobal[key][0]; 
+                    const jmlBarang = dataRiwayatGlobal[key].length;
+                    
+                    const btnHtml = `
+                        <div onclick="bukaPreviewDariRiwayat('${key}')" class="hover-card border border-gray-200 dark:border-gray-600 p-4 rounded-xl cursor-pointer transition flex items-center justify-between shadow-sm">
+                            <div>
+                                <div class="font-bold text-sm mb-1">${info.tanggal}</div>
+                                <div class="text-xs opacity-80 flex items-center gap-1">
+                                    <i class="ph ph-jeep"></i> ${info.mobil || 'Tidak ada mobil'}
+                                </div>
+                            </div>
+                            <div class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 px-2 py-1 rounded-lg text-xs font-bold">
+                                ${jmlBarang} Item
+                            </div>
+                        </div>
+                    `;
+                    wadahRiwayat.innerHTML += btnHtml;
+                });
+
+            } catch (err) {
+                console.error("Gagal menarik riwayat:", err);
+                wadahRiwayat.innerHTML = `<div class="p-4 rounded-lg border border-red-300 text-red-500 text-sm text-center col-span-full">Gagal memuat riwayat pengiriman.</div>`;
+            }
+        }
+
         async function simpanData() {
             const btn = document.getElementById('btn-simpan');
+            if (!clientSupabase) return alert("Database belum terkoneksi. Cek internet Anda.");
+
             btn.innerHTML = '<i class="ph ph-spinner animate-spin text-xl"></i> Menyimpan...';
             btn.disabled = true;
 
-            const tgl = document.getElementById('tanggal').value;
+            const tglRaw = document.getElementById('tanggal').value;
+            const tglIndo = formatTanggalIndo(tglRaw); 
             const mbl = document.getElementById('mobil').value;
             const barisTabel = document.querySelectorAll('#item-tbody tr');
             let dataDikirim = [];
 
             barisTabel.forEach(baris => {
                 const nama = baris.querySelector('.inp-nama').value;
-                if (nama !== "") { // Hanya ambil baris yang barangnya sudah dipilih
+                if (nama !== "") { 
                     dataDikirim.push({
-                        tanggal: tgl,
+                        tanggal: tglIndo,
                         mobil: mbl,
                         nama_barang: nama,
                         qty: baris.querySelector('.inp-qty').value || "0",
@@ -174,40 +495,30 @@
 
             if (dataDikirim.length === 0) {
                 alert("Harap pilih nama barang minimal pada 1 baris!");
-                resetTombolSimpan();
+                btn.innerHTML = '<i class="ph ph-floppy-disk text-xl"></i> Simpan Data';
+                btn.disabled = false;
                 return;
             }
 
             try {
-                const { error } = await supabase.from('table_kirimanjambi').insert(dataDikirim);
+                const { error } = await clientSupabase.from('table_kirimanjambi').insert(dataDikirim);
                 if (error) throw error;
                 
-                alert('Data berhasil disimpan ke Supabase!');
+                alert('Data berhasil disimpan!');
                 
-                // Bersihkan form setelah sukses
                 document.getElementById('mobil').value = '';
                 document.getElementById('item-tbody').innerHTML = '';
-                tambahBaris();
+                for(let i=0; i<5; i++) { tambahBaris(); } 
+
+                tarikRiwayatPengiriman();
+
             } catch (err) {
                 alert("Terjadi kesalahan saat menyimpan: " + err.message);
-                console.error(err);
             }
 
-            resetTombolSimpan();
-        }
-
-        function resetTombolSimpan() {
-            const btn = document.getElementById('btn-simpan');
             btn.innerHTML = '<i class="ph ph-floppy-disk text-xl"></i> Simpan Data';
             btn.disabled = false;
         }
-
-        // --- Inisialisasi Saat Halaman Dimuat ---
-        document.addEventListener('DOMContentLoaded', () => {
-            setTanggalOtomatis();
-            loadBarangDariSupabase();
-        });
-
     </script>
 </body>
 </html>
