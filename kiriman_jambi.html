@@ -330,7 +330,7 @@
             }, 300);
         }
 
-        // --- FUNGSI CETAK WEB BLUETOOTH API (TANPA PIHAK KE-3) ---
+        // --- FUNGSI CETAK WEB BLUETOOTH API ---
         function textToBuffer(text) {
             let buffer = new Uint8Array(text.length);
             for (let i = 0; i < text.length; i++) {
@@ -340,24 +340,27 @@
         }
 
         async function cetakWebBluetooth(karakterMaksimal) {
+            // 1. Cek apakah browser mendukung Web Bluetooth
             if (!navigator.bluetooth) {
-                alert("Browser Anda tidak mendukung Web Bluetooth. Harap gunakan Google Chrome di Android atau PC.");
+                alert("Gagal: Browser ini tidak mendukung Web Bluetooth.\n\nSolusi: Buka link ini langsung di aplikasi Google Chrome bawaan HP, BUKAN dari dalam WhatsApp/Facebook.");
                 return;
             }
 
             try {
-                // 1. Meminta izin pengguna untuk memilih printer Bluetooth
+                // 2. Meminta izin pengguna (Memunculkan pop-up)
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true, 
                     optionalServices: [
-                        '000018f0-0000-1000-8000-00805f9b34fb', // UUID standar printer generic
-                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2'  // UUID alternatif
+                        '000018f0-0000-1000-8000-00805f9b34fb', // UUID Generic 1
+                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // UUID Generic 2
+                        '0000fee7-0000-1000-8000-00805f9b34fb'  // UUID Generic 3 (Umumnya printer Tiongkok)
                     ] 
                 });
 
+                // Jika berhasil memilih, koneksikan ke perangkat
                 const server = await device.gatt.connect();
                 
-                // 2. Mencari Service & Characteristic Printer
+                // 3. Mencari Jalur Data (Service & Characteristic)
                 const services = await server.getPrimaryServices();
                 let printCharacteristic = null;
 
@@ -373,15 +376,14 @@
                 }
 
                 if (!printCharacteristic) {
-                    throw new Error("Karakteristik penulisan data ke printer tidak ditemukan.");
+                    throw new Error("Jalur data (Characteristic) printer tidak ditemukan. Printer mungkin tidak didukung.");
                 }
 
-                // 3. Menyusun data ESC/POS dari Form SBR Putra Food
+                // 4. Menyusun data ESC/POS dari Form
                 const tgl = document.getElementById('prev-tgl').innerText;
                 const mobil = document.getElementById('prev-mobil').innerText;
                 
                 const ESC = "\x1B";
-                const GS = "\x1D";
                 const INIT = ESC + "@"; 
                 const ALIGN_CENTER = ESC + "a\x01";
                 const ALIGN_LEFT = ESC + "a\x00";
@@ -392,20 +394,17 @@
 
                 let dataCetak = INIT;
                 
-                // Header Struk
                 dataCetak += ALIGN_CENTER;
                 dataCetak += BOLD_ON + "SURAT JALAN" + BOLD_OFF + NEW_LINE;
                 dataCetak += BOLD_ON + "SBR PUTRA FOOD" + BOLD_OFF + NEW_LINE;
                 dataCetak += LINE;
                 
-                // Info Pengiriman
                 dataCetak += ALIGN_LEFT;
                 dataCetak += "Tgl   : " + tgl + NEW_LINE;
                 dataCetak += "Mobil : " + mobil + NEW_LINE;
                 dataCetak += LINE;
                 dataCetak += BOLD_ON + "DAFTAR BARANG:" + BOLD_OFF + NEW_LINE;
 
-                // Looping Data Barang dari Form
                 const barisTabel = document.querySelectorAll('#item-tbody tr');
                 let adaBarang = false;
                 
@@ -436,20 +435,27 @@
                 dataCetak += "Harap cek barang sebelum supir pergi" + NEW_LINE;
                 dataCetak += NEW_LINE + NEW_LINE + NEW_LINE; 
 
-                // 4. Mengirim Buffer ke Printer
+                // 5. Mengirim Data ke Printer
                 const bufferInfo = textToBuffer(dataCetak);
-                
-                const CHUNK_SIZE = 100; 
+                const CHUNK_SIZE = 100; // Dikirim per 100 byte agar tidak macet
                 for (let i = 0; i < bufferInfo.length; i += CHUNK_SIZE) {
                     const chunk = bufferInfo.slice(i, i + CHUNK_SIZE);
                     await printCharacteristic.writeValue(chunk);
                 }
 
-                alert("Berhasil mengirim instruksi cetak ke printer!");
-
             } catch (error) {
                 console.error("Gagal mencetak:", error);
-                alert("Gagal koneksi ke printer: " + error.message);
+                
+                // Sistem deteksi error otomatis
+                if (error.name === 'NotFoundError') {
+                    alert("Dialog ditutup, atau printer tidak ditemukan. Pastikan printer menyala dan belum terkoneksi ke HP lain.");
+                } else if (error.name === 'SecurityError') {
+                    alert("Keamanan Browser: Web ini harus dijalankan dengan HTTPS (gembok hijau), bukan file lokal.");
+                } else if (error.name === 'NetworkError') {
+                    alert("Gagal terhubung ke printer. Coba matikan dan nyalakan lagi Bluetooth HP Anda.");
+                } else {
+                    alert("Terjadi masalah: " + error.message);
+                }
             }
         }
 
