@@ -57,7 +57,7 @@
                 <input type="text" id="tanggal" class="flex-1 px-3 py-1.5 bg-transparent border-b-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:border-primary text-sm font-medium">
             </div>
 
-            <!-- Input Form Section (Minimalis Tanpa Label) -->
+            <!-- Input Form Section -->
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <select id="agen" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
@@ -107,7 +107,7 @@
                 <button onclick="loadRiwayatDB()" class="w-full bg-primary text-white text-xs py-2 rounded-md font-bold mt-1">Cari Data</button>
             </div>
             
-            <!-- Flatbox Riwayat Minimalis -->
+            <!-- Flatbox Riwayat -->
             <div class="border border-gray-200 dark:border-gray-700 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-2">
                 <div id="riwayatDbContainer" class="space-y-1.5 max-h-[300px] overflow-y-auto receipt-scroll pr-1">
                     <p class="text-center text-xs text-gray-500 py-4 italic">Memuat data...</p>
@@ -130,10 +130,33 @@
         </div>
     </div>
 
-    <!-- Modal Edit Database -->
+    <!-- Modal Edit / Hapus Antrean Belum Disimpan (Draft) -->
+    <div id="modalEditDraft" class="fixed inset-0 bg-black/70 z-50 hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 px-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-5 transform scale-95 transition-transform duration-300 shadow-2xl" id="modalEditDraftContent">
+            <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Edit / Hapus Antrean</h3>
+            
+            <div class="space-y-3 mb-6">
+                <select id="editDraftAgen" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"></select>
+                
+                <select id="editDraftMobil" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"></select>
+                
+                <select id="editDraftDriver" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"></select>
+                
+                <select id="editDraftCodriver" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"></select>
+            </div>
+
+            <div class="flex flex-col space-y-2.5">
+                <button onclick="simpanEditDraft()" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md transition active:scale-[0.98]">Simpan Perubahan</button>
+                <button onclick="hapusDraftModal()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-md transition active:scale-[0.98]">Hapus Dari Antrean</button>
+                <button onclick="tutupEditDraftModal()" class="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-3 rounded-xl transition active:scale-[0.98]">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit / Hapus Riwayat Database -->
     <div id="modalEdit" class="fixed inset-0 bg-black/70 z-50 hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 px-4">
         <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-5 transform scale-95 transition-transform duration-300 shadow-2xl" id="modalEditContent">
-            <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Edit / Hapus Data</h3>
+            <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Edit / Hapus Riwayat Database</h3>
             
             <div class="space-y-3 mb-6">
                 <select id="editAgen" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"></select>
@@ -214,6 +237,7 @@
         let listRekapan = []; 
         let dataRiwayatDB = []; 
         let currentEditId = null; 
+        let currentDraftEditId = null; // Variabel ID untuk Edit Draft
 
         window.onload = () => {
             flatpickr("#tanggal", { dateFormat: "Y-m-d", altInput: true, altFormat: "d/m/Y", defaultDate: "today", disableMobile: true });
@@ -258,11 +282,17 @@
 
             if (!dataBerhasilDiambil) isiDropdownDummy();
 
-            // Salin daftar opsi ke dropdown modal Edit
+            // Salin daftar opsi ke dropdown modal Edit Database
             document.getElementById('editAgen').innerHTML = document.getElementById('agen').innerHTML;
             document.getElementById('editMobil').innerHTML = document.getElementById('mobil').innerHTML;
             document.getElementById('editDriver').innerHTML = document.getElementById('driver').innerHTML;
             document.getElementById('editCodriver').innerHTML = document.getElementById('codriver').innerHTML;
+
+            // Salin daftar opsi ke dropdown modal Edit Draft
+            document.getElementById('editDraftAgen').innerHTML = document.getElementById('agen').innerHTML;
+            document.getElementById('editDraftMobil').innerHTML = document.getElementById('mobil').innerHTML;
+            document.getElementById('editDraftDriver').innerHTML = document.getElementById('driver').innerHTML;
+            document.getElementById('editDraftCodriver').innerHTML = document.getElementById('codriver').innerHTML;
         }
 
         function populateSelect(id, data, key, placeholder) {
@@ -303,11 +333,6 @@
             document.getElementById('codriver').value = ''; document.getElementById('mobil').value = '';
         }
 
-        function hapusDraft(id) {
-            listRekapan = listRekapan.filter(item => item.id !== id);
-            renderDraft();
-        }
-
         function renderDraft() {
             const section = document.getElementById('draftSection');
             const container = document.getElementById('draftContainer');
@@ -324,8 +349,12 @@
                         <div class="pl-1.5 flex flex-col">
                             <div class="flex justify-between items-center mb-0.5">
                                 <span class="font-bold text-xs text-blue-900 dark:text-blue-100 truncate pr-2">${index + 1}. ${item.agen}</span>
-                                <button onclick="hapusDraft(${item.id})" class="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 p-1 rounded transition shrink-0" title="Hapus">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                
+                                <!-- Hanya Satu Tombol: Buka Modal -->
+                                <button onclick="bukaEditDraftModal(${item.id})" class="text-blue-600 hover:bg-blue-200 dark:text-blue-400 dark:hover:bg-blue-900/30 p-1.5 rounded transition shrink-0" title="Edit/Hapus">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                                    </svg>
                                 </button>
                             </div>
                             <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-blue-800 dark:text-blue-300 leading-tight">
@@ -337,6 +366,53 @@
                     </div>
                 `;
             });
+        }
+
+        // --- 3B. LOGIC MODAL DRAFT (ANTREAN) ---
+        function bukaEditDraftModal(id) {
+            currentDraftEditId = id;
+            const item = listRekapan.find(x => x.id === id);
+            if(!item) return;
+
+            document.getElementById('editDraftAgen').value = item.agen;
+            document.getElementById('editDraftMobil').value = item.mobil;
+            document.getElementById('editDraftDriver').value = item.driver;
+            
+            const editCo = document.getElementById('editDraftCodriver');
+            editCo.value = item.codriver ? item.codriver : "- Kosong -";
+
+            const modal = document.getElementById('modalEditDraft');
+            const content = document.getElementById('modalEditDraftContent');
+            modal.classList.remove('hidden'); modal.style.display = 'flex';
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        }
+
+        function tutupEditDraftModal() {
+            const modal = document.getElementById('modalEditDraft');
+            const content = document.getElementById('modalEditDraftContent');
+            modal.classList.add('opacity-0'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); modal.style.display = ''; currentDraftEditId = null; }, 300);
+        }
+
+        function simpanEditDraft() {
+            const index = listRekapan.findIndex(x => x.id === currentDraftEditId);
+            if (index !== -1) {
+                listRekapan[index].agen = document.getElementById('editDraftAgen').value;
+                listRekapan[index].mobil = document.getElementById('editDraftMobil').value;
+                listRekapan[index].driver = document.getElementById('editDraftDriver').value;
+                
+                const co = document.getElementById('editDraftCodriver').value;
+                listRekapan[index].codriver = (co === '- Kosong -' || !co) ? '' : co;
+            }
+            
+            tutupEditDraftModal();
+            renderDraft();
+        }
+
+        function hapusDraftModal() {
+            listRekapan = listRekapan.filter(item => item.id !== currentDraftEditId);
+            tutupEditDraftModal();
+            renderDraft();
         }
 
         // --- 4. LOGIC RIWAYAT DATABASE & FILTER ---
@@ -410,7 +486,7 @@
             });
         }
 
-        // --- 5. LOGIC MODAL EDIT & HAPUS ---
+        // --- 5. LOGIC MODAL EDIT & HAPUS DATABASE ---
         function bukaEditModal(id) {
             currentEditId = id;
             const item = dataRiwayatDB.find(x => x.id === id);
