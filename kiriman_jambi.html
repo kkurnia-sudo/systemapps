@@ -147,16 +147,16 @@
                 <div class="text-center text-xs">Harap cek barang sebelum supir pergi</div>
             </div>
 
-            <!-- Tombol Aksi Modal -->
+            <!-- Tombol Aksi Modal (Diperbarui untuk Web Bluetooth) -->
             <div class="mt-6 flex flex-wrap justify-center gap-3 w-full max-w-md shrink-0">
                 <button onclick="simpanPNG()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-bold shadow-lg transition transform hover:scale-105">
                     <i class="ph ph-image text-lg"></i> Simpan PNG
                 </button>
-                <button onclick="cetakThermal('58mm')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-bold shadow-lg transition transform hover:scale-105">
-                    <i class="ph ph-bluetooth text-lg"></i> 58mm
+                <button onclick="cetakWebBluetooth(32)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-bold shadow-lg transition transform hover:scale-105">
+                    <i class="ph ph-bluetooth text-lg"></i> Cetak BT (58mm)
                 </button>
-                <button onclick="cetakThermal('80mm')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-bold shadow-lg transition transform hover:scale-105">
-                    <i class="ph ph-bluetooth text-lg"></i> 80mm
+                <button onclick="cetakWebBluetooth(48)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-bold shadow-lg transition transform hover:scale-105">
+                    <i class="ph ph-bluetooth text-lg"></i> Cetak BT (80mm)
                 </button>
                 <button onclick="tutupPreview()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center justify-center gap-2 text-sm font-bold w-full sm:w-auto mt-2 sm:mt-0 shadow-lg">
                     Tutup
@@ -292,26 +292,20 @@
             document.getElementById('modal-preview').classList.remove('block');
         }
 
-        // --- FUNGSI CETAK & EKSPOR (DIPERBARUI) ---
+        // --- FUNGSI SIMPAN PNG ---
         function simpanPNG() {
-            // Munculkan dialog loading
             const dialogLoading = document.getElementById('dialog-loading');
             dialogLoading.classList.remove('hidden');
             dialogLoading.classList.add('flex');
 
-            // Ambil elemen asli
             const strukAsli = document.getElementById('area-struk');
-            
-            // Gandakan elemen struk ke luar dari batasan pop-up modal 
-            // agar bisa dicapture 100% full tanpa terpotong batas atas/bawah layar HP
             const strukClone = strukAsli.cloneNode(true);
             strukClone.style.position = 'absolute';
-            strukClone.style.top = '-9999px'; // Sembunyikan di luar layar
+            strukClone.style.top = '-9999px'; 
             strukClone.style.left = '0';
             strukClone.style.margin = '0';
             document.body.appendChild(strukClone);
 
-            // Beri jeda sejenak (300ms) agar DOM selesai menyusun clone sebelum dicapture
             setTimeout(() => {
                 html2canvas(strukClone, { 
                     scale: 2, 
@@ -324,7 +318,6 @@
                     link.href = canvas.toDataURL("image/png");
                     link.click();
                     
-                    // Bersihkan clone dan hilangkan loading
                     document.body.removeChild(strukClone);
                     dialogLoading.classList.add('hidden');
                     dialogLoading.classList.remove('flex');
@@ -337,52 +330,127 @@
             }, 300);
         }
 
-        function cetakThermal(ukuran) {
-            const widthCSS = (ukuran === '58mm') ? '58mm' : '80mm';
-            const htmlStruk = document.getElementById('area-struk').outerHTML;
-            
-            let printWindow = window.open('', '_blank', 'width=400,height=600');
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Cetak ${ukuran}</title>
-                    <style>
-                        @page { margin: 0; size: ${widthCSS} auto; }
-                        body { 
-                            margin: 0; padding: 5px; 
-                            font-family: 'Courier New', Courier, monospace;
-                            width: ${widthCSS}; 
-                            color: black; background: white;
+        // --- FUNGSI CETAK WEB BLUETOOTH API (TANPA PIHAK KE-3) ---
+        function textToBuffer(text) {
+            let buffer = new Uint8Array(text.length);
+            for (let i = 0; i < text.length; i++) {
+                buffer[i] = text.charCodeAt(i);
+            }
+            return buffer;
+        }
+
+        async function cetakWebBluetooth(karakterMaksimal) {
+            if (!navigator.bluetooth) {
+                alert("Browser Anda tidak mendukung Web Bluetooth. Harap gunakan Google Chrome di Android atau PC.");
+                return;
+            }
+
+            try {
+                // 1. Meminta izin pengguna untuk memilih printer Bluetooth
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true, 
+                    optionalServices: [
+                        '000018f0-0000-1000-8000-00805f9b34fb', // UUID standar printer generic
+                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2'  // UUID alternatif
+                    ] 
+                });
+
+                const server = await device.gatt.connect();
+                
+                // 2. Mencari Service & Characteristic Printer
+                const services = await server.getPrimaryServices();
+                let printCharacteristic = null;
+
+                for (const service of services) {
+                    const characteristics = await service.getCharacteristics();
+                    for (const characteristic of characteristics) {
+                        if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+                            printCharacteristic = characteristic;
+                            break;
                         }
-                        .thermal-preview { width: 100%; box-sizing: border-box; }
-                        table { width: 100%; font-size: 12px; border-collapse: collapse; }
-                        th, td { padding: 2px 0; text-align: left; vertical-align: top;}
-                        .thermal-border { border-bottom: 1px dashed black; margin: 8px 0; }
-                        .text-center { text-align: center; }
-                        .text-right { text-align: right; }
-                        .font-bold { font-weight: bold; }
-                        .italic { font-style: italic; }
-                        .text-sm { font-size: 14px; }
-                        .text-lg { font-size: 18px; }
-                        .text-xs { font-size: 10px; }
-                        .mb-1 { margin-bottom: 4px; }
-                        .mb-2 { margin-bottom: 8px; }
-                        .mt-4 { margin-top: 16px; }
-                        .pt-1 { padding-top: 4px; }
-                        .pl-3 { padding-left: 12px; }
-                        .pb-1 { padding-bottom: 4px; }
-                        .ml-1 { margin-left: 4px; }
-                    </style>
-                </head>
-                <body>
-                    ${htmlStruk}
-                    <script>
-                        window.onload = function() { window.print(); window.close(); }
-                    <\/script>
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
+                    }
+                    if (printCharacteristic) break;
+                }
+
+                if (!printCharacteristic) {
+                    throw new Error("Karakteristik penulisan data ke printer tidak ditemukan.");
+                }
+
+                // 3. Menyusun data ESC/POS dari Form SBR Putra Food
+                const tgl = document.getElementById('prev-tgl').innerText;
+                const mobil = document.getElementById('prev-mobil').innerText;
+                
+                const ESC = "\x1B";
+                const GS = "\x1D";
+                const INIT = ESC + "@"; 
+                const ALIGN_CENTER = ESC + "a\x01";
+                const ALIGN_LEFT = ESC + "a\x00";
+                const BOLD_ON = ESC + "E\x01";
+                const BOLD_OFF = ESC + "E\x00";
+                const NEW_LINE = "\x0A";
+                const LINE = "-".repeat(karakterMaksimal) + NEW_LINE;
+
+                let dataCetak = INIT;
+                
+                // Header Struk
+                dataCetak += ALIGN_CENTER;
+                dataCetak += BOLD_ON + "SURAT JALAN" + BOLD_OFF + NEW_LINE;
+                dataCetak += BOLD_ON + "SBR PUTRA FOOD" + BOLD_OFF + NEW_LINE;
+                dataCetak += LINE;
+                
+                // Info Pengiriman
+                dataCetak += ALIGN_LEFT;
+                dataCetak += "Tgl   : " + tgl + NEW_LINE;
+                dataCetak += "Mobil : " + mobil + NEW_LINE;
+                dataCetak += LINE;
+                dataCetak += BOLD_ON + "DAFTAR BARANG:" + BOLD_OFF + NEW_LINE;
+
+                // Looping Data Barang dari Form
+                const barisTabel = document.querySelectorAll('#item-tbody tr');
+                let adaBarang = false;
+                
+                barisTabel.forEach(baris => {
+                    const nama = baris.querySelector('.inp-nama').value;
+                    if (nama !== "") {
+                        adaBarang = true;
+                        const qty = baris.querySelector('.inp-qty').value || "0";
+                        const uom = baris.querySelector('.inp-uom').value || "";
+                        const ket = baris.querySelector('.inp-ket').value || "";
+                        const total = baris.querySelector('.inp-total').value || "0";
+                        const sisa = baris.querySelector('.inp-sisa').value || "0";
+
+                        let strKet = ket ? ` | Ket: ${ket}` : ``;
+                        
+                        dataCetak += "- " + BOLD_ON + nama + BOLD_OFF + NEW_LINE;
+                        dataCetak += `  ${qty} ${uom} (Kirim: ${total} | Sisa: ${sisa}${strKet})` + NEW_LINE;
+                    }
+                });
+
+                if(!adaBarang) {
+                     dataCetak += "  (Belum ada barang diinput)" + NEW_LINE;
+                }
+
+                dataCetak += LINE;
+                dataCetak += ALIGN_CENTER;
+                dataCetak += "Terima Kasih" + NEW_LINE;
+                dataCetak += "Harap cek barang sebelum supir pergi" + NEW_LINE;
+                dataCetak += NEW_LINE + NEW_LINE + NEW_LINE; 
+
+                // 4. Mengirim Buffer ke Printer
+                const bufferInfo = textToBuffer(dataCetak);
+                
+                const CHUNK_SIZE = 100; 
+                for (let i = 0; i < bufferInfo.length; i += CHUNK_SIZE) {
+                    const chunk = bufferInfo.slice(i, i + CHUNK_SIZE);
+                    await printCharacteristic.writeValue(chunk);
+                }
+
+                alert("Berhasil mengirim instruksi cetak ke printer!");
+
+            } catch (error) {
+                console.error("Gagal mencetak:", error);
+                alert("Gagal koneksi ke printer: " + error.message);
+            }
         }
 
         // --- DATABASE SUPABASE ---
