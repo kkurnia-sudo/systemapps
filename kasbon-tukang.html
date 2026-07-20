@@ -8,48 +8,96 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 15px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; font-size: 22px; } 
-        .subtitle { text-align: center; color: #7f8c8d; font-size: 13px; margin-top: 0; margin-bottom: 20px; font-style: italic; } 
+        /* =========================================
+           VARIABEL WARNA (TEMA TERANG & GELAP)
+           ========================================= */
+        :root {
+            --bg-body: #f4f7f6;
+            --bg-container: #ffffff;
+            --text-main: #333333;
+            --text-muted: #7f8c8d;
+            --text-heading: #2c3e50;
+            --border-color: #ddd;
+            --input-bg: #ffffff;
+            --bg-summary: #ecf0f1;
+            --bg-table-head: #f8f9fa;
+            --bg-modal: #ffffff;
+            --bg-split-box: #e8f4f8;
+            --btn-cancel-text: #333;
+            --btn-toggle-bg: #dcdde1;
+        }
+
+        .dark-theme {
+            --bg-body: #121212;
+            --bg-container: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #aaaaaa;
+            --text-heading: #ffffff;
+            --border-color: #444444;
+            --input-bg: #2c2c2c;
+            --bg-summary: #2c2c2c;
+            --bg-table-head: #252525;
+            --bg-modal: #1e1e1e;
+            --bg-split-box: #1a3a47;
+            --btn-cancel-text: #e0e0e0;
+            --btn-toggle-bg: #353b48;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-body); color: var(--text-main); margin: 0; padding: 15px; transition: background-color 0.3s, color 0.3s; }
+        .container { max-width: 600px; margin: 0 auto; background: var(--bg-container); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: background-color 0.3s; }
+        h2 { text-align: center; color: var(--text-heading); margin-bottom: 5px; font-size: 22px; } 
+        .subtitle { text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 0; margin-bottom: 20px; font-style: italic; } 
         
         .form-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .form-row .form-group { flex: 1; margin-bottom: 0; }
         .form-row .form-group.small { flex: 0.6; } 
         
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: var(--text-main); }
+        input, select { width: 100%; padding: 8px; background-color: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; font-size: 14px; color-scheme: light dark; }
         
         button { width: 100%; padding: 10px; background-color: #3498db; color: white; border: none; border-radius: 4px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         button:hover { background-color: #2980b9; }
         
-        .summary { margin-top: 20px; padding: 15px; background: #ecf0f1; border-radius: 4px; font-size: 15px; }
-        .summary div { padding: 8px 0; font-weight: bold; }
-        .summary span { float: right; } 
-        .keluar { color: #c0392b; }
+        .summary { margin-top: 20px; padding: 15px; background: var(--bg-summary); border-radius: 4px; font-size: 15px; }
+        .summary div.main-sum { padding: 8px 0; font-weight: bold; border-bottom: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .summary div.main-sum:last-child { border-bottom: none; }
+        .keluar { color: #e74c3c; }
+
+        .btn-toggle { width: 100%; padding: 6px; margin-top: 10px; font-size: 12px; background-color: var(--btn-toggle-bg); color: var(--text-main); border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-toggle:hover { opacity: 0.8; }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+        }
 
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
-        .header-container h3 { margin: 0; font-size: 16px; color: #2c3e50; }
+        .header-container h3 { margin: 0; font-size: 16px; color: var(--text-heading); }
         .btn-filter { width: auto; padding: 5px 12px; font-size: 13px; background-color: #f39c12; }
         .btn-filter:hover { background-color: #e67e22; }
         
-        .filter-box { display: none; background: #fdfefe; padding: 12px; border-radius: 4px; border: 1px solid #bdc3c7; margin-bottom: 15px; }
+        .filter-box { display: none; background: var(--bg-container); padding: 12px; border-radius: 4px; border: 1px solid var(--border-color); margin-bottom: 15px; }
         
-        .table-container { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; background: #fff; }
+        .table-container { max-height: 300px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-container); }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 8px 5px; text-align: left; border-bottom: 1px solid #ddd; vertical-align: middle; }
-        th { background-color: #f8f9fa; position: sticky; top: 0; z-index: 1; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        th, td { padding: 8px 5px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        th { background-color: var(--bg-table-head); color: var(--text-heading); position: sticky; top: 0; z-index: 1; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         
         .badge-metode { display: inline-block; font-size: 10px; padding: 2px 5px; border-radius: 3px; margin-top: 2px; }
-        .badge-split-cash { background: #d4efdf; color: #1e8449; }
-        .badge-split-tf { background: #d6eaf8; color: #2874a6; }
+        .badge-split-cash { background: #1e8449; color: #d4efdf; }
+        .badge-split-tf { background: #2874a6; color: #d6eaf8; }
+
+        .dark-theme .badge-split-cash { background: #145a32; color: #d4efdf; }
+        .dark-theme .badge-split-tf { background: #1b4f72; color: #d6eaf8; }
 
         .btn-action { background-color: #95a5a6; color: white; padding: 5px 8px; font-size: 12px; border-radius: 4px; width: auto; display: inline-block; }
         .btn-action:hover { background-color: #7f8c8d; }
 
         .btn-edit { background-color: #f39c12; margin-bottom: 10px; }
         .btn-delete { background-color: #e74c3c; margin-bottom: 10px; }
-        .btn-cancel { background-color: #bdc3c7; color: #333; }
+        .btn-cancel { background-color: var(--border-color); color: var(--btn-cancel-text); }
 
         .export-row { margin-top: 15px; }
         .btn-print { background-color: #2c3e50; }
@@ -77,6 +125,7 @@
         
         .receipt-preview .summary-section { margin-top: 10px; font-weight: bold; }
         .receipt-preview .summary-section div { display: flex; justify-content: space-between; padding: 2px 0; }
+        .receipt-preview .summary-detail { font-size: 11px; font-weight: normal; padding-left: 10px; color: #333 !important; }
 
         /* MODAL UMUM */
         .modal-overlay {
@@ -85,22 +134,22 @@
         }
         .modal-overlay.active { display: flex; }
         .modal-content {
-            background: white; border-radius: 8px; width: 95%; max-width: 420px;
+            background: var(--bg-modal); border-radius: 8px; width: 95%; max-width: 420px;
             max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 15px;
-            box-sizing: border-box;
+            box-sizing: border-box; color: var(--text-main);
         }
         .modal-header {
             display: flex; justify-content: space-between; align-items: center;
-            padding-bottom: 10px; border-bottom: 1px solid #ddd; margin-bottom: 15px;
+            padding-bottom: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px;
         }
-        .modal-header h3 { margin: 0; font-size: 16px; color: #2c3e50; }
+        .modal-header h3 { margin: 0; font-size: 16px; color: var(--text-heading); }
         .close-modal { font-size: 24px; cursor: pointer; color: #e74c3c; line-height: 1; }
         
         #printModal .modal-content { padding: 0; }
-        #printModal .modal-header { padding: 15px; background: #f8f9fa; margin-bottom: 0; }
-        #printModal .modal-body { flex: 1; padding: 15px; background: #ecf0f1; overflow-x: auto; overflow-y: auto; }
+        #printModal .modal-header { padding: 15px; background: var(--bg-table-head); margin-bottom: 0; }
+        #printModal .modal-body { flex: 1; padding: 15px; background: var(--bg-body); overflow-x: auto; overflow-y: auto; }
         #modalPreviewContent { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 380px; margin: 0 auto; }
-        #printModal .modal-footer { padding: 15px; border-top: 1px solid #ddd; background: #fff; display: flex; gap: 10px; }
+        #printModal .modal-footer { padding: 15px; border-top: 1px solid var(--border-color); background: var(--bg-container); display: flex; gap: 10px; }
         #printModal .modal-footer button { flex: 1; }
 
         /* STYLE CETAK */
@@ -116,7 +165,7 @@
 
 <div class="container">
     <h2>Kasbon Tukang</h2>
-    <p class="subtitle">Proyek Gudang Cikidang  Juli 26</p>
+    <p class="subtitle">Proyek Gudang Cikidang - Juli 26</p>
 
     <form id="transactionForm">
         <div class="form-row">
@@ -146,7 +195,7 @@
             </div>
         </div>
 
-        <div class="form-row" id="splitAmountContainer" style="display: none; background: #e8f4f8; padding: 10px; border-radius: 5px;">
+        <div class="form-row" id="splitAmountContainer" style="display: none; background: var(--bg-split-box); padding: 10px; border-radius: 5px;">
             <div class="form-group">
                 <label for="amountCash">Nilai Cash (Rp)</label>
                 <input type="text" id="amountCash" placeholder="Cth: 50.000">
@@ -161,7 +210,25 @@
     </form>
 
     <div class="summary">
-        <div>Total Pengeluaran: <span class="keluar" id="totalKeluar">Rp 0</span></div>
+        <div class="main-sum">Total Pengeluaran: <span class="keluar" id="totalKeluar">Rp 0</span></div>
+        
+        <!-- Tombol Toggle Rincian -->
+        <button type="button" id="btnToggleDetail" class="btn-toggle">Tampilkan Rincian Kas & Transfer 🔽</button>
+
+        <!-- Container Rincian Detail -->
+        <div id="detailContainer" style="display: none; margin-top: 10px; padding: 10px; background: var(--bg-container); border-radius: 4px; border: 1px solid var(--border-color);">
+            <div style="font-size: 13px; font-weight: bold; margin-bottom: 2px;">
+                Detail Pengeluaran Kas/Bank:
+                <div class="detail-row" style="font-weight: normal; padding-left: 10px;">
+                    <span>- Cash:</span>
+                    <span class="keluar" id="keluarCash">Rp 0</span>
+                </div>
+                <div class="detail-row" style="font-weight: normal; padding-left: 10px;">
+                    <span>- Transfer:</span>
+                    <span class="keluar" id="keluarTransfer">Rp 0</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="header-container">
@@ -208,7 +275,7 @@
 
 <div id="actionModal" class="modal-overlay">
     <div class="modal-content" style="max-width: 280px; text-align: center;">
-        <h3 style="margin-top:0; margin-bottom: 15px; color:#2c3e50;">Pilih Aksi</h3>
+        <h3 style="margin-top:0; margin-bottom: 15px; color:var(--text-heading);">Pilih Aksi</h3>
         <button type="button" id="btnTriggerEdit" class="btn-edit">✏️ Edit Data</button>
         <button type="button" id="btnTriggerDelete" class="btn-delete">🗑️ Hapus Data</button>
         <button type="button" id="closeActionModal" class="btn-cancel">Batal</button>
@@ -259,7 +326,7 @@
 <div id="receiptCaptureContainer">
     <div class="receipt-preview" id="receiptTemplate">
         <h2>Kasbon Tukang</h2>
-        <p>Proyek Gudang Cikidang  Juli 26</p>
+        <p>Proyek Gudang Cikidang - Juli 26</p>
         <p id="receiptPeriod" style="font-size: 10px; margin-top:5px;"></p>
         <div class="divider"></div>
         <table>
@@ -276,6 +343,10 @@
         <div class="divider"></div>
         <div class="summary-section">
             <div><span>Total Pengeluaran:</span><span id="rcTotalKeluar">Rp 0</span></div>
+            <div class="summary-detail">
+                <div style="padding: 1px 0;"><span>- Cash:</span><span id="rcKeluarCash">Rp 0</span></div>
+                <div style="padding: 1px 0;"><span>- Transfer:</span><span id="rcKeluarTransfer">Rp 0</span></div>
+            </div>
         </div>
         <div class="divider"></div>
         <p style="text-align: center; font-size: 9px; margin-top: 15px;">-- Dicetak Otomatis via Aplikasi Sistem --</p>
@@ -292,8 +363,21 @@
     const PIN_AKSES = "8000";
     let activeEditId = null;
     
-    // NAMA TABEL BARU DISIMPAN DI VARIABEL AGAR MUDAH
     const NAMA_TABEL = 'kasbon-tukang';
+
+    function checkTheme() {
+        const hour = new Date().getHours();
+        const isNightTime = hour >= 18 || hour < 6;
+        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (isNightTime || prefersDarkMode) {
+            document.body.classList.add('dark-theme');
+        } else {
+            document.body.classList.remove('dark-theme');
+        }
+    }
+    
+    checkTheme();
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', checkTheme);
 
     const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
     
@@ -321,6 +405,17 @@
     setupRupiahInput('amountCash');
     setupRupiahInput('amountTransfer');
     setupRupiahInput('editAmount'); 
+
+    document.getElementById('btnToggleDetail').addEventListener('click', function() {
+        const detailBox = document.getElementById('detailContainer');
+        if (detailBox.style.display === 'none') {
+            detailBox.style.display = 'block';
+            this.innerHTML = 'Sembunyikan Rincian 🔼';
+        } else {
+            detailBox.style.display = 'none';
+            this.innerHTML = 'Tampilkan Rincian Kas & Transfer 🔽';
+        }
+    });
 
     const tglInput = document.getElementById('tanggal');
     const dateNow = new Date();
@@ -364,11 +459,10 @@
     });
 
     async function fetchTransactions() {
-        // MENGGUNAKAN TABEL BARU
         let { data, error } = await supabase.from(NAMA_TABEL).select('*').order('created_at', { ascending: true });
         if (error) return console.error('Error fetching data:', error);
         
-        data = data.filter(tx => tx.type !== 'masuk');
+        // Filter penyaring type dihapus agar data 'keluar' dari database langsung tampil sepenuhnya
 
         if (filterStartDate && filterEndDate) {
             const startLimit = new Date(`${filterStartDate}T00:00:00`);
@@ -388,6 +482,8 @@
         tableBody.innerHTML = '';
         
         let totalKeluar = 0;
+        let keluarCash = 0;
+        let keluarTransfer = 0;
 
         const displayData = [...data].reverse();
 
@@ -410,17 +506,22 @@
             `;
             
             totalKeluar += amt;
+            if (metodeStr === 'Cash') keluarCash += amt;
+            if (metodeStr === 'Transfer') keluarTransfer += amt;
+
             tr.innerHTML = `<td>${formatDate(tx.created_at)}</td><td>${deskripsiLengkap}</td><td class="keluar">${formatRupiah(amt)}</td>${aksiHtml}`;
             
             tableBody.appendChild(tr);
         });
 
         document.getElementById('totalKeluar').innerText = formatRupiah(totalKeluar);
+        document.getElementById('keluarCash').innerText = formatRupiah(keluarCash);
+        document.getElementById('keluarTransfer').innerText = formatRupiah(keluarTransfer);
 
-        buildVirtualReceipt(data, totalKeluar);
+        buildVirtualReceipt(data, totalKeluar, keluarCash, keluarTransfer);
     }
 
-    function buildVirtualReceipt(data, tKeluar) {
+    function buildVirtualReceipt(data, tKeluar, kCash, kTransfer) {
         const rcBody = document.getElementById('receiptTableBody');
         const rcPeriod = document.getElementById('receiptPeriod');
         rcBody.innerHTML = '';
@@ -446,6 +547,8 @@
         });
 
         document.getElementById('rcTotalKeluar').innerText = formatRupiah(tKeluar);
+        document.getElementById('rcKeluarCash').innerText = formatRupiah(kCash);
+        document.getElementById('rcKeluarTransfer').innerText = formatRupiah(kTransfer);
     }
 
     const actionModal = document.getElementById('actionModal');
@@ -474,7 +577,6 @@
         if (pin !== PIN_AKSES) return alert("PIN Salah atau dibatalkan!");
         if (!confirm("Yakin hapus data ini?")) return;
         
-        // MENGGUNAKAN TABEL BARU
         const { error } = await supabase.from(NAMA_TABEL).delete().eq('id', currentDataObj.id);
         if (error) alert("Gagal menghapus!"); else fetchTransactions();
     });
@@ -506,7 +608,6 @@
         if (!newDesc || !newAmtInput) return alert("Keterangan dan Nominal wajib diisi!");
         const newAmt = newAmtInput.replace(/[^0-9]/g, '');
 
-        // MENGGUNAKAN TABEL BARU
         const { error } = await supabase.from(NAMA_TABEL).update({ 
             description: newDesc, 
             amount: newAmt,
@@ -549,7 +650,6 @@
             insertPayload.push({ created_at: created_at_lengkap, type: 'keluar', amount: rawAmount, description, metode });
         }
 
-        // MENGGUNAKAN TABEL BARU
         const { error } = await supabase.from(NAMA_TABEL).insert(insertPayload);
         if (error) {
             alert('Gagal menyimpan data!');
@@ -598,7 +698,6 @@
         window.print();
     });
 
-    // MENGGUNAKAN TABEL BARU UNTUK REALTIME UPDATE
     supabase.channel('custom-all-channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: NAMA_TABEL }, () => fetchTransactions())
       .subscribe();
