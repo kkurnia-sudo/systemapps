@@ -147,7 +147,7 @@
                 <div class="text-center text-xs">Harap cek barang sebelum supir pergi</div>
             </div>
 
-            <!-- Tombol Aksi Modal (Diperbarui untuk Web Bluetooth) -->
+            <!-- Tombol Aksi Modal -->
             <div class="mt-6 flex flex-wrap justify-center gap-3 w-full max-w-md shrink-0">
                 <button onclick="simpanPNG()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-bold shadow-lg transition transform hover:scale-105">
                     <i class="ph ph-image text-lg"></i> Simpan PNG
@@ -177,6 +177,7 @@
 
         let daftarBarang = ["Makroni Naruto", "Aromanis", "Basreng Kiwari"];
         let dataRiwayatGlobal = {}; 
+        let dataCetakStruk = []; // MENYIMPAN DATA KHUSUS UNTUK PRINTER BLUETOOTH
 
         // --- FUNGSI TABEL FORM ---
         function tambahBaris() {
@@ -236,21 +237,25 @@
 
             const barisTabel = document.querySelectorAll('#item-tbody tr');
             const targetTabelPrev = document.getElementById('prev-tabel-barang');
+            
             targetTabelPrev.innerHTML = ""; 
+            dataCetakStruk = []; // Kosongkan data cetak sebelumnya
 
             let adaData = false;
             barisTabel.forEach(baris => {
                 const nama = baris.querySelector('.inp-nama').value;
                 if (nama !== "") {
                     adaData = true;
-                    targetTabelPrev.innerHTML += renderItemStruk(
-                        nama,
-                        baris.querySelector('.inp-qty').value || "0",
-                        baris.querySelector('.inp-uom').value || "",
-                        baris.querySelector('.inp-ket').value || "",
-                        baris.querySelector('.inp-total').value || "0",
-                        baris.querySelector('.inp-sisa').value || "0"
-                    );
+                    const qty = baris.querySelector('.inp-qty').value || "0";
+                    const uom = baris.querySelector('.inp-uom').value || "";
+                    const ket = baris.querySelector('.inp-ket').value || "";
+                    const total = baris.querySelector('.inp-total').value || "0";
+                    const sisa = baris.querySelector('.inp-sisa').value || "0";
+                    
+                    // Simpan ke array agar printer membacanya
+                    dataCetakStruk.push({ nama, qty, uom, ket, total, sisa });
+
+                    targetTabelPrev.innerHTML += renderItemStruk(nama, qty, uom, ket, total, sisa);
                 }
             });
 
@@ -267,8 +272,19 @@
 
             const targetTabelPrev = document.getElementById('prev-tabel-barang');
             targetTabelPrev.innerHTML = ""; 
+            dataCetakStruk = []; // Kosongkan data cetak sebelumnya
 
             dataPilihan.forEach(item => {
+                // Simpan ke array agar printer membacanya dari Riwayat
+                dataCetakStruk.push({
+                    nama: item.nama_barang,
+                    qty: item.qty,
+                    uom: item.uom,
+                    ket: item.keterangan,
+                    total: item.total_terkirim,
+                    sisa: item.sisa
+                });
+
                 targetTabelPrev.innerHTML += renderItemStruk(
                     item.nama_barang,
                     item.qty,
@@ -340,27 +356,22 @@
         }
 
         async function cetakWebBluetooth(karakterMaksimal) {
-            // 1. Cek apakah browser mendukung Web Bluetooth
             if (!navigator.bluetooth) {
                 alert("Gagal: Browser ini tidak mendukung Web Bluetooth.\n\nSolusi: Buka link ini langsung di aplikasi Google Chrome bawaan HP, BUKAN dari dalam WhatsApp/Facebook.");
                 return;
             }
 
             try {
-                // 2. Meminta izin pengguna (Memunculkan pop-up)
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true, 
                     optionalServices: [
-                        '000018f0-0000-1000-8000-00805f9b34fb', // UUID Generic 1
-                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // UUID Generic 2
-                        '0000fee7-0000-1000-8000-00805f9b34fb'  // UUID Generic 3 (Umumnya printer Tiongkok)
+                        '000018f0-0000-1000-8000-00805f9b34fb', 
+                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2', 
+                        '0000fee7-0000-1000-8000-00805f9b34fb'  
                     ] 
                 });
 
-                // Jika berhasil memilih, koneksikan ke perangkat
                 const server = await device.gatt.connect();
-                
-                // 3. Mencari Jalur Data (Service & Characteristic)
                 const services = await server.getPrimaryServices();
                 let printCharacteristic = null;
 
@@ -376,10 +387,9 @@
                 }
 
                 if (!printCharacteristic) {
-                    throw new Error("Jalur data (Characteristic) printer tidak ditemukan. Printer mungkin tidak didukung.");
+                    throw new Error("Jalur data (Characteristic) printer tidak ditemukan.");
                 }
 
-                // 4. Menyusun data ESC/POS dari Form
                 const tgl = document.getElementById('prev-tgl').innerText;
                 const mobil = document.getElementById('prev-mobil').innerText;
                 
@@ -405,24 +415,15 @@
                 dataCetak += LINE;
                 dataCetak += BOLD_ON + "DAFTAR BARANG:" + BOLD_OFF + NEW_LINE;
 
-                const barisTabel = document.querySelectorAll('#item-tbody tr');
+                // Membaca data barang dari array (Bisa dari Riwayat, bisa dari Form)
                 let adaBarang = false;
                 
-                barisTabel.forEach(baris => {
-                    const nama = baris.querySelector('.inp-nama').value;
-                    if (nama !== "") {
-                        adaBarang = true;
-                        const qty = baris.querySelector('.inp-qty').value || "0";
-                        const uom = baris.querySelector('.inp-uom').value || "";
-                        const ket = baris.querySelector('.inp-ket').value || "";
-                        const total = baris.querySelector('.inp-total').value || "0";
-                        const sisa = baris.querySelector('.inp-sisa').value || "0";
-
-                        let strKet = ket ? ` | Ket: ${ket}` : ``;
-                        
-                        dataCetak += "- " + BOLD_ON + nama + BOLD_OFF + NEW_LINE;
-                        dataCetak += `  ${qty} ${uom} (Kirim: ${total} | Sisa: ${sisa}${strKet})` + NEW_LINE;
-                    }
+                dataCetakStruk.forEach(item => {
+                    adaBarang = true;
+                    let strKet = item.ket ? ` | Ket: ${item.ket}` : ``;
+                    
+                    dataCetak += "- " + BOLD_ON + item.nama + BOLD_OFF + NEW_LINE;
+                    dataCetak += `  ${item.qty} ${item.uom} (Kirim: ${item.total} | Sisa: ${item.sisa}${strKet})` + NEW_LINE;
                 });
 
                 if(!adaBarang) {
@@ -435,9 +436,8 @@
                 dataCetak += "Harap cek barang sebelum supir pergi" + NEW_LINE;
                 dataCetak += NEW_LINE + NEW_LINE + NEW_LINE; 
 
-                // 5. Mengirim Data ke Printer
                 const bufferInfo = textToBuffer(dataCetak);
-                const CHUNK_SIZE = 100; // Dikirim per 100 byte agar tidak macet
+                const CHUNK_SIZE = 100; 
                 for (let i = 0; i < bufferInfo.length; i += CHUNK_SIZE) {
                     const chunk = bufferInfo.slice(i, i + CHUNK_SIZE);
                     await printCharacteristic.writeValue(chunk);
@@ -445,8 +445,6 @@
 
             } catch (error) {
                 console.error("Gagal mencetak:", error);
-                
-                // Sistem deteksi error otomatis
                 if (error.name === 'NotFoundError') {
                     alert("Dialog ditutup, atau printer tidak ditemukan. Pastikan printer menyala dan belum terkoneksi ke HP lain.");
                 } else if (error.name === 'SecurityError') {
