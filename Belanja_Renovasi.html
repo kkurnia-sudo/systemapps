@@ -62,14 +62,21 @@
         button:hover { background-color: #2980b9; }
         
         .summary { margin-top: 20px; padding: 15px; background: var(--bg-summary); border-radius: 4px; font-size: 15px; }
-        .summary div.main-sum { padding: 8px 0; font-weight: bold; border-bottom: 1px dashed var(--border-color); }
+        .summary div.main-sum { padding: 8px 0; font-weight: bold; border-bottom: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .summary div.main-sum:last-child { border-bottom: none; }
-        .summary span { float: right; } 
         .masuk { color: #2ecc71; }
         .keluar { color: #e74c3c; }
 
         .btn-toggle { width: 100%; padding: 6px; margin-top: 10px; font-size: 12px; background-color: var(--btn-toggle-bg); color: var(--text-main); border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-toggle:hover { opacity: 0.8; }
+
+        /* Style Flexbox khusus untuk merapikan baris rincian agar lurus rata kanan */
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+        }
 
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
         .header-container h3 { margin: 0; font-size: 16px; color: var(--text-heading); }
@@ -96,7 +103,7 @@
         .btn-cancel { background-color: var(--border-color); color: var(--btn-cancel-text); }
 
         /* =========================================
-           STYLE VIRTUAL STRUK (TETAP PUTIH)
+           STYLE VIRTUAL STRUK
            ========================================= */
         #receiptCaptureContainer {
             position: fixed; top: -9999px; left: 0; width: 380px; z-index: -999; background: #ffffff;
@@ -111,7 +118,6 @@
         .receipt-preview .divider { border-top: 1px dashed #000; margin: 10px 0; }
         
         .receipt-preview table { width: 100%; font-size: 12px; border-collapse: collapse; table-layout: fixed; }
-        
         .receipt-preview th { position: static !important; background: transparent !important; box-shadow: none !important; color: #000 !important; }
         .receipt-preview th, .receipt-preview td { padding: 6px 2px; border: none; border-bottom: 1px dashed #ccc !important; vertical-align: top; }
         
@@ -121,12 +127,10 @@
         
         .receipt-preview .summary-section { margin-top: 10px; font-weight: bold; }
         .receipt-preview .summary-section div { display: flex; justify-content: space-between; padding: 2px 0; }
-        
-        /* Gaya tambahan untuk rincian struk pratinjau */
         .receipt-preview .summary-detail { font-size: 11px; font-weight: normal; padding-left: 10px; color: #333 !important; }
 
         /* =========================================
-           MODAL UMUM (OVERLAY)
+           MODAL UMUM
            ========================================= */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -134,19 +138,14 @@
             display: flex; visibility: hidden; opacity: 0; 
             transition: opacity 0.1s ease-out, visibility 0.1s ease-out;
         }
-        .modal-overlay.active { 
-            visibility: visible; opacity: 1; 
-        }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
         .modal-content {
             background: var(--bg-modal); border-radius: 8px; width: 95%; max-width: 420px;
             max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 20px;
             box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transform: scale(0.9);
-            transition: transform 0.1s ease-out;
+            transform: scale(0.9); transition: transform 0.1s ease-out;
         }
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
         
         .modal-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -173,9 +172,7 @@
             padding: 12px; border: 2px solid #3498db; border-radius: 8px; margin-bottom: 20px;
             background-color: var(--input-bg); color: var(--text-main);
         }
-        #pinInput:focus {
-            outline: none; box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
-        }
+        #pinInput:focus { outline: none; box-shadow: 0 0 8px rgba(52, 152, 219, 0.5); }
 
         @media print {
             body { background: #ffffff !important; color: #000000 !important; margin: 0; padding: 0; }
@@ -254,17 +251,40 @@
         <!-- Tombol Toggle -->
         <button type="button" id="btnToggleDetail" class="btn-toggle">Tampilkan Rincian Kas & Transfer 🔽</button>
 
-        <!-- Container Rincian yang disembunyikan secara default -->
+        <!-- Container Rincian Detail yang dirapikan dengan Flexbox -->
         <div id="detailContainer" style="display: none; margin-top: 10px; padding: 10px; background: var(--bg-container); border-radius: 4px; border: 1px solid var(--border-color);">
             <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">
-                Detail Belanja Keluar:<br>
-                <span style="font-weight: normal;">- Cash: <span class="keluar" id="keluarCash" style="float: right;">Rp 0</span></span><br>
-                <span style="font-weight: normal;">- Transfer: <span class="keluar" id="keluarTransfer" style="float: right;">Rp 0</span></span>
+                Detail Budget Masuk:
+                <div class="detail-row" style="font-weight: normal; padding-left: 10px;">
+                    <span>- Cash:</span>
+                    <span class="masuk" id="masukCash">Rp 0</span>
+                </div>
+                <div class="detail-row" style="font-weight: normal; padding-left: 10px;">
+                    <span>- Transfer:</span>
+                    <span class="masuk" id="masukTransfer">Rp 0</span>
+                </div>
             </div>
-            <div style="border-top: 1px dashed var(--border-color); margin-top: 8px; padding-top: 8px; font-size: 13px; color: var(--text-muted); font-weight: bold;">
-                Detail Sisa Saldo:<br>
-                Sisa di Tangan (Cash): <span id="sisaCash" style="float: right;">Rp 0</span><br>
-                Sisa di Bank (Transfer): <span id="sisaTransfer" style="float: right;">Rp 0</span>
+            <div style="border-top: 1px dashed var(--border-color); margin-top: 8px; padding-top: 8px; font-size: 13px; font-weight: bold; margin-bottom: 8px;">
+                Detail Belanja Keluar:
+                <div class="detail-row" style="font-weight: normal; padding-left: 10px;">
+                    <span>- Cash:</span>
+                    <span class="keluar" id="keluarCash">Rp 0</span>
+                </div>
+                <div class="detail-row" style="font-weight: normal; padding-left: 10px;">
+                    <span>- Transfer:</span>
+                    <span class="keluar" id="keluarTransfer">Rp 0</span>
+                </div>
+            </div>
+            <div style="border-top: 1px dashed var(--border-color); margin-top: 8px; padding-top: 8px; font-size: 13px; color: var(--text-heading); font-weight: bold;">
+                Detail Sisa Saldo:
+                <div class="detail-row" style="font-weight: normal; padding-left: 10px;">
+                    <span>- Sisa Cash (di Tangan):</span>
+                    <span id="sisaCash" style="font-weight: bold;">Rp 0</span>
+                </div>
+                <div class="detail-row" style="font-weight: normal; padding-left: 10px;">
+                    <span>- Sisa Transfer (di Bank):</span>
+                    <span id="sisaTransfer" style="font-weight: bold;">Rp 0</span>
+                </div>
             </div>
         </div>
     </div>
@@ -410,7 +430,11 @@
         <div class="divider"></div>
         <div class="summary-section">
             <div><span>Total Budget:</span><span id="rcTotalMasuk">Rp 0</span></div>
-            <div><span>Total Belanja:</span><span id="rcTotalKeluar">Rp 0</span></div>
+            <div class="summary-detail">
+                <div style="padding: 1px 0;"><span>- Cash:</span><span id="rcMasukCash">Rp 0</span></div>
+                <div style="padding: 1px 0;"><span>- Transfer:</span><span id="rcMasukTransfer">Rp 0</span></div>
+            </div>
+            <div style="margin-top: 4px;"><span>Total Belanja:</span><span id="rcTotalKeluar">Rp 0</span></div>
             <div class="summary-detail">
                 <div style="padding: 1px 0;"><span>- Cash:</span><span id="rcKeluarCash">Rp 0</span></div>
                 <div style="padding: 1px 0;"><span>- Transfer:</span><span id="rcKeluarTransfer">Rp 0</span></div>
@@ -431,16 +455,14 @@
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    // SESUAIKAN DENGAN KREDENSIAL SUPABASE ANDA
     const supabaseUrl = 'https://acpkdnktanrucyfyhckw.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U';
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const TABLE_NAME = 'renovasi_transactions'; // NAMA TABEL BARU
+    const TABLE_NAME = 'renovasi_transactions';
 
     const PIN_AKSES = "5000";
     let activeEditId = null;
 
-    // Variabel Global untuk Cetak Struk
     let globalReceiptData = [];
     let globalTotalMasuk = 0;
     let globalTotalKeluar = 0;
@@ -486,7 +508,6 @@
     setupRupiahInput('amountTransfer');
     setupRupiahInput('editAmount');
 
-    // LOGIKA UNTUK TOMBOL TOGGLE RINCIAN
     document.getElementById('btnToggleDetail').addEventListener('click', function() {
         const detailBox = document.getElementById('detailContainer');
         if (detailBox.style.display === 'none') {
@@ -561,8 +582,6 @@
         
         let totalMasuk = 0;
         let totalKeluar = 0;
-
-        // Variabel baru untuk memisahkan kalkulasi per metode
         let masukCash = 0, keluarCash = 0;
         let masukTransfer = 0, keluarTransfer = 0;
 
@@ -602,28 +621,21 @@
             tableBody.appendChild(tr);
         });
 
-        // Update Total Keseluruhan Layar Utama
         document.getElementById('totalMasuk').innerText = formatRupiah(totalMasuk);
         document.getElementById('totalKeluar').innerText = formatRupiah(totalKeluar);
         document.getElementById('saldoAkhir').innerText = formatRupiah(totalMasuk - totalKeluar);
 
-        // Update Tampilan Rincian Metode di Layar Utama
-        const elKeluarCash = document.getElementById('keluarCash');
-        const elKeluarTransfer = document.getElementById('keluarTransfer');
-        const elSisaCash = document.getElementById('sisaCash');
-        const elSisaTransfer = document.getElementById('sisaTransfer');
+        document.getElementById('masukCash').innerText = formatRupiah(masukCash);
+        document.getElementById('masukTransfer').innerText = formatRupiah(masukTransfer);
+        document.getElementById('keluarCash').innerText = formatRupiah(keluarCash);
+        document.getElementById('keluarTransfer').innerText = formatRupiah(keluarTransfer);
+        document.getElementById('sisaCash').innerText = formatRupiah(masukCash - keluarCash);
+        document.getElementById('sisaTransfer').innerText = formatRupiah(masukTransfer - keluarTransfer);
 
-        if(elKeluarCash) elKeluarCash.innerText = formatRupiah(keluarCash);
-        if(elKeluarTransfer) elKeluarTransfer.innerText = formatRupiah(keluarTransfer);
-        if(elSisaCash) elSisaCash.innerText = formatRupiah(masukCash - keluarCash);
-        if(elSisaTransfer) elSisaTransfer.innerText = formatRupiah(masukTransfer - keluarTransfer);
-
-        // Pass semua data ke fungsi pembuat struk virtual
         buildVirtualReceipt(data, totalMasuk, totalKeluar, masukCash, keluarCash, masukTransfer, keluarTransfer);
     }
 
     function buildVirtualReceipt(data, tMasuk, tKeluar, mCash, kCash, mTransfer, kTransfer) {
-        // Set variabel global untuk cetak Bluetooth
         globalReceiptData = data;
         globalTotalMasuk = tMasuk;
         globalTotalKeluar = tKeluar;
@@ -658,23 +670,17 @@
             if(rcBody) rcBody.appendChild(tr);
         });
 
-        // Update Totalan pada Pratinjau Struk (Gambar/PDF)
-        const rcMasuk = document.getElementById('rcTotalMasuk');
-        const rcKeluar = document.getElementById('rcTotalKeluar');
-        const rcSaldo = document.getElementById('rcSaldoAkhir');
-        const rcKeluarCash = document.getElementById('rcKeluarCash');
-        const rcKeluarTransfer = document.getElementById('rcKeluarTransfer');
-        const rcSisaCash = document.getElementById('rcSisaCash');
-        const rcSisaTransfer = document.getElementById('rcSisaTransfer');
+        document.getElementById('rcTotalMasuk').innerText = formatRupiah(tMasuk);
+        document.getElementById('rcMasukCash').innerText = formatRupiah(mCash);
+        document.getElementById('rcMasukTransfer').innerText = formatRupiah(mTransfer);
 
-        if(rcMasuk) rcMasuk.innerText = formatRupiah(tMasuk);
-        if(rcKeluar) rcKeluar.innerText = formatRupiah(tKeluar);
-        if(rcSaldo) rcSaldo.innerText = formatRupiah(tMasuk - tKeluar);
-        
-        if(rcKeluarCash) rcKeluarCash.innerText = formatRupiah(kCash);
-        if(rcKeluarTransfer) rcKeluarTransfer.innerText = formatRupiah(kTransfer);
-        if(rcSisaCash) rcSisaCash.innerText = formatRupiah(mCash - kCash);
-        if(rcSisaTransfer) rcSisaTransfer.innerText = formatRupiah(mTransfer - kTransfer);
+        document.getElementById('rcTotalKeluar').innerText = formatRupiah(tKeluar);
+        document.getElementById('rcKeluarCash').innerText = formatRupiah(kCash);
+        document.getElementById('rcKeluarTransfer').innerText = formatRupiah(kTransfer);
+
+        document.getElementById('rcSaldoAkhir').innerText = formatRupiah(tMasuk - tKeluar);
+        document.getElementById('rcSisaCash').innerText = formatRupiah(mCash - kCash);
+        document.getElementById('rcSisaTransfer').innerText = formatRupiah(mTransfer - kTransfer);
     }
 
     const actionModal = document.getElementById('actionModal');
@@ -839,7 +845,6 @@
         const templateEl = document.getElementById('receiptTemplate');
         if(!templateEl) return;
         const receiptHtml = templateEl.outerHTML;
-        
         const safeHtml = receiptHtml.replace(/id="[^"]*"/g, ''); 
         
         document.getElementById('modalPreviewContent').innerHTML = safeHtml;
@@ -894,7 +899,7 @@
             
             const sanitize = (text) => {
                 if(!text) return '';
-                return text.replace(/[  ]/g, ' ').replace(/[^ -~]/g, '').trim();
+                return text.replace(/[  ]/g, ' ').replace(/[^ -~]/g, '').trim();
             };
 
             const newLine = "\n";
@@ -910,11 +915,8 @@
                 const left = sanitize(leftText);
                 const right = sanitize(rightText);
                 const spaceCount = paperWidth - left.length - right.length;
-                if (spaceCount > 0) {
-                    return left + " ".repeat(spaceCount) + right;
-                } else {
-                    return left + " " + right; 
-                }
+                if (spaceCount > 0) return left + " ".repeat(spaceCount) + right;
+                else return left + " " + right; 
             };
 
             let textToPrint = "";
@@ -968,15 +970,16 @@
                 }
             });
 
-            // PENAMBAHAN RINCIAN KAS DAN TRANSFER PADA HASIL CETAK BLUETOOTH
             textToPrint += divider;
             textToPrint += formatLine("Total Budget:", formatRupiah(globalTotalMasuk)) + newLine;
+            textToPrint += formatLine("  - Cash:", formatRupiah(globalMasukCash)) + newLine;
+            textToPrint += formatLine("  - Transfer:", formatRupiah(globalMasukTransfer)) + newLine;
+            
             textToPrint += formatLine("Total Belanja:", formatRupiah(globalTotalKeluar)) + newLine;
             textToPrint += formatLine("  - Cash:", formatRupiah(globalKeluarCash)) + newLine;
             textToPrint += formatLine("  - Transfer:", formatRupiah(globalKeluarTransfer)) + newLine;
             
             textToPrint += divider;
-            
             textToPrint += formatLine("Sisa Kas:", formatRupiah(globalTotalMasuk - globalTotalKeluar)) + newLine;
             textToPrint += formatLine("  - Cash:", formatRupiah(globalMasukCash - globalKeluarCash)) + newLine;
             textToPrint += formatLine("  - Transfer:", formatRupiah(globalMasukTransfer - globalKeluarTransfer)) + newLine;
