@@ -671,44 +671,76 @@
 
         // --- BLUETOOTH PRINTING ---
         async function cetakBluetooth(maxChars = 32) {
-            try {
-                const device = await navigator.bluetooth.requestDevice({ filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }], optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] }).catch(e => { return navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] }); });
-                const server = await device.gatt.connect(); const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb'); const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb'); 
-                const strTanggal = document.getElementById('strukTanggal').innerText; const filter = document.getElementById('filterWaktu').value;
-                
-                let lines = [];
-                // Helper rata tengah
-                const centerText = (text, width) => {
-                    const pad = Math.max(0, Math.floor((width - text.length) / 2));
-                    return " ".repeat(pad) + text;
-                };
-
-                lines.push(centerText("SBR PUTRA FOOD", maxChars)); 
-                lines.push(centerText("REKAP PENGIRIMAN", maxChars)); 
-                lines.push(""); // Spasi
-                lines.push(centerText(strTanggal, maxChars)); 
-                lines.push("-".repeat(maxChars));
-                
-                dataRiwayatDB.forEach((item, i) => {
-                    let infoTgl = ""; if(filter === 'tiga_hari' || filter === 'rentang') { const p = item.tanggal.split('-'); infoTgl = ` (${p[2]}/${p[1]})`; }
-                    lines.push(`${item.agen.toUpperCase()}${infoTgl}`.substring(0, maxChars));
-                    lines.push(`M:${item.mobil} | D:${item.driver} | C:${item.codriver || '-'}`.substring(0, maxChars));
-                    lines.push("-".repeat(maxChars)); 
-                });
-                
-                lines.push("");
-                lines.push(centerText("Mengetahui,", maxChars)); 
-                lines.push("\n\n");
-                lines.push(centerText("Admin / Logistik", maxChars)); 
-                lines.push("-".repeat(maxChars));
-                
-                let teksFooter = "*** AKHIR CETAK ***"; lines.push(centerText(teksFooter, maxChars)); lines.push("\n\n\n\n"); 
-                let text = lines.join("\n"); let encoder = new TextEncoder(); let data = encoder.encode(text);
-                let chunkSize = 20; 
-                for (let i = 0; i < data.length; i += chunkSize) { let chunk = data.slice(i, i + chunkSize); await characteristic.writeValue(chunk); await new Promise(resolve => setTimeout(resolve, 100)); }
-                alert('Berhasil mengirim perintah ke printer Bluetooth!');
-            } catch (error) { alert('Gagal cetak Bluetooth: ' + error.message + '\n\nPastikan GPS/Lokasi menyala dan printer sudah dipairing.'); }
+    try {
+        const device = await navigator.bluetooth.requestDevice({ 
+            filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }], 
+            optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] 
+        }).catch(e => { 
+            return navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] }); 
+        });
+        
+        const server = await device.gatt.connect(); 
+        const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb'); 
+        const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb'); 
+        
+        const strTanggal = document.getElementById('strukTanggal').innerText; 
+        const filter = document.getElementById('filterWaktu').value;
+        
+        // --- KODE ESC/POS UNTUK PRINTER THERMAL ---
+        const CMD_ALIGN_CENTER = "\x1B\x61\x01"; // Perintah Rata Tengah
+        const CMD_ALIGN_LEFT = "\x1B\x61\x00";   // Perintah Rata Kiri
+        
+        let lines = [];
+        
+        // --- HEADER (Rata Tengah) ---
+        lines.push(CMD_ALIGN_CENTER);
+        lines.push("SBR PUTRA FOOD"); 
+        lines.push("REKAP PENGIRIMAN"); 
+        lines.push(""); // Spasi baris
+        lines.push(strTanggal); 
+        lines.push("-".repeat(maxChars));
+        
+        // --- BODY / ISI DATA ---
+        dataRiwayatDB.forEach((item, i) => {
+            let infoTgl = ""; 
+            if(filter === 'tiga_hari' || filter === 'rentang') { 
+                const p = item.tanggal.split('-'); 
+                infoTgl = ` (${p[2]}/${p[1]})`; 
+            }
+            
+            // Teks akan otomatis rata tengah mengikuti perintah header
+            lines.push(`${item.agen.toUpperCase()}${infoTgl}`);
+            lines.push(`M:${item.mobil} | D:${item.driver} | C:${item.codriver || '-'}`);
+            lines.push("-".repeat(maxChars)); 
+        });
+        
+        // --- FOOTER (Rata Tengah) ---
+        lines.push("");
+        lines.push("Mengetahui,"); 
+        lines.push("\n\n"); // Jeda tanda tangan
+        lines.push("Admin / Logistik"); 
+        lines.push("-".repeat(maxChars));
+        
+        lines.push("*** AKHIR CETAK ***"); 
+        lines.push("\n\n\n\n"); 
+        
+        // Proses Encode & Kirim ke Printer
+        let text = lines.join("\n"); 
+        let encoder = new TextEncoder(); 
+        let data = encoder.encode(text);
+        
+        let chunkSize = 20; 
+        for (let i = 0; i < data.length; i += chunkSize) { 
+            let chunk = data.slice(i, i + chunkSize); 
+            await characteristic.writeValue(chunk); 
+            await new Promise(resolve => setTimeout(resolve, 100)); 
         }
+        
+        alert('Berhasil mengirim perintah ke printer Bluetooth!');
+    } catch (error) { 
+        alert('Gagal cetak Bluetooth: ' + error.message + '\n\nPastikan GPS/Lokasi menyala dan printer sudah dipairing.'); 
+    }
+}
 
         // --- MANAJEMEN DATA ---
         function bukaManajemen() { const m = document.getElementById('modalManajemen'); const c = document.getElementById('modalManajemenContent'); m.classList.remove('hidden'); m.style.display = 'flex'; setTimeout(() => { m.classList.remove('opacity-0'); c.classList.remove('scale-95'); }, 10); }
