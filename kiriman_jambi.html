@@ -99,14 +99,44 @@
             </div>
         </div>
 
-        <!-- Tombol Aksi Form -->
-        <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6 flex flex-col sm:flex-row gap-4">
-            <button onclick="simpanData()" id="btn-simpan" type="button" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
-                <i class="ph ph-floppy-disk text-xl"></i> Simpan Data
+        <!-- Tombol Aksi Form (DIPERBARUI) -->
+        <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+            
+            <!-- Tombol Manajemen Data -->
+            <button onclick="bukaModalManajemen()" type="button" class="w-full mb-4 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base">
+                <i class="ph ph-database text-xl"></i> Manajemen Data
+            </button>
+
+            <!-- Tombol Simpan & Cetak (Satu Baris) -->
+            <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                <button onclick="simpanData()" id="btn-simpan" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base">
+                    <i class="ph ph-floppy-disk text-xl"></i> Simpan Data
+                </button>
+                
+                <button onclick="bukaPreviewFormSaatIni()" type="button" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base">
+                    <i class="ph ph-printer text-xl"></i> Cetak / Preview
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL MANAJEMEN DATA (BARU) -->
+    <div id="modal-manajemen" class="fixed inset-0 bg-black bg-opacity-70 z-[999] hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-2xl p-6 flex flex-col gap-4 relative">
+            <h2 class="text-xl font-bold flex items-center gap-2 text-gray-800 dark:text-gray-100 mb-2 border-b border-gray-200 dark:border-gray-700 pb-3">
+                <i class="ph ph-database text-blue-500 text-2xl"></i> Menu Manajemen
+            </h2>
+            
+            <!-- Daftar Barang -->
+            <button onclick="alert('Fitur Manajemen Daftar Barang akan segera dikembangkan di tahap selanjutnya!')" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:hover:bg-blue-800/60 dark:text-blue-200 font-semibold py-4 px-4 rounded-xl flex items-center justify-between transition border border-blue-200 dark:border-blue-800 shadow-sm">
+                <span class="flex items-center gap-3"><i class="ph ph-list-dashes text-2xl"></i> Daftar Barang</span>
+                <i class="ph ph-caret-right text-lg"></i>
             </button>
             
-            <button onclick="bukaPreviewFormSaatIni()" type="button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
-                <i class="ph ph-printer text-xl"></i> Cetak / Preview Form
+            <!-- Tombol Tutup -->
+            <button onclick="tutupModalManajemen()" class="mt-4 w-full bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 font-bold py-3 px-4 rounded-xl transition shadow-sm">
+                Tutup / Kembali
             </button>
         </div>
     </div>
@@ -177,7 +207,20 @@
 
         let daftarBarang = ["Makroni Naruto", "Aromanis", "Basreng Kiwari"];
         let dataRiwayatGlobal = {}; 
-        let dataCetakStruk = []; // MENYIMPAN DATA KHUSUS UNTUK PRINTER BLUETOOTH
+        let dataCetakStruk = []; 
+
+        // --- FUNGSI MODAL MANAJEMEN DATA ---
+        function bukaModalManajemen() {
+            const modal = document.getElementById('modal-manajemen');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function tutupModalManajemen() {
+            const modal = document.getElementById('modal-manajemen');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
 
         // --- FUNGSI TABEL FORM ---
         function tambahBaris() {
@@ -239,7 +282,7 @@
             const targetTabelPrev = document.getElementById('prev-tabel-barang');
             
             targetTabelPrev.innerHTML = ""; 
-            dataCetakStruk = []; // Kosongkan data cetak sebelumnya
+            dataCetakStruk = []; 
 
             let adaData = false;
             barisTabel.forEach(baris => {
@@ -252,15 +295,13 @@
                     const total = baris.querySelector('.inp-total').value || "0";
                     const sisa = baris.querySelector('.inp-sisa').value || "0";
                     
-                    // Simpan ke array agar printer membacanya
                     dataCetakStruk.push({ nama, qty, uom, ket, total, sisa });
-
                     targetTabelPrev.innerHTML += renderItemStruk(nama, qty, uom, ket, total, sisa);
                 }
             });
 
             if(!adaData) targetTabelPrev.innerHTML = "<tr><td class='text-center italic'>Belum ada barang diinput</td></tr>";
-            tampilkanModal();
+            tampilkanModalPreview();
         }
 
         function bukaPreviewDariRiwayat(keyRiwayat) {
@@ -272,10 +313,9 @@
 
             const targetTabelPrev = document.getElementById('prev-tabel-barang');
             targetTabelPrev.innerHTML = ""; 
-            dataCetakStruk = []; // Kosongkan data cetak sebelumnya
+            dataCetakStruk = []; 
 
             dataPilihan.forEach(item => {
-                // Simpan ke array agar printer membacanya dari Riwayat
                 dataCetakStruk.push({
                     nama: item.nama_barang,
                     qty: item.qty,
@@ -295,10 +335,10 @@
                 );
             });
 
-            tampilkanModal();
+            tampilkanModalPreview();
         }
 
-        function tampilkanModal() {
+        function tampilkanModalPreview() {
             document.getElementById('modal-preview').classList.remove('hidden');
             document.getElementById('modal-preview').classList.add('block');
         }
@@ -415,7 +455,6 @@
                 dataCetak += LINE;
                 dataCetak += BOLD_ON + "DAFTAR BARANG:" + BOLD_OFF + NEW_LINE;
 
-                // Membaca data barang dari array (Bisa dari Riwayat, bisa dari Form)
                 let adaBarang = false;
                 
                 dataCetakStruk.forEach(item => {
