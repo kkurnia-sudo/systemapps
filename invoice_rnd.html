@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice App - SBR Putra Food</title>
+    <title>Invoice - SBR Putra Food</title>
     <!-- Import Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Import html2canvas untuk fitur Export PNG -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -47,9 +45,8 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; padding: 24px; font-size: 14px; }
-        .container { max-width: 1050px; margin: 0 auto; transition: all 0.3s; }
+        .container { max-width: 950px; margin: 0 auto; transition: all 0.3s; }
         
-        /* Animasi Kelap-Kelip untuk Edit Mode */
         @keyframes blinkEffect {
             0% { opacity: 1; }
             50% { opacity: 0.35; }
@@ -155,35 +152,39 @@
         .table-wrapper { overflow-x: auto; margin: 16px 0; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-card); }
         
         table { width: 100%; border-collapse: collapse; }
-        #invoiceTable { min-width: 950px; }
+        #invoiceTable { min-width: 900px; }
         
         th, td { padding: 12px 14px; text-align: left; vertical-align: middle; border: none !important; }
         th { background-color: var(--th-bg); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-color) !important; padding-bottom: 14px;}
-        tr:hover td { background-color: var(--row-hover); border-radius: 6px; }
+        tr:hover td { background-color: var(--row-hover); }
         
+        /* PENGATURAN KOLOM TABEL BERSIH & TANPA BORDER MENGANGGU */
         .table-wrapper td input, 
         .table-wrapper td select {
             border: 1px solid transparent !important; 
             background-color: transparent !important; 
-            padding: 8px 10px !important; 
+            padding: 6px 8px !important; 
             border-radius: 6px !important; 
             box-shadow: none !important; 
             width: 100% !important;
             outline: none !important;
             color: var(--text-main) !important;
+            font-size: 14px !important;
             transition: all 0.2s;
         }
         
         .table-wrapper td input:focus, 
         .table-wrapper td select:focus {
             background-color: var(--bg-body) !important; 
-            border: 1px solid var(--border-color) !important;
+            border: 1px solid var(--primary) !important;
+            box-shadow: 0 0 0 3px var(--focus-ring) !important;
         }
         
         .table-wrapper td input[readonly] { 
             background-color: transparent !important; 
             color: var(--text-muted) !important; 
             cursor: default !important; 
+            border: none !important;
         }
 
         .table-wrapper td input[type="number"]::-webkit-outer-spin-button,
@@ -221,29 +222,120 @@
 
         .alert { padding: 14px; background-color: #fffbeb; color: #b45309; border-radius: 10px; margin-bottom: 20px; border: 1px solid #fde68a; display: none; font-size: 13px; }
 
+        /* ========================================================
+           MODE CETAK (DIPAKSA TERANG / LIGHT MODE)
+           ======================================================== */
         @media print {
-            body { background: white; padding: 0; }
-            .card { box-shadow: none; border: none; padding: 0; margin: 0; }
-            .btn, .action-col, .top-actions, .bottom-actions, #btnAddRow, .edit-mode-banner { display: none !important; }
-            input, select, textarea { border: none; background: transparent; padding: 0; -webkit-appearance: none; appearance: none; }
-            .table-wrapper { border: none; margin: 0; overflow: visible; }
-            th { background: #f1f5f9 !important; color: #000; }
+            color-scheme: light !important;
+            
+            body { 
+                background: #ffffff !important; 
+                color: #000000 !important; 
+                padding: 0 !important; 
+            }
+            * { color: #000000 !important; font-family: 'Inter', sans-serif !important; }
+            
+            .container { 
+                width: 100% !important; 
+                max-width: 100% !important; 
+                padding: 24px !important; 
+                margin: 0 !important; 
+                background: #ffffff !important;
+            }
+            
+            .card { 
+                box-shadow: none !important; 
+                border: none !important; 
+                padding: 0 !important; 
+                margin-bottom: 20px !important; 
+                background: #ffffff !important;
+            }
+            
+            .btn, .action-col, .top-actions, .bottom-actions, #btnAddRow, .edit-mode-banner, #warningRow, #warningRowInfo, .hide-export { display: none !important; }
+            
+            input, select, textarea { 
+                border: none !important; 
+                background: transparent !important; 
+                color: #000000 !important; 
+                padding: 0 !important; 
+                -webkit-appearance: none !important; 
+                appearance: none !important; 
+                resize: none !important; 
+                font-weight: 500 !important;
+                box-shadow: none !important;
+            }
+            select { background-image: none !important; }
+            input::placeholder, textarea::placeholder { color: transparent !important; }
+
+            .form-group label {
+                font-size: 12px !important;
+                color: #555555 !important;
+                margin-bottom: 2px !important;
+            }
+            .form-group input, .form-group textarea, .form-group select {
+                font-size: 14px !important;
+                font-weight: 600 !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                background: transparent !important;
+            }
+            
+            .table-wrapper { 
+                border: none !important; 
+                margin: 10px 0 !important; 
+                overflow: visible !important; 
+                background: #ffffff !important; 
+                border-radius: 0 !important;
+            }
+            table { width: 100% !important; border-collapse: collapse !important; }
+            th { 
+                background-color: transparent !important; 
+                color: #333333 !important; 
+                border-bottom: 2px solid #000000 !important; 
+                border-top: none !important; 
+                padding: 10px 6px !important;
+                font-size: 11px !important;
+            }
+            td { 
+                border-bottom: 1px solid #e2e8f0 !important; 
+                padding: 10px 6px !important;
+                font-size: 13px !important;
+            }
+            tr:hover td { background-color: transparent !important; }
+            
+            .summary-card { 
+                border: none !important; 
+                box-shadow: none !important; 
+                padding: 0 !important; 
+                background: transparent !important; 
+                margin-top: 15px !important;
+                width: 340px !important;
+            }
+            .summary-row { padding: 4px 0 !important; font-size: 13px !important; color: #333333 !important; }
+            .summary-row.total { 
+                border-top: 2px solid #000000 !important; 
+                margin-top: 8px !important; 
+                padding-top: 8px !important; 
+                font-size: 15px !important;
+                font-weight: 700 !important;
+            }
+            
+            .card-header-title { 
+                border-bottom: 1px solid #cbd5e1 !important; 
+                margin-bottom: 12px !important; 
+                padding-bottom: 6px !important; 
+            }
+            .card-header-title h3 { font-size: 14px !important; color: #000000 !important; font-weight: 700 !important; }
         }
-        
-        .export-mode { background: #ffffff !important; padding: 40px !important; }
-        .export-mode .card { box-shadow: none !important; border: none !important; padding: 10px 0 !important; margin-bottom: 10px !important; }
-        .export-mode .top-actions, .export-mode .action-col, .export-mode .bottom-actions, .export-mode #btnAddRow, .export-mode .edit-mode-banner { display: none !important; }
-        .export-mode input, .export-mode select, .export-mode textarea { border: none !important; background: transparent !important; color: #000 !important; padding: 0 !important; -webkit-appearance: none; appearance: none; resize: none; }
-        .export-mode select { background-image: none !important; }
-        .export-mode th { background: #f1f5f9 !important; color: #000 !important; border-bottom: 2px solid #cbd5e1 !important; }
-        .export-mode .summary-card { border: none !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; }
     </style>
 </head>
 <body>
 
 <div class="container" id="invoiceContainer">
+    <!-- Tombol Aksi Atas -->
     <div class="top-actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 16px;">
         <button class="btn btn-gold" onclick="openHistoryModal()" title="Riwayat Invoice">📜</button>
+        <button class="btn btn-outline" onclick="window.print()" title="Cetak / Print PDF" style="padding: 10px 14px;">🖨️</button>
         <button class="btn btn-outline" onclick="toggleModal('dataModal')">⚙️ Manajemen Data Master</button>
     </div>
 
@@ -273,7 +365,7 @@
     <div class="card">
         <div class="card-header-title">
             <h3>Informasi Pelanggan & Transaksi</h3>
-            <span style="font-size: 12px; color: var(--text-muted);">* Data otomatis terisi berdasarkan agen</span>
+            <span style="font-size: 12px; color: var(--text-muted);" id="warningRowInfo">* Data otomatis terisi berdasarkan agen</span>
         </div>
         <div class="grid-2">
             <div style="display: flex; flex-direction: column; gap: 16px;">
@@ -312,13 +404,13 @@
             <table id="invoiceTable">
                 <thead>
                     <tr>
-                        <th style="width: 130px;">Tanggal</th>
-                        <th style="width: 200px;">Nama Barang</th>
-                        <th class="text-center" style="width: 80px;">Kuantitas</th>
-                        <th style="width: 80px;">Satuan</th>
-                        <th style="width: 125px;">Tujuan Pengiriman</th>
-                        <th style="width: 130px;" class="text-right">Harga Satuan</th>
-                        <th style="width: 140px;" class="text-right">Total Jumlah</th>
+                        <th style="width: 88px;">Tanggal</th>
+                        <th style="width: 180px;">Nama Barang</th>
+                        <th class="text-center" style="width: 60px;">Qty</th>
+                        <th style="width: 75px;">Satuan</th>
+                        <th style="width: 192px;">Tujuan</th>
+                        <th style="width: 110px;" class="text-right">Harga</th>
+                        <th style="width: 120px;" class="text-right">Total</th>
                         <th class="action-col text-center" style="width: 40px;"></th>
                     </tr>
                 </thead>
@@ -330,11 +422,7 @@
         
         <button class="btn btn-outline" id="btnAddRow" onclick="addRow()" disabled style="margin-top: 4px; border-style: dashed;">+ Tambah Baris Barang</button>
 
-        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-top: 28px; gap: 24px;">
-            <div>
-                <button class="btn btn-outline" onclick="openDepositModal(-1)">Deposit</button>
-            </div>
-            
+        <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: flex-end; margin-top: 28px; gap: 24px;">
             <div class="summary-card">
                 <div class="summary-row"><span>Sub Total Pesanan</span><span id="subTotal" style="font-weight: 600; color: var(--text-main);">Rp 0</span></div>
                 <div id="depositListSummary"></div>
@@ -344,10 +432,11 @@
     </div>
 
     <!-- Tombol Aksi Bawah -->
-    <div class="bottom-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 40px;">
-        <button class="btn btn-outline" onclick="saveAsPNG()">🖼️ Simpan PNG</button>
-        <button class="btn btn-outline" onclick="window.print()">🖨️ Cetak / Print PDF</button>
-        <button class="btn btn-primary" onclick="simpanInvoice()" id="btnSaveInvoiceMain">💾 Simpan Invoice</button>
+    <div class="bottom-actions" style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px; margin-bottom: 40px;">
+        <button class="btn btn-outline" onclick="openDepositModal(-1)">💳 Tambah Deposit</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="simpanInvoice()" id="btnSaveInvoiceMain">💾 Simpan Invoice</button>
+        </div>
     </div>
 </div>
 
@@ -405,23 +494,6 @@
             <button class="btn btn-outline" onclick="toggleModal('depositModal')">Batal</button>
             <button class="btn btn-primary" onclick="simpanDeposit()">Simpan</button>
         </div>
-    </div>
-</div>
-
-<!-- Dialog Loading PNG -->
-<div class="modal" id="loadingModal" style="z-index: 9999;">
-    <div class="modal-content" style="max-width: 320px; text-align: center; padding: 40px 20px;">
-        <h3 style="margin-bottom: 12px;">⏳ Memproses...</h3>
-        <p style="color: var(--text-muted); font-size: 13px;">Sedang menyiapkan dan menyimpan gambar invoice berkualitas tinggi.</p>
-    </div>
-</div>
-
-<!-- Dialog Sukses PNG -->
-<div class="modal" id="successModal" style="z-index: 9999;">
-    <div class="modal-content" style="max-width: 320px; text-align: center; padding: 40px 20px;">
-        <h3 style="margin-bottom: 12px; color: var(--primary);">✅ Berhasil!</h3>
-        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Gambar invoice profesional berhasil diunduh ke perangkat Anda.</p>
-        <button class="btn btn-primary" style="width: 100%;" onclick="toggleModal('successModal')">Tutup</button>
     </div>
 </div>
 
@@ -567,6 +639,51 @@
         }
     }
 
+    async function fetchPreviousBalance(customerName) {
+        if(!isSupabaseConnected) return 0;
+        try {
+            const { data, error } = await supabaseClient
+                .from('invoices')
+                .select('balance_due')
+                .eq('customer_name', customerName)
+                .order('created_at', { ascending: false })
+                .limit(1);
+            
+            if (error) throw error;
+            if (data && data.length > 0) {
+                return parseFloat(data[0].balance_due) || 0;
+            }
+        } catch (err) {
+            console.error("Gagal mengambil data piutang:", err);
+        }
+        return 0;
+    }
+
+    function addPiutangRow(amount) {
+        const tbody = document.getElementById('itemsBody');
+        const tr = document.createElement('tr');
+        const today = new Date().toISOString().split('T')[0];
+
+        tr.innerHTML = `
+            <td><input type="date" value="${today}"></td>
+            <td>
+                <select class="item-select" onchange="onProductSelect(this)">
+                    <option value="PIUTANG" data-name="Piutang Tagihan Sebelumnya" data-price="${amount}" data-unit="-" selected>Piutang Tagihan Sebelumnya</option>
+                </select>
+            </td>
+            <td><input type="number" class="item-qty text-center" value="1" readonly></td>
+            <td><input type="text" class="item-unit" value="-" readonly></td>
+            <td><input type="text" placeholder="Tujuan pengiriman" value="-"></td>
+            <td>
+                <input type="text" class="item-price-display text-right" readonly value="${new Intl.NumberFormat('id-ID').format(amount)}">
+                <input type="hidden" class="item-price" value="${amount}">
+            </td>
+            <td class="item-total text-right" style="font-weight:600; padding-right:12px;">${formatMoney(amount)}</td>
+            <td class="action-col text-center"><button class="btn-icon-danger" onclick="removeRow(this)">🗑️</button></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
     function formatMoney(amount) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount); }
     
     function formatRibuanInput(input) {
@@ -657,7 +774,6 @@
             document.getElementById('editModeBanner').style.display = 'flex';
             document.getElementById('btnSaveInvoiceMain').innerText = '💾 Simpan Perubahan';
 
-            // Pisahkan rincian deposit dan barang dari invoice_items secara presisi
             depositList = [];
             const productItems = [];
 
@@ -674,7 +790,6 @@
                 });
             }
 
-            // Fallback untuk invoice lama yang belum memiliki rincian deposit item terpisah
             if (depositList.length === 0 && (parseFloat(invData.deposit) || 0) > 0) {
                 depositList.push({ ket: 'Deposit / Pembayaran', nom: parseFloat(invData.deposit) });
             }
@@ -707,10 +822,17 @@
                 const availableProducts = getAvailableProductsForCurrentAgent();
                 
                 let productOptions = '<option value="">-- Pilih Barang --</option>';
+                let isProductFound = false;
+
                 availableProducts.forEach(p => {
                     const isSelected = (String(p.id) === String(item.product_id) || p.name === item.product_name) ? 'selected' : '';
+                    if (isSelected) isProductFound = true;
                     productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.custom_price}" data-unit="${p.unit}" ${isSelected}>${p.name}</option>`;
                 });
+
+                if (!isProductFound && item.product_id) {
+                    productOptions += `<option value="${item.product_id}" data-name="${item.product_name}" data-price="${item.price}" data-unit="${item.unit}" selected>${item.product_name}</option>`;
+                }
 
                 tr.innerHTML = `
                     <td><input type="date" value="${item.tanggal || new Date().toISOString().split('T')[0]}"></td>
@@ -1016,7 +1138,7 @@
         }
     }
 
-    function autoFillCustomer() {
+    async function autoFillCustomer() {
         const select = document.getElementById('custName');
         const customerId = parseInt(select.value);
         currentCustomerId = customerId || null;
@@ -1039,8 +1161,20 @@
 
         if(!isEditingMode) {
             document.getElementById('itemsBody').innerHTML = '';
+            depositList = []; 
+            
+            if(currentCustomerId && customer) {
+                const prevBalance = await fetchPreviousBalance(customer.name);
+                
+                if (prevBalance > 0) {
+                    addPiutangRow(prevBalance);
+                } else if (prevBalance < 0) {
+                    depositList.push({ ket: 'Deposit / Kelebihan Bayar Sebelumnya', nom: Math.abs(prevBalance) });
+                }
+                
+                addRow(); 
+            }
             calculate();
-            if(currentCustomerId) addRow(); 
         }
     }
 
@@ -1152,7 +1286,7 @@
             totalDeposit += dep.nom;
             depositHtml += `
             <div class="summary-row deposit-row" style="cursor:pointer;" onclick="openDepositModal(${idx})" title="Klik untuk edit">
-                <span>${dep.ket} ✏️</span>
+                <span>${dep.ket} <span class="hide-export">✏️</span></span>
                 <span style="color: var(--danger); font-weight: 600;">- ${formatMoney(dep.nom)}</span>
             </div>`;
         });
@@ -1160,36 +1294,6 @@
         document.getElementById('subTotal').innerText = formatMoney(subtotal);
         document.getElementById('depositListSummary').innerHTML = depositHtml;
         document.getElementById('balanceDue').innerText = formatMoney(subtotal - totalDeposit);
-    }
-
-    async function saveAsPNG() {
-        toggleModal('loadingModal');
-        const container = document.getElementById('invoiceContainer');
-        document.body.classList.add('export-mode');
-
-        setTimeout(async () => {
-            try {
-                const canvas = await html2canvas(container, {
-                    scale: 2, 
-                    backgroundColor: '#ffffff',
-                    windowWidth: 1050
-                });
-                
-                const link = document.createElement('a');
-                link.download = `Invoice-${document.getElementById('invoiceNumber').value}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-
-                toggleModal('loadingModal');
-                toggleModal('successModal');
-            } catch (err) {
-                console.error("Gagal simpan gambar:", err);
-                alert("Terjadi kesalahan saat menyimpan gambar.");
-                toggleModal('loadingModal');
-            } finally {
-                document.body.classList.remove('export-mode');
-            }
-        }, 500);
     }
 
     async function simpanInvoice() {
@@ -1243,7 +1347,6 @@
         let totalDeposit = 0;
         depositList.forEach(dep => {
             totalDeposit += dep.nom;
-            // Masukkan juga setiap rincian deposit ke itemsPayload agar tersimpan individual di database
             itemsPayload.push({
                 invoice_no: invoiceNo,
                 tanggal: new Date().toISOString().split('T')[0],
