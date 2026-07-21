@@ -815,7 +815,15 @@
 
         const tanggalInput = document.getElementById('tanggal').value;
         const now = new Date();
-        const created_at_lengkap = `${tanggalInput} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        
+        // 1. Pisahkan tahun, bulan, dan hari dari input user
+        const [year, month, day] = tanggalInput.split('-');
+        
+        // 2. Buat objek tanggal dengan zona waktu lokal secara spesifik
+        const localDate = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
+        
+        // 3. Ubah ke standar ISO String agar Supabase menyimpannya dalam format UTC yang benar
+        const created_at_lengkap = localDate.toISOString();
         
         let insertPayload = [];
         if (metode === 'Split') {
@@ -834,6 +842,9 @@
             metodeSelect.value = "";
             singleAmountContainer.style.display = 'block';
             splitAmountContainer.style.display = 'none';
+            
+            // TAMBAHKAN BARIS INI UNTUK MEMPERBARUI TABEL OTOMATIS
+            fetchTransactions();
         }
         submitBtn.innerText = 'Simpan Catatan Renovasi';
         submitBtn.disabled = false;
