@@ -1,0 +1,658 @@
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice App - SBR Putra Food</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            /* Light Theme Colors */
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --input-bg: #f8fafc;
+            --th-bg: #f1f5f9;
+            --focus-ring: rgba(16, 185, 129, 0.2);
+            --modal-bg: rgba(0,0,0,0.5);
+        }
+
+        /* Dark Theme Colors */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #0f172a;
+                --bg-card: #1e293b;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --border-color: #334155;
+                --primary: #10b981;
+                --primary-hover: #34d399;
+                --input-bg: #0f172a;
+                --th-bg: #334155;
+                --modal-bg: rgba(0,0,0,0.7);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            background-color: var(--th-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--text-muted);
+            border: 2px solid var(--border-color);
+        }
+
+        .brand-text h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-text p {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .title-section h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Grid Layout for Inputs */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Inputs */
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        
+        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { background-color: var(--th-bg); }
+
+        .btn-danger { background-color: transparent; color: var(--danger); padding: 6px; border-radius: 6px;}
+        .btn-danger:hover { background-color: #fee2e2; color: #b91c1c; }
+
+        @media (prefers-color-scheme: dark) {
+            .btn-danger:hover { background-color: rgba(239, 68, 68, 0.2); }
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--th-bg);
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .text-right { text-align: right !important; }
+        .text-center { text-align: center !important; }
+        .w-auto { width: auto; }
+        .w-small { width: 100px; }
+
+        /* Summary Section */
+        .summary-card {
+            width: 100%;
+            max-width: 350px;
+            margin-left: auto;
+            background-color: var(--th-bg);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+
+        .summary-row.total {
+            border-top: 2px dashed var(--border-color);
+            margin-top: 8px;
+            padding-top: 16px;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        .top-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 16px;
+        }
+
+        /* Modal / Data Management */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-bg);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            width: 100%;
+            max-width: 700px;
+            border-radius: 12px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .close-modal {
+            background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            background: var(--th-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .card { box-shadow: none; border: none; padding: 0; margin: 0; }
+            .btn, .top-actions, .action-col { display: none !important; }
+            input, select, textarea { 
+                border: none; background: transparent; padding: 0; 
+                -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            }
+            .table-wrapper { border: none; margin: 0; overflow: visible;}
+            th { background: #f8fafc !important; -webkit-print-color-adjust: exact; color: #000; }
+            :root { --text-main: #000; --text-muted: #333; --border-color: #ddd; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="top-actions">
+        <button class="btn btn-outline" onclick="toggleModal('dataModal')">
+            ⚙️ Manajemen Data
+        </button>
+    </div>
+
+    <!-- Header Card -->
+    <div class="card header">
+        <div class="brand-section">
+            <div class="logo">LOGO</div>
+            <div class="brand-text">
+                <h1>SBR PUTRA FOOD</h1>
+                <p>Lembang, Bandung Barat, Jawa Barat</p>
+            </div>
+        </div>
+        <div class="title-section">
+            <h2>Invoice</h2>
+        </div>
+    </div>
+
+    <!-- Customer Details Card -->
+    <div class="card">
+        <h3 style="margin-bottom: 16px; font-size: 16px;">Informasi Pelanggan</h3>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Nama Pelanggan (Pilih atau Ketik)</label>
+                <input type="text" id="custName" list="customerList" placeholder="Masukkan nama pelanggan..." autocomplete="off" onchange="autoFillCustomer()">
+                <datalist id="customerList"></datalist>
+            </div>
+            <div class="form-group">
+                <label>Nomor Telepon</label>
+                <input type="text" id="custPhone" placeholder="Contoh: +62 812...">
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Alamat Pengiriman</label>
+                <textarea id="custAddress" rows="2" placeholder="Detail alamat pengiriman..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Items Card -->
+    <div class="card">
+        <h3 style="margin-bottom: 16px; font-size: 16px;">Detail Pesanan</h3>
+        
+        <div class="table-wrapper">
+            <table id="invoiceTable">
+                <thead>
+                    <tr>
+                        <th style="width: 140px;">Hari/Tgl</th>
+                        <th>Nama Barang</th>
+                        <th class="w-small text-center">Qty</th>
+                        <th class="w-small">Satuan</th>
+                        <th>Tujuan</th>
+                        <th style="width: 150px;" class="text-right">Harga</th>
+                        <th style="width: 150px;" class="text-right">Jumlah</th>
+                        <th class="action-col" style="width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="itemsBody">
+                    <!-- Rows dynamic -->
+                </tbody>
+            </table>
+        </div>
+        <button class="btn btn-outline" onclick="addRow()">+ Tambah Barang</button>
+
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 24px; gap: 20px;">
+            <div style="flex: 1; min-width: 250px;">
+                <h4 style="margin-bottom: 10px; font-size: 14px; color: var(--text-muted);">Catatan / Deposit</h4>
+                <div id="depositContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+                    <!-- Deposits -->
+                </div>
+                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="addDeposit()">+ Tambah Deposit</button>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-row">
+                    <span>Sub Total</span>
+                    <span id="subTotal">Rp 0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Total Deposit</span>
+                    <span id="totalDeposit" style="color: var(--danger);">- Rp 0</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Sisa Pembayaran</span>
+                    <span id="balanceDue">Rp 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 40px;">
+        <button class="btn btn-outline" onclick="window.print()">🖨️ Cetak PDF</button>
+        <button class="btn btn-primary" onclick="alert('Siap dihubungkan ke Supabase!')">💾 Simpan Invoice</button>
+    </div>
+</div>
+
+<!-- Modal Manajemen Data -->
+<div class="modal" id="dataModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Manajemen Data Master</h3>
+            <button class="close-modal" onclick="toggleModal('dataModal')">&times;</button>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tabProducts', this)">📦 Data Barang</button>
+            <button class="tab-btn" onclick="switchTab('tabCustomers', this)">👥 Data Pelanggan</button>
+        </div>
+
+        <!-- Tab Products -->
+        <div id="tabProducts" class="tab-content active">
+            <p style="margin-bottom: 10px; color: var(--text-muted); font-size: 13px;">Data ini akan muncul di dropdown pilihan barang pada invoice.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nama Barang</th>
+                            <th>Harga Default</th>
+                            <th>Satuan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterProductsBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab Customers -->
+        <div id="tabCustomers" class="tab-content">
+            <p style="margin-bottom: 10px; color: var(--text-muted); font-size: 13px;">Data ini akan membantu mengisi otomatis form pelanggan.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nama Pelanggan</th>
+                            <th>No Telp</th>
+                            <th>Alamat</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterCustomersBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // --- Mockup Database (Representasi Supabase) ---
+    const dbProducts = [
+        { id: 1, name: 'Aromanis (Rambut Nenek)', price: 514500, unit: 'DUS' },
+        { id: 2, name: 'Basreng Kiwari', price: 876000, unit: 'KARUNG' },
+        { id: 3, name: 'Makroni Naruto', price: 150000, unit: 'DUS' }
+    ];
+
+    const dbCustomers = [
+        { name: 'Bpk Rachmat R&D', phone: '+62 821-2233-2017', address: 'Jakarta' },
+        { name: 'Toko Lembang Jaya', phone: '08123456789', address: 'Jl. Raya Lembang No 10, Bandung Barat' }
+    ];
+
+    // Format Rupiah
+    function formatMoney(amount) {
+        return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
+    }
+    
+    // Init Page
+    document.addEventListener('DOMContentLoaded', () => {
+        populateMasterData();
+        addRow(); // Add first empty row
+    });
+
+    // Populate Master Data into Modal & Datalists
+    function populateMasterData() {
+        // Populate Datalist Customers
+        const dataList = document.getElementById('customerList');
+        const custBody = document.getElementById('masterCustomersBody');
+        dataList.innerHTML = '';
+        custBody.innerHTML = '';
+
+        dbCustomers.forEach(c => {
+            dataList.innerHTML += `<option value="${c.name}">`;
+            custBody.innerHTML += `<tr><td>${c.name}</td><td>${c.phone}</td><td>${c.address}</td></tr>`;
+        });
+
+        // Populate Modal Products
+        const prodBody = document.getElementById('masterProductsBody');
+        prodBody.innerHTML = '';
+        dbProducts.forEach(p => {
+            prodBody.innerHTML += `<tr><td>${p.name}</td><td>${formatMoney(p.price)}</td><td>${p.unit}</td></tr>`;
+        });
+    }
+
+    // Auto Fill Customer Data
+    function autoFillCustomer() {
+        const inputName = document.getElementById('custName').value;
+        const customer = dbCustomers.find(c => c.name === inputName);
+        if(customer) {
+            document.getElementById('custPhone').value = customer.phone;
+            document.getElementById('custAddress').value = customer.address;
+        }
+    }
+
+    // Modal Logic
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        modal.classList.toggle('active');
+    }
+
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // Invoice Logic
+    function addRow() {
+        const tbody = document.getElementById('itemsBody');
+        const tr = document.createElement('tr');
+        const today = new Date().toISOString().split('T')[0];
+
+        // Generate options from dbProducts
+        let productOptions = '<option value="">-- Pilih Barang --</option>';
+        dbProducts.forEach(p => {
+            productOptions += `<option value="${p.id}">${p.name}</option>`;
+        });
+
+        tr.innerHTML = `
+            <td><input type="date" value="${today}"></td>
+            <td>
+                <select class="item-select" onchange="onProductSelect(this)">
+                    ${productOptions}
+                </select>
+            </td>
+            <!-- Placeholder diubah menjadi 0 -->
+            <td><input type="number" class="item-qty text-center" value="0" min="0" oninput="calculate()"></td>
+            <td><input type="text" class="item-unit" placeholder="Satuan"></td>
+            <td><input type="text" placeholder="Kota / Tujuan"></td>
+            <td><input type="number" class="item-price text-right" value="0" oninput="calculate()"></td>
+            <td class="item-total text-right font-weight-bold" style="font-weight:600;">Rp 0</td>
+            <td class="action-col text-center">
+                <button class="btn btn-danger" onclick="removeRow(this)">🗑️</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function onProductSelect(selectElement) {
+        const row = selectElement.closest('tr');
+        const productId = parseInt(selectElement.value);
+        const product = dbProducts.find(p => p.id === productId);
+        
+        if(product) {
+            row.querySelector('.item-price').value = product.price;
+            row.querySelector('.item-unit').value = product.unit;
+            // Jika quantity masih 0 saat barang dipilih, ubah jadi 1 agar langsung muncul harga
+            const qtyInput = row.querySelector('.item-qty');
+            if(qtyInput.value === "0" || qtyInput.value === "") {
+                qtyInput.value = 1;
+            }
+        } else {
+            row.querySelector('.item-price').value = 0;
+            row.querySelector('.item-unit').value = "";
+        }
+        calculate();
+    }
+
+    function removeRow(btn) {
+        btn.closest('tr').remove();
+        calculate();
+    }
+
+    function addDeposit() {
+        const container = document.getElementById('depositContainer');
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.gap = '8px';
+        div.innerHTML = `
+            <input type="text" placeholder="Keterangan (misal: Transfer BCA)" style="flex: 2;">
+            <input type="number" class="deposit-amount text-right" placeholder="Nominal" value="0" style="flex: 1;" oninput="calculate()">
+            <button class="btn btn-danger" onclick="this.parentElement.remove(); calculate();">X</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function calculate() {
+        let subtotal = 0;
+        
+        // Calculate rows
+        document.querySelectorAll('#itemsBody tr').forEach(row => {
+            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            const total = qty * price;
+            row.querySelector('.item-total').innerText = formatMoney(total);
+            subtotal += total;
+        });
+
+        // Calculate deposit
+        let totalDeposit = 0;
+        document.querySelectorAll('.deposit-amount').forEach(dep => {
+            totalDeposit += parseFloat(dep.value) || 0;
+        });
+
+        const balance = subtotal - totalDeposit;
+
+        // Update Summary UI
+        document.getElementById('subTotal').innerText = formatMoney(subtotal);
+        document.getElementById('totalDeposit').innerText = '- ' + formatMoney(totalDeposit);
+        document.getElementById('balanceDue').innerText = formatMoney(balance);
+    }
+</script>
+
+</body>
+</html>
