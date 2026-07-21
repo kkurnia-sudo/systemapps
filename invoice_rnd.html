@@ -6,6 +6,8 @@
     <title>Invoice App - SBR Putra Food</title>
     <!-- Import Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Import html2canvas untuk fitur Export PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -24,6 +26,7 @@
             --th-bg: #f8fafc;
             --focus-ring: rgba(16, 185, 129, 0.2);
             --modal-bg: rgba(0,0,0,0.5);
+            --row-hover: rgba(0,0,0,0.02);
         }
 
         @media (prefers-color-scheme: dark) {
@@ -38,14 +41,34 @@
                 --input-bg: #0f172a;
                 --th-bg: #334155;
                 --modal-bg: rgba(0,0,0,0.7);
+                --row-hover: rgba(255,255,255,0.03);
             }
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; padding: 24px; font-size: 14px; }
-        .container { max-width: 1050px; margin: 0 auto; }
+        .container { max-width: 1050px; margin: 0 auto; transition: all 0.3s; }
         
-        /* Card Styling Modern */
+        /* Animasi Kelap-Kelip untuk Edit Mode */
+        @keyframes blinkEffect {
+            0% { opacity: 1; }
+            50% { opacity: 0.35; }
+            100% { opacity: 1; }
+        }
+        .edit-mode-banner {
+            animation: blinkEffect 1.5s infinite ease-in-out;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
         .card { 
             background-color: var(--bg-card); 
             border-radius: 16px; 
@@ -80,7 +103,6 @@
             margin-top: 6px; 
         }
 
-        /* Section Title Header inside Cards */
         .card-header-title {
             display: flex;
             align-items: center;
@@ -105,7 +127,7 @@
             transition: all 0.2s ease; 
         }
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--focus-ring); }
-        input[readonly] { background-color: var(--th-bg); color: var(--text-muted); cursor: not-allowed; }
+        input[readonly], textarea[readonly] { background-color: var(--th-bg); color: var(--text-muted); cursor: not-allowed; }
 
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border: none; border-radius: 10px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; font-size: 14px; }
         .btn-primary { background-color: var(--primary); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
@@ -115,18 +137,61 @@
         .btn-danger { background-color: var(--danger); color: white; padding: 6px 12px; border-radius: 8px; }
         .btn-danger:hover { background-color: var(--danger-hover); }
         
-        .btn-icon-danger { background-color: transparent; color: var(--danger); padding: 8px; border-radius: 8px; }
+        .btn-gold { 
+            background: linear-gradient(135deg, #fbbf24, #f59e0b); 
+            color: white; 
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); 
+            padding: 10px 14px; 
+            font-size: 16px; 
+        }
+        .btn-gold:hover { 
+            background: linear-gradient(135deg, #f59e0b, #d97706); 
+            transform: translateY(-1px); 
+        }
+        
+        .btn-icon-danger { background-color: transparent; color: var(--danger); padding: 6px; border-radius: 8px; border: none; cursor: pointer; }
         .btn-icon-danger:hover { background-color: #fee2e2; color: #b91c1c; }
 
         .table-wrapper { overflow-x: auto; margin: 16px 0; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-card); }
-        table { width: 100%; border-collapse: collapse; min-width: 850px; }
-        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-        th { background-color: var(--th-bg); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: rgba(0,0,0,0.01); }
+        
+        table { width: 100%; border-collapse: collapse; }
+        #invoiceTable { min-width: 950px; }
+        
+        th, td { padding: 12px 14px; text-align: left; vertical-align: middle; border: none !important; }
+        th { background-color: var(--th-bg); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-color) !important; padding-bottom: 14px;}
+        tr:hover td { background-color: var(--row-hover); border-radius: 6px; }
+        
+        .table-wrapper td input, 
+        .table-wrapper td select {
+            border: 1px solid transparent !important; 
+            background-color: transparent !important; 
+            padding: 8px 10px !important; 
+            border-radius: 6px !important; 
+            box-shadow: none !important; 
+            width: 100% !important;
+            outline: none !important;
+            color: var(--text-main) !important;
+            transition: all 0.2s;
+        }
+        
+        .table-wrapper td input:focus, 
+        .table-wrapper td select:focus {
+            background-color: var(--bg-body) !important; 
+            border: 1px solid var(--border-color) !important;
+        }
+        
+        .table-wrapper td input[readonly] { 
+            background-color: transparent !important; 
+            color: var(--text-muted) !important; 
+            cursor: default !important; 
+        }
+
+        .table-wrapper td input[type="number"]::-webkit-outer-spin-button,
+        .table-wrapper td input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .table-wrapper td input[type="number"] { -moz-appearance: textfield; }
+
         .text-right { text-align: right !important; }
         .text-center { text-align: center !important; }
-        .w-small { width: 110px; }
 
         .summary-card { 
             width: 100%; max-width: 380px; 
@@ -137,6 +202,7 @@
             border: 1px solid var(--border-color);
         }
         .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: var(--text-muted); }
+        .summary-row.deposit-row:hover { background-color: var(--bg-card); border-radius: 8px; padding: 8px; margin: 0 -8px; }
         .summary-row.total { border-top: 2px dashed var(--border-color); margin-top: 10px; padding-top: 14px; font-weight: 700; font-size: 16px; color: var(--text-main); }
         .summary-row.total span:last-child { color: var(--primary); }
 
@@ -158,21 +224,35 @@
         @media print {
             body { background: white; padding: 0; }
             .card { box-shadow: none; border: none; padding: 0; margin: 0; }
-            .btn, .action-col, .top-actions { display: none !important; }
+            .btn, .action-col, .top-actions, .bottom-actions, #btnAddRow, .edit-mode-banner { display: none !important; }
             input, select, textarea { border: none; background: transparent; padding: 0; -webkit-appearance: none; appearance: none; }
             .table-wrapper { border: none; margin: 0; overflow: visible; }
             th { background: #f1f5f9 !important; color: #000; }
         }
+        
+        .export-mode { background: #ffffff !important; padding: 40px !important; }
+        .export-mode .card { box-shadow: none !important; border: none !important; padding: 10px 0 !important; margin-bottom: 10px !important; }
+        .export-mode .top-actions, .export-mode .action-col, .export-mode .bottom-actions, .export-mode #btnAddRow, .export-mode .edit-mode-banner { display: none !important; }
+        .export-mode input, .export-mode select, .export-mode textarea { border: none !important; background: transparent !important; color: #000 !important; padding: 0 !important; -webkit-appearance: none; appearance: none; resize: none; }
+        .export-mode select { background-image: none !important; }
+        .export-mode th { background: #f1f5f9 !important; color: #000 !important; border-bottom: 2px solid #cbd5e1 !important; }
+        .export-mode .summary-card { border: none !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="top-actions" style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+<div class="container" id="invoiceContainer">
+    <div class="top-actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 16px;">
+        <button class="btn btn-gold" onclick="openHistoryModal()" title="Riwayat Invoice">📜</button>
         <button class="btn btn-outline" onclick="toggleModal('dataModal')">⚙️ Manajemen Data Master</button>
     </div>
 
-    <!-- Alert Notifikasi Supabase -->
+    <!-- Banner Edit Mode (Kelap-Kelip) -->
+    <div id="editModeBanner" class="edit-mode-banner">
+        <span>⚠️ <b>EDIT MODE:</b> Sedang mengedit invoice <span id="editingInvoiceLabel" style="text-decoration: underline;"></span></span>
+        <button class="btn btn-outline" style="background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 4px 10px; font-size: 12px;" onclick="cancelEditMode()">Batalkan</button>
+    </div>
+
     <div class="alert" id="supabaseAlert">
         ⚠️ <b>Status Koneksi:</b> Gagal terhubung ke database atau RLS Aktif. Menggunakan simulasi lokal.
     </div>
@@ -189,35 +269,39 @@
         </div>
     </div>
 
-    <!-- Informasi Pelanggan & Nomor Invoice (Dibuat Lebih Bersih & Rapi) -->
+    <!-- Informasi Pelanggan -->
     <div class="card">
         <div class="card-header-title">
             <h3>Informasi Pelanggan & Transaksi</h3>
             <span style="font-size: 12px; color: var(--text-muted);">* Data otomatis terisi berdasarkan agen</span>
         </div>
         <div class="grid-2">
-            <div class="form-group">
-                <label>Nomor Invoice</label>
-                <input type="text" id="invoiceNumber" readonly style="font-weight: 600; letter-spacing: 0.5px;">
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                    <label>Nomor Invoice</label>
+                    <input type="text" id="invoiceNumber" readonly style="font-weight: 600; letter-spacing: 0.5px; color: var(--primary);">
+                </div>
+                <div class="form-group">
+                    <label>Nama Pelanggan / Agen</label>
+                    <select id="custName" onchange="autoFillCustomer()">
+                        <option value="">-- Pilih Agen --</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Nama Pelanggan / Agen</label>
-                <select id="custName" onchange="autoFillCustomer()">
-                    <option value="">-- Pilih Agen --</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Nomor Telepon</label>
-                <input type="text" id="custPhone" placeholder="Otomatis terisi..." readonly>
-            </div>
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label>Alamat Pengiriman</label>
-                <textarea id="custAddress" rows="2" placeholder="Otomatis terisi..." readonly style="resize: none;"></textarea>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                    <label>Nomor Telepon</label>
+                    <input type="text" id="custPhone" placeholder="Otomatis terisi..." readonly>
+                </div>
+                <div class="form-group">
+                    <label>Alamat Pengiriman</label>
+                    <textarea id="custAddress" rows="2" placeholder="Otomatis terisi..." readonly style="resize: none;"></textarea>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Detail Pesanan (Dibuat Lebih Bersih & Proporsional) -->
+    <!-- Detail Pesanan -->
     <div class="card">
         <div class="card-header-title">
             <h3>Rincian Barang Pesanan</h3>
@@ -228,14 +312,14 @@
             <table id="invoiceTable">
                 <thead>
                     <tr>
-                        <th style="width: 150px;">Hari / Tanggal</th>
-                        <th>Nama Barang</th>
-                        <th class="w-small text-center">Kuantitas</th>
-                        <th class="w-small">Satuan</th>
-                        <th>Tujuan Pengiriman</th>
-                        <th style="width: 150px;" class="text-right">Harga Satuan</th>
-                        <th style="width: 150px;" class="text-right">Total Jumlah</th>
-                        <th class="action-col text-center" style="width: 50px;"></th>
+                        <th style="width: 130px;">Tanggal</th>
+                        <th style="width: 200px;">Nama Barang</th>
+                        <th class="text-center" style="width: 80px;">Kuantitas</th>
+                        <th style="width: 80px;">Satuan</th>
+                        <th style="width: 125px;">Tujuan Pengiriman</th>
+                        <th style="width: 130px;" class="text-right">Harga Satuan</th>
+                        <th style="width: 140px;" class="text-right">Total Jumlah</th>
+                        <th class="action-col text-center" style="width: 40px;"></th>
                     </tr>
                 </thead>
                 <tbody id="itemsBody">
@@ -244,27 +328,100 @@
             </table>
         </div>
         
-        <button class="btn btn-outline" id="btnAddRow" onclick="addRow()" disabled style="margin-top: 4px;">+ Tambah Baris Barang</button>
+        <button class="btn btn-outline" id="btnAddRow" onclick="addRow()" disabled style="margin-top: 4px; border-style: dashed;">+ Tambah Baris Barang</button>
 
-        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 28px; gap: 24px; align-items: flex-start;">
-            <div style="flex: 1; min-width: 280px;">
-                <h4 style="margin-bottom: 10px; font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Deposit / Cicilan Pembayaran</h4>
-                <div id="depositContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;"></div>
-                <button class="btn btn-outline" style="padding: 7px 14px; font-size: 12px;" onclick="addDeposit()">+ Tambah Riwayat Deposit</button>
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-top: 28px; gap: 24px;">
+            <div>
+                <button class="btn btn-outline" onclick="openDepositModal(-1)">Deposit</button>
             </div>
             
             <div class="summary-card">
                 <div class="summary-row"><span>Sub Total Pesanan</span><span id="subTotal" style="font-weight: 600; color: var(--text-main);">Rp 0</span></div>
-                <div class="summary-row"><span>Total Potongan Deposit</span><span id="totalDeposit" style="color: var(--danger); font-weight: 600;">- Rp 0</span></div>
+                <div id="depositListSummary"></div>
                 <div class="summary-row total"><span>Sisa Pembayaran (Due)</span><span id="balanceDue">Rp 0</span></div>
             </div>
         </div>
     </div>
 
     <!-- Tombol Aksi Bawah -->
-    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 40px;">
+    <div class="bottom-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 40px;">
+        <button class="btn btn-outline" onclick="saveAsPNG()">🖼️ Simpan PNG</button>
         <button class="btn btn-outline" onclick="window.print()">🖨️ Cetak / Print PDF</button>
-        <button class="btn btn-primary" onclick="simpanInvoice()">💾 Simpan Invoice ke Database</button>
+        <button class="btn btn-primary" onclick="simpanInvoice()" id="btnSaveInvoiceMain">💾 Simpan Invoice</button>
+    </div>
+</div>
+
+<!-- Modal Riwayat Invoice -->
+<div class="modal" id="historyModal">
+    <div class="modal-content" style="max-width: 850px;">
+        <div class="modal-header">
+            <h3 style="font-size: 18px; font-weight: 600;">📜 Riwayat Invoice</h3>
+            <button class="close-modal" onclick="toggleModal('historyModal')">&times;</button>
+        </div>
+        
+        <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Klik pada <b>Nomor Invoice</b> untuk memuat dan mengedit kembali rinciannya.</p>
+        
+        <div class="table-wrapper" style="margin: 0; border: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 140px;">No Invoice</th>
+                        <th>Pelanggan</th>
+                        <th class="text-right">Subtotal</th>
+                        <th class="text-right">Deposit</th>
+                        <th class="text-right">Sisa Tagihan</th>
+                        <th class="text-center" style="width: 60px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <tr><td colspan="6" class="text-center text-muted">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+            <button class="btn btn-outline" onclick="toggleModal('historyModal')">Kembali</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Input Deposit -->
+<div class="modal" id="depositModal" style="z-index: 1200;">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 style="font-size: 16px; font-weight: 600;">Data Deposit / Cicilan</h3>
+            <button class="close-modal" onclick="toggleModal('depositModal')">&times;</button>
+        </div>
+        <div class="form-group">
+            <label>Keterangan (Cth: Transfer BCA 1)</label>
+            <input type="text" id="depKet" placeholder="Masukkan keterangan...">
+        </div>
+        <div class="form-group">
+            <label>Nominal Deposit (Rp)</label>
+            <input type="text" id="depNom" placeholder="0" oninput="formatRibuanInput(this)">
+        </div>
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-danger" style="margin-right: auto; display: none;" id="btnHapusDeposit" onclick="hapusDeposit()">Hapus</button>
+            <button class="btn btn-outline" onclick="toggleModal('depositModal')">Batal</button>
+            <button class="btn btn-primary" onclick="simpanDeposit()">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Dialog Loading PNG -->
+<div class="modal" id="loadingModal" style="z-index: 9999;">
+    <div class="modal-content" style="max-width: 320px; text-align: center; padding: 40px 20px;">
+        <h3 style="margin-bottom: 12px;">⏳ Memproses...</h3>
+        <p style="color: var(--text-muted); font-size: 13px;">Sedang menyiapkan dan menyimpan gambar invoice berkualitas tinggi.</p>
+    </div>
+</div>
+
+<!-- Dialog Sukses PNG -->
+<div class="modal" id="successModal" style="z-index: 9999;">
+    <div class="modal-content" style="max-width: 320px; text-align: center; padding: 40px 20px;">
+        <h3 style="margin-bottom: 12px; color: var(--primary);">✅ Berhasil!</h3>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Gambar invoice profesional berhasil diunduh ke perangkat Anda.</p>
+        <button class="btn btn-primary" style="width: 100%;" onclick="toggleModal('successModal')">Tutup</button>
     </div>
 </div>
 
@@ -354,6 +511,12 @@
     let editingType = '';
     let editingId = null;
     let editingId2 = null;
+    
+    let depositList = [];
+    let editingDepositIndex = -1;
+
+    let isEditingMode = false;
+    let originalEditingInvoiceNo = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
         generateRandomInvoice(); 
@@ -363,6 +526,7 @@
     });
 
     function generateRandomInvoice() {
+        if(isEditingMode) return; 
         const randomNum = Math.floor(10000 + Math.random() * 90000);
         document.getElementById('invoiceNumber').value = 'INV.SBR' + randomNum;
     }
@@ -422,6 +586,186 @@
 
     function toggleModal(id) { document.getElementById(id).classList.toggle('active'); }
     
+    async function openHistoryModal() {
+        toggleModal('historyModal');
+        const tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">⏳ Mengambil data dari server...</td></tr>';
+        
+        if(!isSupabaseConnected) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Aplikasi dalam mode simulasi. Riwayat database tidak tersedia.</td></tr>';
+            return;
+        }
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('invoices')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Belum ada riwayat invoice.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(inv => `
+                <tr>
+                    <td>
+                        <span style="font-weight: 600; color: var(--primary); cursor: pointer; text-decoration: underline;" onclick="loadInvoiceForEdit('${inv.invoice_no}')" title="Klik untuk edit invoice ini">
+                            ${inv.invoice_no}
+                        </span>
+                    </td>
+                    <td>${inv.customer_name}</td>
+                    <td class="text-right">${formatMoney(inv.subtotal)}</td>
+                    <td class="text-right" style="color: var(--danger);">${formatMoney(inv.deposit)}</td>
+                    <td class="text-right" style="font-weight: 600;">${formatMoney(inv.balance_due)}</td>
+                    <td class="text-center">
+                        <button class="btn-icon-danger" style="padding: 4px 8px; font-size: 13px;" onclick="deleteInvoice('${inv.invoice_no}')" title="Hapus Invoice">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+
+        } catch (err) {
+            console.error("Gagal memuat riwayat:", err);
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="color: var(--danger);">Gagal memuat data: ${err.message}</td></tr>`;
+        }
+    }
+
+    async function loadInvoiceForEdit(invoiceNo) {
+        if(!isSupabaseConnected) return;
+        
+        try {
+            const { data: invData, error: invErr } = await supabaseClient
+                .from('invoices')
+                .select('*')
+                .eq('invoice_no', invoiceNo)
+                .single();
+            if(invErr) throw invErr;
+
+            const { data: itemsData, error: itemErr } = await supabaseClient
+                .from('invoice_items')
+                .select('*')
+                .eq('invoice_no', invoiceNo);
+            if(itemErr) throw itemErr;
+
+            toggleModal('historyModal');
+
+            isEditingMode = true;
+            originalEditingInvoiceNo = invoiceNo;
+            document.getElementById('editingInvoiceLabel').innerText = invoiceNo;
+            document.getElementById('editModeBanner').style.display = 'flex';
+            document.getElementById('btnSaveInvoiceMain').innerText = '💾 Simpan Perubahan';
+
+            // Pisahkan rincian deposit dan barang dari invoice_items secara presisi
+            depositList = [];
+            const productItems = [];
+
+            if (itemsData) {
+                itemsData.forEach(item => {
+                    if (item.unit === 'DEPOSIT' || item.product_id === 'DEPOSIT') {
+                        depositList.push({
+                            ket: item.product_name,
+                            nom: parseFloat(item.total) || 0
+                        });
+                    } else {
+                        productItems.push(item);
+                    }
+                });
+            }
+
+            // Fallback untuk invoice lama yang belum memiliki rincian deposit item terpisah
+            if (depositList.length === 0 && (parseFloat(invData.deposit) || 0) > 0) {
+                depositList.push({ ket: 'Deposit / Pembayaran', nom: parseFloat(invData.deposit) });
+            }
+
+            document.getElementById('invoiceNumber').value = invData.invoice_no;
+
+            const customerObj = customers.find(c => c.name === invData.customer_name);
+            const custSelect = document.getElementById('custName');
+            
+            if(customerObj) {
+                custSelect.value = customerObj.id;
+                currentCustomerId = customerObj.id;
+                document.getElementById('custPhone').value = customerObj.phone || '';
+                document.getElementById('custAddress').value = customerObj.address || '';
+                document.getElementById('btnAddRow').disabled = false;
+                document.getElementById('warningRow').style.color = 'var(--primary)';
+                document.getElementById('warningRow').innerText = '✓ Mode Edit Agen Aktif';
+            } else {
+                custSelect.value = "";
+                document.getElementById('custPhone').value = invData.customer_phone || '';
+                document.getElementById('custAddress').value = invData.customer_address || '';
+                document.getElementById('btnAddRow').disabled = false;
+            }
+
+            const tbody = document.getElementById('itemsBody');
+            tbody.innerHTML = '';
+
+            productItems.forEach(item => {
+                const tr = document.createElement('tr');
+                const availableProducts = getAvailableProductsForCurrentAgent();
+                
+                let productOptions = '<option value="">-- Pilih Barang --</option>';
+                availableProducts.forEach(p => {
+                    const isSelected = (String(p.id) === String(item.product_id) || p.name === item.product_name) ? 'selected' : '';
+                    productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.custom_price}" data-unit="${p.unit}" ${isSelected}>${p.name}</option>`;
+                });
+
+                tr.innerHTML = `
+                    <td><input type="date" value="${item.tanggal || new Date().toISOString().split('T')[0]}"></td>
+                    <td><select class="item-select" onchange="onProductSelect(this)">${productOptions}</select></td>
+                    <td><input type="number" class="item-qty text-center" value="${item.qty}" min="1" oninput="calculate()"></td>
+                    <td><input type="text" class="item-unit" readonly value="${item.unit || '-'}"></td>
+                    <td><input type="text" value="${item.destination || ''}" placeholder="Tujuan pengiriman"></td>
+                    <td><input type="text" class="item-price-display text-right" readonly value="${new Intl.NumberFormat('id-ID').format(item.price)}">
+                        <input type="hidden" class="item-price" value="${item.price}"></td>
+                    <td class="item-total text-right" style="font-weight:600; padding-right:12px;">${formatMoney(item.total)}</td>
+                    <td class="action-col text-center"><button class="btn-icon-danger" onclick="removeRow(this)">🗑️</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            calculate();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        } catch (err) {
+            console.error("Gagal memuat data edit:", err);
+            alert("Gagal memuat rincian invoice untuk diedit: " + err.message);
+        }
+    }
+
+    function cancelEditMode() {
+        isEditingMode = false;
+        originalEditingInvoiceNo = null;
+        depositList = [];
+        document.getElementById('editModeBanner').style.display = 'none';
+        document.getElementById('btnSaveInvoiceMain').innerText = '💾 Simpan Invoice';
+        generateRandomInvoice();
+        document.getElementById('custName').value = "";
+        autoFillCustomer();
+    }
+
+    async function deleteInvoice(invoiceNo) {
+        if(!confirm(`⚠️ Peringatan: Anda yakin ingin menghapus dokumen invoice ${invoiceNo} secara permanen dari database?`)) return;
+
+        if(!isSupabaseConnected) {
+            alert("Mode simulasi: Hapus dibatalkan.");
+            return;
+        }
+
+        try {
+            await supabaseClient.from('invoice_items').delete().eq('invoice_no', invoiceNo);
+            const { error } = await supabaseClient.from('invoices').delete().eq('invoice_no', invoiceNo);
+            if(error) throw error;
+
+            alert(`Sukses! Invoice ${invoiceNo} berhasil dihapus.`);
+            openHistoryModal(); 
+        } catch (err) {
+            alert("Gagal menghapus invoice: " + err.message);
+        }
+    }
+
     function switchTab(tabId, btn, type) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -693,9 +1037,11 @@
             document.getElementById('warningRow').innerText = 'Pilih agen terlebih dahulu untuk menambah barang';
         }
 
-        document.getElementById('itemsBody').innerHTML = '';
-        calculate();
-        if(currentCustomerId) addRow(); 
+        if(!isEditingMode) {
+            document.getElementById('itemsBody').innerHTML = '';
+            calculate();
+            if(currentCustomerId) addRow(); 
+        }
     }
 
     function getAvailableProductsForCurrentAgent() {
@@ -723,12 +1069,13 @@
         tr.innerHTML = `
             <td><input type="date" value="${today}"></td>
             <td><select class="item-select" onchange="onProductSelect(this)">${productOptions}</select></td>
-            <td><input type="number" class="item-qty text-center" value="0" min="0" oninput="calculate()"></td>
+            <td><input type="number" class="item-qty text-center" value="1" min="1" oninput="calculate()"></td>
             <td><input type="text" class="item-unit" readonly placeholder="-"></td>
             <td><input type="text" placeholder="Tujuan pengiriman"></td>
-            <td><input type="number" class="item-price text-right" readonly value="0"></td>
-            <td class="item-total text-right" style="font-weight:600;">Rp 0</td>
-            <td class="action-col text-center"><button class="btn btn-icon-danger" onclick="removeRow(this)">🗑️</button></td>
+            <td><input type="text" class="item-price-display text-right" readonly value="0">
+                <input type="hidden" class="item-price" value="0"></td>
+            <td class="item-total text-right" style="font-weight:600; padding-right:12px;">Rp 0</td>
+            <td class="action-col text-center"><button class="btn-icon-danger" onclick="removeRow(this)">🗑️</button></td>
         `;
         tbody.appendChild(tr);
     }
@@ -738,12 +1085,13 @@
         const selectedOption = selectElement.options[selectElement.selectedIndex];
         
         if(selectElement.value !== "") {
-            row.querySelector('.item-price').value = selectedOption.getAttribute('data-price');
+            const price = selectedOption.getAttribute('data-price');
+            row.querySelector('.item-price').value = price;
+            row.querySelector('.item-price-display').value = formatMoney(price).replace('Rp ', '');
             row.querySelector('.item-unit').value = selectedOption.getAttribute('data-unit');
-            const qtyInput = row.querySelector('.item-qty');
-            if(qtyInput.value === "0" || qtyInput.value === "") qtyInput.value = 1;
         } else {
             row.querySelector('.item-price').value = 0;
+            row.querySelector('.item-price-display').value = "0";
             row.querySelector('.item-unit').value = "";
         }
         calculate();
@@ -751,16 +1099,41 @@
 
     function removeRow(btn) { btn.closest('tr').remove(); calculate(); }
 
-    function addDeposit() {
-        const container = document.getElementById('depositContainer');
-        const div = document.createElement('div');
-        div.style.display = 'flex'; div.style.gap = '8px';
-        div.innerHTML = `
-            <input type="text" placeholder="Keterangan / Tanggal" style="flex: 2;">
-            <input type="text" class="deposit-amount text-right" placeholder="Nominal" value="0" style="flex: 1;" oninput="formatRibuanInput(this)" onkeyup="calculate()">
-            <button class="btn btn-icon-danger" style="padding: 6px 10px;" onclick="this.parentElement.remove(); calculate();">✕</button>
-        `;
-        container.appendChild(div);
+    function openDepositModal(index) {
+        editingDepositIndex = index;
+        if(index >= 0) {
+            const dep = depositList[index];
+            document.getElementById('depKet').value = dep.ket;
+            document.getElementById('depNom').value = new Intl.NumberFormat('id-ID').format(dep.nom);
+            document.getElementById('btnHapusDeposit').style.display = 'block';
+        } else {
+            document.getElementById('depKet').value = '';
+            document.getElementById('depNom').value = '';
+            document.getElementById('btnHapusDeposit').style.display = 'none';
+        }
+        toggleModal('depositModal');
+    }
+
+    function simpanDeposit() {
+        const ket = document.getElementById('depKet').value || 'Deposit';
+        const nom = getCleanNumber('depNom');
+        if(nom <= 0) return alert('Nominal harus lebih dari 0');
+
+        if(editingDepositIndex >= 0) {
+            depositList[editingDepositIndex] = { ket, nom };
+        } else {
+            depositList.push({ ket, nom });
+        }
+        toggleModal('depositModal');
+        calculate();
+    }
+
+    function hapusDeposit() {
+        if(editingDepositIndex >= 0) {
+            depositList.splice(editingDepositIndex, 1);
+        }
+        toggleModal('depositModal');
+        calculate();
     }
 
     function calculate() {
@@ -774,14 +1147,49 @@
         });
 
         let totalDeposit = 0;
-        document.querySelectorAll('.deposit-amount').forEach(dep => {
-            let cleanVal = parseFloat(dep.value.replace(/\./g, '')) || 0;
-            totalDeposit += cleanVal;
+        let depositHtml = '';
+        depositList.forEach((dep, idx) => {
+            totalDeposit += dep.nom;
+            depositHtml += `
+            <div class="summary-row deposit-row" style="cursor:pointer;" onclick="openDepositModal(${idx})" title="Klik untuk edit">
+                <span>${dep.ket} ✏️</span>
+                <span style="color: var(--danger); font-weight: 600;">- ${formatMoney(dep.nom)}</span>
+            </div>`;
         });
 
         document.getElementById('subTotal').innerText = formatMoney(subtotal);
-        document.getElementById('totalDeposit').innerText = '- ' + formatMoney(totalDeposit);
+        document.getElementById('depositListSummary').innerHTML = depositHtml;
         document.getElementById('balanceDue').innerText = formatMoney(subtotal - totalDeposit);
+    }
+
+    async function saveAsPNG() {
+        toggleModal('loadingModal');
+        const container = document.getElementById('invoiceContainer');
+        document.body.classList.add('export-mode');
+
+        setTimeout(async () => {
+            try {
+                const canvas = await html2canvas(container, {
+                    scale: 2, 
+                    backgroundColor: '#ffffff',
+                    windowWidth: 1050
+                });
+                
+                const link = document.createElement('a');
+                link.download = `Invoice-${document.getElementById('invoiceNumber').value}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                toggleModal('loadingModal');
+                toggleModal('successModal');
+            } catch (err) {
+                console.error("Gagal simpan gambar:", err);
+                alert("Terjadi kesalahan saat menyimpan gambar.");
+                toggleModal('loadingModal');
+            } finally {
+                document.body.classList.remove('export-mode');
+            }
+        }, 500);
     }
 
     async function simpanInvoice() {
@@ -833,8 +1241,20 @@
         }
 
         let totalDeposit = 0;
-        document.querySelectorAll('.deposit-amount').forEach(dep => {
-            totalDeposit += parseFloat(dep.value.replace(/\./g, '')) || 0;
+        depositList.forEach(dep => {
+            totalDeposit += dep.nom;
+            // Masukkan juga setiap rincian deposit ke itemsPayload agar tersimpan individual di database
+            itemsPayload.push({
+                invoice_no: invoiceNo,
+                tanggal: new Date().toISOString().split('T')[0],
+                product_id: 'DEPOSIT',
+                product_name: dep.ket,
+                qty: 1,
+                unit: 'DEPOSIT',
+                destination: '',
+                price: dep.nom,
+                total: dep.nom
+            });
         });
 
         const balanceDue = subtotal - totalDeposit;
@@ -845,23 +1265,47 @@
         }
 
         try {
-            const { error: invError } = await supabaseClient.from('invoices').insert([{
-                invoice_no: invoiceNo,
-                customer_name: customer.name,
-                customer_phone: customer.phone,
-                customer_address: customer.address,
-                subtotal: subtotal,
-                deposit: totalDeposit,
-                balance_due: balanceDue
-            }]);
+            if(isEditingMode) {
+                await supabaseClient.from('invoice_items').delete().eq('invoice_no', invoiceNo);
+                
+                const { error: updErr } = await supabaseClient.from('invoices').update({
+                    customer_name: customer.name,
+                    customer_phone: customer.phone,
+                    customer_address: customer.address,
+                    subtotal: subtotal,
+                    deposit: totalDeposit,
+                    balance_due: balanceDue
+                }).eq('invoice_no', invoiceNo);
 
-            if (invError) throw invError;
+                if(updErr) throw updErr;
 
-            const { error: itemError } = await supabaseClient.from('invoice_items').insert(itemsPayload);
-            if (itemError) throw itemError;
+                const { error: itemErr } = await supabaseClient.from('invoice_items').insert(itemsPayload);
+                if(itemErr) throw itemErr;
 
-            alert("Sukses! Invoice " + invoiceNo + " beserta rincian barang berhasil disimpan ke Supabase.");
-            generateRandomInvoice();
+                alert(`Sukses! Perubahan pada Invoice ${invoiceNo} berhasil disimpan.`);
+                cancelEditMode();
+            } else {
+                const { error: invError } = await supabaseClient.from('invoices').insert([{
+                    invoice_no: invoiceNo,
+                    customer_name: customer.name,
+                    customer_phone: customer.phone,
+                    customer_address: customer.address,
+                    subtotal: subtotal,
+                    deposit: totalDeposit,
+                    balance_due: balanceDue
+                }]);
+
+                if (invError) throw invError;
+
+                const { error: itemError } = await supabaseClient.from('invoice_items').insert(itemsPayload);
+                if (itemError) throw itemError;
+
+                alert("Sukses! Invoice " + invoiceNo + " beserta rincian barang dan deposit berhasil disimpan ke Supabase.");
+                
+                generateRandomInvoice();
+                depositList = [];
+                calculate();
+            }
 
         } catch (error) {
             console.error("Gagal menyimpan invoice:", error);
