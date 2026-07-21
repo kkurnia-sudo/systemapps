@@ -1,848 +1,674 @@
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice App - SBR Putra Food</title>
-    
-    <!-- Supabase & HTML2Canvas SDK -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Import Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
         :root {
-            --bg-body: #f8fafc; --bg-card: #ffffff; --text-main: #0f172a; --text-muted: #64748b;
-            --border-color: #e2e8f0; --primary: #10b981; --primary-hover: #059669;
-            --danger: #ef4444; --input-bg: #f8fafc; --th-bg: #f1f5f9;
-            --modal-bg: rgba(0,0,0,0.5); --tr-stripe: #f8fafc;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --input-bg: #f8fafc;
+            --th-bg: #f1f5f9;
+            --focus-ring: rgba(16, 185, 129, 0.2);
+            --modal-bg: rgba(0,0,0,0.5);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg-body: #0f172a; --bg-card: #1e293b; --text-main: #f8fafc;
-                --text-muted: #94a3b8; --border-color: #334155; --primary: #10b981;
-                --input-bg: #0f172a; --th-bg: #334155; --modal-bg: rgba(0,0,0,0.7);
-                --tr-stripe: #151e32;
+                --bg-body: #0f172a;
+                --bg-card: #1e293b;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --border-color: #334155;
+                --primary: #10b981;
+                --primary-hover: #34d399;
+                --input-bg: #0f172a;
+                --th-bg: #334155;
+                --modal-bg: rgba(0,0,0,0.7);
             }
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); padding: 20px; font-size: 14px; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; padding: 20px; font-size: 14px; }
         .container { max-width: 1000px; margin: 0 auto; }
+        .card { background-color: var(--bg-card); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 24px; border: 1px solid var(--border-color); }
         
-        .card { background-color: var(--bg-card); border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; border: 1px solid var(--border-color); }
-        
-        /* Header & Invoice No */
         .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
         .brand-section { display: flex; align-items: center; gap: 16px; }
-        .logo { width: 56px; height: 56px; background-color: var(--th-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid var(--border-color); }
-        .brand-text h1 { font-size: 18px; font-weight: 700; }
-        .title-section { display: flex; align-items: center; gap: 12px; }
-        .title-section h2 { font-size: 26px; font-weight: 600; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-left: 6px;}
-        .invoice-box { background: var(--th-bg); padding: 8px 16px; border-radius: 8px; border: 1px dashed var(--border-color); display: flex; align-items: center; gap: 8px; }
-        .invoice-box span { color: var(--text-muted); font-weight: 500; font-size: 13px; }
-        .invoice-box input { border: none; background: transparent; font-weight: 700; font-size: 16px; color: var(--primary); width: 125px; padding: 0; outline: none; }
-        
-        /* Compact Customer Grid */
-        .grid-customer { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 12px; }
-        @media(max-width: 768px) { .grid-customer { grid-template-columns: 1fr; } }
-        
-        .form-group { display: flex; flex-direction: column; gap: 4px; }
-        .form-group label { font-weight: 500; font-size: 12px; color: var(--text-muted); }
-        input, select, textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--input-bg); color: var(--text-main); font-family: inherit; font-size: 13px; transition: all 0.2s;}
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
-        
-        .form-inline { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; background: var(--th-bg); padding: 12px; border-radius: 8px; }
-        .form-inline input { flex: 1; min-width: 150px; }
-        
-        /* Buttons */
-        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; font-size: 13px; }
+        .logo { width: 64px; height: 64px; background-color: var(--th-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--text-muted); border: 2px solid var(--border-color); }
+        .brand-text h1 { font-size: 20px; font-weight: 700; }
+        .brand-text p { color: var(--text-muted); font-size: 13px; }
+        .title-section h2 { font-size: 28px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; }
+
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-weight: 500; font-size: 13px; color: var(--text-muted); }
+
+        input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--input-bg); color: var(--text-main); font-family: inherit; font-size: 14px; transition: all 0.2s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--focus-ring); }
+        input[readonly] { background-color: var(--th-bg); cursor: not-allowed; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; font-size: 14px; }
         .btn-primary { background-color: var(--primary); color: white; }
         .btn-primary:hover { background-color: var(--primary-hover); }
         .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-outline:hover { background-color: var(--th-bg); }
-        .btn-danger { background-color: transparent; color: var(--danger); padding: 6px; border-radius: 6px;}
-        .btn-danger:hover { background-color: #fee2e2; color: #b91c1c; }
+        .btn-danger { background-color: var(--danger); color: white; padding: 6px 12px; border-radius: 6px; }
+        .btn-danger:hover { background-color: var(--danger-hover); }
         
-        /* Table Detail Pesanan */
-        .table-wrapper { overflow-x: auto; margin: 10px 0 15px 0; }
+        .btn-icon-danger { background-color: transparent; color: var(--danger); padding: 6px; border-radius: 6px; }
+        .btn-icon-danger:hover { background-color: #fee2e2; color: #b91c1c; }
+
+        .table-wrapper { overflow-x: auto; margin: 20px 0; border-radius: 8px; border: 1px solid var(--border-color); }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        
-        /* Header Tabel Hijau Simple */
-        #invoiceTable th { 
-            background-color: #10b981; 
-            color: white; 
-            font-weight: 600; 
-            font-size: 12px; 
-            text-transform: uppercase; 
-            padding: 10px 8px; 
-            text-align: center;
-            letter-spacing: 0.5px;
-            white-space: nowrap; 
-        }
-        #invoiceTable th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
-        #invoiceTable th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
-
-        #invoiceTable td { padding: 8px 6px; border-bottom: 1px dashed var(--border-color); vertical-align: middle; }
-        
-        /* Baris Selang-seling (Stripe) */
-        #invoiceTable tbody tr:nth-child(even) { background-color: var(--tr-stripe); }
-
-        #invoiceTable input, #invoiceTable select { border: 1px solid transparent; background-color: transparent; border-radius: 6px; padding: 6px; box-shadow: none; font-size: 13px; }
-        #invoiceTable input:hover, #invoiceTable select:hover { border-color: var(--border-color); background-color: var(--input-bg); }
-        #invoiceTable input:focus, #invoiceTable select:focus { border-color: var(--primary); background-color: var(--bg-card); }
-        
-        /* Lebar Kolom & Penataan */
-        .col-tgl { width: 140px; }
-        .col-barang { width: auto; }
-        .col-qty { width: 65px; }
-        .col-satuan { width: 80px; }
-        .col-tujuan { width: 130px; } 
-        .col-harga { width: 145px; } 
-        .col-jumlah { width: 135px; }
-        
-        /* Base Data Master Tables */
-        .master-table th, .master-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        .master-table th { background-color: var(--th-bg); font-weight: 600; color: var(--text-muted); }
-
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--th-bg); font-weight: 600; font-size: 13px; color: var(--text-muted); }
+        tr:last-child td { border-bottom: none; }
         .text-right { text-align: right !important; }
         .text-center { text-align: center !important; }
-        
-        /* Summary Section */
-        .summary-card { width: 100%; max-width: 350px; background-color: var(--th-bg); border-radius: 8px; padding: 16px; margin-bottom: 10px; margin-top: -20px; }
-        .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
-        .summary-row.total { border-top: 2px dashed var(--border-color); margin-top: 6px; padding-top: 12px; font-weight: 700; font-size: 15px; color: var(--primary); }
-        .top-actions { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 16px; }
-        
-        /* Modal */
+        .w-small { width: 100px; }
+
+        .summary-card { width: 100%; max-width: 350px; margin-left: auto; background-color: var(--th-bg); border-radius: 8px; padding: 16px; }
+        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+        .summary-row.total { border-top: 2px dashed var(--border-color); margin-top: 8px; padding-top: 16px; font-weight: 700; font-size: 16px; color: var(--primary); }
+
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-        .modal.active { display: flex !important; }
-        .modal-content { background: var(--bg-card); width: 100%; max-width: 850px; border-radius: 12px; max-height: 90vh; overflow-y: auto; padding: 24px; }
-        .modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab-btn { padding: 8px 16px; background: var(--th-bg); border: 1px solid var(--border-color); border-radius: 20px; cursor: pointer; color: var(--text-main); }
-        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary);}
+        .modal.active { display: flex; }
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 800px; border-radius: 12px; max-height: 90vh; overflow-y: auto; padding: 24px; position: relative;}
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .close-modal { background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { padding: 8px 16px; background: var(--th-bg); border: 1px solid var(--border-color); border-radius: 20px; cursor: pointer; color: var(--text-main); white-space: nowrap; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Unified Professional Format for PNG & Print */
-        .is-generating-png {
-            background-color: #ffffff !important;
-            color: #0f172a !important;
-            padding: 20px !important;
-        }
-        .is-generating-png .card {
-            background-color: #ffffff !important;
-            color: #0f172a !important;
-            border: 1px solid #e2e8f0 !important;
-            box-shadow: none !important;
-        }
-        .is-generating-png .invoice-box {
-            background: #f8fafc !important;
-            border: 1px dashed #cbd5e1 !important;
-        }
-        .is-generating-png input, 
-        .is-generating-png select, 
-        .is-generating-png textarea {
-            border: none !important;
-            background: transparent !important;
-            color: #0f172a !important;
-            padding: 4px 0 !important;
-            box-shadow: none !important;
-            appearance: none !important;
-        }
-        .is-generating-png .summary-card {
-            background-color: #f8fafc !important;
-            border: 1px solid #e2e8f0 !important;
-        }
-        .is-generating-png #invoiceTable tbody tr:nth-child(even) {
-            background-color: #f8fafc !important;
-        }
-        .is-generating-png #invoiceTable td {
-            border-bottom: 1px dashed #e2e8f0 !important;
-        }
-        
+        .alert { padding: 12px; background-color: #fff3cd; color: #856404; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffeeba; display: none; }
+
         @media print {
-            body { background: white !important; color: #0f172a !important; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
-            [data-html2canvas-ignore="true"] { display: none !important; }
-            
-            .card { background-color: #ffffff !important; color: #0f172a !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; padding: 15px 20px !important; margin-bottom: 15px !important; }
-            .invoice-box { background: #f8fafc !important; border: 1px dashed #cbd5e1 !important; }
-            
-            input, select, textarea { border: none !important; background: transparent !important; color: #0f172a !important; padding: 2px 0 !important; appearance: none !important; box-shadow: none !important; }
-            
-            .table-wrapper { overflow: visible !important; width: 100% !important; }
-            table { width: 100% !important; min-width: auto !important; }
-            
-            #invoiceTable th { background-color: #10b981 !important; color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            #invoiceTable tbody tr:nth-child(even) { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            #invoiceTable td { border-bottom: 1px dashed #e2e8f0 !important; }
-            
-            .summary-card { background-color: #f8fafc !important; border: 1px solid #e2e8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { background: white; padding: 0; }
+            .card { box-shadow: none; border: none; padding: 0; margin: 0; }
+            .btn, .action-col, .top-actions { display: none !important; }
+            input, select, textarea { border: none; background: transparent; padding: 0; -webkit-appearance: none; appearance: none; }
+            .table-wrapper { border: none; margin: 0; overflow: visible; }
+            th { background: #f8fafc !important; color: #000; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="top-actions" data-html2canvas-ignore="true">
-        <button type="button" class="btn btn-outline" onclick="window.print()">🖨️ Cetak PDF</button>
-        <button type="button" class="btn btn-outline" onclick="toggleModal('dataModal')">⚙️ Manajemen Data</button>
+    <div class="top-actions" style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+        <button class="btn btn-outline" onclick="toggleModal('dataModal')">⚙️ Manajemen Data</button>
     </div>
 
-    <!-- Area untuk dicetak (PDF/PNG) -->
-    <div id="invoicePrintArea">
-        <div class="card header">
-            <div class="brand-section">
-    <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/aa6cd280f3ae01a16be9f72930a5d5684c0f868d/sbr_logo.png" alt="Logo SBR" style="width: 56px; height: 56px; object-fit: contain; border-radius: 50%;">
-    <div class="brand-text">
-        <h1>SBR PUTRA FOOD</h1>
-        <p>Lembang, Bandung Barat, Jawa Barat</p>
+    <!-- Alert Notifikasi Supabase -->
+    <div class="alert" id="supabaseAlert">
+        ⚠️ <b>Status Koneksi:</b> Gagal terhubung ke database atau RLS Aktif. Menggunakan simulasi lokal.
     </div>
-</div>
-            <div class="title-section">
-                <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 16px; border-radius: 8px;" onclick="openHistoryModal()" data-html2canvas-ignore="true" title="Riwayat Invoice">
-                    🕒
-                </button>
-                
-                <div class="invoice-box">
-                    <span>No.</span>
-                    <input type="text" id="invoiceNumber">
-                </div>
-                <h2>Invoice</h2>
+
+    <div class="card header">
+        <div class="brand-section">
+            <div class="logo">SBR</div>
+            <div class="brand-text">
+                <h1>SBR PUTRA FOOD</h1>
+                <p>Lembang, Bandung Barat, Jawa Barat</p>
             </div>
         </div>
-
-        <!-- Informasi Pelanggan Simple & Compact -->
-        <div class="card">
-            <h3 style="margin-bottom: 12px; font-size: 14px;">Informasi Pelanggan / Agen</h3>
-            <div class="grid-customer">
-                <div class="form-group">
-                    <label>Nama Agen / Pelanggan</label>
-                    <select id="custNameSelect" onchange="onCustomerSelect()">
-                        <option value="">-- Pilih Agen --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Nomor Telepon</label>
-                    <input type="text" id="custPhone" placeholder="+62...">
-                </div>
-                <div class="form-group">
-                    <label>Alamat Pengiriman</label>
-                    <input type="text" id="custAddress" placeholder="Alamat lengkap...">
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-bottom: 10px; font-size: 14px;">Detail Pesanan</h3>
-            <div class="table-wrapper">
-                <table id="invoiceTable">
-                    <thead>
-                        <tr>
-                            <th class="col-tgl">Tanggal</th>
-                            <th class="col-barang text-center">Barang</th>
-                            <th class="col-qty">Qty</th>
-                            <th class="col-satuan">Satuan</th>
-                            <th class="col-tujuan">Tujuan</th>
-                            <th class="col-harga">Harga</th>
-                            <th class="col-jumlah">Jumlah</th>
-                            <th class="action-col" style="width: 35px;" data-html2canvas-ignore="true"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="itemsBody"></tbody>
-                </table>
-            </div>
-            <button type="button" class="btn btn-outline" onclick="addRow()" data-html2canvas-ignore="true" style="font-size: 12px; padding: 6px 12px;">+ Tambah Barang</button>
-
-            <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; margin-top: 20px; gap: 20px;">
-                <div style="display: flex; flex-direction: column; align-items: flex-end; width: 100%; max-width: 350px;">
-                    <div class="summary-card">
-                        <div class="summary-row"><span>Sub Total</span><span id="subTotal" style="font-weight: 700; font-style: bold; font-size: 17px;">Rp 0</span></div>
-                        
-                        <!-- Kontainer Piutang Lalu (Balance Forward) -->
-                        <div id="piutangRowsContainer"></div>
-
-                        <!-- Kontainer Deposit -->
-                        <div id="depositRowsContainer">
-                            <div class="summary-row"><span>Deposit</span><span style="color: var(--danger); font-weight: 700; font-size: 13px;">- Rp 0</span></div>
-                        </div>
-
-                        <div class="summary-row total"><span>Sisa</span><span id="balanceDue" style="font-weight: 700; font-style: bold; font-size: 17px;">Rp 0</span></div>
-                    </div>
-                    
-                    <div style="display: flex; gap: 6px; width: 100%; flex-wrap: wrap;" data-html2canvas-ignore="true">
-                        <button type="button" class="btn btn-outline" onclick="saveAsPNG()" style="flex: 1; font-size: 11px; padding: 8px 4px;">🖼️ PNG</button>
-                        <button type="button" class="btn btn-outline" onclick="openPiutangModal()" style="flex: 1; font-size: 11px; padding: 8px 4px;">+ Piutang</button>
-                        <button type="button" class="btn btn-outline" onclick="openDepositModal()" style="flex: 1; font-size: 11px; padding: 8px 4px;">+ Deposit</button>
-                        <button type="button" class="btn btn-primary" id="btnSaveInvoice" onclick="saveInvoice()" style="flex: 1.2; font-size: 11px; padding: 8px 4px;">💾 Simpan</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> 
-</div>
-
-<!-- Modal Loading & Status PNG -->
-<div class="modal" id="loadingModal">
-    <div class="modal-content" style="max-width: 320px; text-align: center; padding: 30px;">
-        <div id="loadingSpinner" style="margin-bottom: 15px;">
-            <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid var(--border-color); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-        </div>
-        <h3 id="loadingText" style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Menyiapkan Gambar...</h3>
-        <p id="loadingDesc" style="color: var(--text-muted); font-size: 13px;">Mohon tunggu sebentar...</p>
-        <button type="button" id="closeLoadingBtn" class="btn btn-primary" style="margin-top: 20px; display: none; width: 100%;" onclick="toggleModal('loadingModal')">Tutup</button>
+        <div class="title-section"><h2>Invoice</h2></div>
     </div>
-</div>
 
-<style>
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-</style>
-
-<!-- Modal Input / Edit Piutang Lalu -->
-<div class="modal" id="piutangModal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header">
-            <h3 id="piutangModalTitle">Tambah Piutang / Tagihan Lalu</h3>
-            <button type="button" class="close-modal" onclick="toggleModal('piutangModal')">&times;</button>
-        </div>
-        <div class="form-group" style="margin-bottom: 12px;">
-            <label>Keterangan (Opsional)</label>
-            <input type="text" id="inputPiutangDesc" placeholder="Contoh: Sisa Nota Lalu / Inv #001">
-        </div>
-        <div class="form-group" style="margin-bottom: 16px;">
-            <label>Nominal Piutang</label>
-            <input type="text" id="inputPiutangAmount" placeholder="0" oninput="formatInputNumber(this)">
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-            <div>
-                <button type="button" id="btnDeletePiutangModal" class="btn btn-danger" style="display: none;" onclick="deletePiutangFromModal()">Hapus Piutang</button>
+    <div class="card">
+        <h3 style="margin-bottom: 16px; font-size: 16px;">Informasi Pelanggan (Agen)</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+            Pilih nama agen terlebih dahulu. Daftar barang dan harga akan otomatis menyesuaikan dengan profil agen yang dipilih.
+        </p>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Nama Pelanggan / Agen</label>
+                <select id="custName" onchange="autoFillCustomer()">
+                    <option value="">-- Pilih Agen --</option>
+                </select>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <button type="button" class="btn btn-outline" onclick="toggleModal('piutangModal')">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="savePiutangInput()">Simpan</button>
+            <div class="form-group">
+                <label>Nomor Telepon</label>
+                <input type="text" id="custPhone" placeholder="Otomatis terisi..." readonly>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Alamat Pengiriman</label>
+                <textarea id="custAddress" rows="2" placeholder="Otomatis terisi..." readonly></textarea>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal Input / Edit Deposit -->
-<div class="modal" id="depositModal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header">
-            <h3 id="depositModalTitle">Tambah Deposit / Catatan</h3>
-            <button type="button" class="close-modal" onclick="toggleModal('depositModal')">&times;</button>
-        </div>
-        <div class="form-group" style="margin-bottom: 12px;">
-            <label>Keterangan (Opsional)</label>
-            <input type="text" id="inputDepositDesc" placeholder="Contoh: Transfer / DP">
-        </div>
-        <div class="form-group" style="margin-bottom: 16px;">
-            <label>Nominal</label>
-            <input type="text" id="inputDepositAmount" placeholder="0" oninput="formatInputNumber(this)">
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-            <div>
-                <button type="button" id="btnDeleteDepositModal" class="btn btn-danger" style="display: none;" onclick="deleteDepositFromModal()">Hapus Deposit</button>
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <button type="button" class="btn btn-outline" onclick="toggleModal('depositModal')">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="saveDepositInput()">Simpan</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Input Tujuan Manual -->
-<div class="modal" id="customDestModal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header">
-            <h3>Ketik Tujuan Manual</h3>
-            <button type="button" class="close-modal" onclick="closeCustomDestModal()">&times;</button>
-        </div>
-        <div class="form-group" style="margin-bottom: 16px;">
-            <label>Nama Kota / Tujuan</label>
-            <input type="text" id="customDestInput" placeholder="Masukkan nama tujuan...">
-        </div>
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button type="button" class="btn btn-outline" onclick="closeCustomDestModal()">Batal</button>
-            <button type="button" class="btn btn-primary" onclick="saveCustomDestination()">Simpan</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Riwayat Invoice -->
-<div class="modal" id="historyModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>🕒 Riwayat Invoice Tersimpan</h3>
-            <button type="button" class="close-modal" onclick="toggleModal('historyModal')">&times;</button>
-        </div>
+    <div class="card">
+        <h3 style="margin-bottom: 16px; font-size: 16px;">Detail Pesanan</h3>
+        
         <div class="table-wrapper">
-            <table class="master-table">
+            <table id="invoiceTable">
                 <thead>
                     <tr>
-                        <th>No Invoice</th>
-                        <th>Pelanggan</th>
-                        <th class="text-right">Sisa Tagihan</th>
-                        <th class="text-center" style="width: 130px;">Aksi</th>
+                        <th style="width: 140px;">Hari/Tgl</th>
+                        <th>Nama Barang</th>
+                        <th class="w-small text-center">Qty</th>
+                        <th class="w-small">Satuan</th>
+                        <th>Tujuan</th>
+                        <th style="width: 150px;" class="text-right">Harga</th>
+                        <th style="width: 150px;" class="text-right">Jumlah</th>
+                        <th class="action-col" style="width: 50px;"></th>
                     </tr>
                 </thead>
-                <tbody id="historyBody">
-                    <tr><td colspan="4" class="text-center">Memuat riwayat...</td></tr>
+                <tbody id="itemsBody">
                 </tbody>
             </table>
         </div>
+        <button class="btn btn-outline" id="btnAddRow" onclick="addRow()" disabled>+ Tambah Barang</button>
+        <small style="margin-left: 10px; color: var(--danger);" id="warningRow">Pilih agen terlebih dahulu untuk menambah barang.</small>
+
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 24px; gap: 20px;">
+            <div style="flex: 1; min-width: 250px;">
+                <h4 style="margin-bottom: 10px; font-size: 14px; color: var(--text-muted);">Deposit / Cicilan</h4>
+                <div id="depositContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
+                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="addDeposit()">+ Tambah Deposit</button>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-row"><span>Sub Total</span><span id="subTotal">Rp 0</span></div>
+                <div class="summary-row"><span>Total Deposit</span><span id="totalDeposit" style="color: var(--danger);">- Rp 0</span></div>
+                <div class="summary-row total"><span>Sisa Pembayaran</span><span id="balanceDue">Rp 0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 40px;">
+        <button class="btn btn-outline" onclick="window.print()">🖨️ Cetak PDF</button>
+        <button class="btn btn-primary" onclick="simpanInvoice()">💾 Simpan Invoice</button>
     </div>
 </div>
 
-<!-- Modal Manajemen Data Master -->
+<!-- Modal Data Master -->
 <div class="modal" id="dataModal">
     <div class="modal-content">
         <div class="modal-header">
             <h3>Manajemen Data Master</h3>
-            <button type="button" class="close-modal" onclick="toggleModal('dataModal')">&times;</button>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="openAddModal()">+ Tambah Data</button>
+                <button class="close-modal" onclick="toggleModal('dataModal')">&times;</button>
+            </div>
         </div>
+        
         <div class="tabs">
-            <button type="button" class="tab-btn active" onclick="switchTab('tabProducts', this)">📦 Barang</button>
-            <button type="button" class="tab-btn" onclick="switchTab('tabCustomers', this)">👥 Agen / Pelanggan</button>
-            <button type="button" class="tab-btn" onclick="switchTab('tabDestinations', this)">📍 Alamat / Tujuan</button>
+            <button class="tab-btn active" onclick="switchTab('tabCustomers', this, 'customer')">👥 Data Agen</button>
+            <button class="tab-btn" onclick="switchTab('tabProducts', this, 'product')">📦 Master Barang</button>
+            <button class="tab-btn" onclick="switchTab('tabAgentPrices', this, 'agentPrice')">🤝 Harga Khusus Agen</button>
         </div>
 
-        <div id="tabProducts" class="tab-content active">
-            <div class="form-inline">
-                <input type="hidden" id="formProdId">
-                <input type="text" id="formProdName" placeholder="Nama Barang">
-                <input type="text" id="formProdPrice" placeholder="Harga" oninput="formatInputNumber(this)">
-                <input type="text" id="formProdUnit" placeholder="Satuan">
-                <button type="button" class="btn btn-primary" onclick="saveProduct()">Simpan</button>
-                <button type="button" class="btn btn-outline" onclick="resetFormProduct()">Batal</button>
-            </div>
+        <div id="tabCustomers" class="tab-content active">
+            <p style="margin-bottom: 10px; font-size: 13px; color: var(--text-muted);">Daftar pelanggan (Agen) SBR Putra Food (Urut A-Z).</p>
             <div class="table-wrapper">
-                <table class="master-table">
-                    <thead><tr><th>Barang</th><th>Harga</th><th>Satuan</th><th class="text-center">Aksi</th></tr></thead>
-                    <tbody id="masterProductsBody"><tr><td colspan="4" class="text-center">Memuat...</td></tr></tbody>
+                <table>
+                    <thead><tr><th>Nama Agen</th><th>No Telp</th><th>Alamat</th><th class="text-center">Aksi</th></tr></thead>
+                    <tbody id="tblCustomersBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <div id="tabCustomers" class="tab-content">
-            <div class="form-inline">
-                <input type="hidden" id="formCustId">
-                <input type="text" id="formCustName" placeholder="Nama Agen">
-                <input type="text" id="formCustPhone" placeholder="No Telp">
-                <input type="text" id="formCustAddress" placeholder="Alamat">
-                <button type="button" class="btn btn-primary" onclick="saveCustomer()">Simpan</button>
-                <button type="button" class="btn btn-outline" onclick="resetFormCustomer()">Batal</button>
-            </div>
+        <div id="tabProducts" class="tab-content">
+            <p style="margin-bottom: 10px; font-size: 13px; color: var(--text-muted);">Daftar semua barang dan harga dasar (default) (Urut A-Z).</p>
             <div class="table-wrapper">
-                <table class="master-table">
-                    <thead><tr><th>Nama</th><th>No Telp</th><th>Alamat</th><th class="text-center">Aksi</th></tr></thead>
-                    <tbody id="masterCustomersBody"><tr><td colspan="4" class="text-center">Memuat...</td></tr></tbody>
+                <table>
+                    <thead><tr><th>Nama Barang</th><th>Satuan</th><th>Harga Dasar</th><th class="text-center">Aksi</th></tr></thead>
+                    <tbody id="tblProductsBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <div id="tabDestinations" class="tab-content">
-            <div class="form-inline">
-                <input type="hidden" id="formDestIndex" value="">
-                <input type="text" id="formDestName" placeholder="Nama Kota / Tujuan">
-                <button type="button" class="btn btn-primary" onclick="saveDestinationItem()">Simpan</button>
-                <button type="button" class="btn btn-outline" onclick="resetFormDestination()">Batal</button>
-            </div>
+        <div id="tabAgentPrices" class="tab-content">
+            <p style="margin-bottom: 10px; font-size: 13px; color: var(--text-muted);">Di sinilah Anda mengatur <b>barang apa saja</b> yang bisa dibeli oleh agen tertentu, dan <b>berapa harga khususnya</b>.</p>
             <div class="table-wrapper">
-                <table class="master-table">
-                    <thead><tr><th>Daftar Kota / Tujuan (A-Z)</th><th class="text-center" style="width: 130px;">Aksi</th></tr></thead>
-                    <tbody id="masterDestinationsBody"><tr><td colspan="2" class="text-center">Memuat...</td></tr></tbody>
+                <table>
+                    <thead><tr><th>Nama Agen</th><th>Barang</th><th>Harga Spesial</th><th class="text-center">Aksi</th></tr></thead>
+                    <tbody id="tblAgentPricesBody"></tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Form (Edit & Tambah) -->
+<div class="modal" id="formModal" style="z-index: 1100;">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3 id="formModalTitle">Form Data</h3>
+            <button class="close-modal" onclick="toggleModal('formModal')">&times;</button>
+        </div>
+        <div id="formContent"></div>
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+            <button class="btn btn-danger" style="margin-right: auto; display: none;" id="btnDeleteData" onclick="deleteData()">Hapus</button>
+            <button class="btn btn-outline" onclick="toggleModal('formModal')">Batal</button>
+            <button class="btn btn-primary" onclick="saveData()" id="btnSaveForm">Simpan</button>
         </div>
     </div>
 </div>
 
 <script>
-    window.onerror = function(msg, url, lineNo, columnNo, error) { console.error("Error Detail: ", msg, url, lineNo); return false; };
-
-    let dbProducts = [];
-    let dbCustomers = [];
-    let activeDestSelect = null; 
+    const SUPABASE_URL = 'https://acpkdnktanrucyfyhckw.supabase.co'; 
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U'; 
     
-    let rawSubtotal = 0;
-    let rawPiutangLalu = 0;
-    let rawDeposit = 0;
-    let rawBalance = 0;
+    let supabaseClient = null; 
+    let isSupabaseConnected = false;
+
+    if(SUPABASE_URL !== '' && SUPABASE_KEY !== '') {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+
+    let customers = [];
+    let products = [];
+    let agentPrices = [];
+
+    let currentCustomerId = null; 
+    let activeTabType = 'customer'; 
+    let isCreating = false; 
+    let editingType = '';
+    let editingId = null;
+    let editingId2 = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await fetchDataFromSupabase();
+        renderDropdownCustomers();
+        renderDataManagement();
+    });
+
+    async function fetchDataFromSupabase() {
+        if(!supabaseClient) return;
+        
+        try {
+            const { data: dbCustomers, error: errC } = await supabaseClient.from('customers').select('*');
+            const { data: dbProducts, error: errP } = await supabaseClient.from('products').select('*');
+            const { data: dbAgentPrices, error: errA } = await supabaseClient.from('agent_prices').select('*');
+            
+            if(errC || errP || errA) throw new Error("Gagal mengambil data dari tabel Supabase.");
+
+            customers = dbCustomers || [];
+            products = dbProducts || [];
+            agentPrices = dbAgentPrices || [];
+            
+            isSupabaseConnected = true;
+            document.getElementById('supabaseAlert').style.display = 'none';
+
+        } catch (error) {
+            isSupabaseConnected = false;
+            document.getElementById('supabaseAlert').style.display = 'block';
+            
+            customers = [
+                { id: 1, name: 'Bpk Rachmat R&D', phone: '+62 821-2233-2017', address: 'Jakarta' },
+                { id: 2, name: 'Agen Lembang Makmur', phone: '0812-3333-4444', address: 'Jl. Raya Lembang' }
+            ];
+            products = [
+                { id: 1, name: 'Aromanis (Rambut Nenek)', unit: 'DUS', default_price: 514500 },
+                { id: 2, name: 'Basreng Kiwari', unit: 'KARUNG', default_price: 876000 },
+                { id: 3, name: 'Makroni Naruto', unit: 'DUS', default_price: 150000 }
+            ];
+            agentPrices = [
+                { customer_id: 1, product_id: 1, custom_price: 500000 }
+            ];
+        }
+    }
+
+    function formatMoney(amount) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount); }
     
-    let piutangList = [];
-    let editingPiutangIndex = null;
-
-    let depositsList = []; 
-    let editingDepositIndex = null; 
-
-    let cityList = JSON.parse(localStorage.getItem('sbr_cities')) || [
-        "BANGKA", "BANJARMASIN", "BELITUNG", "BENGKULU", 
-        "LAMPUNG", "MAKASSAR", "MEDAN", "PONTIANAK", 
-        "SELAT PANJANG", "SAMARINDA"
-    ];
-    cityList.sort((a, b) => a.localeCompare(b));
-
-    function saveCityListToStorage() {
-        cityList.sort((a, b) => a.localeCompare(b));
-        localStorage.setItem('sbr_cities', JSON.stringify(cityList));
-        updateAllDestinationDropdowns();
-    }
-
-    function updateAllDestinationDropdowns() {
-        document.querySelectorAll('.dest-select').forEach(select => {
-            const currentVal = select.value;
-            let destinationOptions = '<option value="">-- Pilih Tujuan --</option>';
-            let found = false;
-            cityList.forEach(city => {
-                const selected = (currentVal.toUpperCase() === city) ? 'selected' : '';
-                if(selected) found = true;
-                destinationOptions += `<option value="${city}" ${selected}>${city}</option>`;
-            });
-            if(currentVal && !found && currentVal !== 'CUSTOM') {
-                destinationOptions += `<option value="${currentVal}" selected>${currentVal}</option>`;
-            }
-            destinationOptions += `<option value="CUSTOM">✏️ Ketik Manual...</option>`;
-            select.innerHTML = destinationOptions;
-            select.value = currentVal;
-        });
-    }
-
-    function formatMoney(amount) {
-        return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount || 0);
-    }
-
-    function getLocalDateString() {
-        const d = new Date();
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    function formatDateToDDMMMYY(dateString) {
-        if (!dateString) return '';
-        const parts = dateString.split('-');
-        if (parts.length !== 3) return dateString;
-        const year = parts[0].slice(-2);
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
-        const monthIndex = parseInt(parts[1], 10) - 1;
-        const month = monthNames[monthIndex] || parts[1];
-        const day = parts[2];
-        return `${day}/${month}/${year}`;
-    }
-
-    function formatNumberWithDot(value) {
-        if (!value) return '';
-        let numberString = value.toString().replace(/[^,\d]/g, '').toString();
-        let split = numberString.split(',');
-        let sisa = split[0].length % 3;
-        let rupiah = split[0].substr(0, sisa);
-        let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
-
-        if (ribuan) {
-            let separator = sisa ? '.' : '';
-            rupiah += separator + ribuan.join('.');
-        }
-        return split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
-    }
-
-    function formatInputNumber(input) {
-        let rawVal = input.value.replace(/\./g, '');
-        input.value = formatNumberWithDot(rawVal);
-    }
-
-    function cleanNumber(val) {
-        if (!val) return 0;
-        return parseFloat(val.toString().replace(/\./g, '').replace(',', '.')) || 0;
-    }
-
-    function generateInvoiceNumber() {
-        const randomNum = Math.floor(10000 + Math.random() * 90000);
-        document.getElementById('invoiceNumber').value = `INV.SBR${randomNum}`;
-    }
-
-    function saveAsPNG() {
-        const printArea = document.getElementById('invoicePrintArea');
-        const loadingModal = document.getElementById('loadingModal');
-        const spinner = document.getElementById('loadingSpinner');
-        const loadingText = document.getElementById('loadingText');
-        const loadingDesc = document.getElementById('loadingDesc');
-        const closeBtn = document.getElementById('closeLoadingBtn');
-
-        spinner.style.display = 'block';
-        loadingText.innerText = 'Menyiapkan Gambar...';
-        loadingDesc.innerText = 'Mohon tunggu sebentar...';
-        closeBtn.style.display = 'none';
-        loadingModal.classList.add('active');
-
-        printArea.classList.add('is-generating-png');
-        window.scrollTo(0, 0); 
-
-        setTimeout(() => {
-            html2canvas(printArea, { 
-                scale: 2, 
-                useCORS: true, 
-                backgroundColor: '#ffffff' 
-            })
-            .then(canvas => {
-                printArea.classList.remove('is-generating-png');
-
-                const invoiceNo = document.getElementById('invoiceNumber').value || 'invoice';
-                const link = document.createElement('a');
-                link.download = `${invoiceNo}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-
-                spinner.style.display = 'none';
-                loadingText.innerText = '✅ Berhasil Disimpan!';
-                loadingDesc.innerText = `File "${invoiceNo}.png" telah berhasil diunduh.`;
-                closeBtn.style.display = 'block';
-            })
-            .catch(err => {
-                printArea.classList.remove('is-generating-png');
-                spinner.style.display = 'none';
-                loadingText.innerText = '❌ Gagal Menyimpan';
-                loadingDesc.innerText = 'Terjadi kesalahan saat memproses gambar: ' + err.message;
-                closeBtn.style.display = 'block';
-            });
-        }, 300);
-    }
-
-    function toggleModal(id) {
-        const modal = document.getElementById(id);
-        if (modal) modal.classList.toggle('active');
-    }
-
-    /* Piutang Lalu Handlers */
-    function openPiutangModal(index = null) {
-        editingPiutangIndex = index;
-        const titleEl = document.getElementById('piutangModalTitle');
-        const deleteBtn = document.getElementById('btnDeletePiutangModal');
-        
-        if (index !== null) {
-            titleEl.innerText = 'Edit Piutang / Tagihan Lalu';
-            deleteBtn.style.display = 'inline-flex';
-            const item = piutangList[index];
-            document.getElementById('inputPiutangDesc').value = item.desc;
-            document.getElementById('inputPiutangAmount').value = formatNumberWithDot(item.amount);
+    // Fungsi bantuan untuk memformat angka dengan pemisah ribuan saat diketik di input
+    function formatRibuanInput(input) {
+        let value = input.value.replace(/\D/g, '');
+        if(value !== '') {
+            input.value = new Intl.NumberFormat('id-ID').format(value);
         } else {
-            titleEl.innerText = 'Tambah Piutang / Tagihan Lalu';
-            deleteBtn.style.display = 'none';
-            document.getElementById('inputPiutangDesc').value = '';
-            document.getElementById('inputPiutangAmount').value = ''; 
-        }
-        toggleModal('piutangModal');
-    }
-
-    function savePiutangInput() {
-        const desc = document.getElementById('inputPiutangDesc').value.trim();
-        const amount = cleanNumber(document.getElementById('inputPiutangAmount').value);
-        
-        if (amount <= 0) {
-            alert('Nominal piutang harus lebih dari 0!');
-            return;
-        }
-
-        if (editingPiutangIndex !== null) {
-            piutangList[editingPiutangIndex] = { desc, amount };
-        } else {
-            piutangList.push({ desc, amount });
-        }
-
-        toggleModal('piutangModal');
-        calculate();
-    }
-
-    function deletePiutangFromModal() {
-        if (editingPiutangIndex !== null) {
-            piutangList.splice(editingPiutangIndex, 1);
-            toggleModal('piutangModal');
-            calculate();
+            input.value = '';
         }
     }
 
-    /* Deposit Handlers */
-    function openDepositModal(index = null) {
-        editingDepositIndex = index;
-        const titleEl = document.getElementById('depositModalTitle');
-        const deleteBtn = document.getElementById('btnDeleteDepositModal');
-        
-        if (index !== null) {
-            titleEl.innerText = 'Edit Deposit / Catatan';
-            deleteBtn.style.display = 'inline-flex';
-            const dep = depositsList[index];
-            document.getElementById('inputDepositDesc').value = dep.desc;
-            document.getElementById('inputDepositAmount').value = formatNumberWithDot(dep.amount);
-        } else {
-            titleEl.innerText = 'Tambah Deposit / Catatan';
-            deleteBtn.style.display = 'none';
-            document.getElementById('inputDepositDesc').value = '';
-            document.getElementById('inputDepositAmount').value = ''; 
-        }
-        toggleModal('depositModal');
+    // Ambil nilai murni (angka mentah tanpa titik pemisah ribuan) dari input
+    function getCleanNumber(inputId) {
+        const val = document.getElementById(inputId).value;
+        if(!val) return 0;
+        return parseFloat(val.replace(/\./g, '')) || 0;
     }
 
-    function saveDepositInput() {
-        const desc = document.getElementById('inputDepositDesc').value.trim();
-        const amount = cleanNumber(document.getElementById('inputDepositAmount').value);
-        
-        if (amount <= 0) {
-            alert('Nominal deposit harus lebih dari 0!');
-            return;
-        }
-
-        if (editingDepositIndex !== null) {
-            depositsList[editingDepositIndex] = { desc, amount };
-        } else {
-            depositsList.push({ desc, amount });
-        }
-
-        toggleModal('depositModal');
-        calculate();
-    }
-
-    function deleteDepositFromModal() {
-        if (editingDepositIndex !== null) {
-            depositsList.splice(editingDepositIndex, 1);
-            toggleModal('depositModal');
-            calculate();
-        }
-    }
-
-    function switchTab(tabId, btn) {
+    function toggleModal(id) { document.getElementById(id).classList.toggle('active'); }
+    
+    function switchTab(tabId, btn, type) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
         btn.classList.add('active');
+        activeTabType = type; 
     }
 
-    function addRow(data = null) {
-        const tbody = document.getElementById('itemsBody');
-        if(!tbody) return;
-        const tr = document.createElement('tr');
-        
-        const rawDate = data ? data.tanggal : getLocalDateString();
-        
-        let productOptions = '<option value="">-- Pilih Barang --</option>';
-        dbProducts.forEach(p => { 
-            const selected = (data && (data.product_id == p.id || data.product_name == p.name)) ? 'selected' : '';
-            productOptions += `<option value="${p.id}" data-name="${p.name}" ${selected}>${p.name}</option>`; 
-        });
+    function renderDataManagement() {
+        // Urutkan Agen secara Alphabet A-Z berdasarkan nama
+        const sortedCustomers = [...customers].sort((a, b) => a.name.localeCompare(b.name));
+        // Urutkan Produk secara Alphabet A-Z berdasarkan nama
+        const sortedProducts = [...products].sort((a, b) => a.name.localeCompare(b.name));
 
-        let destinationValue = data ? (data.destination || '') : '';
-        let destinationOptions = '<option value="">-- Pilih Tujuan --</option>';
-        let foundInList = false;
-        
-        cityList.forEach(city => {
-            const selected = (destinationValue.toUpperCase() === city) ? 'selected' : '';
-            if (selected) foundInList = true;
-            destinationOptions += `<option value="${city}" ${selected}>${city}</option>`;
-        });
+        const tbodyCust = document.getElementById('tblCustomersBody');
+        const tbodyProd = document.getElementById('tblProductsBody');
+        const tbodyAgent = document.getElementById('tblAgentPricesBody');
 
-        if (destinationValue && !foundInList) {
-            destinationOptions += `<option value="${destinationValue}" selected>${destinationValue}</option>`;
+        // ID disembunyikan dari kolom tabel sesuai permintaan
+        tbodyCust.innerHTML = sortedCustomers.map(c => `
+            <tr>
+                <td>${c.name}</td><td>${c.phone}</td><td>${c.address}</td>
+                <td class="text-center"><button class="btn btn-outline" style="padding: 4px 8px;" onclick="openEditModal('customer', ${c.id})">✏️</button></td>
+            </tr>
+        `).join('');
+        
+        tbodyProd.innerHTML = sortedProducts.map(p => `
+            <tr>
+                <td>${p.name}</td><td>${p.unit}</td><td>${formatMoney(p.default_price)}</td>
+                <td class="text-center"><button class="btn btn-outline" style="padding: 4px 8px;" onclick="openEditModal('product', ${p.id})">✏️</button></td>
+            </tr>
+        `).join('');
+        
+        tbodyAgent.innerHTML = agentPrices.map(ap => {
+            const cust = customers.find(c => c.id === ap.customer_id)?.name || 'Unknown';
+            const prod = products.find(p => p.id === ap.product_id)?.name || 'Unknown';
+            return `
+            <tr>
+                <td><b>${cust}</b></td><td>${prod}</td><td style="color:var(--primary); font-weight:bold;">${formatMoney(ap.custom_price)}</td>
+                <td class="text-center"><button class="btn btn-outline" style="padding: 4px 8px;" onclick="openEditModal('agentPrice', ${ap.customer_id}, ${ap.product_id})">✏️</button></td>
+            </tr>`;
+        }).join('');
+    }
+
+    function renderDropdownCustomers() {
+        const select = document.getElementById('custName');
+        const sortedCustomers = [...customers].sort((a, b) => a.name.localeCompare(b.name));
+        let options = '<option value="">-- Pilih Agen --</option>';
+        sortedCustomers.forEach(c => { options += `<option value="${c.id}">${c.name}</option>`; });
+        select.innerHTML = options;
+    }
+
+    function openAddModal() {
+        isCreating = true;
+        editingType = activeTabType;
+        const formContent = document.getElementById('formContent');
+        const title = document.getElementById('formModalTitle');
+        document.getElementById('btnDeleteData').style.display = 'none';
+
+        if(editingType === 'customer') {
+            title.innerText = 'Tambah Agen Baru';
+            formContent.innerHTML = `
+                <div class="form-group"><label>Nama Agen</label><input type="text" id="inputName"></div>
+                <div class="form-group" style="margin-top:12px;"><label>No Telp</label><input type="text" id="inputPhone"></div>
+                <div class="form-group" style="margin-top:12px;"><label>Alamat</label><textarea id="inputAddress" rows="3"></textarea></div>
+            `;
+        } else if(editingType === 'product') {
+            title.innerText = 'Tambah Barang Baru';
+            formContent.innerHTML = `
+                <div class="form-group"><label>Nama Barang</label><input type="text" id="inputProdName"></div>
+                <div class="form-group" style="margin-top:12px;"><label>Satuan (DUS/KARUNG)</label><input type="text" id="inputProdUnit"></div>
+                <div class="form-group" style="margin-top:12px;"><label>Harga Dasar</label><input type="text" id="inputProdPrice" oninput="formatRibuanInput(this)" placeholder="0"></div>
+            `;
+        } else if(editingType === 'agentPrice') {
+            title.innerText = 'Tambah Harga Khusus';
+            let sortedCust = [...customers].sort((a, b) => a.name.localeCompare(b.name));
+            let sortedProd = [...products].sort((a, b) => a.name.localeCompare(b.name));
+            let custOpts = sortedCust.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            let prodOpts = sortedProd.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            formContent.innerHTML = `
+                <div class="form-group"><label>Pilih Agen</label><select id="inputApCust">${custOpts}</select></div>
+                <div class="form-group" style="margin-top:12px;"><label>Pilih Barang</label><select id="inputApProd">${prodOpts}</select></div>
+                <div class="form-group" style="margin-top:12px;"><label>Harga Spesial</label><input type="text" id="inputSpecialPrice" oninput="formatRibuanInput(this)" placeholder="0"></div>
+            `;
         }
-        destinationOptions += `<option value="CUSTOM">✏️ Ketik Manual...</option>`;
+        toggleModal('formModal');
+    }
 
-        const qty = data ? data.qty : 0;
-        const unit = data ? data.unit : '';
-        const price = data ? data.price : 0;
-        const total = data ? data.total : 0;
+    function openEditModal(type, id, id2 = null) {
+        isCreating = false;
+        editingType = type;
+        editingId = id;
+        editingId2 = id2;
+        
+        const formContent = document.getElementById('formContent');
+        const title = document.getElementById('formModalTitle');
+        document.getElementById('btnDeleteData').style.display = 'block';
+
+        if(type === 'customer') {
+            const c = customers.find(x => x.id === id);
+            title.innerText = 'Edit Agen';
+            formContent.innerHTML = `
+                <div class="form-group"><label>Nama Agen</label><input type="text" id="inputName" value="${c.name}"></div>
+                <div class="form-group" style="margin-top:12px;"><label>No Telp</label><input type="text" id="inputPhone" value="${c.phone}"></div>
+                <div class="form-group" style="margin-top:12px;"><label>Alamat</label><textarea id="inputAddress" rows="3">${c.address}</textarea></div>
+            `;
+        } else if(type === 'product') {
+            const p = products.find(x => x.id === id);
+            title.innerText = 'Edit Barang';
+            const formattedPrice = new Intl.NumberFormat('id-ID').format(p.default_price || 0);
+            formContent.innerHTML = `
+                <div class="form-group"><label>Nama Barang</label><input type="text" id="inputProdName" value="${p.name}"></div>
+                <div class="form-group" style="margin-top:12px;"><label>Satuan (DUS/KARUNG)</label><input type="text" id="inputProdUnit" value="${p.unit}"></div>
+                <div class="form-group" style="margin-top:12px;"><label>Harga Dasar</label><input type="text" id="inputProdPrice" value="${formattedPrice}" oninput="formatRibuanInput(this)"></div>
+            `;
+        } else if(type === 'agentPrice') {
+            const ap = agentPrices.find(x => x.customer_id === id && x.product_id === id2);
+            const custName = customers.find(c => c.id === id)?.name || '';
+            const prodName = products.find(p => p.id === id2)?.name || '';
+            const formattedSpecial = new Intl.NumberFormat('id-ID').format(ap.custom_price || 0);
+            
+            title.innerText = 'Edit Harga Khusus';
+            formContent.innerHTML = `
+                <div style="padding: 10px; background: var(--th-bg); border-radius: 8px; margin-bottom: 15px;">
+                    <p style="font-size: 13px; margin-bottom: 5px;"><strong>Agen:</strong> ${custName}</p>
+                    <p style="font-size: 13px; margin: 0;"><strong>Barang:</strong> ${prodName}</p>
+                </div>
+                <div class="form-group"><label>Ubah Harga Spesial</label><input type="text" id="inputSpecialPrice" value="${formattedSpecial}" oninput="formatRibuanInput(this)"></div>
+            `;
+        }
+        toggleModal('formModal');
+    }
+
+    async function saveData() {
+        const btnSave = document.getElementById('btnSaveForm');
+        btnSave.innerText = 'Menyimpan...';
+        btnSave.disabled = true;
+
+        try {
+            if(editingType === 'customer') {
+                const name = document.getElementById('inputName').value;
+                const phone = document.getElementById('inputPhone').value;
+                const address = document.getElementById('inputAddress').value;
+
+                if (isCreating) {
+                    if(isSupabaseConnected) {
+                        const { data, error } = await supabaseClient.from('customers').insert([{ name, phone, address }]).select();
+                        if (error) throw error;
+                        if (data) customers.push(data[0]);
+                    } else {
+                        const newId = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1;
+                        customers.push({ id: newId, name, phone, address });
+                    }
+                } else {
+                    if(isSupabaseConnected) {
+                        const { error } = await supabaseClient.from('customers').update({ name, phone, address }).eq('id', editingId);
+                        if (error) throw error;
+                    }
+                    const idx = customers.findIndex(c => c.id === editingId);
+                    if(idx > -1) customers[idx] = { ...customers[idx], name, phone, address };
+                }
+
+            } else if(editingType === 'product') {
+                const name = document.getElementById('inputProdName').value;
+                const unit = document.getElementById('inputProdUnit').value;
+                const default_price = getCleanNumber('inputProdPrice'); // Mengambil angka asli tanpa format titik ribuan
+
+                if (isCreating) {
+                    if(isSupabaseConnected) {
+                        const { data, error } = await supabaseClient.from('products').insert([{ name, unit, default_price }]).select();
+                        if (error) throw error;
+                        if (data) products.push(data[0]);
+                    } else {
+                        const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                        products.push({ id: newId, name, unit, default_price });
+                    }
+                } else {
+                    if(isSupabaseConnected) {
+                        const { error } = await supabaseClient.from('products').update({ name, unit, default_price }).eq('id', editingId);
+                        if (error) throw error;
+                    }
+                    const idx = products.findIndex(p => p.id === editingId);
+                    if(idx > -1) products[idx] = { ...products[idx], name, unit, default_price };
+                }
+
+            } else if(editingType === 'agentPrice') {
+                if (isCreating) {
+                    const customer_id = parseInt(document.getElementById('inputApCust').value);
+                    const product_id = parseInt(document.getElementById('inputApProd').value);
+                    const custom_price = getCleanNumber('inputSpecialPrice'); // Mengambil angka asli
+                    
+                    if(agentPrices.find(ap => ap.customer_id === customer_id && ap.product_id === product_id)) {
+                        alert("Harga khusus untuk kombinasi agen dan barang ini sudah ada!");
+                        btnSave.innerText = 'Simpan'; btnSave.disabled = false; return;
+                    }
+
+                    if(isSupabaseConnected) {
+                        const { error } = await supabaseClient.from('agent_prices').insert([{ customer_id, product_id, custom_price }]);
+                        if (error) throw error;
+                    }
+                    agentPrices.push({ customer_id, product_id, custom_price });
+
+                } else {
+                    const custom_price = getCleanNumber('inputSpecialPrice'); // Mengambil angka asli
+                    if(isSupabaseConnected) {
+                        const { error } = await supabaseClient.from('agent_prices').update({ custom_price }).eq('customer_id', editingId).eq('product_id', editingId2);
+                        if (error) throw error;
+                    }
+                    const idx = agentPrices.findIndex(ap => ap.customer_id === editingId && ap.product_id === editingId2);
+                    if(idx > -1) agentPrices[idx].custom_price = custom_price;
+                }
+            }
+
+            renderDataManagement();
+            renderDropdownCustomers();
+            autoFillCustomer(); 
+            toggleModal('formModal');
+
+        } catch (error) {
+            console.error("Gagal simpan:", error);
+            alert("Gagal menyimpan ke database Supabase: " + error.message);
+        } finally {
+            btnSave.innerText = 'Simpan';
+            btnSave.disabled = false;
+        }
+    }
+
+    async function deleteData() {
+        if(!confirm("Anda yakin ingin menghapus data ini?")) return;
+        
+        try {
+            if(editingType === 'customer') {
+                if(isSupabaseConnected) await supabaseClient.from('customers').delete().eq('id', editingId);
+                customers = customers.filter(c => c.id !== editingId);
+                agentPrices = agentPrices.filter(ap => ap.customer_id !== editingId);
+            } else if(editingType === 'product') {
+                if(isSupabaseConnected) await supabaseClient.from('products').delete().eq('id', editingId);
+                products = products.filter(p => p.id !== editingId);
+                agentPrices = agentPrices.filter(ap => ap.product_id !== editingId);
+            } else if(editingType === 'agentPrice') {
+                if(isSupabaseConnected) await supabaseClient.from('agent_prices').delete().eq('customer_id', editingId).eq('product_id', editingId2);
+                agentPrices = agentPrices.filter(ap => !(ap.customer_id === editingId && ap.product_id === editingId2));
+            }
+
+            renderDataManagement();
+            renderDropdownCustomers();
+            autoFillCustomer(); 
+            toggleModal('formModal');
+        } catch (error) {
+            alert("Gagal menghapus: " + error.message);
+        }
+    }
+
+    function autoFillCustomer() {
+        const select = document.getElementById('custName');
+        const customerId = parseInt(select.value);
+        currentCustomerId = customerId || null;
+
+        const customer = customers.find(c => c.id === currentCustomerId);
+        
+        if (customer) {
+            document.getElementById('custPhone').value = customer.phone || '';
+            document.getElementById('custAddress').value = customer.address || '';
+            document.getElementById('btnAddRow').disabled = false;
+            document.getElementById('warningRow').style.display = 'none';
+        } else {
+            document.getElementById('custPhone').value = "";
+            document.getElementById('custAddress').value = "";
+            document.getElementById('btnAddRow').disabled = true;
+            document.getElementById('warningRow').style.display = 'inline';
+        }
+
+        document.getElementById('itemsBody').innerHTML = '';
+        calculate();
+        if(currentCustomerId) addRow(); 
+    }
+
+    function getAvailableProductsForCurrentAgent() {
+        if (!currentCustomerId) return [];
+        const mapping = agentPrices.filter(ap => ap.customer_id === currentCustomerId);
+        return mapping.map(ap => {
+            const prod = products.find(p => p.id === ap.product_id);
+            if(!prod) return null;
+            return { id: prod.id, name: prod.name, unit: prod.unit, custom_price: ap.custom_price };
+        }).filter(Boolean);
+    }
+
+    function addRow() {
+        if(!currentCustomerId) return;
+        const tbody = document.getElementById('itemsBody');
+        const tr = document.createElement('tr');
+        const today = new Date().toISOString().split('T')[0];
+
+        const availableProducts = getAvailableProductsForCurrentAgent();
+        let productOptions = '<option value="">-- Pilih Barang --</option>';
+        availableProducts.forEach(p => {
+            productOptions += `<option value="${p.id}" data-price="${p.custom_price}" data-unit="${p.unit}">${p.name}</option>`;
+        });
 
         tr.innerHTML = `
-            <td>
-                <input type="date" class="item-date-input" value="${rawDate}" onchange="updateDateDisplay(this)" style="display:none;">
-                <input type="text" class="item-date-text text-center" value="${formatDateToDDMMMYY(rawDate)}" readonly onclick="triggerDatePick(this)" style="cursor:pointer;" title="Klik untuk ubah tanggal">
-            </td>
+            <td><input type="date" value="${today}"></td>
             <td><select class="item-select" onchange="onProductSelect(this)">${productOptions}</select></td>
-            <td><input type="number" class="item-qty text-center" value="${qty}" min="0" oninput="calculate()"></td>
-            <td><input type="text" class="item-unit text-center" placeholder="-" value="${unit}"></td>
-            <td>
-                <select class="dest-select" onchange="onDestinationChange(this)">
-                    ${destinationOptions}
-                </select>
-            </td>
-            <td><input type="text" class="item-price text-right" value="${price ? formatNumberWithDot(price) : 0}" oninput="formatInputNumber(this); calculate();"></td>
-            <td class="item-total text-right" style="font-weight: normal; font-style: italic; font-size: 13px; padding-right: 8px;">${formatMoney(total)}</td>
-            <td class="action-col text-center" data-html2canvas-ignore="true">
-                <button type="button" style="background:none; border:none; color:var(--danger); font-size:15px; cursor:pointer;" onclick="removeRow(this)">✖</button>
-            </td>
+            <td><input type="number" class="item-qty text-center" value="0" min="0" oninput="calculate()"></td>
+            <td><input type="text" class="item-unit" readonly placeholder="-"></td>
+            <td><input type="text" placeholder="Tujuan"></td>
+            <td><input type="number" class="item-price text-right" readonly value="0"></td>
+            <td class="item-total text-right font-weight-bold" style="font-weight:600;">Rp 0</td>
+            <td class="action-col text-center"><button class="btn btn-icon-danger" onclick="removeRow(this)">🗑️</button></td>
         `;
         tbody.appendChild(tr);
     }
 
-    function triggerDatePick(textInput) {
-        const dateInput = textInput.previousElementSibling;
-        if (dateInput && typeof dateInput.showPicker === 'function') {
-            dateInput.showPicker();
-        } else if (dateInput) {
-            dateInput.style.display = 'block';
-            textInput.style.display = 'none';
-            dateInput.focus();
-        }
-    }
-
-    function updateDateDisplay(dateInput) {
-        const textInput = dateInput.nextElementSibling;
-        if (dateInput.value) {
-            textInput.value = formatDateToDDMMMYY(dateInput.value);
-        }
-    }
-
-    function onDestinationChange(selectEl) {
-        if (selectEl.value === 'CUSTOM') {
-            activeDestSelect = selectEl;
-            document.getElementById('customDestInput').value = '';
-            toggleModal('customDestModal');
-        }
-    }
-
-    function saveCustomDestination() {
-        const customVal = document.getElementById('customDestInput').value.trim().toUpperCase();
-        if (!customVal) {
-            alert('Nama tujuan tidak boleh kosong!');
-            return;
-        }
-
-        if (!cityList.includes(customVal)) {
-            cityList.push(customVal);
-            saveCityListToStorage();
-            renderMasterTables();
-        }
-
-        if (activeDestSelect) {
-            activeDestSelect.value = customVal;
-        }
-
-        toggleModal('customDestModal');
-        calculate();
-    }
-
-    function closeCustomDestModal() {
-        if (activeDestSelect && activeDestSelect.value === 'CUSTOM') {
-            activeDestSelect.value = ''; 
-        }
-        toggleModal('customDestModal');
-    }
-
-    function removeRow(btn) {
-        btn.closest('tr').remove();
-        calculate();
-    }
-
     function onProductSelect(selectElement) {
         const row = selectElement.closest('tr');
-        const productId = selectElement.value; 
-        const product = dbProducts.find(p => String(p.id) === String(productId));
-        if(product) {
-            row.querySelector('.item-price').value = formatNumberWithDot(product.price || 0);
-            row.querySelector('.item-unit').value = product.unit || '';
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        
+        if(selectElement.value !== "") {
+            row.querySelector('.item-price').value = selectedOption.getAttribute('data-price');
+            row.querySelector('.item-unit').value = selectedOption.getAttribute('data-unit');
             const qtyInput = row.querySelector('.item-qty');
             if(qtyInput.value === "0" || qtyInput.value === "") qtyInput.value = 1;
         } else {
@@ -852,441 +678,49 @@
         calculate();
     }
 
+    function removeRow(btn) { btn.closest('tr').remove(); calculate(); }
+
+    function addDeposit() {
+        const container = document.getElementById('depositContainer');
+        const div = document.createElement('div');
+        div.style.display = 'flex'; div.style.gap = '8px';
+        div.innerHTML = `
+            <input type="text" placeholder="Ket/Tgl" style="flex: 2;">
+            <input type="text" class="deposit-amount text-right" placeholder="Nominal" value="0" style="flex: 1;" oninput="formatRibuanInput(this)" onkeyup="calculate()">
+            <button class="btn btn-icon-danger" style="padding: 6px 12px;" onclick="this.parentElement.remove(); calculate();">X</button>
+        `;
+        container.appendChild(div);
+    }
+
     function calculate() {
-        rawSubtotal = 0;
+        let subtotal = 0;
         document.querySelectorAll('#itemsBody tr').forEach(row => {
             const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const price = cleanNumber(row.querySelector('.item-price').value);
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
             const total = qty * price;
             row.querySelector('.item-total').innerText = formatMoney(total);
-            rawSubtotal += total;
+            subtotal += total;
         });
 
-        // Hitung Piutang Lalu
-        rawPiutangLalu = 0;
-        let piutangHtml = '';
-        if (piutangList.length > 0) {
-            piutangList.forEach((item, index) => {
-                rawPiutangLalu += item.amount;
-                const label = item.desc ? item.desc : 'Piutang Lalu';
-                piutangHtml += `
-                    <div class="summary-row" style="align-items: center;">
-                        <span style="display: flex; align-items: center; gap: 4px;">
-                            ${label} 
-                            <span style="cursor: pointer; font-size: 11px;" onclick="openPiutangModal(${index})" title="Edit" data-html2canvas-ignore="true">✏️</span>
-                        </span>
-                        <span style="font-weight: 700; font-size: 13px;">${formatMoney(item.amount)}</span>
-                    </div>
-                `;
-            });
-        }
-        document.getElementById('piutangRowsContainer').innerHTML = piutangHtml;
+        let totalDeposit = 0;
+        document.querySelectorAll('.deposit-amount').forEach(dep => {
+            let cleanVal = parseFloat(dep.value.replace(/\./g, '')) || 0;
+            totalDeposit += cleanVal;
+        });
 
-        // Hitung Deposit
-        rawDeposit = 0;
-        let depositHtml = '';
-        if (depositsList.length === 0) {
-            depositHtml = `<div class="summary-row"><span>Deposit</span><span style="color: var(--danger); font-weight: 700; font-size: 13px;">- Rp 0</span></div>`;
+        document.getElementById('subTotal').innerText = formatMoney(subtotal);
+        document.getElementById('totalDeposit').innerText = '- ' + formatMoney(totalDeposit);
+        document.getElementById('balanceDue').innerText = formatMoney(subtotal - totalDeposit);
+    }
+
+    async function simpanInvoice() {
+        if(!currentCustomerId) { alert("Harap pilih agen terlebih dahulu!"); return; }
+        if(isSupabaseConnected) {
+            alert("Data invoice siap disimpan ke Supabase!");
         } else {
-            depositsList.forEach((dep, index) => {
-                rawDeposit += dep.amount;
-                const label = dep.desc ? dep.desc : 'Deposit';
-                depositHtml += `
-                    <div class="summary-row" style="align-items: center;">
-                        <span style="display: flex; align-items: center; gap: 4px;">
-                            ${label} 
-                            <span style="cursor: pointer; font-size: 11px;" onclick="openDepositModal(${index})" title="Edit" data-html2canvas-ignore="true">✏️</span>
-                        </span>
-                        <span style="color: var(--danger); font-weight: 700; font-size: 13px;">- ${formatMoney(dep.amount)}</span>
-                    </div>
-                `;
-            });
-        }
-        document.getElementById('depositRowsContainer').innerHTML = depositHtml;
-
-        // Rumus Balance Forward: Sub Total + Piutang Lalu - Deposit
-        rawBalance = rawSubtotal + rawPiutangLalu - rawDeposit;
-        
-        document.getElementById('subTotal').innerText = formatMoney(rawSubtotal);
-        document.getElementById('balanceDue').innerText = formatMoney(rawBalance);
-    }
-
-    // Otomasi Ambil Data Sisa Saldo / Piutang Pelanggan Terakhir dari Database
-    async function onCustomerSelect() {
-        const selectEl = document.getElementById('custNameSelect');
-        const selectedName = selectEl.value;
-        const customer = dbCustomers.find(c => c.name === selectedName);
-        
-        if(customer) {
-            document.getElementById('custPhone').value = customer.phone || '';
-            document.getElementById('custAddress').value = customer.address || '';
-        } else {
-            document.getElementById('custPhone').value = '';
-            document.getElementById('custAddress').value = '';
-        }
-
-        // Reset data piutang & deposit dinamis saat ganti pelanggan
-        piutangList = [];
-        depositsList = [];
-
-        if (selectedName && supabaseClient) {
-            // Ambil invoice terakhir dari agen tersebut berdasarkan urutan waktu (created_at descending)
-            const { data, error } = await supabaseClient
-                .from('invoices')
-                .select('*')
-                .eq('customer_name', selectedName)
-                .order('created_at', { ascending: false })
-                .limit(1);
-
-            if (!error && data && data.length > 0) {
-                const lastInv = data[0];
-                const lastBalance = lastInv.balance_due || 0;
-
-                if (lastBalance > 0) {
-                    // Jika sisa tagihan lalu > 0, otomatis masuk sebagai Piutang
-                    piutangList.push({
-                        desc: `Sisa Nota ${lastInv.invoice_no}`,
-                        amount: lastBalance
-                    });
-                } else if (lastBalance < 0) {
-                    // Jika sisa tagihan lalu < 0 (kelebihan bayar), otomatis masuk sebagai Deposit
-                    depositsList.push({
-                        desc: `Deposit (${lastInv.invoice_no})`,
-                        amount: Math.abs(lastBalance)
-                    });
-                }
-            }
-        }
-        calculate();
-    }
-
-    function resetInvoiceForm() {
-        generateInvoiceNumber();
-        document.getElementById('custNameSelect').value = '';
-        document.getElementById('custPhone').value = '';
-        document.getElementById('custAddress').value = '';
-        document.getElementById('itemsBody').innerHTML = '';
-        rawPiutangLalu = 0;
-        piutangList = [];
-        rawDeposit = 0;
-        depositsList = [];
-        addRow();
-        calculate();
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        generateInvoiceNumber();
-        addRow();
-        setTimeout(initDatabase, 500);
-    });
-</script>
-
-<!-- ========================================== -->
-<!-- SCRIPT DATABASE SUPABASE & MASTER DATA     -->
-<!-- ========================================== -->
-<script>
-    const SUPABASE_URL = 'https://acpkdnktanrucyfyhckw.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U';
-    
-    let supabaseClient = null;
-
-    function initDatabase() {
-        if (window.supabase) {
-            try {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                fetchData();
-            } catch (err) {
-                console.error("Gagal konek Supabase:", err);
-            }
+            alert("Mode simulasi lokal aktif.");
         }
     }
-
-    async function fetchData() {
-        if(!supabaseClient) return;
-        const { data: products } = await supabaseClient.from('products').select('*').order('id', { ascending: true });
-        if (products) dbProducts = products;
-
-        const { data: customers } = await supabaseClient.from('customers').select('*').order('name', { ascending: true });
-        if (customers) dbCustomers = customers;
-
-        const custSelect = document.getElementById('custNameSelect');
-        const currentCustVal = custSelect.value;
-        let custOptions = '<option value="">-- Pilih Agen --</option>';
-        dbCustomers.forEach(c => {
-            custOptions += `<option value="${c.name}">${c.name}</option>`;
-        });
-        custSelect.innerHTML = custOptions;
-        custSelect.value = currentCustVal;
-
-        document.querySelectorAll('.item-select').forEach(select => {
-            const currentVal = select.value;
-            let options = '<option value="">-- Pilih Barang --</option>';
-            dbProducts.forEach(p => options += `<option value="${p.id}" data-name="${p.name}">${p.name}</option>`);
-            select.innerHTML = options;
-            select.value = currentVal;
-        });
-        renderMasterTables();
-    }
-
-    function renderMasterTables() {
-        const custBody = document.getElementById('masterCustomersBody');
-        const prodBody = document.getElementById('masterProductsBody');
-        const destBody = document.getElementById('masterDestinationsBody');
-        
-        custBody.innerHTML = dbCustomers.length === 0 ? '<tr><td colspan="4" class="text-center">Belum ada data.</td></tr>' : '';
-        dbCustomers.forEach(c => {
-            custBody.innerHTML += `<tr>
-                <td>${c.name}</td><td>${c.phone || '-'}</td><td>${c.address || '-'}</td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="editCustomer('${c.id}')">✏️</button>
-                    <button type="button" class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="deleteCustomer('${c.id}')">🗑️</button>
-                </td></tr>`;
-        });
-
-        prodBody.innerHTML = dbProducts.length === 0 ? '<tr><td colspan="4" class="text-center">Belum ada data.</td></tr>' : '';
-        dbProducts.forEach(p => {
-            prodBody.innerHTML += `<tr>
-                <td>${p.name}</td><td>${formatMoney(p.price)}</td><td>${p.unit || '-'}</td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="editProduct('${p.id}')">✏️</button>
-                    <button type="button" class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="deleteProduct('${p.id}')">🗑️</button>
-                </td></tr>`;
-        });
-
-        destBody.innerHTML = cityList.length === 0 ? '<tr><td colspan="2" class="text-center">Belum ada data.</td></tr>' : '';
-        cityList.forEach((city, index) => {
-            destBody.innerHTML += `<tr>
-                <td>${city}</td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" onclick="editDestinationItem(${index})">✏️</button>
-                    <button type="button" class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="deleteDestinationItem(${index})">🗑️</button>
-                </td></tr>`;
-        });
-    }
-
-    function saveDestinationItem() {
-        const index = document.getElementById('formDestIndex').value;
-        const name = document.getElementById('formDestName').value.trim().toUpperCase();
-        if(!name) return alert('Nama tujuan wajib diisi!');
-
-        if(index !== '') {
-            cityList[index] = name;
-        } else {
-            if(cityList.includes(name)) return alert('Kota tujuan sudah ada dalam daftar!');
-            cityList.push(name);
-        }
-        saveCityListToStorage();
-        resetFormDestination();
-        renderMasterTables();
-    }
-
-    function editDestinationItem(index) {
-        document.getElementById('formDestIndex').value = index;
-        document.getElementById('formDestName').value = cityList[index];
-    }
-
-    function deleteDestinationItem(index) {
-        if(!confirm(`Yakin ingin menghapus ${cityList[index]} dari daftar tujuan?`)) return;
-        cityList.splice(index, 1);
-        saveCityListToStorage();
-        renderMasterTables();
-    }
-
-    function resetFormDestination() {
-        document.getElementById('formDestIndex').value = '';
-        document.getElementById('formDestName').value = '';
-    }
-
-    async function saveInvoice() {
-        if(!supabaseClient) return alert('Koneksi database belum siap.');
-        
-        const btn = document.getElementById('btnSaveInvoice');
-        btn.innerText = '⏳ Menyimpan...';
-        btn.disabled = true;
-
-        const invoiceNo = document.getElementById('invoiceNumber').value;
-        const custName = document.getElementById('custNameSelect').value;
-        
-        if(!invoiceNo || !custName) {
-            btn.innerText = '💾 Simpan';
-            btn.disabled = false;
-            return alert('Nomor Invoice dan Nama Agen/Pelanggan wajib dipilih!');
-        }
-
-        const headerData = {
-            invoice_no: invoiceNo,
-            customer_name: custName,
-            customer_phone: document.getElementById('custPhone').value,
-            customer_address: document.getElementById('custAddress').value,
-            subtotal: rawSubtotal,
-            deposit: rawDeposit,
-            balance_due: rawBalance
-        };
-
-        const itemsData = [];
-        document.querySelectorAll('#itemsBody tr').forEach(row => {
-            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const selectEl = row.querySelector('.item-select');
-            const priceVal = cleanNumber(row.querySelector('.item-price').value);
-            
-            const destSelect = row.querySelector('.dest-select');
-            let finalDestination = destSelect.value;
-            if (finalDestination === 'CUSTOM') finalDestination = '';
-            
-            const dateInputVal = row.querySelector('.item-date-input').value;
-
-            if (qty > 0) {
-                itemsData.push({
-                    invoice_no: invoiceNo,
-                    tanggal: dateInputVal,
-                    product_id: selectEl.value || null,
-                    product_name: selectEl.options[selectEl.selectedIndex]?.text || '-',
-                    qty: qty,
-                    unit: row.querySelector('.item-unit').value,
-                    destination: finalDestination,
-                    price: priceVal,
-                    total: qty * priceVal
-                });
-            }
-        });
-
-        try {
-            const { error: errHeader } = await supabaseClient.from('invoices').upsert(headerData, { onConflict: 'invoice_no' });
-            if (errHeader) throw errHeader;
-
-            await supabaseClient.from('invoice_items').delete().eq('invoice_no', invoiceNo);
-
-            if(itemsData.length > 0) {
-                const { error: errItems } = await supabaseClient.from('invoice_items').insert(itemsData);
-                if (errItems) throw errItems;
-            }
-
-            alert('✅ Invoice berhasil disimpan!');
-            resetInvoiceForm();
-        } catch (error) {
-            alert('Gagal menyimpan invoice: ' + error.message);
-        } finally {
-            btn.innerText = '💾 Simpan';
-            btn.disabled = false;
-        }
-    }
-
-    async function openHistoryModal() {
-        toggleModal('historyModal');
-        const historyBody = document.getElementById('historyBody');
-        historyBody.innerHTML = '<tr><td colspan="4" class="text-center">Memuat riwayat...</td></tr>';
-
-        if(!supabaseClient) return;
-        
-        const { data, error } = await supabaseClient.from('invoices').select('*').order('created_at', { ascending: false });
-        
-        if (error) {
-            historyBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal memuat: ${error.message}</td></tr>`;
-            return;
-        }
-
-        if(data.length === 0) {
-            historyBody.innerHTML = '<tr><td colspan="4" class="text-center">Belum ada riwayat invoice.</td></tr>';
-            return;
-        }
-
-        historyBody.innerHTML = '';
-        data.forEach(inv => {
-            historyBody.innerHTML += `
-                <tr>
-                    <td><strong>${inv.invoice_no}</strong></td>
-                    <td>${inv.customer_name}</td>
-                    <td class="text-right" style="color:var(--primary); font-weight:600;">${formatMoney(inv.balance_due)}</td>
-                    <td class="text-center">
-                        <button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; margin-right: 4px;" onclick="loadInvoiceData('${inv.invoice_no}')">Buka</button>
-                        <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px;" onclick="deleteInvoice('${inv.invoice_no}')">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
-    async function loadInvoiceData(invoiceNo) {
-        toggleModal('historyModal');
-        
-        const { data: header } = await supabaseClient.from('invoices').select('*').eq('invoice_no', invoiceNo).single();
-        if(header) {
-            document.getElementById('invoiceNumber').value = header.invoice_no;
-            document.getElementById('custNameSelect').value = header.customer_name;
-            document.getElementById('custPhone').value = header.customer_phone || '';
-            document.getElementById('custAddress').value = header.customer_address || '';
-            
-            rawDeposit = header.deposit || 0;
-            depositsList = rawDeposit > 0 ? [{ desc: 'Deposit', amount: rawDeposit }] : [];
-            piutangList = [];
-        }
-
-        const { data: items } = await supabaseClient.from('invoice_items').select('*').eq('invoice_no', invoiceNo);
-        if(items) {
-            document.getElementById('itemsBody').innerHTML = ''; 
-            if(items.length === 0) {
-                addRow();
-            } else {
-                items.forEach(item => addRow(item));
-            }
-        }
-        calculate();
-    }
-
-    async function deleteInvoice(invoiceNo) {
-        if(!confirm(`Yakin ingin menghapus invoice ${invoiceNo} secara permanen?`)) return;
-        
-        await supabaseClient.from('invoice_items').delete().eq('invoice_no', invoiceNo);
-        const { error } = await supabaseClient.from('invoices').delete().eq('invoice_no', invoiceNo);
-        
-        if(error) alert('Gagal hapus: ' + error.message);
-        else openHistoryModal(); 
-    }
-
-    async function saveProduct() {
-        const id = document.getElementById('formProdId').value;
-        const name = document.getElementById('formProdName').value;
-        const price = cleanNumber(document.getElementById('formProdPrice').value);
-        const unit = document.getElementById('formProdUnit').value;
-        if(!name) return alert('Nama wajib diisi!');
-        const payload = { name, price: price || 0, unit };
-
-        if(id) await supabaseClient.from('products').update(payload).eq('id', id);
-        else await supabaseClient.from('products').insert([payload]);
-        resetFormProduct(); fetchData();
-    }
-
-    function editProduct(id) {
-        const p = dbProducts.find(x => String(x.id) === String(id));
-        if(p) { 
-            document.getElementById('formProdId').value = p.id; 
-            document.getElementById('formProdName').value = p.name; 
-            document.getElementById('formProdPrice').value = formatNumberWithDot(p.price); 
-            document.getElementById('formProdUnit').value = p.unit; 
-        }
-    }
-    async function deleteProduct(id) { if(!confirm('Yakin hapus?')) return; await supabaseClient.from('products').delete().eq('id', id); fetchData(); }
-    function resetFormProduct() { document.getElementById('formProdId').value = ''; document.getElementById('formProdName').value = ''; document.getElementById('formProdPrice').value = ''; document.getElementById('formProdUnit').value = ''; }
-
-    async function saveCustomer() {
-        const id = document.getElementById('formCustId').value;
-        const name = document.getElementById('formCustName').value;
-        const phone = document.getElementById('formCustPhone').value;
-        const address = document.getElementById('formCustAddress').value;
-        if(!name) return alert('Nama wajib diisi!');
-        const payload = { name, phone, address };
-
-        if(id) await supabaseClient.from('customers').update(payload).eq('id', id);
-        else await supabaseClient.from('customers').insert([payload]);
-        resetFormCustomer(); fetchData();
-    }
-
-    function editCustomer(id) {
-        const c = dbCustomers.find(x => String(x.id) === String(id));
-        if(c) { document.getElementById('formCustId').value = c.id; document.getElementById('formCustName').value = c.name; document.getElementById('formCustPhone').value = c.phone; document.getElementById('formCustAddress').value = c.address; }
-    }
-    async function deleteCustomer(id) { if(!confirm('Yakin hapus?')) return; await supabaseClient.from('customers').delete().eq('id', id); fetchData(); }
-    function resetFormCustomer() { document.getElementById('formCustId').value = ''; document.getElementById('formCustName').value = ''; document.getElementById('formCustPhone').value = ''; document.getElementById('formCustAddress').value = ''; }
 </script>
 
 </body>
