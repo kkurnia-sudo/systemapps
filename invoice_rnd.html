@@ -62,7 +62,7 @@
         .card { background-color: var(--bg-card); border-radius: 16px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05); padding: 28px; margin-bottom: 24px; border: 1px solid var(--border-color); }
         .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
         .brand-section { display: flex; align-items: center; gap: 18px; }
-        .logo { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; border: 2px solid var(--border-color); background: transparent; }
+        .logo { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; border: none; background: transparent; }
         .brand-text h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
         .brand-text p { color: var(--text-muted); font-size: 13px; }
         .invoice-subtitle { display: inline-block; font-size: 11px; font-weight: 700; color: var(--primary); background: rgba(16, 185, 129, 0.1); padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
@@ -130,7 +130,7 @@
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
         .modal.active { display: flex; }
-        .modal-content { background: var(--bg-card); width: 100%; max-width: 800px; border-radius: 16px; max-height: 90vh; overflow-y: auto; overflow-x: hidden; padding: 28px; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 850px; border-radius: 16px; max-height: 90vh; overflow-y: auto; overflow-x: hidden; padding: 28px; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; }
         .close-modal { background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
         .close-modal:hover { color: var(--text-main); }
@@ -327,7 +327,7 @@
         <div id="previewContent">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 14px;">
-                    <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/f57e85bb5c146f7fb7aebd7cbf8013d2ac707c35/sbr_logo.png" alt="Logo SBR" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #e2e8f0; background: transparent;">
+                    <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/f57e85bb5c146f7fb7aebd7cbf8013d2ac707c35/sbr_logo.png" alt="Logo SBR" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: none; background: transparent;">
                     <div>
                         <h2 style="font-size: 20px; font-weight: 800; margin: 0; color: #000 !important;">SBR PUTRA FOOD</h2>
                         <p style="font-size: 12px; margin: 2px 0 0 0; color: #555 !important;">Lembang, Bandung Barat, Jawa Barat</p>
@@ -465,7 +465,20 @@
         </div>
         
         <div id="tabCustomers" class="tab-content active">
-            <div class="table-wrapper"><table style="width: 100%;"><thead><tr><th style="text-align: left !important;">Nama Agen</th><th style="text-align: left !important;">No Telp</th><th style="text-align: left !important;">Alamat</th><th class="text-center" style="width: 80px;">Aksi</th></tr></thead><tbody id="tblCustomersBody"></tbody></table></div>
+            <div class="table-wrapper">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left !important;">Nama Agen</th>
+                            <th style="text-align: left !important;">Deposit / Piutang</th>
+                            <th style="text-align: left !important;">No Telp</th>
+                            <th style="text-align: left !important;">Alamat</th>
+                            <th class="text-center" style="width: 80px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblCustomersBody"></tbody>
+                </table>
+            </div>
         </div>
         <div id="tabProducts" class="tab-content">
             <div class="table-wrapper"><table style="width: 100%;"><thead><tr><th style="text-align: left !important;">Nama Barang</th><th style="text-align: left !important;">Satuan</th><th style="text-align: left !important;">Harga Dasar</th><th class="text-center" style="width: 80px;">Aksi</th></tr></thead><tbody id="tblProductsBody"></tbody></table></div>
@@ -519,6 +532,7 @@
     let customers = [];
     let products = [];
     let agentPrices = [];
+    let customerBalances = {};
 
     let currentCustomerId = null; 
     let activeTabType = 'customer'; 
@@ -638,8 +652,23 @@
             const { data: dbCustomers, error: errC } = await supabaseClient.from('customers').select('*');
             const { data: dbProducts, error: errP } = await supabaseClient.from('products').select('*');
             const { data: dbAgentPrices, error: errA } = await supabaseClient.from('agent_prices').select('*');
+            const { data: dbInvoices, error: errI } = await supabaseClient.from('invoices').select('customer_name, balance_due, created_at').order('created_at', { ascending: false });
+            
             if(errC || errP || errA) throw new Error("Gagal mengambil data.");
-            customers = dbCustomers || []; products = dbProducts || []; agentPrices = dbAgentPrices || [];
+            
+            customers = dbCustomers || []; 
+            products = dbProducts || []; 
+            agentPrices = dbAgentPrices || [];
+            
+            customerBalances = {};
+            if (dbInvoices) {
+                dbInvoices.forEach(inv => {
+                    if (customerBalances[inv.customer_name] === undefined) {
+                        customerBalances[inv.customer_name] = parseFloat(inv.balance_due) || 0;
+                    }
+                });
+            }
+
             isSupabaseConnected = true;
             document.getElementById('supabaseAlert').style.display = 'none';
         } catch (error) {
@@ -648,11 +677,13 @@
             customers = [{ id: 1, name: 'Asep', phone: '+62 821-1234', address: 'Lembang' }];
             products = [{ id: 1, name: 'Aromanis', unit: 'Ball', default_price: 75000 }];
             agentPrices = [{ customer_id: 1, product_id: 1, custom_price: 75000 }];
+            customerBalances = {};
         }
     }
 
     async function fetchPreviousBalance(customerName) {
         if(!isSupabaseConnected) return 0;
+        if (customerBalances[customerName] !== undefined) return customerBalances[customerName];
         try {
             const { data, error } = await supabaseClient.from('invoices').select('balance_due').eq('customer_name', customerName).order('created_at', { ascending: false }).limit(1);
             if (!error && data && data.length > 0) return parseFloat(data[0].balance_due) || 0;
@@ -790,7 +821,24 @@
 
     function renderDataManagement() {
         let sortedCustomers = [...customers].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        document.getElementById('tblCustomersBody').innerHTML = sortedCustomers.map(c => `<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td>${c.address}</td><td class="text-center"><button class="btn btn-outline" style="padding:4px 10px;" onclick="openEditModal('customer', ${c.id})">✏️</button></td></tr>`).join('');
+        document.getElementById('tblCustomersBody').innerHTML = sortedCustomers.map(c => {
+            const balance = customerBalances[c.name] || 0;
+            let balanceHtml = '<span style="color:var(--text-muted); font-style:italic;">Rp 0</span>';
+            if (balance > 0) {
+                balanceHtml = `<span style="color:var(--danger); font-weight:600; font-style:italic;">Piutang: ${formatMoney(balance)}</span>`;
+            } else if (balance < 0) {
+                balanceHtml = `<span style="color:var(--primary); font-weight:600; font-style:italic;">Deposit: ${formatMoney(Math.abs(balance))}</span>`;
+            }
+            return `
+                <tr>
+                    <td><b>${c.name}</b></td>
+                    <td>${balanceHtml}</td>
+                    <td>${c.phone || '-'}</td>
+                    <td>${c.address || '-'}</td>
+                    <td class="text-center"><button class="btn btn-outline" style="padding:4px 10px;" onclick="openEditModal('customer', ${c.id})">✏️</button></td>
+                </tr>
+            `;
+        }).join('');
         
         let sortedProducts = [...products].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         document.getElementById('tblProductsBody').innerHTML = sortedProducts.map(p => `<tr><td><b>${p.name}</b></td><td>${p.unit}</td><td>${formatMoney(p.default_price)}</td><td class="text-center"><button class="btn btn-outline" style="padding:4px 10px;" onclick="openEditModal('product', ${p.id})">✏️</button></td></tr>`).join('');
@@ -897,7 +945,9 @@
             formContent.innerHTML = `
                 <div class="form-group"><label>Nama Agen</label><input type="text" id="inputName"></div>
                 <div class="form-group"><label>No Telp</label><input type="text" id="inputPhone"></div>
-                <div class="form-group"><label>Alamat</label><textarea id="inputAddress" rows="3" style="resize:none;"></textarea></div>
+                <div class="form-group"><label>Alamat</label><textarea id="inputAddress" rows="2" style="resize:none;"></textarea></div>
+                <div class="form-group"><label>Tipe Saldo Awal</label><select id="inputBalType"><option value="piutang">Piutang (Agen Berutang)</option><option value="deposit">Deposit (Kelebihan Bayar)</option></select></div>
+                <div class="form-group"><label>Nominal Saldo Awal (Rp)</label><input type="text" id="inputBalance" placeholder="0" oninput="formatRibuanInput(this)"></div>
             `;
         } else if(editingType === 'product') {
             title.innerText = 'Tambah Barang Baru';
@@ -956,11 +1006,17 @@
 
         if(type === 'customer') {
             const c = customers.find(x => x.id === id);
+            const currentBal = customerBalances[c.name] || 0;
+            const balType = currentBal < 0 ? 'deposit' : 'piutang';
+            const balVal = Math.abs(currentBal);
+
             title.innerText = 'Edit Agen';
             formContent.innerHTML = `
                 <div class="form-group"><label>Nama Agen</label><input type="text" id="inputName" value="${c.name}"></div>
-                <div class="form-group"><label>No Telp</label><input type="text" id="inputPhone" value="${c.phone}"></div>
-                <div class="form-group"><label>Alamat</label><textarea id="inputAddress" rows="3" style="resize:none;">${c.address}</textarea></div>
+                <div class="form-group"><label>No Telp</label><input type="text" id="inputPhone" value="${c.phone || ''}"></div>
+                <div class="form-group"><label>Alamat</label><textarea id="inputAddress" rows="2" style="resize:none;">${c.address || ''}</textarea></div>
+                <div class="form-group"><label>Tipe Saldo / Tagihan</label><select id="inputBalType"><option value="piutang" ${balType==='piutang'?'selected':''}>Piutang (Agen Berutang)</option><option value="deposit" ${balType==='deposit'?'selected':''}>Deposit (Kelebihan Bayar)</option></select></div>
+                <div class="form-group"><label>Nominal Saldo (Rp)</label><input type="text" id="inputBalance" value="${balVal > 0 ? new Intl.NumberFormat('id-ID').format(balVal) : ''}" placeholder="0" oninput="formatRibuanInput(this)"></div>
             `;
         } else if(type === 'product') {
             const p = products.find(x => x.id === id);
@@ -991,15 +1047,49 @@
 
         try {
             if(editingType === 'customer') {
-                const name = document.getElementById('inputName').value; const phone = document.getElementById('inputPhone').value; const address = document.getElementById('inputAddress').value;
+                const name = document.getElementById('inputName').value.trim(); 
+                const phone = document.getElementById('inputPhone').value; 
+                const address = document.getElementById('inputAddress').value;
+                const balType = document.getElementById('inputBalType').value;
+                let rawBal = getCleanNumber('inputBalance');
+                const finalBal = balType === 'deposit' ? -Math.abs(rawBal) : Math.abs(rawBal);
+
                 if (isCreating) {
                     if(isSupabaseConnected) {
                         const { data, error } = await supabaseClient.from('customers').insert([{ name, phone, address }]).select();
-                        if (!error && data) customers.push(data[0]);
-                    } else customers.push({ id: Date.now(), name, phone, address });
+                        if (!error && data) {
+                            customers.push(data[0]);
+                            if (finalBal !== 0) {
+                                await supabaseClient.from('invoices').insert([{ invoice_no: 'SALDO.' + Date.now(), customer_name: name, customer_phone: phone, customer_address: address, subtotal: balType==='piutang'?rawBal:0, deposit: balType==='deposit'?rawBal:0, balance_due: finalBal }]);
+                                customerBalances[name] = finalBal;
+                            }
+                        }
+                    } else {
+                        customers.push({ id: Date.now(), name, phone, address });
+                        customerBalances[name] = finalBal;
+                    }
                 } else {
-                    if(isSupabaseConnected) await supabaseClient.from('customers').update({ name, phone, address }).eq('id', editingId);
-                    const idx = customers.findIndex(c => c.id === editingId); if(idx > -1) customers[idx] = { ...customers[idx], name, phone, address };
+                    const oldCust = customers.find(c => c.id === editingId);
+                    const oldName = oldCust ? oldCust.name : '';
+
+                    if(isSupabaseConnected) {
+                        await supabaseClient.from('customers').update({ name, phone, address }).eq('id', editingId);
+                        
+                        if (oldName !== name) {
+                            await supabaseClient.from('invoices').update({ customer_name: name }).eq('customer_name', oldName);
+                            delete customerBalances[oldName];
+                        }
+
+                        const { data: existingInv } = await supabaseClient.from('invoices').select('invoice_no').eq('customer_name', name).order('created_at', { ascending: false }).limit(1);
+                        if (existingInv && existingInv.length > 0) {
+                            await supabaseClient.from('invoices').update({ balance_due: finalBal }).eq('invoice_no', existingInv[0].invoice_no);
+                        } else if (finalBal !== 0) {
+                            await supabaseClient.from('invoices').insert([{ invoice_no: 'SALDO.' + Date.now(), customer_name: name, customer_phone: phone, customer_address: address, subtotal: balType==='piutang'?rawBal:0, deposit: balType==='deposit'?rawBal:0, balance_due: finalBal }]);
+                        }
+                    }
+                    const idx = customers.findIndex(c => c.id === editingId); 
+                    if(idx > -1) customers[idx] = { ...customers[idx], name, phone, address };
+                    customerBalances[name] = finalBal;
                 }
             } else if(editingType === 'product') {
                 const name = document.getElementById('inputProdName').value; const unit = document.getElementById('inputProdUnit').value; const default_price = getCleanNumber('inputProdPrice');
