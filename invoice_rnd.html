@@ -328,7 +328,7 @@
     </div>
 </div>
 
-<!-- Modal Detail Harga Khusus Agen (BARU) -->
+<!-- Modal Detail Harga Khusus Agen -->
 <div class="modal" id="agentPriceDetailModal" style="z-index: 1250;">
     <div class="modal-content" style="max-width: 600px;">
         <div class="modal-header">
@@ -350,7 +350,9 @@
                 </tbody>
             </table>
         </div>
-        <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+        <!-- TOMBOL TAMBAH BARANG DITAMBAHKAN DISINI -->
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-primary" onclick="openAddSpecialPriceFromDetail()">+ Tambah Barang</button>
             <button class="btn btn-outline" onclick="toggleModal('agentPriceDetailModal')">Kembali</button>
         </div>
     </div>
@@ -434,7 +436,7 @@
         <div id="tabProducts" class="tab-content">
             <div class="table-wrapper"><table style="min-width: 600px;"><thead><tr><th>Nama Barang</th><th>Satuan</th><th>Harga Dasar</th><th class="text-center" style="width: 80px;">Aksi</th></tr></thead><tbody id="tblProductsBody"></tbody></table></div>
         </div>
-        <!-- TAB HARGA KHUSUS (DIKERUCUTKAN MENJADI NAMA AGEN & TOTAL BARANG) -->
+        <!-- TAB HARGA KHUSUS -->
         <div id="tabAgentPrices" class="tab-content">
             <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Klik pada <strong>Nama Agen</strong> untuk melihat rincian barang dan harga khususnya.</p>
             <div class="table-wrapper">
@@ -457,8 +459,8 @@
     </div>
 </div>
 
-<!-- Modal Form CRUD -->
-<div class="modal" id="formModal" style="z-index: 1100;">
+<!-- Modal Form CRUD (DIPERBAIKI Z-INDEX NYA MENJADI 1500) -->
+<div class="modal" id="formModal" style="z-index: 1500;">
     <div class="modal-content" style="max-width: 450px;">
         <div class="modal-header">
             <h3 id="formModalTitle" style="font-size: 16px; font-weight: 600;">Form Data</h3>
@@ -492,6 +494,7 @@
     let editingType = '';
     let editingId = null;
     let editingId2 = null;
+    let currentDetailCustId = null; // Menyimpan ID agen yang sedang dibuka detailnya
     
     let depositList = [];
     let editingDepositIndex = -1;
@@ -718,7 +721,6 @@
         document.getElementById('tblCustomersBody').innerHTML = customers.map(c => `<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td>${c.address}</td><td class="text-center"><button class="btn btn-outline" style="padding:4px 10px;" onclick="openEditModal('customer', ${c.id})">✏️</button></td></tr>`).join('');
         document.getElementById('tblProductsBody').innerHTML = products.map(p => `<tr><td><b>${p.name}</b></td><td>${p.unit}</td><td>${formatMoney(p.default_price)}</td><td class="text-center"><button class="btn btn-outline" style="padding:4px 10px;" onclick="openEditModal('product', ${p.id})">✏️</button></td></tr>`).join('');
         
-        // --- RENDER TABEL HARGA KHUSUS (DIPERKETAT PER AGEN) ---
         let groupedAgentPrices = {};
         agentPrices.forEach(ap => {
             if(!groupedAgentPrices[ap.customer_id]) groupedAgentPrices[ap.customer_id] = [];
@@ -747,13 +749,12 @@
             agentPricesHtml = '<tr><td colspan="3" class="text-center text-muted">Belum ada data harga khusus.</td></tr>';
         }
         document.getElementById('tblAgentPricesBody').innerHTML = agentPricesHtml;
-        // ----------------------------------------------------
 
         document.getElementById('tblDestinationsBody').innerHTML = getDestinationsList().map(d => `<tr><td><b>${d}</b></td><td class="text-center"><button class="btn btn-outline" style="padding:4px 10px;" onclick="openEditModal('destination', '${d}')">✏️</button></td></tr>`).join('');
     }
 
-    // --- MODAL DETAIL RINCIAN HARGA KHUSUS PER AGEN (BARU) ---
     function openAgentPriceDetail(custId) {
+        currentDetailCustId = custId;
         const cust = customers.find(c => c.id == custId);
         const custName = cust ? cust.name : 'Agen';
         document.getElementById('detailAgentTitle').innerText = `Rincian Harga Khusus: ${custName}`;
@@ -776,7 +777,10 @@
             `;
         }).join('');
 
-        toggleModal('agentPriceDetailModal');
+        // Cek dan tambahkan class active jika belum ada
+        if (!document.getElementById('agentPriceDetailModal').classList.contains('active')) {
+            toggleModal('agentPriceDetailModal');
+        }
     }
 
     async function deleteAgentPriceDirect(custId, prodId) {
@@ -787,12 +791,11 @@
             }
             agentPrices = agentPrices.filter(ap => !(ap.customer_id == custId && ap.product_id == prodId));
             renderDataManagement();
-            openAgentPriceDetail(custId); // Refresh modal detail
+            openAgentPriceDetail(custId); 
         } catch (err) {
             alert("Gagal menghapus: " + err.message);
         }
     }
-    // --------------------------------------------------------
 
     function renderDropdownCustomers() {
         let options = '<option value="">-- Pilih Agen Pelanggan --</option>';
@@ -836,6 +839,28 @@
                 <div class="form-group"><label>Nama Kota/Tujuan</label><input type="text" id="inputDestName" placeholder="Contoh: JAKARTA"></div>
             `;
         }
+        toggleModal('formModal');
+    }
+
+    // FUNGSI BARU KHUSUS UNTUK TOMBOL TAMBAH BARANG DARI DETAIL
+    function openAddSpecialPriceFromDetail() {
+        isCreating = true;
+        editingType = 'agentPrice';
+        const formContent = document.getElementById('formContent');
+        const title = document.getElementById('formModalTitle');
+        document.getElementById('btnDeleteData').style.display = 'none';
+
+        title.innerText = 'Tambah Barang Khusus Agen';
+        
+        // Pilih agen saat ini, dikunci (disabled) agar tidak keliru memindahkan ke agen lain
+        let custOpts = [...customers].map(c => `<option value="${c.id}" ${c.id == currentDetailCustId ? 'selected' : ''}>${c.name}</option>`).join('');
+        let prodOpts = [...products].sort((a, b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        
+        formContent.innerHTML = `
+            <div class="form-group"><label>Nama Agen</label><select id="inputApCust" disabled style="background-color: var(--th-bg); cursor: not-allowed;">${custOpts}</select></div>
+            <div class="form-group"><label>Pilih Barang</label><select id="inputApProd">${prodOpts}</select></div>
+            <div class="form-group"><label>Harga Spesial</label><input type="text" id="inputSpecialPrice" oninput="formatRibuanInput(this)" placeholder="0"></div>
+        `;
         toggleModal('formModal');
     }
 
@@ -936,9 +961,12 @@
             autoFillCustomer(); 
             toggleModal('formModal');
             
-            // Jika sedang buka detail agen harga khusus, update tampilannya juga
-            if(editingType === 'agentPrice' && !isCreating) {
-                openAgentPriceDetail(editingId);
+            // Logika untuk merefresh modal rincian jika sedang aktif (untuk create dan update)
+            if (editingType === 'agentPrice') {
+                const activeCustId = isCreating ? parseInt(document.getElementById('inputApCust').value) : editingId;
+                if (document.getElementById('agentPriceDetailModal').classList.contains('active')) {
+                    openAgentPriceDetail(activeCustId);
+                }
             }
         } catch (error) { alert("Gagal: " + error.message); } finally { btnSave.innerText = 'Simpan'; btnSave.disabled = false; }
     }
@@ -956,7 +984,7 @@
                 if(isSupabaseConnected) await supabaseClient.from('agent_prices').delete().eq('customer_id', editingId).eq('product_id', editingId2);
                 agentPrices = agentPrices.filter(ap => !(ap.customer_id == editingId && ap.product_id == editingId2));
                 toggleModal('formModal');
-                openAgentPriceDetail(editingId); // Refresh modal detail
+                openAgentPriceDetail(editingId); 
                 renderDataManagement();
                 return;
             } else if (editingType === 'destination') {
