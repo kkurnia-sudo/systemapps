@@ -247,6 +247,15 @@
             <p id="popupWarningSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Harap periksa kembali data Anda.</p>
             <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="closePopup()">Mengerti</button>
         </div>
+        <div id="popupConfirmState" style="display: none;">
+            <div class="warning-icon">🗑️</div>
+            <h4 id="popupConfirmText" style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Konfirmasi Hapus</h4>
+            <p id="popupConfirmSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Apakah Anda yakin ingin menghapus data ini?</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="closePopup()">Batal</button>
+                <button class="btn btn-danger" style="flex: 1; justify-content: center;" id="btnPopupConfirmYes">Hapus</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -439,6 +448,15 @@
             <h3 style="font-size: 18px; font-weight: 600;">📜 Riwayat Invoice</h3>
             <button class="close-modal" onclick="toggleModal('historyModal')">&times;</button>
         </div>
+        
+        <!-- Sticky Single Filter Box -->
+        <div style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+            <div class="form-group" style="margin: 0;">
+                <label style="font-size: 11px;">Pencarian Riwayat</label>
+                <input type="text" id="filterGlobal" placeholder="Ketik No Invoice, Tanggal, atau Nama Agen..." oninput="filterHistoryTable()" style="padding: 8px 12px; font-size: 13px;">
+            </div>
+        </div>
+
         <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Klik pada <b>Nomor Invoice</b> untuk memuat dan mengedit kembali rinciannya.</p>
         
         <!-- Tabel Wrapper dengan Max-Height & Overflow Auto -->
@@ -558,6 +576,7 @@
     let products = [];
     let agentPrices = [];
     let customerBalances = {};
+    let allHistoryData = [];
 
     let currentCustomerId = null; 
     let activeTabType = 'customer'; 
@@ -586,6 +605,7 @@
         document.getElementById('popupLoadingText').innerText = text;
         document.getElementById('popupWarningState').style.display = 'none';
         document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'none';
         document.getElementById('popupLoadingState').style.display = 'block';
         document.getElementById('popupOverlay').classList.add('active');
     }
@@ -595,6 +615,7 @@
         document.getElementById('popupSuccessSubtext').innerText = subtitle;
         document.getElementById('popupLoadingState').style.display = 'none';
         document.getElementById('popupWarningState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'none';
         document.getElementById('popupSuccessState').style.display = 'block';
         document.getElementById('popupOverlay').classList.add('active');
     }
@@ -604,6 +625,7 @@
         document.getElementById('popupWarningSubtext').innerText = subtitle;
         document.getElementById('popupLoadingState').style.display = 'none';
         document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'none';
         document.getElementById('popupWarningState').style.display = 'block';
         document.getElementById('popupOverlay').classList.add('active');
     }
@@ -617,6 +639,9 @@
         isEditingMode = false; originalEditingInvoiceNo = null; depositList = [];
         document.getElementById('editModeBanner').style.display = 'none'; 
         
+        // Kembalikan tombol simpan utama seperti semula
+        document.getElementById('btnSaveInvoiceMain').innerHTML = `<svg class="humbleicons hi-save" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-1.828-1.828A2 2 0 0 0 16.172 4H15M8 4v4a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4M8 4h7M7 17v-3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"/></svg> Simpan Invoice`;
+
         // Aktifkan kembali tombol Buat Inv Baru
         const btnNew = document.getElementById('btnBuatInvBaru');
         if(btnNew) {
@@ -773,23 +798,52 @@
     
     async function openHistoryModal() {
         toggleModal('historyModal');
+        document.getElementById('filterGlobal').value = '';
+        await fetchHistoryDataSilent();
+    }
+
+    async function fetchHistoryDataSilent() {
         const tbody = document.getElementById('historyTableBody');
         tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">⏳ Mengambil data...</td></tr>';
         if(!isSupabaseConnected) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Mode simulasi.</td></tr>'; return; }
         try {
             const { data, error } = await supabaseClient.from('invoices').select('*').order('created_at', { ascending: false });
             if (error) throw error;
-            if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center">Belum ada riwayat.</td></tr>'; return; }
-            tbody.innerHTML = data.map(inv => `<tr>
-                <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="loadInvoiceForEdit('${inv.invoice_no}')">${inv.invoice_no}</span></td>
-                <td class="text-center">${formatCustomDate(inv.created_at)}</td>
-                <td>${inv.customer_name}</td>
-                <td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
-                <td class="text-right" style="color:var(--danger); font-style: italic;">${formatMoney(inv.deposit)}</td>
-                <td class="text-right" style="font-weight:600; font-style: italic;">${formatMoney(inv.balance_due)}</td>
-                <td class="text-center"><button class="btn-icon-danger" onclick="deleteInvoice('${inv.invoice_no}')">🗑️</button></td>
-            </tr>`).join('');
+            allHistoryData = data || [];
+            renderHistoryTable(allHistoryData);
         } catch (err) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Gagal memuat.</td></tr>`; }
+    }
+
+    function renderHistoryTable(data) {
+        const tbody = document.getElementById('historyTableBody');
+        if (!data || data.length === 0) { 
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Belum ada riwayat.</td></tr>'; 
+            return; 
+        }
+        tbody.innerHTML = data.map(inv => `<tr>
+            <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="loadInvoiceForEdit('${inv.invoice_no}')">${inv.invoice_no}</span></td>
+            <td class="text-center">${formatCustomDate(inv.created_at)}</td>
+            <td>${inv.customer_name}</td>
+            <td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
+            <td class="text-right" style="color:var(--danger); font-style: italic;">${formatMoney(inv.deposit)}</td>
+            <td class="text-right" style="font-weight:600; font-style: italic;">${formatMoney(inv.balance_due)}</td>
+            <td class="text-center"><button class="btn-icon-danger" onclick="deleteInvoice('${inv.invoice_no}')">🗑️</button></td>
+        </tr>`).join('');
+    }
+
+    function filterHistoryTable() {
+        const keyword = document.getElementById('filterGlobal').value.toLowerCase().trim();
+
+        const filtered = allHistoryData.filter(inv => {
+            const invNoMatch = (inv.invoice_no || '').toLowerCase().includes(keyword);
+            const dateFormatted = formatCustomDate(inv.created_at).toLowerCase();
+            const rawDate = (inv.created_at || '').toLowerCase();
+            const dateMatch = dateFormatted.includes(keyword) || rawDate.includes(keyword);
+            const nameMatch = (inv.customer_name || '').toLowerCase().includes(keyword);
+            
+            return invNoMatch || dateMatch || nameMatch;
+        });
+        renderHistoryTable(filtered);
     }
 
     async function loadInvoiceForEdit(invoiceNo) {
@@ -861,13 +915,29 @@
         } catch (err) { showWarningPopup("Terjadi Kesalahan", "Gagal memuat: " + err.message); }
     }
 
-    async function deleteInvoice(invoiceNo) {
-        if(!confirm(`Yakin hapus invoice ${invoiceNo}?`)) return;
-        if(isSupabaseConnected) {
-            await supabaseClient.from('invoice_items').delete().eq('invoice_no', invoiceNo);
-            await supabaseClient.from('invoices').delete().eq('invoice_no', invoiceNo);
-            openHistoryModal(); 
-        }
+    function deleteInvoice(invoiceNo) {
+        document.getElementById('popupConfirmText').innerText = "Konfirmasi Hapus";
+        document.getElementById('popupConfirmSubtext').innerText = `Yakin ingin menghapus invoice ${invoiceNo}?`;
+        document.getElementById('popupLoadingState').style.display = 'none';
+        document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupWarningState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'block';
+        document.getElementById('popupOverlay').classList.add('active');
+
+        document.getElementById('btnPopupConfirmYes').onclick = async function() {
+            closePopup();
+            showLoadingPopup("Menghapus Invoice...");
+            if(isSupabaseConnected) {
+                try {
+                    await supabaseClient.from('invoice_items').delete().eq('invoice_no', invoiceNo);
+                    await supabaseClient.from('invoices').delete().eq('invoice_no', invoiceNo);
+                    showSuccessPopup("Berhasil Dihapus", `Invoice ${invoiceNo} berhasil dihapus.`);
+                    await fetchHistoryDataSilent();
+                } catch(err) {
+                    showWarningPopup("Gagal", err.message);
+                }
+            }
+        };
     }
 
     function switchTab(tabId, btn, type) {
@@ -970,17 +1040,27 @@
     }
 
     async function deleteAgentPriceDirect(custId, prodId) {
-        if(!confirm("Yakin ingin menghapus harga khusus barang ini?")) return;
-        try {
-            if(isSupabaseConnected) {
-                await supabaseClient.from('agent_prices').delete().eq('customer_id', custId).eq('product_id', prodId);
+        document.getElementById('popupConfirmText').innerText = "Konfirmasi Hapus";
+        document.getElementById('popupConfirmSubtext').innerText = "Yakin ingin menghapus harga khusus barang ini?";
+        document.getElementById('popupLoadingState').style.display = 'none';
+        document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupWarningState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'block';
+        document.getElementById('popupOverlay').classList.add('active');
+
+        document.getElementById('btnPopupConfirmYes').onclick = async function() {
+            closePopup();
+            try {
+                if(isSupabaseConnected) {
+                    await supabaseClient.from('agent_prices').delete().eq('customer_id', custId).eq('product_id', prodId);
+                }
+                agentPrices = agentPrices.filter(ap => !(ap.customer_id == custId && ap.product_id == prodId));
+                renderDataManagement();
+                openAgentPriceDetail(custId); 
+            } catch (err) {
+                showWarningPopup("Gagal Menghapus", err.message);
             }
-            agentPrices = agentPrices.filter(ap => !(ap.customer_id == custId && ap.product_id == prodId));
-            renderDataManagement();
-            openAgentPriceDetail(custId); 
-        } catch (err) {
-            showWarningPopup("Gagal Menghapus", err.message);
-        }
+        };
     }
 
     function renderDropdownCustomers() {
@@ -1200,28 +1280,38 @@
     }
 
     async function deleteData() {
-        if(!confirm("Anda yakin ingin menghapus data ini?")) return;
-        try {
-            if(editingType === 'customer') {
-                if(isSupabaseConnected) await supabaseClient.from('customers').delete().eq('id', editingId);
-                customers = customers.filter(c => c.id !== editingId); agentPrices = agentPrices.filter(ap => ap.customer_id !== editingId);
-            } else if(editingType === 'product') {
-                if(isSupabaseConnected) await supabaseClient.from('products').delete().eq('id', editingId);
-                products = products.filter(p => p.id !== editingId); agentPrices = agentPrices.filter(ap => ap.product_id !== editingId);
-            } else if(editingType === 'agentPrice') {
-                if(isSupabaseConnected) await supabaseClient.from('agent_prices').delete().eq('customer_id', editingId).eq('product_id', editingId2);
-                agentPrices = agentPrices.filter(ap => !(ap.customer_id == editingId && ap.product_id == editingId2));
-                toggleModal('formModal');
-                openAgentPriceDetail(editingId); 
-                renderDataManagement();
-                return;
-            } else if (editingType === 'destination') {
-                savedDestinations = savedDestinations.filter(d => d !== editingId);
-                localStorage.setItem('savedDestinations', JSON.stringify(savedDestinations));
-                refreshAllDestinationDropdowns();
-            }
-            renderDataManagement(); renderDropdownCustomers(); autoFillCustomer(); toggleModal('formModal');
-        } catch (error) { showWarningPopup("Gagal Menghapus", error.message); }
+        document.getElementById('popupConfirmText').innerText = "Konfirmasi Hapus";
+        document.getElementById('popupConfirmSubtext').innerText = "Anda yakin ingin menghapus data ini?";
+        document.getElementById('popupLoadingState').style.display = 'none';
+        document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupWarningState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'block';
+        document.getElementById('popupOverlay').classList.add('active');
+
+        document.getElementById('btnPopupConfirmYes').onclick = async function() {
+            closePopup();
+            try {
+                if(editingType === 'customer') {
+                    if(isSupabaseConnected) await supabaseClient.from('customers').delete().eq('id', editingId);
+                    customers = customers.filter(c => c.id !== editingId); agentPrices = agentPrices.filter(ap => ap.customer_id !== editingId);
+                } else if(editingType === 'product') {
+                    if(isSupabaseConnected) await supabaseClient.from('products').delete().eq('id', editingId);
+                    products = products.filter(p => p.id !== editingId); agentPrices = agentPrices.filter(ap => ap.product_id !== editingId);
+                } else if(editingType === 'agentPrice') {
+                    if(isSupabaseConnected) await supabaseClient.from('agent_prices').delete().eq('customer_id', editingId).eq('product_id', editingId2);
+                    agentPrices = agentPrices.filter(ap => !(ap.customer_id == editingId && ap.product_id == editingId2));
+                    toggleModal('formModal');
+                    openAgentPriceDetail(editingId); 
+                    renderDataManagement();
+                    return;
+                } else if (editingType === 'destination') {
+                    savedDestinations = savedDestinations.filter(d => d !== editingId);
+                    localStorage.setItem('savedDestinations', JSON.stringify(savedDestinations));
+                    refreshAllDestinationDropdowns();
+                }
+                renderDataManagement(); renderDropdownCustomers(); autoFillCustomer(); toggleModal('formModal');
+            } catch (error) { showWarningPopup("Gagal Menghapus", error.message); }
+        };
     }
 
     async function autoFillCustomer() {
