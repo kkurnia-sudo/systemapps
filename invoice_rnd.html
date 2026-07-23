@@ -50,6 +50,17 @@
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; padding: 24px; font-size: 14px; }
         .container { max-width: 950px; margin: 0 auto; transition: all 0.3s; }
         
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @media (prefers-color-scheme: dark) {
+            ::-webkit-scrollbar-track { background: var(--bg-card); }
+            ::-webkit-scrollbar-thumb { background: #475569; }
+            ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        }
+        
         @keyframes blinkEffect { 0% { opacity: 1; } 50% { opacity: 0.35; } 100% { opacity: 1; } }
         
         .edit-mode-banner {
@@ -98,18 +109,19 @@
         .btn-danger:hover { background-color: var(--danger-hover); }
         .btn-secondary { background-color: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); }
         .btn-secondary:hover { background-color: #2563eb; transform: translateY(-1px); }
-        .btn-gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); padding: 10px 14px; font-size: 16px; }
-        .btn-gold:hover { background: linear-gradient(135deg, #f59e0b, #d97706); transform: translateY(-1px); }
         .btn-icon-danger { background-color: transparent; color: var(--danger); padding: 6px; border-radius: 8px; border: none; cursor: pointer; }
         .btn-icon-danger:hover { background-color: #fee2e2; color: #b91c1c; }
 
         .table-wrapper { width: 100%; margin: 16px 0; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-card); overflow-x: auto; }
         
+        /* Sticky Header for Tables inside Wrappers */
+        .table-wrapper thead th { position: sticky; top: 0; background-color: var(--th-bg); z-index: 10; box-shadow: 0 1px 0 var(--border-color); }
+
         table { width: 100%; border-collapse: collapse; }
         #invoiceTable { min-width: 650px; }
         
         th, td { padding: 12px 8px; vertical-align: middle; border: none !important; }
-        th { text-align: center !important; background-color: var(--th-bg); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-color) !important; padding-bottom: 14px; }
+        th { text-align: center !important; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-color) !important; padding-bottom: 14px; }
         tr:hover td { background-color: var(--row-hover); }
         
         .table-wrapper td input, .table-wrapper td select { border: 1px solid transparent !important; background-color: transparent !important; padding: 6px 8px !important; border-radius: 6px !important; box-shadow: none !important; width: 100% !important; outline: none !important; color: var(--text-main) !important; font-size: 13px !important; transition: all 0.2s; text-overflow: ellipsis; }
@@ -143,14 +155,17 @@
 
         .alert { padding: 14px; background-color: #fffbeb; color: #b45309; border-radius: 10px; margin-bottom: 20px; border: 1px solid #fde68a; display: none; font-size: 13px; }
 
-        /* Custom Popup Loading & Success CSS */
+        /* Custom Popup Loading, Success & Warning CSS */
         .popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .popup-overlay.active { display: flex; }
         .popup-box { background: var(--bg-card); padding: 32px; border-radius: 20px; text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); border: 1px solid var(--border-color); animation: popupScale 0.25s ease-out; }
         @keyframes popupScale { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
         .spinner { width: 50px; height: 50px; border: 4px solid var(--border-color); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         .success-icon { width: 60px; height: 60px; background: rgba(16, 185, 129, 0.15); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px auto; }
+        .warning-icon { width: 60px; height: 60px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px auto; }
 
         #previewContent, #previewContent * { 
             color-scheme: light !important; 
@@ -213,7 +228,7 @@
 </head>
 <body>
 
-<!-- POPUP LOADING & SUCCESS DIALOG -->
+<!-- POPUP LOADING, SUCCESS, & WARNING DIALOG -->
 <div class="popup-overlay" id="popupOverlay">
     <div class="popup-box">
         <div id="popupLoadingState">
@@ -225,6 +240,12 @@
             <h4 id="popupSuccessText" style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Berhasil!</h4>
             <p id="popupSuccessSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Data berhasil diproses.</p>
             <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="closePopup()">OK</button>
+        </div>
+        <div id="popupWarningState" style="display: none;">
+            <div class="warning-icon">⚠️</div>
+            <h4 id="popupWarningText" style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Peringatan</h4>
+            <p id="popupWarningSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Harap periksa kembali data Anda.</p>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="closePopup()">Mengerti</button>
         </div>
     </div>
 </div>
@@ -250,7 +271,7 @@
             <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/f57e85bb5c146f7fb7aebd7cbf8013d2ac707c35/sbr_logo.png" alt="Logo SBR" class="logo">
             <div class="brand-text">
                 <h1>SBR PUTRA FOOD</h1>
-                <p>Lembang, Bandung Barat, Jawa Barat</p>
+                <p>Bandung Barat, Jawa Barat</p>
                 <div class="invoice-subtitle">INVOICE PENJUALAN</div>
             </div>
         </div>
@@ -291,7 +312,7 @@
                 <tbody id="itemsBody"></tbody>
             </table>
         </div>
-        <button class="btn btn-outline" id="btnAddRow" onclick="addRow()" disabled style="margin-top: 4px; border-style: dashed;">+ Tambah Baris Barang</button>
+        <button class="btn btn-outline" id="btnAddRow" onclick="addRow()" style="margin-top: 4px; border-style: dashed;">+ Tambah Baris Barang</button>
     </div>
 
     <div class="card bottom-section" style="border-top-left-radius: 0; border-top-right-radius: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 24px; padding-top: 10px; margin-bottom: 16px;">
@@ -301,6 +322,7 @@
                 <button class="btn btn-outline" onclick="openPreviewModal()" style="flex: 1; justify-content: center; padding: 10px;"><svg class="humbleicons hi-maximize" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 0 1 2-2h2m8 0h2a2 2 0 0 1 2 2v2m0 8v2a2 2 0 0 1-2 2h-2m-8 0H6a2 2 0 0 1-2-2v-2"/></svg> Pratinjau</button>
                 <button class="btn btn-primary" onclick="simpanInvoice()" id="btnSaveInvoiceMain" style="flex: 1; justify-content: center; padding: 10px;"><svg class="humbleicons hi-save" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-1.828-1.828A2 2 0 0 0 16.172 4H15M8 4v4a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4M8 4h7M7 17v-3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"/></svg> Simpan Invoice</button>
             </div>
+            <button class="btn btn-top-history" id="btnBuatInvBaru" onclick="buatInvoiceBaru()" style="width: 100%; justify-content: center; padding: 10px;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg> Buat Inv Baru</button>
         </div>
 
         <div class="summary-card">
@@ -330,7 +352,7 @@
                     <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/f57e85bb5c146f7fb7aebd7cbf8013d2ac707c35/sbr_logo.png" alt="Logo SBR" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: none; background: transparent;">
                     <div>
                         <h2 style="font-size: 20px; font-weight: 800; margin: 0; color: #000 !important;">SBR PUTRA FOOD</h2>
-                        <p style="font-size: 12px; margin: 2px 0 0 0; color: #555 !important;">Lembang, Bandung Barat, Jawa Barat</p>
+                        <p style="font-size: 12px; margin: 2px 0 0 0; color: #555 !important;">Bandung Barat, Jawa Barat</p>
                     </div>
                 </div>
                 <div style="text-align: right;">
@@ -355,7 +377,7 @@
                     <tr><td style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;">SISA PEMBAYARAN</td><td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; color: #10b981!important; font-style: italic;" id="prevBalance">-</td></tr>
                 </table>
             </div>
-            <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #777;"><p>Terima kasih atas kerja sama Anda dengan SBR Putra Food.</p></div>
+            <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #777;"><p>Terima Kasih Atas Kepercayaannya<br>Mulus Rahayu, Berkah Salamet<br>**SBR SYSTEMS**</p></div>
         </div>
         <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
             <button class="btn btn-outline" style="background-color: #ffffff; color: #000000;" onclick="toggleModal('previewModal')">Tutup</button>
@@ -373,7 +395,7 @@
             <button class="close-modal" onclick="toggleModal('agentPriceDetailModal')">&times;</button>
         </div>
         <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Daftar barang dan harga spesial untuk agen ini.</p>
-        <div class="table-wrapper" style="margin: 0; border: none;">
+        <div class="table-wrapper" style="margin: 0; border: none; max-height: 380px; overflow-y: auto;">
             <table style="width: 100%;">
                 <thead>
                     <tr>
@@ -418,12 +440,15 @@
             <button class="close-modal" onclick="toggleModal('historyModal')">&times;</button>
         </div>
         <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Klik pada <b>Nomor Invoice</b> untuk memuat dan mengedit kembali rinciannya.</p>
-        <div class="table-wrapper" style="margin: 0; border: none;">
+        
+        <!-- Tabel Wrapper dengan Max-Height & Overflow Auto -->
+        <div class="table-wrapper" style="margin: 0; border: none; max-height: 380px; overflow-y: auto;">
             <table style="width: 100%;">
                 <thead><tr><th style="text-align: left !important; width: 120px;">No Invoice</th><th style="text-align: center !important;">Tanggal</th><th style="text-align: left !important;">Pelanggan</th><th class="text-right">Subtotal</th><th class="text-right">Deposit</th><th class="text-right">Sisa Tagihan</th><th class="text-center" style="width: 60px;">Aksi</th></tr></thead>
                 <tbody id="historyTableBody"><tr><td colspan="7" class="text-center text-muted">Memuat data...</td></tr></tbody>
             </table>
         </div>
+        
         <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
             <button class="btn btn-outline" onclick="toggleModal('historyModal')">Kembali</button>
         </div>
@@ -465,7 +490,7 @@
         </div>
         
         <div id="tabCustomers" class="tab-content active">
-            <div class="table-wrapper">
+            <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
                 <table style="width: 100%;">
                     <thead>
                         <tr>
@@ -481,11 +506,11 @@
             </div>
         </div>
         <div id="tabProducts" class="tab-content">
-            <div class="table-wrapper"><table style="width: 100%;"><thead><tr><th style="text-align: left !important;">Nama Barang</th><th style="text-align: left !important;">Satuan</th><th style="text-align: left !important;">Harga Dasar</th><th class="text-center" style="width: 80px;">Aksi</th></tr></thead><tbody id="tblProductsBody"></tbody></table></div>
+            <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;"><table style="width: 100%;"><thead><tr><th style="text-align: left !important;">Nama Barang</th><th style="text-align: left !important;">Satuan</th><th style="text-align: left !important;">Harga Dasar</th><th class="text-center" style="width: 80px;">Aksi</th></tr></thead><tbody id="tblProductsBody"></tbody></table></div>
         </div>
         <div id="tabAgentPrices" class="tab-content">
             <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Klik pada <strong>Nama Agen</strong> untuk melihat rincian barang dan harga khususnya.</p>
-            <div class="table-wrapper">
+            <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
                 <table style="width: 100%;">
                     <thead>
                         <tr>
@@ -499,7 +524,7 @@
         </div>
         <div id="tabDestinations" class="tab-content">
             <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Daftar tujuan pengiriman.</p>
-            <div class="table-wrapper"><table style="width: 100%;"><thead><tr><th style="text-align: left !important;">Nama Kota / Tujuan</th><th class="text-center" style="width: 80px;">Aksi</th></tr></thead><tbody id="tblDestinationsBody"></tbody></table></div>
+            <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;"><table style="width: 100%;"><thead><tr><th style="text-align: left !important;">Nama Kota / Tujuan</th><th class="text-center" style="width: 80px;">Aksi</th></tr></thead><tbody id="tblDestinationsBody"></tbody></table></div>
         </div>
     </div>
 </div>
@@ -556,11 +581,12 @@
     
     let activeTargetSelect = null; 
 
-    // Helper Fungsi untuk Popup Loading & Success
+    // Helper Fungsi untuk Popup Loading, Success & Warning
     function showLoadingPopup(text = "Memproses...") {
         document.getElementById('popupLoadingText').innerText = text;
-        document.getElementById('popupLoadingState').style.display = 'block';
+        document.getElementById('popupWarningState').style.display = 'none';
         document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupLoadingState').style.display = 'block';
         document.getElementById('popupOverlay').classList.add('active');
     }
 
@@ -568,12 +594,45 @@
         document.getElementById('popupSuccessText').innerText = title;
         document.getElementById('popupSuccessSubtext').innerText = subtitle;
         document.getElementById('popupLoadingState').style.display = 'none';
+        document.getElementById('popupWarningState').style.display = 'none';
         document.getElementById('popupSuccessState').style.display = 'block';
+        document.getElementById('popupOverlay').classList.add('active');
+    }
+    
+    function showWarningPopup(title = "Peringatan", subtitle = "Harap periksa kembali data Anda.") {
+        document.getElementById('popupWarningText').innerText = title;
+        document.getElementById('popupWarningSubtext').innerText = subtitle;
+        document.getElementById('popupLoadingState').style.display = 'none';
+        document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupWarningState').style.display = 'block';
         document.getElementById('popupOverlay').classList.add('active');
     }
 
     function closePopup() {
         document.getElementById('popupOverlay').classList.remove('active');
+    }
+
+    // Fungsi Membuat Invoice Baru (Reset Form & Re-enable Buat Inv Baru)
+    function buatInvoiceBaru() {
+        isEditingMode = false; originalEditingInvoiceNo = null; depositList = [];
+        document.getElementById('editModeBanner').style.display = 'none'; 
+        
+        // Aktifkan kembali tombol Buat Inv Baru
+        const btnNew = document.getElementById('btnBuatInvBaru');
+        if(btnNew) {
+            btnNew.disabled = false;
+            btnNew.style.opacity = '1';
+            btnNew.style.cursor = 'pointer';
+        }
+
+        document.getElementById('custName').disabled = false;
+        document.getElementById('custName').value = ""; 
+        autoFillCustomer();
+        generateRandomInvoice();
+    }
+
+    function cancelEditMode() {
+        buatInvoiceBaru();
     }
 
     function formatCustomDate(dateString) {
@@ -744,6 +803,14 @@
             document.getElementById('editModeBanner').style.display = 'flex';
             document.getElementById('btnSaveInvoiceMain').innerText = '💾 Simpan Perubahan';
             
+            // Disable tombol Buat Inv Baru saat masuk Mode Edit
+            const btnNew = document.getElementById('btnBuatInvBaru');
+            if(btnNew) {
+                btnNew.disabled = true;
+                btnNew.style.opacity = '0.5';
+                btnNew.style.cursor = 'not-allowed';
+            }
+
             document.getElementById('custName').disabled = true;
             
             depositList = []; const productItems = [];
@@ -761,10 +828,9 @@
             if(customerObj) {
                 custSelect.value = customerObj.id; currentCustomerId = customerObj.id;
                 document.getElementById('custPhone').value = customerObj.phone || ''; document.getElementById('custAddress').value = customerObj.address || '';
-                document.getElementById('btnAddRow').disabled = false;
                 document.getElementById('warningRow').innerText = '✓ Mode Edit Agen Aktif'; document.getElementById('warningRow').style.color = 'var(--primary)';
             } else {
-                custSelect.value = ""; document.getElementById('custPhone').value = invData.customer_phone || ''; document.getElementById('custAddress').value = invData.customer_address || ''; document.getElementById('btnAddRow').disabled = false;
+                custSelect.value = ""; document.getElementById('custPhone').value = invData.customer_phone || ''; document.getElementById('custAddress').value = invData.customer_address || '';
             }
 
             const tbody = document.getElementById('itemsBody'); tbody.innerHTML = '';
@@ -792,17 +858,7 @@
                 tbody.appendChild(tr);
             });
             calculate(); window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (err) { alert("Gagal memuat: " + err.message); }
-    }
-
-    function cancelEditMode() {
-        isEditingMode = false; originalEditingInvoiceNo = null; depositList = [];
-        document.getElementById('editModeBanner').style.display = 'none'; 
-        document.getElementById('btnSaveInvoiceMain').innerText = '💾 Simpan Invoice';
-        document.getElementById('custName').disabled = false;
-        generateRandomInvoice(); 
-        document.getElementById('custName').value = ""; 
-        autoFillCustomer();
+        } catch (err) { showWarningPopup("Terjadi Kesalahan", "Gagal memuat: " + err.message); }
     }
 
     async function deleteInvoice(invoiceNo) {
@@ -923,12 +979,12 @@
             renderDataManagement();
             openAgentPriceDetail(custId); 
         } catch (err) {
-            alert("Gagal menghapus: " + err.message);
+            showWarningPopup("Gagal Menghapus", err.message);
         }
     }
 
     function renderDropdownCustomers() {
-        let options = '<option value="">-- Pilih Agen Pelanggan --</option>';
+        let options = '<option value="">-- Pilih Agen --</option>';
         [...customers].sort((a,b)=>a.name.localeCompare(b.name)).forEach(c => { options += `<option value="${c.id}">${c.name}</option>`; });
         document.getElementById('custName').innerHTML = options;
     }
@@ -1105,7 +1161,10 @@
             } else if(editingType === 'agentPrice') {
                 if (isCreating) {
                     const customer_id = parseInt(document.getElementById('inputApCust').value); const product_id = parseInt(document.getElementById('inputApProd').value); const custom_price = getCleanNumber('inputSpecialPrice');
-                    if(agentPrices.find(ap => ap.customer_id == customer_id && ap.product_id == product_id)) { alert("Sudah ada!"); btnSave.innerText = 'Simpan'; btnSave.disabled = false; return; }
+                    if(agentPrices.find(ap => ap.customer_id == customer_id && ap.product_id == product_id)) { 
+                        showWarningPopup("Data Duplikat", "Harga khusus untuk barang tersebut sudah ada di agen ini!"); 
+                        btnSave.innerText = 'Simpan'; btnSave.disabled = false; return; 
+                    }
                     if(isSupabaseConnected) await supabaseClient.from('agent_prices').insert([{ customer_id, product_id, custom_price }]);
                     agentPrices.push({ customer_id, product_id, custom_price });
                 } else {
@@ -1115,7 +1174,7 @@
                 }
             } else if (editingType === 'destination') {
                 const newName = document.getElementById('inputDestName').value.trim().toUpperCase();
-                if (!newName) { alert("Nama tidak boleh kosong!"); btnSave.innerText = 'Simpan'; btnSave.disabled = false; return; }
+                if (!newName) { showWarningPopup("Data Kosong", "Nama kota tidak boleh kosong!"); btnSave.innerText = 'Simpan'; btnSave.disabled = false; return; }
                 if (isCreating) {
                     if (!savedDestinations.includes(newName)) savedDestinations.push(newName);
                 } else {
@@ -1137,7 +1196,7 @@
                     openAgentPriceDetail(activeCustId);
                 }
             }
-        } catch (error) { alert("Gagal: " + error.message); } finally { btnSave.innerText = 'Simpan'; btnSave.disabled = false; }
+        } catch (error) { showWarningPopup("Gagal Menyimpan", error.message); } finally { btnSave.innerText = 'Simpan'; btnSave.disabled = false; }
     }
 
     async function deleteData() {
@@ -1162,7 +1221,7 @@
                 refreshAllDestinationDropdowns();
             }
             renderDataManagement(); renderDropdownCustomers(); autoFillCustomer(); toggleModal('formModal');
-        } catch (error) { alert("Gagal menghapus: " + error.message); }
+        } catch (error) { showWarningPopup("Gagal Menghapus", error.message); }
     }
 
     async function autoFillCustomer() {
@@ -1172,10 +1231,10 @@
         
         if (customer) {
             document.getElementById('custPhone').value = customer.phone || ''; document.getElementById('custAddress').value = customer.address || '';
-            document.getElementById('btnAddRow').disabled = false; document.getElementById('warningRow').style.color = 'var(--primary)'; document.getElementById('warningRow').innerText = '✓ Agen aktif, silakan tambah barang';
+            document.getElementById('warningRow').style.color = 'var(--primary)'; document.getElementById('warningRow').innerText = '✓ Agen aktif, silakan tambah barang';
         } else {
             document.getElementById('custPhone').value = ""; document.getElementById('custAddress').value = "";
-            document.getElementById('btnAddRow').disabled = true; document.getElementById('warningRow').style.color = 'var(--text-muted)'; document.getElementById('warningRow').innerText = 'Pilih agen terlebih dahulu untuk menambah barang';
+            document.getElementById('warningRow').style.color = 'var(--text-muted)'; document.getElementById('warningRow').innerText = 'Pilih agen terlebih dahulu untuk menambah barang';
         }
 
         if(!isEditingMode) {
@@ -1197,7 +1256,11 @@
     }
 
     function addRow() {
-        if(!currentCustomerId) return;
+        if(!currentCustomerId) {
+            showWarningPopup("Pilih Agen", "Pilih Agen Terlebih Dahulu");
+            return;
+        }
+
         const tbody = document.getElementById('itemsBody'); const tr = document.createElement('tr');
         const today = new Date().toISOString().split('T')[0];
         let productOptions = '<option value="">-- Barang --</option>';
@@ -1248,12 +1311,11 @@
     }
 
     function openPreviewModal() {
-        if(!currentCustomerId) return alert("Pilih agen pelanggan terlebih dahulu sebelum melakukan pratinjau!");
+        if(!currentCustomerId) return showWarningPopup("Pilih Agen!", "Pilih Agen terlebih dahulu sebelum melakukan pratinjau!");
         
         const invoiceNo = document.getElementById('invoiceNumber').value;
         const customer = customers.find(c => c.id === currentCustomerId);
         const rows = document.querySelectorAll('#itemsBody tr');
-        if(rows.length === 0) return alert("Belum ada rincian barang yang ditambahkan!");
         
         let validItems = [];
         let uniqueDates = new Set();
@@ -1274,6 +1336,8 @@
                 if (itemDate) uniqueDates.add(itemDate);
             }
         });
+        
+        if(validItems.length === 0 && depositList.length === 0) return showWarningPopup("Data Kosong!", "Belum ada rincian barang atau deposit yang ditambahkan!");
 
         const showDateOnItems = uniqueDates.size > 1;
 
@@ -1301,7 +1365,7 @@
 
     function exportToPDF() {
         if (typeof html2pdf === 'undefined') {
-            alert("Sistem PDF belum termuat sempurna. Pastikan koneksi internet Anda aktif dan muat ulang halaman.");
+            showWarningPopup("Sistem Belum Siap", "Sistem PDF belum termuat sempurna. Pastikan koneksi internet Anda aktif dan muat ulang halaman.");
             return;
         }
         
@@ -1326,7 +1390,7 @@
                 showSuccessPopup("PDF Berhasil Disimpan!", `File Invoice_${invoiceNo}.pdf berhasil diunduh.`);
             }).catch(err => {
                 closePopup();
-                alert("Gagal ekspor PDF: " + err.message);
+                showWarningPopup("Gagal Ekspor", "Terjadi kesalahan saat memproses PDF: " + err.message);
             });
         }, 500);
     }
@@ -1346,13 +1410,13 @@
                 showSuccessPopup("JPG Berhasil Disimpan!", `File Invoice_${invoiceNo}.jpg berhasil diunduh.`);
             }).catch(err => {
                 closePopup();
-                alert("Gagal ekspor JPG: " + err.message);
+                showWarningPopup("Gagal Ekspor", "Terjadi kesalahan saat memproses JPG: " + err.message);
             });
         }, 500);
     }
 
     async function simpanInvoice() {
-        if(!currentCustomerId) return alert("Pilih agen!");
+        if(!currentCustomerId) return showWarningPopup("Pilih Agen!", "Pilih Agen terlebih dahulu sebelum menyimpan invoice!");
         const invoiceNo = document.getElementById('invoiceNumber').value;
         const customer = customers.find(c => c.id === currentCustomerId);
         const rows = document.querySelectorAll('#itemsBody tr');
@@ -1369,7 +1433,7 @@
                 });
             }
         });
-        if(itemsPayload.length === 0) return alert("Lengkapi data barang minimal 1!");
+        if(itemsPayload.length === 0 && depositList.length === 0) return showWarningPopup("Data Kosong!", "Lengkapi minimal 1 data barang atau deposit!");
 
         let totalDeposit = 0;
         depositList.forEach(dep => {
@@ -1386,8 +1450,7 @@
         if(!isSupabaseConnected) {
             setTimeout(() => {
                 showSuccessPopup(successTitle, successSub);
-                if(isEditingMode) cancelEditMode(); 
-                else { generateRandomInvoice(); document.getElementById('custName').value = ""; autoFillCustomer(); }
+                buatInvoiceBaru(); 
             }, 600);
             return;
         }
@@ -1398,16 +1461,16 @@
                 await supabaseClient.from('invoices').update({ customer_name: customer.name, customer_phone: customer.phone, customer_address: customer.address, subtotal, deposit: totalDeposit, balance_due: subtotal - totalDeposit }).eq('invoice_no', invoiceNo);
                 await supabaseClient.from('invoice_items').insert(itemsPayload);
                 showSuccessPopup(successTitle, successSub);
-                cancelEditMode(); 
+                buatInvoiceBaru(); 
             } else {
                 await supabaseClient.from('invoices').insert([{ invoice_no: invoiceNo, customer_name: customer.name, customer_phone: customer.phone, customer_address: customer.address, subtotal, deposit: totalDeposit, balance_due: subtotal - totalDeposit }]);
                 await supabaseClient.from('invoice_items').insert(itemsPayload);
                 showSuccessPopup(successTitle, successSub);
-                generateRandomInvoice(); document.getElementById('custName').value = ""; autoFillCustomer(); depositList = []; calculate();
+                buatInvoiceBaru(); 
             }
         } catch (error) { 
             closePopup();
-            alert("Gagal simpan: " + error.message); 
+            showWarningPopup("Gagal Menyimpan", error.message); 
         }
     }
 </script>
