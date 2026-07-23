@@ -308,13 +308,13 @@
             <table id="invoiceTable">
                 <thead>
                     <tr>
-                        <th style="width: 10%;">Tanggal</th>
-                        <th style="width: 19%;">Nama Barang</th>
-                        <th style="width: 8%; text-align: right !important;">Qty</th>
-                        <th style="width: 8.5%; text-align: right !important;">Satuan</th>
-                        <th style="width: 20.5%;">Tujuan</th>
+                        <th style="width: 11%;">Tanggal</th>
+                        <th style="width: 21%;">Nama Barang</th>
+                        <th style="width: 7%; text-align: right !important;">Qty</th>
+                        <th style="width: 8%; text-align: right !important;">Satuan</th>
+                        <th style="width: 21%;">Tujuan</th>
                         <th style="width: 13%;">Harga</th>
-                        <th style="width: 18%;">Total</th>
+                        <th style="width: 15%;">Total</th>
                         <th class="action-col text-center" style="width: 4%;"></th>
                     </tr>
                 </thead>
@@ -457,7 +457,7 @@
             </div>
         </div>
 
-        <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Klik pada <b>Nomor Invoice</b> untuk memuat dan mengedit kembali rinciannya.</p>
+        <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Klik pada <b>Nomor Invoice</b> untuk melihat opsi pratinjau atau mengedit kembali.</p>
         
         <!-- Tabel Wrapper dengan Max-Height & Overflow Auto -->
         <div class="table-wrapper" style="margin: 0; border: none; max-height: 380px; overflow-y: auto;">
@@ -469,6 +469,21 @@
         
         <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
             <button class="btn btn-outline" onclick="toggleModal('historyModal')">Kembali</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Aksi Riwayat Invoice -->
+<div class="modal" id="invoiceActionModal" style="z-index: 1400;">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <div class="modal-header" style="justify-content: center; border-bottom: none; margin-bottom: 10px;">
+            <h3 style="font-size: 18px; font-weight: 600;">Opsi Invoice <span id="actionInvoiceNo" style="color: var(--primary);"></span></h3>
+        </div>
+        <p style="margin-bottom: 24px; font-size: 13px; color: var(--text-muted);">Pilih aksi yang ingin dilakukan pada invoice ini.</p>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn btn-primary" onclick="executeInvoiceAction('edit')" style="width: 100%; justify-content: center;">✏️ Edit Invoice</button>
+            <button class="btn btn-secondary" onclick="executeInvoiceAction('preview')" style="width: 100%; justify-content: center;">👀 Pratinjau Invoice</button>
+            <button class="btn btn-outline" onclick="toggleModal('invoiceActionModal')" style="width: 100%; justify-content: center;">Kembali</button>
         </div>
     </div>
 </div>
@@ -591,6 +606,7 @@
 
     let isEditingMode = false;
     let originalEditingInvoiceNo = null;
+    let selectedActionInvoice = null;
     
     let savedDestinations = JSON.parse(localStorage.getItem('savedDestinations'));
     if (!savedDestinations) {
@@ -634,15 +650,13 @@
         document.getElementById('popupOverlay').classList.remove('active');
     }
 
-    // Fungsi Membuat Invoice Baru (Reset Form & Re-enable Buat Inv Baru)
+    // Fungsi Membuat Invoice Baru
     function buatInvoiceBaru() {
         isEditingMode = false; originalEditingInvoiceNo = null; depositList = [];
         document.getElementById('editModeBanner').style.display = 'none'; 
         
-        // Kembalikan tombol simpan utama seperti semula
         document.getElementById('btnSaveInvoiceMain').innerHTML = `<svg class="humbleicons hi-save" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-1.828-1.828A2 2 0 0 0 16.172 4H15M8 4v4a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4M8 4h7M7 17v-3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"/></svg> Simpan Invoice`;
 
-        // Aktifkan kembali tombol Buat Inv Baru
         const btnNew = document.getElementById('btnBuatInvBaru');
         if(btnNew) {
             btnNew.disabled = false;
@@ -821,7 +835,7 @@
             return; 
         }
         tbody.innerHTML = data.map(inv => `<tr>
-            <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="loadInvoiceForEdit('${inv.invoice_no}')">${inv.invoice_no}</span></td>
+            <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="openInvoiceActionModal('${inv.invoice_no}')">${inv.invoice_no}</span></td>
             <td class="text-center">${formatCustomDate(inv.created_at)}</td>
             <td>${inv.customer_name}</td>
             <td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
@@ -846,18 +860,36 @@
         renderHistoryTable(filtered);
     }
 
+    // Modal Aksi Riwayat Invoice
+    function openInvoiceActionModal(invoiceNo) {
+        selectedActionInvoice = invoiceNo;
+        document.getElementById('actionInvoiceNo').innerText = invoiceNo;
+        toggleModal('invoiceActionModal');
+    }
+
+    function executeInvoiceAction(action) {
+        toggleModal('invoiceActionModal'); 
+        if (action === 'edit') {
+            loadInvoiceForEdit(selectedActionInvoice);
+        } else if (action === 'preview') {
+            previewInvoiceFromHistory(selectedActionInvoice);
+        }
+    }
+
     async function loadInvoiceForEdit(invoiceNo) {
         if(!isSupabaseConnected) return;
         try {
             const { data: invData } = await supabaseClient.from('invoices').select('*').eq('invoice_no', invoiceNo).single();
             const { data: itemsData } = await supabaseClient.from('invoice_items').select('*').eq('invoice_no', invoiceNo);
-            toggleModal('historyModal');
+            if(document.getElementById('historyModal').classList.contains('active')) {
+                toggleModal('historyModal');
+            }
+            
             isEditingMode = true; originalEditingInvoiceNo = invoiceNo;
             document.getElementById('editingInvoiceLabel').innerText = invoiceNo; 
             document.getElementById('editModeBanner').style.display = 'flex';
             document.getElementById('btnSaveInvoiceMain').innerText = '💾 Simpan Perubahan';
             
-            // Disable tombol Buat Inv Baru saat masuk Mode Edit
             const btnNew = document.getElementById('btnBuatInvBaru');
             if(btnNew) {
                 btnNew.disabled = true;
@@ -913,6 +945,64 @@
             });
             calculate(); window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err) { showWarningPopup("Terjadi Kesalahan", "Gagal memuat: " + err.message); }
+    }
+
+    async function previewInvoiceFromHistory(invoiceNo) {
+        if(!isSupabaseConnected) return;
+        showLoadingPopup("Memuat Pratinjau...");
+        try {
+            const { data: invData } = await supabaseClient.from('invoices').select('*').eq('invoice_no', invoiceNo).single();
+            const { data: itemsData } = await supabaseClient.from('invoice_items').select('*').eq('invoice_no', invoiceNo);
+            
+            closePopup(); 
+
+            if(!invData) throw new Error("Invoice tidak ditemukan");
+
+            let itemsHtml = '';
+            let depositHtml = '';
+            let uniqueDates = new Set();
+            let subtotal = parseFloat(invData.subtotal) || 0;
+            let balanceDue = parseFloat(invData.balance_due) || 0;
+            let totalDeposit = parseFloat(invData.deposit) || 0;
+
+            if (itemsData) {
+                itemsData.forEach(item => { if(item.tanggal) uniqueDates.add(item.tanggal); });
+                const showDateOnItems = uniqueDates.size > 1;
+
+                itemsData.forEach(item => {
+                    if (item.unit === 'DEPOSIT' || item.product_id === 'DEPOSIT') {
+                        depositHtml += `<tr><td style="padding: 4px; color: #555;">${item.product_name}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(item.price)}</td></tr>`;
+                    } else {
+                        const destText = item.destination && item.destination !== "MANUAL" ? ` <br><span style="font-size: 11px; color: #777;">Tujuan: ${item.destination}</span>` : '';
+                        const dateText = showDateOnItems ? `<span style="font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #333; margin-right: 6px; display: inline-block; font-weight: 500;">${formatCustomDate(item.tanggal)}</span>` : '';
+                        
+                        itemsHtml += `<tr><td style="padding: 10px 4px; border-bottom: 1px solid #eee;">${dateText}<strong>${item.product_name}</strong>${destText}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: center;">${item.qty} ${item.unit || '-'}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: right;">${formatMoney(item.price).replace('Rp ', '')}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600; font-style: italic;">${formatMoney(item.total)}</td></tr>`;
+                    }
+                });
+            }
+
+            if (depositHtml === '' && totalDeposit > 0) {
+                depositHtml = `<tr><td style="padding: 4px; color: #555;">Deposit</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(totalDeposit)}</td></tr>`;
+            }
+
+            document.getElementById('prevInvNo').innerText = invData.invoice_no; 
+            document.getElementById('prevCustName').innerText = invData.customer_name;
+            document.getElementById('prevCustPhone').innerText = invData.customer_phone || '-'; 
+            document.getElementById('prevCustAddress').innerText = invData.customer_address || '-';
+            document.getElementById('prevDate').innerText = formatCustomDate(invData.created_at);
+            
+            document.getElementById('prevItemsBody').innerHTML = itemsHtml; 
+            document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
+            document.getElementById('prevDepositBody').innerHTML = depositHtml; 
+            document.getElementById('prevBalance').innerText = formatMoney(balanceDue);
+
+            document.getElementById('invoiceNumber').value = invoiceNo; 
+
+            toggleModal('previewModal');
+
+        } catch (err) { 
+            showWarningPopup("Terjadi Kesalahan", "Gagal memuat pratinjau: " + err.message); 
+        }
     }
 
     function deleteInvoice(invoiceNo) {
@@ -1069,6 +1159,19 @@
         document.getElementById('custName').innerHTML = options;
     }
     
+    function updateSpecialPricePlaceholder(selectEl) {
+        const priceInput = document.getElementById('inputSpecialPrice');
+        if(!selectEl.value) {
+            if (priceInput) priceInput.placeholder = "0";
+            return;
+        }
+        const selectedOption = selectEl.options[selectEl.selectedIndex];
+        const defaultPrice = selectedOption.getAttribute('data-price') || 0;
+        if (priceInput) {
+            priceInput.placeholder = "Harga Master: Rp " + new Intl.NumberFormat('id-ID').format(defaultPrice);
+        }
+    }
+
     function openAddModal() {
         isCreating = true;
         editingType = activeTabType;
@@ -1094,13 +1197,19 @@
             `;
         } else if(editingType === 'agentPrice') {
             title.innerText = 'Tambah Harga Khusus';
-            let custOpts = [...customers].sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            let prodOpts = [...products].sort((a, b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            let custOpts = '<option value="" disabled selected>-- Pilih Agen --</option>' + [...customers].sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            let prodOpts = '<option value="" disabled selected>-- Pilih Barang --</option>' + [...products].sort((a, b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}" data-price="${p.default_price}">${p.name}</option>`).join('');
             formContent.innerHTML = `
                 <div class="form-group"><label>Pilih Agen</label><select id="inputApCust">${custOpts}</select></div>
-                <div class="form-group"><label>Pilih Barang</label><select id="inputApProd">${prodOpts}</select></div>
+                <div class="form-group"><label>Pilih Barang</label><select id="inputApProd" onchange="updateSpecialPricePlaceholder(this)">${prodOpts}</select></div>
                 <div class="form-group"><label>Harga Spesial</label><input type="text" id="inputSpecialPrice" oninput="formatRibuanInput(this)" placeholder="0"></div>
             `;
+            toggleModal('formModal');
+            const prodSelect = document.getElementById('inputApProd');
+            if (prodSelect && prodSelect.options.length > 0) {
+                updateSpecialPricePlaceholder(prodSelect);
+            }
+            return;
         } else if(editingType === 'destination') {
             title.innerText = 'Tambah Tujuan / Kota Baru';
             formContent.innerHTML = `
@@ -1120,14 +1229,19 @@
         title.innerText = 'Tambah Barang Khusus Agen';
         
         let custOpts = [...customers].map(c => `<option value="${c.id}" ${c.id == currentDetailCustId ? 'selected' : ''}>${c.name}</option>`).join('');
-        let prodOpts = [...products].sort((a, b) => (a.name||'').localeCompare(b.name||'')).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        let prodOpts = '<option value="" disabled selected>-- Pilih Barang --</option>' + [...products].sort((a, b) => (a.name||'').localeCompare(b.name||'')).map(p => `<option value="${p.id}" data-price="${p.default_price}">${p.name}</option>`).join('');
         
         formContent.innerHTML = `
             <div class="form-group"><label>Nama Agen</label><select id="inputApCust" disabled style="background-color: var(--th-bg); cursor: not-allowed;">${custOpts}</select></div>
-            <div class="form-group"><label>Pilih Barang</label><select id="inputApProd">${prodOpts}</select></div>
+            <div class="form-group"><label>Pilih Barang</label><select id="inputApProd" onchange="updateSpecialPricePlaceholder(this)">${prodOpts}</select></div>
             <div class="form-group"><label>Harga Spesial</label><input type="text" id="inputSpecialPrice" oninput="formatRibuanInput(this)" placeholder="0"></div>
         `;
         toggleModal('formModal');
+        
+        const prodSelect = document.getElementById('inputApProd');
+        if (prodSelect && prodSelect.options.length > 0) {
+            updateSpecialPricePlaceholder(prodSelect);
+        }
     }
 
     function openEditModal(type, id, id2 = null) {
