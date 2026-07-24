@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nota Pembayaran - SBR Putra Food</title>
+    <!-- Import Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Import html2pdf dan html2canvas untuk fitur Export PDF & JPG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --input-bg: #f8fafc;
+            --th-bg: #f8fafc;
+            --focus-ring: rgba(16, 185, 129, 0.2);
+            --modal-bg: rgba(0,0,0,0.5);
+            --row-hover: rgba(0,0,0,0.02);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #0f172a;
+                --bg-card: #1e293b;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --border-color: #334155;
+                --primary: #10b981;
+                --primary-hover: #34d399;
+                --input-bg: #0f172a;
+                --th-bg: #334155;
+                --modal-bg: rgba(0,0,0,0.7);
+                --row-hover: rgba(255,255,255,0.03);
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; padding: 24px; font-size: 14px; }
+        .container { max-width: 950px; margin: 0 auto; transition: all 0.3s; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @media (prefers-color-scheme: dark) {
+            ::-webkit-scrollbar-track { background: var(--bg-card); }
+            ::-webkit-scrollbar-thumb { background: #475569; }
+            ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        }
+        
+        @keyframes blinkEffect { 0% { opacity: 1; } 50% { opacity: 0.35; } 100% { opacity: 1; } }
+        
+        .edit-mode-banner {
+            animation: blinkEffect 1.5s infinite ease-in-out; background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white; padding: 12px 20px; border-radius: 12px; font-weight: 600; display: none;
+            justify-content: space-between; align-items: center; margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .card { background-color: var(--bg-card); border-radius: 16px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05); padding: 28px; margin-bottom: 24px; border: 1px solid var(--border-color); }
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .brand-section { display: flex; align-items: center; gap: 18px; }
+        .logo { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; border: none; background: transparent; }
+        .brand-text h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+        .brand-text p { color: var(--text-muted); font-size: 13px; }
+        .invoice-subtitle { display: inline-block; font-size: 11px; font-weight: 700; color: var(--primary); background: rgba(16, 185, 129, 0.1); padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+
+        .card-header-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .card-header-title h3 { font-size: 16px; font-weight: 600; color: var(--text-main); }
+
+        .customer-info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px 24px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-weight: 500; font-size: 13px; color: var(--text-muted); }
+
+        input, select, textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 10px; background-color: var(--input-bg); color: var(--text-main); font-family: inherit; font-size: 14px; transition: all 0.2s ease; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--focus-ring); }
+        input[readonly], textarea[readonly], select[disabled] { background-color: var(--th-bg); color: var(--text-muted); cursor: not-allowed; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border: none; border-radius: 10px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; font-size: 14px; }
+        .btn-primary { background-color: var(--primary); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+        
+        .btn-white { background-color: #ffffff !important; border: 1px solid var(--border-color); color: #000000 !important; }
+        .btn-white:hover { background-color: #f8fafc !important; border-color: #cbd5e1; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { background-color: var(--th-bg); border-color: var(--text-muted); }
+        
+        .btn-top-history { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+        .btn-top-history:hover { background: linear-gradient(135deg, #4f46e5, #4338ca); transform: translateY(-1px); }
+        
+        .btn-top-print { background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3); }
+        .btn-top-print:hover { background: linear-gradient(135deg, #0891b2, #0e7490); transform: translateY(-1px); }
+        
+        .btn-top-data { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+        .btn-top-data:hover { background: linear-gradient(135deg, #7c3aed, #6d28d9); transform: translateY(-1px); }
+
+        .btn-danger { background-color: var(--danger); color: white; padding: 6px 12px; border-radius: 8px; }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        .btn-secondary { background-color: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); }
+        .btn-secondary:hover { background-color: #2563eb; transform: translateY(-1px); }
+        .btn-icon-danger { background-color: transparent; color: var(--danger); padding: 6px; border-radius: 8px; border: none; cursor: pointer; }
+        .btn-icon-danger:hover { background-color: #fee2e2; color: #b91c1c; }
+
+        .table-wrapper { width: 100%; margin: 16px 0; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-card); overflow-x: auto; }
+        .table-wrapper thead th { position: sticky; top: 0; background-color: var(--th-bg); z-index: 10; box-shadow: 0 1px 0 var(--border-color); }
+
+        table { width: 100%; border-collapse: collapse; }
+        #invoiceTable { min-width: 650px; }
+        
+        th, td { padding: 12px 8px; vertical-align: middle; border: none !important; }
+        th { text-align: center !important; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-color) !important; padding-bottom: 14px; }
+        tr:hover td { background-color: var(--row-hover); }
+        
+        .table-wrapper td input, .table-wrapper td select { border: 1px solid transparent !important; background-color: transparent !important; padding: 6px 8px !important; border-radius: 6px !important; box-shadow: none !important; width: 100% !important; outline: none !important; color: var(--text-main) !important; font-size: 13px !important; transition: all 0.2s; text-overflow: ellipsis; }
+        .table-wrapper td input:focus, .table-wrapper td select:focus { background-color: var(--bg-body) !important; border: 1px solid var(--primary) !important; box-shadow: 0 0 0 3px var(--focus-ring) !important; }
+        .table-wrapper td input[readonly] { background-color: transparent !important; color: var(--text-muted) !important; cursor: default !important; border: none !important; }
+        .table-wrapper td input[type="number"]::-webkit-outer-spin-button, .table-wrapper td input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .table-wrapper td input[type="number"] { -moz-appearance: textfield; }
+
+        .text-right { text-align: right !important; }
+        .text-center { text-align: center !important; }
+        .item-total { white-space: nowrap !important; }
+
+        .summary-card { width: 100%; max-width: 380px; background-color: var(--th-bg); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); }
+        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: var(--text-muted); }
+        .summary-row.deposit-row:hover { background-color: var(--bg-card); border-radius: 8px; padding: 8px; margin: 0 -8px; }
+        .summary-row.total { border-top: 2px dashed var(--border-color); margin-top: 10px; padding-top: 14px; font-weight: 700; font-size: 16px; color: var(--text-main); }
+        .summary-row.total span:last-child { color: var(--primary); font-style: italic; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 850px; border-radius: 16px; max-height: 90vh; overflow-y: auto; overflow-x: hidden; padding: 28px; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; }
+        .close-modal { background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+        .close-modal:hover { color: var(--text-main); }
+
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+        .tab-btn { padding: 9px 18px; background: var(--th-bg); border: 1px solid var(--border-color); border-radius: 24px; cursor: pointer; color: var(--text-muted); font-weight: 500; white-space: nowrap; transition: all 0.2s; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .alert { padding: 14px; background-color: #fffbeb; color: #b45309; border-radius: 10px; margin-bottom: 20px; border: 1px solid #fde68a; display: none; font-size: 13px; }
+
+        .popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .popup-overlay.active { display: flex; }
+        .popup-box { background: var(--bg-card); padding: 32px; border-radius: 20px; text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); border: 1px solid var(--border-color); animation: popupScale 0.25s ease-out; }
+        @keyframes popupScale { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .spinner { width: 50px; height: 50px; border: 4px solid var(--border-color); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .success-icon { width: 60px; height: 60px; background: rgba(16, 185, 129, 0.15); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px auto; }
+        .warning-icon { width: 60px; height: 60px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px auto; }
+
+        #previewContent, #previewContent * { 
+            color-scheme: light !important; 
+            background-color: #ffffff !important; 
+            color: #000000 !important; 
+            border-color: #e2e8f0 !important; 
+            font-family: 'Inter', sans-serif !important;
+        }
+        #previewContent { padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        #prevBalance { color: #10b981 !important; }
+        #prevItemsBody td { border-bottom: 1px solid #eee !important; }
+        #previewContent table { min-width: 100% !important; width: 100%; table-layout: auto; }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .container { padding: 0; }
+            .header { flex-direction: column; text-align: center; gap: 12px; }
+            .brand-section { flex-direction: column; }
+            .top-actions { justify-content: center; width: 100%; flex-wrap: wrap; margin-top: 10px; }
+            .top-actions .btn { flex: 1; min-width: 45%; }
+            .customer-info-grid { grid-template-columns: 1fr; gap: 12px; }
+            .bottom-section { flex-direction: column-reverse; align-items: stretch !important; gap: 20px !important; }
+            .action-buttons-container { max-width: 100% !important; }
+            .summary-card { max-width: 100%; }
+            .modal-content { padding: 16px; margin: 10px; }
+            .card { padding: 16px; margin-bottom: 16px; }
+            #previewContent { padding: 15px !important; }
+            #previewContent h2 { font-size: 18px !important; }
+            #previewContent h3 { font-size: 16px !important; }
+            #previewContent table th, #previewContent table td { padding: 6px 4px !important; font-size: 11px !important; }
+            .summary-table-container { max-width: 100% !important; margin-top: 16px; }
+        }
+
+        @media print {
+            color-scheme: light !important;
+            body { background: #ffffff !important; color: #000000 !important; padding: 0 !important; }
+            * { color: #000000 !important; font-family: 'Inter', sans-serif !important; }
+            .container { width: 100% !important; max-width: 100% !important; padding: 24px !important; margin: 0 !important; background: #ffffff !important; }
+            .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin-bottom: 20px !important; background: #ffffff !important; }
+            .btn, .action-col, .top-actions, .bottom-section .action-buttons-container, #btnAddRow, .edit-mode-banner, #warningRow, #warningRowInfo, .hide-export { display: none !important; }
+            input, select, textarea { border: none !important; background: transparent !important; color: #000000 !important; padding: 0 !important; -webkit-appearance: none !important; appearance: none !important; resize: none !important; font-weight: 500 !important; box-shadow: none !important; }
+            select { background-image: none !important; }
+            input::placeholder, textarea::placeholder { color: transparent !important; }
+            .form-group label { font-size: 12px !important; color: #555555 !important; margin-bottom: 2px !important; }
+            .form-group input, .form-group textarea, .form-group select { font-size: 14px !important; font-weight: 600 !important; color: #000000 !important; padding: 0 !important; background: transparent !important; }
+            .table-wrapper { border: none !important; margin: 10px 0 !important; overflow: visible !important; background: #ffffff !important; border-radius: 0 !important; }
+            table { width: 100% !important; border-collapse: collapse !important; }
+            #invoiceTable { min-width: unset !important; }
+            th { background-color: transparent !important; color: #333333 !important; border-bottom: 2px solid #000000 !important; border-top: none !important; padding: 10px 6px !important; font-size: 11px !important; text-align: center !important;}
+            td { border-bottom: 1px solid #e2e8f0 !important; padding: 10px 6px !important; font-size: 13px !important; }
+            tr:hover td { background-color: transparent !important; }
+            .bottom-section { justify-content: flex-end !important; margin-top: 10px !important; margin-bottom: 0 !important; }
+            .summary-card { border: none !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; margin-top: 0 !important; width: 340px !important; }
+            .summary-row { padding: 4px 0 !important; font-size: 13px !important; color: #333333 !important; }
+            .summary-row.total { border-top: 2px solid #000000 !important; margin-top: 8px !important; padding-top: 8px !important; font-size: 15px !important; font-weight: 700 !important; }
+            .card-header-title { border-bottom: 1px solid #cbd5e1 !important; margin-bottom: 12px !important; padding-bottom: 6px !important; }
+            .card-header-title h3 { font-size: 14px !important; color: #000000 !important; font-weight: 700 !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="popup-overlay" id="popupOverlay">
+    <div class="popup-box">
+        <div id="popupLoadingState">
+            <div class="spinner"></div>
+            <h4 id="popupLoadingText" style="font-size: 16px; font-weight: 600; color: var(--text-main);">Memproses...</h4>
+        </div>
+        <div id="popupSuccessState" style="display: none;">
+            <div class="success-icon">✓</div>
+            <h4 id="popupSuccessText" style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Berhasil!</h4>
+            <p id="popupSuccessSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Data berhasil diproses.</p>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="closePopup()">OK</button>
+        </div>
+        <div id="popupWarningState" style="display: none;">
+            <div class="warning-icon">⚠️</div>
+            <h4 id="popupWarningText" style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Peringatan</h4>
+            <p id="popupWarningSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Harap periksa kembali data Anda.</p>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="closePopup()">Mengerti</button>
+        </div>
+        <div id="popupConfirmState" style="display: none;">
+            <div class="warning-icon">🗑️</div>
+            <h4 id="popupConfirmText" style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Konfirmasi Hapus</h4>
+            <p id="popupConfirmSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Apakah Anda yakin ingin menghapus data ini?</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="closePopup()">Batal</button>
+                <button class="btn btn-danger" style="flex: 1; justify-content: center;" id="btnPopupConfirmYes">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="invoiceContainer">
+    <div class="top-actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 16px;">
+        <button class="btn btn-top-history" onclick="openHistoryModal()" title="Riwayat Rekap">
+            <svg class="humbleicons hi-history" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7.5v5l4 1M4.252 5v4H8M5.07 8a8 8 0 1 1-.818 6"/></svg>
+        </button>
+        <button class="btn btn-top-print" onclick="window.print()" title="Cetak / Print PDF">
+            <svg class="humbleicons hi-print" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M8 17H5a1 1 0 0 1-1-1v-5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a1 1 0 0 1-1 1h-3M8 4h8v5H8V4zm0 11h8v4H8v-4z"/><circle cx="7" cy="12" r="1" fill="currentColor"/></svg>
+        </button>
+        <button class="btn btn-top-data" onclick="toggleModal('dataModal')" title="Data Master">
+            <svg class="humbleicons hi-cog-2" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 0a7 7 0 0 0-7 7m7-7a7 7 0 0 1 7 7m0 0h2m-2 0a7 7 0 0 1-7 7m0 0v2m0-2a7 7 0 0 1-7-7m0 0H3m4.5-7.794 1 1.732M18.062 8.5l1.732-1M15.5 18.062l1 1.732M5.938 15.5l-1.732 1m0-9 1.732 1M15.5 5.938l1-1.732M18.062 15.5l1.732 1M8.5 18.062l-1 1.732M12 12 7 7.101M12 12l-1.812 6.762M12 12l6.762-1.812"/></svg> Manajemen Data
+        </button>
+    </div>
+
+    <div class="alert" id="supabaseAlert">⚠️ <b>Status Koneksi:</b> Gagal terhubung ke database. Menggunakan simulasi lokal.</div>
+
+    <div class="card header">
+        <div class="brand-section">
+            <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/f57e85bb5c146f7fb7aebd7cbf8013d2ac707c35/sbr_logo.png" alt="Logo SBR" class="logo">
+            <div class="brand-text">
+                <h1>SBR PUTRA FOOD</h1>
+                <p>Bandung Barat, Jawa Barat</p>
+                <div class="invoice-subtitle">NOTA PEMBAYARAN SUPPLIER</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header-title">
+            <h3>Informasi Supplier & Transaksi</h3>
+            <span style="font-size: 12px; color: var(--text-muted);" id="warningRowInfo">* Data otomatis terisi berdasarkan supplier</span>
+        </div>
+        <div class="customer-info-grid">
+            <div class="form-group"><label>Nomor Rekap</label><input type="text" id="invoiceNumber" readonly style="font-weight: 600; letter-spacing: 0.5px; color: var(--primary);"></div>
+            <div class="form-group"><label>Tanggal Kirim</label><input type="date" id="deliveryDate"></div>
+            <div class="form-group"><label>Nama Supplier</label><select id="custName" onchange="autoFillCustomer()"><option value="">-- Pilih Supplier --</option></select></div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none;">
+        <div class="card-header-title">
+            <h3>Rincian Barang Pesanan</h3>
+            <span style="font-size: 12px; color: var(--text-muted);" id="warningRow">Pilih supplier terlebih dahulu untuk menambah barang</span>
+        </div>
+        <div class="table-wrapper">
+            <table id="invoiceTable">
+                <thead>
+                    <tr>
+                        <th style="width: 10%; text-align: right !important;">Qty</th>
+                        <th style="width: 15%; text-align: right !important;">Satuan</th>
+                        <th style="width: 35%;">Nama Barang</th>
+                        <th style="width: 15%;">Harga</th>
+                        <th style="width: 20%;">Total</th>
+                        <th class="action-col text-center" style="width: 5%;"></th>
+                    </tr>
+                </thead>
+                <tbody id="itemsBody"></tbody>
+            </table>
+        </div>
+        <button class="btn btn-outline" id="btnAddRow" onclick="addRow()" style="margin-top: 4px; border-style: dashed;">+ Tambah Baris Barang</button>
+    </div>
+
+    <div class="card bottom-section" style="border-top-left-radius: 0; border-top-right-radius: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 24px; padding-top: 10px; margin-bottom: 16px;">
+        <div class="action-buttons-container" style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 330px;">
+            <button class="btn btn-outline" onclick="openDepositModal(-1)" style="width: 100%; justify-content: center; padding: 10px;"><svg class="humbleicons hi-currency-dollar-circle" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.5 10-.035-.139A2.457 2.457 0 0 0 12.082 8h-.522a1.841 1.841 0 0 0-.684 3.55l2.248.9A1.841 1.841 0 0 1 12.44 16h-.521a2.457 2.457 0 0 1-2.384-1.861L9.5 14M12 6v2m0 8v2m9-6a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg> Tambah Deposit / Cicilan</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-outline" onclick="openPreviewModal()" style="flex: 1; justify-content: center; padding: 10px;"><svg class="humbleicons hi-maximize" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 0 1 2-2h2m8 0h2a2 2 0 0 1 2 2v2m0 8v2a2 2 0 0 1-2 2h-2m-8 0H6a2 2 0 0 1-2-2v-2"/></svg> Pratinjau</button>
+                <button class="btn btn-primary" onclick="simpanInvoice()" id="btnSaveInvoiceMain" style="flex: 1; justify-content: center; padding: 10px;"><svg class="humbleicons hi-save" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-1.828-1.828A2 2 0 0 0 16.172 4H15M8 4v4a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4M8 4h7M7 17v-3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"/></svg> Simpan Rekap</button>
+            </div>
+            <button class="btn btn-top-history" id="btnBuatInvBaru" onclick="buatInvoiceBaru()" style="width: 100%; justify-content: center; padding: 10px;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg> Buat Rekap Baru</button>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-row"><span>Sub Total Pesanan</span><span id="subTotal" style="font-weight: 600; color: var(--text-main); font-style: italic;">Rp 0</span></div>
+            <div id="depositListSummary"></div>
+            <div class="summary-row total"><span>Sisa Pembayaran (Due)</span><span id="balanceDue">Rp 0</span></div>
+        </div>
+    </div>
+
+    <div id="editModeBanner" class="edit-mode-banner">
+        <span>⚠️ <b>EDIT MODE:</b> Sedang mengedit rekap <span id="editingInvoiceLabel" style="text-decoration: underline;"></span></span>
+        <button class="btn btn-outline" style="background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 4px 10px; font-size: 12px;" onclick="cancelEditMode()">Batalkan</button>
+    </div>
+</div>
+
+<div class="modal" id="previewModal" style="z-index: 1300;">
+    <div class="modal-content" style="max-width: 650px; background: #f8fafc;">
+        <div class="modal-header">
+            <h3 style="font-size: 16px; font-weight: 600; color: #000;">Pratinjau Rincian Pembayaran</h3>
+            <button class="close-modal" onclick="toggleModal('previewModal')">&times;</button>
+        </div>
+        <div id="previewContent">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/f57e85bb5c146f7fb7aebd7cbf8013d2ac707c35/sbr_logo.png" alt="Logo SBR" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: none; background: transparent;">
+                    <div>
+                        <h2 style="font-size: 20px; font-weight: 800; margin: 0; color: #000 !important;">SBR PUTRA FOOD</h2>
+                        <p style="font-size: 12px; margin: 2px 0 0 0; color: #555 !important;">Bandung Barat, Jawa Barat</p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <h3 style="font-size: 18px; color: #10b981 !important; margin: 0; font-weight: 700;">NOTA PEMBAYARAN</h3>
+                    <p style="font-size: 12px; font-weight: 600; margin: 4px 0 0 0; color: #000 !important;" id="prevInvNo">-</p>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <div><p style="font-size: 12px; color: #555; margin: 0;">Dibayarkan Kepada:</p><h4 style="font-size: 14px; font-weight: 700; margin: 4px 0;" id="prevCustName">-</h4></div>
+                <div style="text-align: right;"><p style="font-size: 12px; color: #555; margin: 0;">Tanggal Kirim:</p><p style="font-size: 13px; font-weight: 600; margin: 4px 0 0 0;" id="prevDate">-</p></div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                    <tr><th style="padding: 8px 4px; text-align: center !important; font-size: 12px; border-bottom: 2px solid #e2e8f0; color:#555!important;">Qty</th><th style="padding: 8px 4px; text-align: left !important; font-size: 12px; border-bottom: 2px solid #e2e8f0; color:#555!important;">Satuan</th><th style="padding: 8px 4px; text-align: left !important; font-size: 12px; border-bottom: 2px solid #e2e8f0; color:#555!important;">Deskripsi Barang</th><th style="padding: 8px 4px; text-align: right !important; font-size: 12px; border-bottom: 2px solid #e2e8f0; color:#555!important;">Harga</th><th style="padding: 8px 4px; text-align: right !important; font-size: 12px; border-bottom: 2px solid #e2e8f0; color:#555!important;">Total</th></tr>
+                </thead>
+                <tbody id="prevItemsBody" style="font-size: 13px;"></tbody>
+            </table>
+            <div class="summary-table-container" style="width: 100%; max-width: 300px; margin-left: auto;">
+                <table style="width: 100%; font-size: 13px;">
+                    <tr><td style="padding: 4px; color: #555;">Subtotal</td><td style="padding: 4px; text-align: right; font-weight: 600; font-style: italic;" id="prevSubtotal">-</td></tr>
+                    <tbody id="prevDepositBody"></tbody>
+                    <tr><td style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;">SISA PEMBAYARAN</td><td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; color: #10b981!important; font-style: italic;" id="prevBalance">-</td></tr>
+                </table>
+            </div>
+            <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #777;"><p>Terima Kasih Atas Kerjasamanya<br>Mulus Rahayu, Berkah Salamet<br>**SBR SYSTEMS**</p></div>
+        </div>
+        <div style="margin-top: 24px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-white" onclick="toggleModal('previewModal')">Tutup</button>
+                <button class="btn btn-primary" id="btnSaveInvoicePreview" onclick="simpanInvoiceAndClose()">💾 Simpan Rekap</button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-left: auto;">
+                <button class="btn btn-secondary" onclick="exportToJPG()">📷 Simpan JPG</button>
+                <button class="btn btn-danger" onclick="exportToPDF()">📄 Simpan PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="historyModal">
+    <div class="modal-content" style="max-width: 850px;">
+        <div class="modal-header">
+            <h3 style="font-size: 18px; font-weight: 600;">📜 Riwayat Rekap</h3>
+            <button class="close-modal" onclick="toggleModal('historyModal')">&times;</button>
+        </div>
+        
+        <div style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+            <div class="form-group" style="margin: 0;">
+                <label style="font-size: 11px;">Pencarian Riwayat</label>
+                <input type="text" id="filterGlobal" placeholder="Ketik No Rekap, Tanggal, atau Nama Supplier..." oninput="filterHistoryTable()" style="padding: 8px 12px; font-size: 13px;">
+            </div>
+        </div>
+
+        <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Klik pada <b>Nomor Rekap</b> untuk melihat opsi pratinjau atau mengedit kembali.</p>
+        
+        <div class="table-wrapper" style="margin: 0; border: none; max-height: 380px; overflow-y: auto;">
+            <table style="width: 100%;">
+                <thead><tr><th style="text-align: left !important; width: 120px;">No Rekap</th><th style="text-align: center !important;">Tanggal</th><th style="text-align: left !important;">Supplier</th><th class="text-right">Subtotal</th><th class="text-right">Deposit</th><th class="text-right">Sisa Tagihan</th><th class="text-center" style="width: 60px;">Aksi</th></tr></thead>
+                <tbody id="historyTableBody"><tr><td colspan="7" class="text-center text-muted">Memuat data...</td></tr></tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+            <button class="btn btn-outline" onclick="toggleModal('historyModal')">Kembali</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="invoiceActionModal" style="z-index: 1400;">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <div class="modal-header" style="justify-content: center; border-bottom: none; margin-bottom: 10px;">
+            <h3 style="font-size: 18px; font-weight: 600;">Opsi Rekap <span id="actionInvoiceNo" style="color: var(--primary);"></span></h3>
+        </div>
+        <p style="margin-bottom: 24px; font-size: 13px; color: var(--text-muted);">Pilih aksi yang ingin dilakukan pada rekap ini.</p>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn btn-primary" onclick="executeInvoiceAction('edit')" style="width: 100%; justify-content: center;">✏️ Edit Rekap</button>
+            <button class="btn btn-secondary" onclick="executeInvoiceAction('preview')" style="width: 100%; justify-content: center;">👀 Pratinjau Rekap</button>
+            <button class="btn btn-outline" onclick="toggleModal('invoiceActionModal')" style="width: 100%; justify-content: center;">Kembali</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="depositModal" style="z-index: 1200;">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 style="font-size: 16px; font-weight: 600;">Data Deposit / Cicilan</h3>
+            <button class="close-modal" onclick="toggleModal('depositModal')">&times;</button>
+        </div>
+        <div class="form-group"><label>Keterangan (Cth: Transfer BCA 1)</label><input type="text" id="depKet" placeholder="Masukkan keterangan..."></div>
+        <div class="form-group"><label>Nominal Deposit (Rp)</label><input type="text" id="depNom" placeholder="0" oninput="formatRibuanInput(this)"></div>
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-danger" style="margin-right: auto; display: none;" id="btnHapusDeposit" onclick="hapusDeposit()">Hapus</button>
+            <button class="btn btn-outline" onclick="toggleModal('depositModal')">Batal</button>
+            <button class="btn btn-primary" onclick="simpanDeposit()">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="dataModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="font-size: 18px; font-weight: 600;">Manajemen Data Master</h3>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn btn-primary" style="padding: 7px 14px; font-size: 12px;" onclick="openAddModal()">+ Tambah Data Baru</button>
+                <button class="close-modal" onclick="toggleModal('dataModal')">&times;</button>
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tabCustomers', this, 'customer')">👥 Data Supplier</button>
+            <button class="tab-btn" onclick="switchTab('tabProducts', this, 'product')">📦 Nama Barang</button>
+        </div>
+        
+        <div id="tabCustomers" class="tab-content active">
+            <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left !important;">Nama Supplier</th>
+                            <th style="text-align: left !important;">Deposit / Hutang</th>
+                            <th style="text-align: left !important;">No. Telepon</th>
+                            <th style="text-align: left !important;">Alamat</th>
+                            <th class="text-center" style="width: 80px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblCustomersBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="tabProducts" class="tab-content">
+            <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;"><table style="width: 100%;"><thead><tr><th style="text-align: left !important;">Nama Barang</th><th style="text-align: left !important;">Satuan</th><th style="text-align: left !important;">Harga Dasar</th><th class="text-center" style="width: 80px;">Aksi</th></tr></thead><tbody id="tblProductsBody"></tbody></table></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="formModal" style="z-index: 1500;">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3 id="formModalTitle" style="font-size: 16px; font-weight: 600;">Form Data</h3>
+            <button class="close-modal" onclick="toggleModal('formModal')">&times;</button>
+        </div>
+        <div id="formContent" style="display: flex; flex-direction: column; gap: 12px;"></div>
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+            <button class="btn btn-danger" style="margin-right: auto; display: none;" id="btnDeleteData" onclick="deleteData()">Hapus</button>
+            <button class="btn btn-outline" onclick="toggleModal('formModal')">Batal</button>
+            <button class="btn btn-primary" onclick="saveData()" id="btnSaveForm">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://acpkdnktanrucyfyhckw.supabase.co'; 
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U'; 
+    
+    let supabaseClient = null; 
+    let isSupabaseConnected = false;
+
+    if(SUPABASE_URL !== '' && SUPABASE_KEY !== '') { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
+
+    let customers = [];
+    let products = [];
+    let customerBalances = {};
+    let allHistoryData = [];
+
+    let currentCustomerId = null; 
+    let activeTabType = 'customer'; 
+    let isCreating = false; 
+    let editingType = '';
+    let editingId = null;
+    
+    let depositList = [];
+    let editingDepositIndex = -1;
+
+    let isEditingMode = false;
+    let originalEditingInvoiceNo = null;
+    let selectedActionInvoice = null;
+
+    function showLoadingPopup(text = "Memproses...") {
+        document.getElementById('popupLoadingText').innerText = text;
+        document.getElementById('popupWarningState').style.display = 'none';
+        document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'none';
+        document.getElementById('popupLoadingState').style.display = 'block';
+        document.getElementById('popupOverlay').classList.add('active');
+    }
+
+    function showSuccessPopup(title = "Berhasil!", subtitle = "Data berhasil diproses.") {
+        document.getElementById('popupSuccessText').innerText = title;
+        document.getElementById('popupSuccessSubtext').innerText = subtitle;
+        document.getElementById('popupLoadingState').style.display = 'none';
+        document.getElementById('popupWarningState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'none';
+        document.getElementById('popupSuccessState').style.display = 'block';
+        document.getElementById('popupOverlay').classList.add('active');
+    }
+    
+    function showWarningPopup(title = "Peringatan", subtitle = "Harap periksa kembali data Anda.") {
+        document.getElementById('popupWarningText').innerText = title;
+        document.getElementById('popupWarningSubtext').innerText = subtitle;
+        document.getElementById('popupLoadingState').style.display = 'none';
+        document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'none';
+        document.getElementById('popupWarningState').style.display = 'block';
+        document.getElementById('popupOverlay').classList.add('active');
+    }
+
+    function closePopup() {
+        document.getElementById('popupOverlay').classList.remove('active');
+    }
+
+    function buatInvoiceBaru() {
+        isEditingMode = false; originalEditingInvoiceNo = null; depositList = [];
+        document.getElementById('editModeBanner').style.display = 'none'; 
+        
+        document.getElementById('btnSaveInvoiceMain').innerHTML = `<svg class="humbleicons hi-save" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-1.828-1.828A2 2 0 0 0 16.172 4H15M8 4v4a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4M8 4h7M7 17v-3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"/></svg> Simpan Rekap`;
+
+        const btnNew = document.getElementById('btnBuatInvBaru');
+        if(btnNew) {
+            btnNew.disabled = false;
+            btnNew.style.opacity = '1';
+            btnNew.style.cursor = 'pointer';
+        }
+
+        document.getElementById('custName').disabled = false;
+        document.getElementById('custName').value = ""; 
+        autoFillCustomer();
+        generateRandomInvoice();
+        setTodayDeliveryDate();
+    }
+
+    function cancelEditMode() {
+        buatInvoiceBaru();
+    }
+
+    function formatCustomDate(dateString) {
+        if(!dateString) return '-';
+        const d = new Date(dateString);
+        if(isNaN(d.getTime())) return dateString; 
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = months[d.getMonth()];
+        const year = String(d.getFullYear()).slice(-2);
+        return `${day}/${month}/${year}`;
+    }
+
+    function setTodayDeliveryDate() {
+        const today = new Date().toISOString().split('T')[0];
+        const delDateEl = document.getElementById('deliveryDate');
+        if (delDateEl) delDateEl.value = today;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        generateRandomInvoice(); 
+        setTodayDeliveryDate();
+        await fetchDataFromSupabase();
+        renderDropdownCustomers();
+        renderDataManagement();
+    });
+
+    function generateRandomInvoice() {
+        if(isEditingMode) return; 
+        const randomNum = Math.floor(10000 + Math.random() * 90000);
+        document.getElementById('invoiceNumber').value = 'PYM.SBR' + randomNum;
+    }
+
+    async function fetchDataFromSupabase() {
+        if(!supabaseClient) return;
+        try {
+            const { data: dbCustomers, error: errC } = await supabaseClient.from('suppliers').select('*');
+            const { data: dbProducts, error: errP } = await supabaseClient.from('supplier_products').select('*');
+            const { data: dbInvoices, error: errI } = await supabaseClient.from('supplier_recaps').select('customer_name, balance_due, created_at').order('created_at', { ascending: false });
+            
+            if(errC || errP) throw new Error("Gagal mengambil data.");
+            
+            customers = dbCustomers || []; 
+            products = dbProducts || []; 
+            
+            customerBalances = {};
+            if (dbInvoices) {
+                // Ambil data paling terakhir untuk masing-masing supplier berdasarkan created_at desc
+                dbInvoices.forEach(inv => {
+                    if (customerBalances[inv.customer_name] === undefined) {
+                        customerBalances[inv.customer_name] = parseFloat(inv.balance_due) || 0;
+                    }
+                });
+            }
+
+            isSupabaseConnected = true;
+            document.getElementById('supabaseAlert').style.display = 'none';
+        } catch (error) {
+            isSupabaseConnected = false;
+            document.getElementById('supabaseAlert').style.display = 'block';
+            customers = [{ id: 1, name: 'Supplier A', phone: '08123456789', address: 'Lembang' }];
+            products = [{ id: 1, name: 'Bawang', unit: 'Karung', default_price: 75000 }];
+            customerBalances = {};
+        }
+    }
+
+    async function fetchPreviousBalance(customerName) {
+        if(!isSupabaseConnected) return 0;
+        // Cek langsung dari database untuk memastikan data paling terakhir
+        try {
+            const { data, error } = await supabaseClient.from('supplier_recaps').select('balance_due').eq('customer_name', customerName).order('created_at', { ascending: false }).limit(1);
+            if (!error && data && data.length > 0) {
+                const latestBal = parseFloat(data[0].balance_due) || 0;
+                customerBalances[customerName] = latestBal;
+                return latestBal;
+            }
+        } catch (err) {} 
+        return customerBalances[customerName] !== undefined ? customerBalances[customerName] : 0;
+    }
+
+    function addPiutangRow(amount) {
+        const tbody = document.getElementById('itemsBody');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="number" class="item-qty text-right" value="1" readonly></td>
+            <td><input type="text" class="item-unit text-right" value="-" readonly></td>
+            <td><select class="item-select" onchange="onProductSelect(this)"><option value="PIUTANG" data-name="Hutang Tagihan Sebelumnya" data-price="${amount}" data-unit="-" selected>Hutang Tagihan Sebelumnya</option></select></td>
+            <td><input type="text" class="item-price-display text-right" readonly value="${new Intl.NumberFormat('id-ID').format(amount)}"><input type="hidden" class="item-price" value="${amount}"></td>
+            <td class="item-total text-right" style="font-weight:600; font-style: italic;">${formatMoney(amount)}</td>
+            <td class="action-col text-center"><button class="btn-icon-danger" onclick="removeRow(this)">🗑️</button></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function formatMoney(amount) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount); }
+    function formatRibuanInput(input) { let v = input.value.replace(/\D/g, ''); input.value = v !== '' ? new Intl.NumberFormat('id-ID').format(v) : ''; }
+    function getCleanNumber(inputId) { const val = document.getElementById(inputId).value; return val ? parseFloat(val.replace(/\./g, '')) || 0 : 0; }
+    function toggleModal(id) { document.getElementById(id).classList.toggle('active'); }
+    
+    async function openHistoryModal() {
+        toggleModal('historyModal');
+        document.getElementById('filterGlobal').value = '';
+        await fetchHistoryDataSilent();
+    }
+
+    async function fetchHistoryDataSilent() {
+        const tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">⏳ Mengambil data...</td></tr>';
+        if(!isSupabaseConnected) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Mode simulasi.</td></tr>'; return; }
+        try {
+            const { data, error } = await supabaseClient.from('supplier_recaps').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            allHistoryData = data || [];
+            renderHistoryTable(allHistoryData);
+        } catch (err) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Gagal memuat.</td></tr>`; }
+    }
+
+    function renderHistoryTable(data) {
+        const tbody = document.getElementById('historyTableBody');
+        if (!data || data.length === 0) { 
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Belum ada riwayat.</td></tr>'; 
+            return; 
+        }
+        tbody.innerHTML = data.map(inv => `<tr>
+            <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="openInvoiceActionModal('${inv.invoice_no}')">${inv.invoice_no}</span></td>
+            <td class="text-center">${formatCustomDate(inv.created_at)}</td>
+            <td>${inv.customer_name}</td>
+            <td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
+            <td class="text-right" style="color:var(--danger); font-style: italic;">${formatMoney(inv.deposit)}</td>
+            <td class="text-right" style="font-weight:600; font-style: italic;">${formatMoney(inv.balance_due)}</td>
+            <td class="text-center"><button class="btn-icon-danger" onclick="deleteInvoice('${inv.invoice_no}')">🗑️</button></td>
+        </tr>`).join('');
+    }
+
+    function filterHistoryTable() {
+        const keyword = document.getElementById('filterGlobal').value.toLowerCase().trim();
+        const filtered = allHistoryData.filter(inv => {
+            const invNoMatch = (inv.invoice_no || '').toLowerCase().includes(keyword);
+            const dateFormatted = formatCustomDate(inv.created_at).toLowerCase();
+            const rawDate = (inv.created_at || '').toLowerCase();
+            const dateMatch = dateFormatted.includes(keyword) || rawDate.includes(keyword);
+            const nameMatch = (inv.customer_name || '').toLowerCase().includes(keyword);
+            return invNoMatch || dateMatch || nameMatch;
+        });
+        renderHistoryTable(filtered);
+    }
+
+    function openInvoiceActionModal(invoiceNo) {
+        selectedActionInvoice = invoiceNo;
+        document.getElementById('actionInvoiceNo').innerText = invoiceNo;
+        toggleModal('invoiceActionModal');
+    }
+
+    function executeInvoiceAction(action) {
+        toggleModal('invoiceActionModal'); 
+        if (action === 'edit') {
+            loadInvoiceForEdit(selectedActionInvoice);
+        } else if (action === 'preview') {
+            previewInvoiceFromHistory(selectedActionInvoice);
+        }
+    }
+
+    async function loadInvoiceForEdit(invoiceNo) {
+        if(!isSupabaseConnected) return;
+        try {
+            const { data: invData } = await supabaseClient.from('supplier_recaps').select('*').eq('invoice_no', invoiceNo).single();
+            const { data: itemsData } = await supabaseClient.from('supplier_recap_items').select('*').eq('invoice_no', invoiceNo);
+            if(document.getElementById('historyModal').classList.contains('active')) {
+                toggleModal('historyModal');
+            }
+            
+            isEditingMode = true; originalEditingInvoiceNo = invoiceNo;
+            document.getElementById('editingInvoiceLabel').innerText = invoiceNo; 
+            document.getElementById('editModeBanner').style.display = 'flex';
+            document.getElementById('btnSaveInvoiceMain').innerText = '💾 Simpan Perubahan';
+            
+            const btnNew = document.getElementById('btnBuatInvBaru');
+            if(btnNew) {
+                btnNew.disabled = true;
+                btnNew.style.opacity = '0.5';
+                btnNew.style.cursor = 'not-allowed';
+            }
+
+            document.getElementById('custName').disabled = true;
+            
+            depositList = []; const productItems = [];
+            if (itemsData) {
+                itemsData.forEach(item => {
+                    if (item.unit === 'DEPOSIT' || item.product_id === 'DEPOSIT') { depositList.push({ ket: item.product_name, nom: parseFloat(item.total) || 0 }); }
+                    else { productItems.push(item); }
+                });
+            }
+            if (depositList.length === 0 && (parseFloat(invData.deposit) || 0) > 0) depositList.push({ ket: 'Deposit', nom: parseFloat(invData.deposit) });
+            
+            document.getElementById('invoiceNumber').value = invData.invoice_no;
+            
+            if(itemsData && itemsData.length > 0 && itemsData[0].tanggal) {
+                let tgl = itemsData[0].tanggal;
+                if(tgl.includes('/')) {
+                    const parts = tgl.split('/');
+                    if(parts.length === 3) {
+                        const monthsMap = { 'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'Mei': '05', 'Jun': '06', 'Jul': '07', 'Agu': '08', 'Sep': '09', 'Okt': '10', 'Nov': '11', 'Des': '12' };
+                        let m = monthsMap[parts[1]] || '01';
+                        document.getElementById('deliveryDate').value = `20${parts[2]}-${m}-${parts[0]}`;
+                    }
+                } else {
+                    document.getElementById('deliveryDate').value = tgl;
+                }
+            }
+
+            const customerObj = customers.find(c => c.name === invData.customer_name);
+            const custSelect = document.getElementById('custName');
+            if(customerObj) {
+                custSelect.value = customerObj.id; currentCustomerId = customerObj.id;
+                document.getElementById('warningRow').innerText = '✓ Mode Edit Supplier Aktif'; document.getElementById('warningRow').style.color = 'var(--primary)';
+            } else {
+                custSelect.value = ""; 
+            }
+
+            const tbody = document.getElementById('itemsBody'); tbody.innerHTML = '';
+            productItems.forEach(item => {
+                const tr = document.createElement('tr');
+                const availableProducts = getAvailableProductsForCurrentAgent();
+                let productOptions = '<option value="">-- Barang --</option>'; let isProductFound = false;
+                availableProducts.forEach(p => {
+                    const isSelected = (String(p.id) === String(item.product_id) || p.name === item.product_name) ? 'selected' : '';
+                    if (isSelected) isProductFound = true;
+                    productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.custom_price}" data-unit="${p.unit}" ${isSelected}>${p.name}</option>`;
+                });
+                if (!isProductFound && item.product_id) productOptions += `<option value="${item.product_id}" data-name="${item.product_name}" data-price="${item.price}" data-unit="${item.unit}" selected>${item.product_name}</option>`;
+                
+                tr.innerHTML = `
+                    <td><input type="number" class="item-qty text-right" value="${item.qty}" min="1" oninput="calculate()"></td>
+                    <td><input type="text" class="item-unit text-right" readonly value="${item.unit || '-'}"></td>
+                    <td><select class="item-select" onchange="onProductSelect(this)">${productOptions}</select></td>
+                    <td><input type="text" class="item-price-display text-right" readonly value="${new Intl.NumberFormat('id-ID').format(item.price)}"><input type="hidden" class="item-price" value="${item.price}"></td>
+                    <td class="item-total text-right" style="font-weight:600; font-style: italic;">${formatMoney(item.total)}</td>
+                    <td class="action-col text-center"><button class="btn-icon-danger" onclick="removeRow(this)">🗑️</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            calculate(); window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (err) { showWarningPopup("Terjadi Kesalahan", "Gagal memuat: " + err.message); }
+    }
+
+    async function previewInvoiceFromHistory(invoiceNo) {
+        if(!isSupabaseConnected) return;
+        showLoadingPopup("Memuat Pratinjau...");
+        try {
+            const { data: invData } = await supabaseClient.from('supplier_recaps').select('*').eq('invoice_no', invoiceNo).single();
+            const { data: itemsData } = await supabaseClient.from('supplier_recap_items').select('*').eq('invoice_no', invoiceNo);
+            
+            closePopup(); 
+
+            if(!invData) throw new Error("Rekap tidak ditemukan");
+
+            let itemsHtml = '';
+            let depositHtml = '';
+            let subtotal = parseFloat(invData.subtotal) || 0;
+            let balanceDue = parseFloat(invData.balance_due) || 0;
+            let totalDeposit = parseFloat(invData.deposit) || 0;
+            let displayDate = formatCustomDate(invData.created_at);
+
+            if (itemsData && itemsData.length > 0 && itemsData[0].tanggal) {
+                displayDate = formatCustomDate(itemsData[0].tanggal);
+                itemsData.forEach(item => {
+                    if (item.unit === 'DEPOSIT' || item.product_id === 'DEPOSIT') {
+                        depositHtml += `<tr><td style="padding: 4px; color: #555;">${item.product_name}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(item.price)}</td></tr>`;
+                    } else {
+                        itemsHtml += `<tr><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: center;">${item.qty}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: left;">${item.unit || '-'}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee;"><strong>${item.product_name}</strong></td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: right;">${formatMoney(item.price).replace('Rp ', '')}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600; font-style: italic;">${formatMoney(item.total)}</td></tr>`;
+                    }
+                });
+            }
+
+            if (depositHtml === '' && totalDeposit > 0) {
+                depositHtml = `<tr><td style="padding: 4px; color: #555;">Deposit</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(totalDeposit)}</td></tr>`;
+            }
+
+            document.getElementById('prevInvNo').innerText = invData.invoice_no; 
+            document.getElementById('prevCustName').innerText = invData.customer_name;
+            document.getElementById('prevDate').innerText = displayDate;
+            
+            document.getElementById('prevItemsBody').innerHTML = itemsHtml; 
+            document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
+            document.getElementById('prevDepositBody').innerHTML = depositHtml; 
+            document.getElementById('prevBalance').innerText = formatMoney(balanceDue);
+
+            document.getElementById('invoiceNumber').value = invoiceNo; 
+            
+            const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
+            if(btnSavePreview) {
+                btnSavePreview.innerHTML = isEditingMode ? '💾 Simpan Perubahan' : '💾 Simpan Rekap';
+            }
+
+            toggleModal('previewModal');
+
+        } catch (err) { 
+            showWarningPopup("Terjadi Kesalahan", "Gagal memuat pratinjau: " + err.message); 
+        }
+    }
+
+    function deleteInvoice(invoiceNo) {
+        document.getElementById('popupConfirmText').innerText = "Konfirmasi Hapus";
+        document.getElementById('popupConfirmSubtext').innerText = `Yakin ingin menghapus rekap ${invoiceNo}?`;
+        document.getElementById('popupLoadingState').style.display = 'none';
+        document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupWarningState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'block';
+        document.getElementById('popupOverlay').classList.add('active');
+
+        document.getElementById('btnPopupConfirmYes').onclick = async function() {
+            closePopup();
+            showLoadingPopup("Menghapus Rekap...");
+            if(isSupabaseConnected) {
+                try {
+                    await supabaseClient.from('supplier_recap_items').delete().eq('invoice_no', invoiceNo);
+                    await supabaseClient.from('supplier_recaps').delete().eq('invoice_no', invoiceNo);
+                    showSuccessPopup("Berhasil Dihapus", `Rekap ${invoiceNo} berhasil dihapus.`);
+                    await fetchHistoryDataSilent();
+                } catch(err) {
+                    showWarningPopup("Gagal", err.message);
+                }
+            }
+        };
+    }
+
+    function switchTab(tabId, btn, type) {
+        document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active'); btn.classList.add('active'); activeTabType = type; 
+    }
+
+    function renderDataManagement() {
+        let sortedCustomers = [...customers].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        document.getElementById('tblCustomersBody').innerHTML = sortedCustomers.map(c => {
+            const balance = customerBalances[c.name] || 0;
+            let balanceHtml = '<span style="color:var(--text-muted); font-style:italic;">Rp 0</span>';
+            if (balance > 0) {
+                balanceHtml = `<span style="color:var(--danger); font-weight:600; font-style:italic;">Hutang: ${formatMoney(balance)}</span>`;
+            } else if (balance < 0) {
+                balanceHtml = `<span style="color:var(--primary); font-weight:600; font-style:italic;">Deposit: ${formatMoney(Math.abs(balance))}</span>`;
+            }
+            return `
+                <tr>
+                    <td><b>${c.name}</b></td>
+                    <td>${balanceHtml}</td>
+                    <td>${c.phone || '-'}</td>
+                    <td>${c.address || '-'}</td>
+                    <td class="text-center"><button class="btn btn-outline" style="padding:4px 10px;" onclick="openEditModal('customer', ${c.id})">✏️</button></td>
+                </tr>
+            `;
+        }).join('');
+        
+        let sortedProducts = [...products].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        document.getElementById('tblProductsBody').innerHTML = sortedProducts.map(p => `<tr><td><b>${p.name}</b></td><td>${p.unit}</td><td>${formatMoney(p.default_price)}</td><td class="text-center"><button class="btn btn-outline" style="padding:4px 10px;" onclick="openEditModal('product', ${p.id})">✏️</button></td></tr>`).join('');
+    }
+
+    function renderDropdownCustomers() {
+        let options = '<option value="">-- Pilih Supplier --</option>';
+        [...customers].sort((a,b)=>a.name.localeCompare(b.name)).forEach(c => { options += `<option value="${c.id}">${c.name}</option>`; });
+        document.getElementById('custName').innerHTML = options;
+    }
+    
+    function openAddModal() {
+        isCreating = true;
+        editingType = activeTabType;
+        const formContent = document.getElementById('formContent');
+        const title = document.getElementById('formModalTitle');
+        document.getElementById('btnDeleteData').style.display = 'none';
+
+        if(editingType === 'customer') {
+            title.innerText = 'Tambah Supplier Baru';
+            formContent.innerHTML = `
+                <div class="form-group"><label>Nama Supplier</label><input type="text" id="inputName"></div>
+                <div class="form-group"><label>No. Telepon</label><input type="text" id="inputPhone" placeholder="08xxxxxxxxxx"></div>
+                <div class="form-group"><label>Alamat</label><textarea id="inputAddress" rows="2" placeholder="Masukkan alamat..."></textarea></div>
+                <div class="form-group"><label>Tipe Saldo Awal</label><select id="inputBalType"><option value="piutang">Hutang (Berhutang ke Supplier)</option><option value="deposit">Deposit (Kelebihan Bayar)</option></select></div>
+                <div class="form-group"><label>Nominal Saldo Awal (Rp)</label><input type="text" id="inputBalance" placeholder="0" oninput="formatRibuanInput(this)"></div>
+            `;
+        } else if(editingType === 'product') {
+            title.innerText = 'Tambah Barang Baru';
+            formContent.innerHTML = `
+                <div class="form-group"><label>Nama Barang</label><input type="text" id="inputProdName"></div>
+                <div class="form-group"><label>Satuan (Ball / Dus / Karung)</label><input type="text" id="inputProdUnit"></div>
+                <div class="form-group"><label>Harga Dasar</label><input type="text" id="inputProdPrice" oninput="formatRibuanInput(this)" placeholder="0"></div>
+            `;
+        }
+        toggleModal('formModal');
+    }
+
+    function openEditModal(type, id) {
+        isCreating = false;
+        editingType = type;
+        editingId = id;
+        
+        const formContent = document.getElementById('formContent');
+        const title = document.getElementById('formModalTitle');
+        document.getElementById('btnDeleteData').style.display = 'block';
+
+        if(type === 'customer') {
+            const c = customers.find(x => x.id === id);
+            const currentBal = customerBalances[c.name] || 0;
+            const balType = currentBal < 0 ? 'deposit' : 'piutang';
+            const balVal = Math.abs(currentBal);
+
+            title.innerText = 'Edit Supplier';
+            formContent.innerHTML = `
+                <div class="form-group"><label>Nama Supplier</label><input type="text" id="inputName" value="${c.name}"></div>
+                <div class="form-group"><label>No. Telepon</label><input type="text" id="inputPhone" value="${c.phone || ''}" placeholder="08xxxxxxxxxx"></div>
+                <div class="form-group"><label>Alamat</label><textarea id="inputAddress" rows="2" placeholder="Masukkan alamat...">${c.address || ''}</textarea></div>
+                <div class="form-group"><label>Tipe Saldo / Tagihan</label><select id="inputBalType"><option value="piutang" ${balType==='piutang'?'selected':''}>Hutang (Berhutang ke Supplier)</option><option value="deposit" ${balType==='deposit'?'selected':''}>Deposit (Kelebihan Bayar)</option></select></div>
+                <div class="form-group"><label>Nominal Saldo (Rp)</label><input type="text" id="inputBalance" value="${balVal > 0 ? new Intl.NumberFormat('id-ID').format(balVal) : ''}" placeholder="0" oninput="formatRibuanInput(this)"></div>
+            `;
+        } else if(type === 'product') {
+            const p = products.find(x => x.id === id);
+            title.innerText = 'Edit Barang';
+            formContent.innerHTML = `
+                <div class="form-group"><label>Nama Barang</label><input type="text" id="inputProdName" value="${p.name}"></div>
+                <div class="form-group"><label>Satuan</label><input type="text" id="inputProdUnit" value="${p.unit}"></div>
+                <div class="form-group"><label>Harga Dasar</label><input type="text" id="inputProdPrice" value="${new Intl.NumberFormat('id-ID').format(p.default_price)}" oninput="formatRibuanInput(this)"></div>
+            `;
+        }
+        toggleModal('formModal');
+    }
+
+    async function saveData() {
+        const btnSave = document.getElementById('btnSaveForm');
+        btnSave.innerText = 'Menyimpan...'; btnSave.disabled = true;
+
+        try {
+            if(editingType === 'customer') {
+                const name = document.getElementById('inputName').value.trim(); 
+                const phone = document.getElementById('inputPhone').value.trim() || "-"; 
+                const address = document.getElementById('inputAddress').value.trim() || "-";
+                const balType = document.getElementById('inputBalType').value;
+                let rawBal = getCleanNumber('inputBalance');
+                const finalBal = balType === 'deposit' ? -Math.abs(rawBal) : Math.abs(rawBal);
+
+                if (isCreating) {
+                    if(isSupabaseConnected) {
+                        const { data, error } = await supabaseClient.from('suppliers').insert([{ name, phone, address }]).select();
+                        if (!error && data) {
+                            customers.push(data[0]);
+                            if (finalBal !== 0) {
+                                await supabaseClient.from('supplier_recaps').insert([{ invoice_no: 'SALDO.' + Date.now(), customer_name: name, customer_phone: phone, customer_address: address, subtotal: balType==='piutang'?rawBal:0, deposit: balType==='deposit'?rawBal:0, balance_due: finalBal }]);
+                                customerBalances[name] = finalBal;
+                            }
+                        }
+                    } else {
+                        customers.push({ id: Date.now(), name, phone, address });
+                        customerBalances[name] = finalBal;
+                    }
+                } else {
+                    const oldCust = customers.find(c => c.id === editingId);
+                    const oldName = oldCust ? oldCust.name : '';
+
+                    if(isSupabaseConnected) {
+                        await supabaseClient.from('suppliers').update({ name, phone, address }).eq('id', editingId);
+                        
+                        if (oldName !== name) {
+                            await supabaseClient.from('supplier_recaps').update({ customer_name: name }).eq('customer_name', oldName);
+                            delete customerBalances[oldName];
+                        }
+
+                        const { data: existingInv } = await supabaseClient.from('supplier_recaps').select('invoice_no').eq('customer_name', name).order('created_at', { ascending: false }).limit(1);
+                        if (existingInv && existingInv.length > 0) {
+                            await supabaseClient.from('supplier_recaps').update({ balance_due: finalBal }).eq('invoice_no', existingInv[0].invoice_no);
+                        } else if (finalBal !== 0) {
+                            await supabaseClient.from('supplier_recaps').insert([{ invoice_no: 'SALDO.' + Date.now(), customer_name: name, customer_phone: phone, customer_address: address, subtotal: balType==='piutang'?rawBal:0, deposit: balType==='deposit'?rawBal:0, balance_due: finalBal }]);
+                        }
+                    }
+                    const idx = customers.findIndex(c => c.id === editingId); 
+                    if(idx > -1) customers[idx] = { ...customers[idx], name, phone, address };
+                    customerBalances[name] = finalBal;
+                }
+            } else if(editingType === 'product') {
+                const name = document.getElementById('inputProdName').value; const unit = document.getElementById('inputProdUnit').value; const default_price = getCleanNumber('inputProdPrice');
+                if (isCreating) {
+                    if(isSupabaseConnected) {
+                        const { data, error } = await supabaseClient.from('supplier_products').insert([{ name, unit, default_price }]).select();
+                        if (!error && data) products.push(data[0]);
+                    } else products.push({ id: Date.now(), name, unit, default_price });
+                } else {
+                    if(isSupabaseConnected) await supabaseClient.from('supplier_products').update({ name, unit, default_price }).eq('id', editingId);
+                    const idx = products.findIndex(p => p.id === editingId); if(idx > -1) products[idx] = { ...products[idx], name, unit, default_price };
+                }
+            }
+
+            renderDataManagement(); 
+            renderDropdownCustomers(); 
+            autoFillCustomer(); 
+            toggleModal('formModal');
+            
+        } catch (error) { showWarningPopup("Gagal Menyimpan", error.message); } finally { btnSave.innerText = 'Simpan'; btnSave.disabled = false; }
+    }
+
+    async function deleteData() {
+        document.getElementById('popupConfirmText').innerText = "Konfirmasi Hapus";
+        document.getElementById('popupConfirmSubtext').innerText = "Anda yakin ingin menghapus data ini?";
+        document.getElementById('popupLoadingState').style.display = 'none';
+        document.getElementById('popupSuccessState').style.display = 'none';
+        document.getElementById('popupWarningState').style.display = 'none';
+        document.getElementById('popupConfirmState').style.display = 'block';
+        document.getElementById('popupOverlay').classList.add('active');
+
+        document.getElementById('btnPopupConfirmYes').onclick = async function() {
+            closePopup();
+            try {
+                if(editingType === 'customer') {
+                    if(isSupabaseConnected) await supabaseClient.from('suppliers').delete().eq('id', editingId);
+                    customers = customers.filter(c => c.id !== editingId); 
+                } else if(editingType === 'product') {
+                    if(isSupabaseConnected) await supabaseClient.from('supplier_products').delete().eq('id', editingId);
+                    products = products.filter(p => p.id !== editingId); 
+                }
+                renderDataManagement(); renderDropdownCustomers(); autoFillCustomer(); toggleModal('formModal');
+            } catch (error) { showWarningPopup("Gagal Menghapus", error.message); }
+        };
+    }
+
+    async function autoFillCustomer() {
+        const select = document.getElementById('custName');
+        currentCustomerId = parseInt(select.value) || null;
+        const customer = customers.find(c => c.id === currentCustomerId);
+        
+        if (customer) {
+            document.getElementById('warningRow').style.color = 'var(--primary)'; document.getElementById('warningRow').innerText = '✓ Supplier aktif, silakan tambah barang';
+        } else {
+            document.getElementById('warningRow').style.color = 'var(--text-muted)'; document.getElementById('warningRow').innerText = 'Pilih supplier terlebih dahulu untuk menambah barang';
+        }
+
+        if(!isEditingMode) {
+            document.getElementById('itemsBody').innerHTML = ''; depositList = []; 
+            if(currentCustomerId && customer) {
+                // AMBIL DATA PALING TERAKHIR DARI DATABASE UNTUK SUPPLIER INI
+                const prevBalance = await fetchPreviousBalance(customer.name);
+                if (prevBalance > 0) {
+                    addPiutangRow(prevBalance); 
+                } else if (prevBalance < 0) {
+                    depositList.push({ ket: 'Deposit / Kelebihan Bayar Sebelumnya', nom: Math.abs(prevBalance) });
+                }
+                addRow(); 
+            }
+            calculate();
+        }
+    }
+
+    function getAvailableProductsForCurrentAgent() {
+        return [...products].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => ({ id: p.id, name: p.name, unit: p.unit, custom_price: p.default_price }));
+    }
+
+    function addRow() {
+        if(!currentCustomerId) {
+            showWarningPopup("Pilih Supplier", "Pilih Supplier Terlebih Dahulu");
+            return;
+        }
+
+        const tbody = document.getElementById('itemsBody'); const tr = document.createElement('tr');
+        let productOptions = '<option value="">-- Barang --</option>';
+        getAvailableProductsForCurrentAgent().forEach(p => { productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.custom_price}" data-unit="${p.unit}">${p.name}</option>`; });
+
+        tr.innerHTML = `
+            <td><input type="number" class="item-qty text-right" placeholder="0" min="1" oninput="calculate()"></td>
+            <td><input type="text" class="item-unit text-right" readonly placeholder="-"></td>
+            <td><select class="item-select" onchange="onProductSelect(this)">${productOptions}</select></td>
+            <td><input type="text" class="item-price-display text-right" readonly value="0"><input type="hidden" class="item-price" value="0"></td>
+            <td class="item-total text-right" style="font-weight:600; font-style: italic;">Rp 0</td>
+            <td class="action-col text-center"><button class="btn-icon-danger" onclick="removeRow(this)">🗑️</button></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function onProductSelect(selectElement) {
+        const row = selectElement.closest('tr'); const selectedOption = selectElement.options[selectElement.selectedIndex];
+        if(selectElement.value !== "") {
+            const price = selectedOption.getAttribute('data-price');
+            row.querySelector('.item-price').value = price; row.querySelector('.item-price-display').value = formatMoney(price).replace('Rp ', ''); row.querySelector('.item-unit').value = selectedOption.getAttribute('data-unit');
+        } else { row.querySelector('.item-price').value = 0; row.querySelector('.item-price-display').value = "0"; row.querySelector('.item-unit').value = ""; }
+        calculate();
+    }
+
+    function removeRow(btn) { btn.closest('tr').remove(); calculate(); }
+
+    function openDepositModal(index) {
+        editingDepositIndex = index;
+        if(index >= 0) { const dep = depositList[index]; document.getElementById('depKet').value = dep.ket; document.getElementById('depNom').value = new Intl.NumberFormat('id-ID').format(dep.nom); document.getElementById('btnHapusDeposit').style.display = 'block'; }
+        else { document.getElementById('depKet').value = ''; document.getElementById('depNom').value = ''; document.getElementById('btnHapusDeposit').style.display = 'none'; }
+        toggleModal('depositModal');
+    }
+    function simpanDeposit() { const ket = document.getElementById('depKet').value || 'Deposit'; const nom = getCleanNumber('depNom'); if(nom<=0)return; if(editingDepositIndex>=0) depositList[editingDepositIndex]={ket,nom}; else depositList.push({ket,nom}); toggleModal('depositModal'); calculate(); }
+    function hapusDeposit() { if(editingDepositIndex>=0) depositList.splice(editingDepositIndex,1); toggleModal('depositModal'); calculate(); }
+
+    function calculate() {
+        let subtotal = 0;
+        document.querySelectorAll('#itemsBody tr').forEach(row => {
+            const total = (parseFloat(row.querySelector('.item-qty').value)||0) * (parseFloat(row.querySelector('.item-price').value)||0);
+            row.querySelector('.item-total').innerText = formatMoney(total); subtotal += total;
+        });
+        let totalDeposit = 0; let depositHtml = '';
+        depositList.forEach((dep, idx) => { totalDeposit += dep.nom; depositHtml += `<div class="summary-row deposit-row" style="cursor:pointer;" onclick="openDepositModal(${idx})"><span>${dep.ket} <span class="hide-export">✏️</span></span><span style="color:var(--danger); font-weight:600; font-style: italic;">- ${formatMoney(dep.nom)}</span></div>`; });
+        document.getElementById('subTotal').innerText = formatMoney(subtotal); document.getElementById('depositListSummary').innerHTML = depositHtml; document.getElementById('balanceDue').innerText = formatMoney(subtotal - totalDeposit);
+    }
+
+    function simpanInvoiceAndClose() {
+        toggleModal('previewModal');
+        simpanInvoice();
+    }
+
+    function openPreviewModal() {
+        if(!currentCustomerId) return showWarningPopup("Pilih Supplier!", "Pilih Supplier terlebih dahulu sebelum melakukan pratinjau!");
+        
+        const invoiceNo = document.getElementById('invoiceNumber').value;
+        const customer = customers.find(c => c.id === currentCustomerId);
+        const rows = document.querySelectorAll('#itemsBody tr');
+        
+        let validItems = [];
+        let subtotal = 0;
+
+        rows.forEach(row => {
+            const prodSelect = row.querySelector('.item-select'); 
+            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0; 
+            const unit = row.querySelector('.item-unit').value;
+            const total = qty * price; 
+            
+            if (prodSelect.value && qty > 0) {
+                subtotal += total;
+                validItems.push({ prodSelect, qty, price, unit, total });
+            }
+        });
+        
+        if(validItems.length === 0 && depositList.length === 0) return showWarningPopup("Data Kosong!", "Belum ada rincian barang atau deposit yang ditambahkan!");
+
+        let itemsHtml = '';
+        validItems.forEach(item => {
+            const prodName = item.prodSelect.options[item.prodSelect.selectedIndex].getAttribute('data-name');
+            itemsHtml += `<tr><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: center;">${item.qty}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: left;">${item.unit}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee;"><strong>${prodName}</strong></td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: right;">${formatMoney(item.price).replace('Rp ', '')}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600; font-style: italic;">${formatMoney(item.total)}</td></tr>`;
+        });
+
+        let totalDeposit = 0; let depositHtml = '';
+        depositList.forEach(dep => { totalDeposit += dep.nom; depositHtml += `<tr><td style="padding: 4px; color: #555;">${dep.ket}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(dep.nom)}</td></tr>`; });
+        const balanceDue = subtotal - totalDeposit;
+
+        const deliveryDateVal = document.getElementById('deliveryDate').value;
+
+        document.getElementById('prevInvNo').innerText = invoiceNo; document.getElementById('prevCustName').innerText = customer.name;
+        document.getElementById('prevDate').innerText = formatCustomDate(deliveryDateVal);
+        
+        document.getElementById('prevItemsBody').innerHTML = itemsHtml; document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
+        document.getElementById('prevDepositBody').innerHTML = depositHtml; document.getElementById('prevBalance').innerText = formatMoney(balanceDue);
+        
+        const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
+        if(btnSavePreview) {
+            btnSavePreview.innerHTML = isEditingMode ? '💾 Simpan Perubahan' : '💾 Simpan Rekap';
+        }
+
+        toggleModal('previewModal');
+    }
+
+    function exportToPDF() {
+        if (typeof html2pdf === 'undefined') {
+            showWarningPopup("Sistem Belum Siap", "Sistem PDF belum termuat sempurna. Pastikan koneksi internet Anda aktif dan muat ulang halaman.");
+            return;
+        }
+        
+        showLoadingPopup("Menyiapkan Berkas PDF...");
+
+        setTimeout(() => {
+            const element = document.getElementById('previewContent'); 
+            const invoiceNo = document.getElementById('invoiceNumber').value;
+            const originalBorder = element.style.border;
+            element.style.border = 'none';
+
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `Rekap_${invoiceNo}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.border = originalBorder;
+                showSuccessPopup("PDF Berhasil Disimpan!", `File Rekap_${invoiceNo}.pdf berhasil diunduh.`);
+            }).catch(err => {
+                closePopup();
+                showWarningPopup("Gagal Ekspor", "Terjadi kesalahan saat memproses PDF: " + err.message);
+            });
+        }, 500);
+    }
+
+    function exportToJPG() {
+        showLoadingPopup("Menyiapkan Berkas Gambar JPG...");
+
+        setTimeout(() => {
+            const element = document.getElementById('previewContent'); 
+            const invoiceNo = document.getElementById('invoiceNumber').value;
+            
+            html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a'); 
+                link.download = `Rekap_${invoiceNo}.jpg`; 
+                link.href = canvas.toDataURL('image/jpeg', 0.9); 
+                link.click();
+                showSuccessPopup("JPG Berhasil Disimpan!", `File Rekap_${invoiceNo}.jpg berhasil diunduh.`);
+            }).catch(err => {
+                closePopup();
+                showWarningPopup("Gagal Ekspor", "Terjadi kesalahan saat memproses JPG: " + err.message);
+            });
+        }, 500);
+    }
+
+    async function simpanInvoice() {
+        if(!currentCustomerId) return showWarningPopup("Pilih Supplier!", "Pilih Supplier terlebih dahulu sebelum menyimpan rekap!");
+        const invoiceNo = document.getElementById('invoiceNumber').value;
+        const customer = customers.find(c => c.id === currentCustomerId);
+        const rows = document.querySelectorAll('#itemsBody tr');
+        const deliveryDateVal = document.getElementById('deliveryDate').value;
+        let subtotal = 0; let itemsPayload = [];
+        
+        rows.forEach(row => {
+            const prodSelect = row.querySelector('.item-select'); const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0; const total = qty * price; subtotal += total;
+            if (prodSelect.value && qty > 0) {
+                itemsPayload.push({
+                    invoice_no: invoiceNo, tanggal: deliveryDateVal,
+                    product_id: String(prodSelect.value), product_name: prodSelect.options[prodSelect.selectedIndex].getAttribute('data-name'),
+                    qty: qty, unit: row.querySelector('.item-unit').value, destination: "-", price: price, total: total                    
+                });
+            }
+        });
+        if(itemsPayload.length === 0 && depositList.length === 0) return showWarningPopup("Data Kosong!", "Lengkapi minimal 1 data barang atau deposit!");
+
+        let totalDeposit = 0;
+        depositList.forEach(dep => {
+            totalDeposit += dep.nom;
+            itemsPayload.push({ invoice_no: invoiceNo, tanggal: deliveryDateVal, product_id: 'DEPOSIT', product_name: dep.ket, qty: 1, unit: 'DEPOSIT', destination: '-', price: dep.nom, total: dep.nom });
+        });
+
+        const actionText = isEditingMode ? "Menyimpan Perubahan..." : "Menyimpan Rekap...";
+        const successTitle = isEditingMode ? "Perubahan Disimpan!" : "Rekap Berhasil Disimpan!";
+        const successSub = isEditingMode ? `Rekap ${invoiceNo} berhasil diperbarui.` : `Rekap ${invoiceNo} berhasil disimpan ke sistem.`;
+
+        showLoadingPopup(actionText);
+
+        if(!isSupabaseConnected) {
+            setTimeout(() => {
+                showSuccessPopup(successTitle, successSub);
+                buatInvoiceBaru(); 
+            }, 600);
+            return;
+        }
+
+        try {
+            if(isEditingMode) {
+                await supabaseClient.from('supplier_recap_items').delete().eq('invoice_no', invoiceNo);
+                await supabaseClient.from('supplier_recaps').update({ customer_name: customer.name, customer_phone: customer.phone || "-", customer_address: customer.address || "-", subtotal, deposit: totalDeposit, balance_due: subtotal - totalDeposit }).eq('invoice_no', invoiceNo);
+                await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
+                showSuccessPopup(successTitle, successSub);
+                buatInvoiceBaru(); 
+            } else {
+                await supabaseClient.from('supplier_recaps').insert([{ invoice_no: invoiceNo, customer_name: customer.name, customer_phone: customer.phone || "-", customer_address: customer.address || "-", subtotal, deposit: totalDeposit, balance_due: subtotal - totalDeposit }]);
+                await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
+                showSuccessPopup(successTitle, successSub);
+                buatInvoiceBaru(); 
+            }
+        } catch (error) { 
+            closePopup();
+            showWarningPopup("Gagal Menyimpan", error.message); 
+        }
+    }
+</script>
+
+</body>
+</html>
