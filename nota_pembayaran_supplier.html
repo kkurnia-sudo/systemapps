@@ -332,7 +332,7 @@
         <div class="summary-card">
             <div class="summary-row"><span>Sub Total Pesanan</span><span id="subTotal" style="font-weight: 600; color: var(--text-main); font-style: italic;">Rp 0</span></div>
             <div id="depositListSummary"></div>
-            <div class="summary-row total"><span>Sisa Pembayaran (Due)</span><span id="balanceDue">Rp 0</span></div>
+            <div class="summary-row total"><span id="balanceLabel">Sisa Pembayaran</span><span id="balanceDue">Rp 0</span></div>
         </div>
     </div>
 
@@ -376,7 +376,7 @@
                 <table style="width: 100%; font-size: 13px;">
                     <tr><td style="padding: 4px; color: #555;">Subtotal</td><td style="padding: 4px; text-align: right; font-weight: 600; font-style: italic;" id="prevSubtotal">-</td></tr>
                     <tbody id="prevDepositBody"></tbody>
-                    <tr><td style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;">SISA PEMBAYARAN</td><td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; color: #10b981!important; font-style: italic;" id="prevBalance">-</td></tr>
+                    <tr><td id="prevBalanceLabel" style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;">SISA PEMBAYARAN</td><td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; color: #10b981!important; font-style: italic;" id="prevBalance">-</td></tr>
                 </table>
             </div>
             <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #777;"><p>Terima Kasih Atas Kerjasamanya<br>Mulus Rahayu, Berkah Salamet<br>**SBR SYSTEMS**</p></div>
@@ -672,7 +672,7 @@
         tr.innerHTML = `
             <td><input type="number" class="item-qty text-right" value="1" readonly></td>
             <td><input type="text" class="item-unit text-right" value="-" readonly></td>
-            <td><select class="item-select" onchange="onProductSelect(this)"><option value="PIUTANG" data-name="Hutang Tagihan Sebelumnya" data-price="${amount}" data-unit="-" selected>Hutang Tagihan Sebelumnya</option></select></td>
+            <td><select class="item-select" onchange="onProductSelect(this)"><option value="PIUTANG" data-name="Sisa Bon Lama" data-price="${amount}" data-unit="-" selected>Sisa Bon Lama</option></select></td>
             <td><input type="text" class="item-price-display text-right" readonly value="${new Intl.NumberFormat('id-ID').format(amount)}"><input type="hidden" class="item-price" value="${amount}"></td>
             <td class="item-total text-right" style="font-weight:600; font-style: italic;">${formatMoney(amount)}</td>
             <td class="action-col text-center"><button class="btn-icon-danger" onclick="removeRow(this)">🗑️</button></td>
@@ -864,6 +864,10 @@
                 depositHtml = `<tr><td style="padding: 4px; color: #555;">Deposit</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(totalDeposit)}</td></tr>`;
             }
 
+            let labelTxt = balanceDue > 0 ? 'SISA PEMBAYARAN' : (balanceDue === 0 ? 'LUNAS' : 'DEPOSIT / KELEBIHAN BAYAR');
+            let prevBalanceLabelEl = document.getElementById('prevBalanceLabel');
+            if(prevBalanceLabelEl) prevBalanceLabelEl.innerText = labelTxt;
+
             document.getElementById('prevInvNo').innerText = invData.invoice_no; 
             document.getElementById('prevCustName').innerText = invData.customer_name;
             document.getElementById('prevDate').innerText = displayDate;
@@ -871,7 +875,7 @@
             document.getElementById('prevItemsBody').innerHTML = itemsHtml; 
             document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
             document.getElementById('prevDepositBody').innerHTML = depositHtml; 
-            document.getElementById('prevBalance').innerText = formatMoney(balanceDue);
+            document.getElementById('prevBalance').innerText = formatMoney(Math.abs(balanceDue));
 
             document.getElementById('invoiceNumber').value = invoiceNo; 
             
@@ -1124,7 +1128,7 @@
                 if (prevBalance > 0) {
                     addPiutangRow(prevBalance); 
                 } else if (prevBalance < 0) {
-                    depositList.push({ ket: 'Deposit / Kelebihan Bayar Sebelumnya', nom: Math.abs(prevBalance) });
+                    depositList.push({ ket: 'Deposit', nom: Math.abs(prevBalance) });
                 }
                 addRow(); 
             }
@@ -1185,7 +1189,13 @@
         });
         let totalDeposit = 0; let depositHtml = '';
         depositList.forEach((dep, idx) => { totalDeposit += dep.nom; depositHtml += `<div class="summary-row deposit-row" style="cursor:pointer;" onclick="openDepositModal(${idx})"><span>${dep.ket} <span class="hide-export">✏️</span></span><span style="color:var(--danger); font-weight:600; font-style: italic;">- ${formatMoney(dep.nom)}</span></div>`; });
-        document.getElementById('subTotal').innerText = formatMoney(subtotal); document.getElementById('depositListSummary').innerHTML = depositHtml; document.getElementById('balanceDue').innerText = formatMoney(subtotal - totalDeposit);
+        
+        let sisa = subtotal - totalDeposit;
+        let balanceLabel = sisa > 0 ? 'Sisa Pembayaran' : (sisa === 0 ? 'LUNAS' : 'Deposit / Kelebihan Bayar');
+        let balanceLabelEl = document.getElementById('balanceLabel');
+        if (balanceLabelEl) balanceLabelEl.innerText = balanceLabel;
+        
+        document.getElementById('subTotal').innerText = formatMoney(subtotal); document.getElementById('depositListSummary').innerHTML = depositHtml; document.getElementById('balanceDue').innerText = formatMoney(Math.abs(sisa));
     }
 
     function simpanInvoiceAndClose() {
@@ -1227,6 +1237,10 @@
         let totalDeposit = 0; let depositHtml = '';
         depositList.forEach(dep => { totalDeposit += dep.nom; depositHtml += `<tr><td style="padding: 4px; color: #555;">${dep.ket}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(dep.nom)}</td></tr>`; });
         const balanceDue = subtotal - totalDeposit;
+        
+        let labelTxt = balanceDue > 0 ? 'SISA PEMBAYARAN' : (balanceDue === 0 ? 'LUNAS' : 'DEPOSIT / KELEBIHAN BAYAR');
+        let prevBalanceLabelEl = document.getElementById('prevBalanceLabel');
+        if(prevBalanceLabelEl) prevBalanceLabelEl.innerText = labelTxt;
 
         const deliveryDateVal = document.getElementById('deliveryDate').value;
 
@@ -1234,7 +1248,7 @@
         document.getElementById('prevDate').innerText = formatCustomDate(deliveryDateVal);
         
         document.getElementById('prevItemsBody').innerHTML = itemsHtml; document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
-        document.getElementById('prevDepositBody').innerHTML = depositHtml; document.getElementById('prevBalance').innerText = formatMoney(balanceDue);
+        document.getElementById('prevDepositBody').innerHTML = depositHtml; document.getElementById('prevBalance').innerText = formatMoney(Math.abs(balanceDue));
         
         const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
         if(btnSavePreview) {
