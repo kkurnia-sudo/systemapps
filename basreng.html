@@ -11,10 +11,11 @@
         tailwind.config = { darkMode: 'class', theme: { extend: {} } }
     </script>
     
-    <!-- Supabase, html2canvas (PNG), html2pdf (PDF) -->
+    <!-- Supabase, html2canvas (PNG), html2pdf (PDF), SheetJS (Excel) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; transition: background 0.3s; }
@@ -50,6 +51,16 @@
             transform: translateX(-20px);
             pointer-events: none;
             overflow: hidden;
+        }
+
+        /* Animasi Kelap-Kelip (Blinking) untuk Tombol Simpan Invoice */
+        @keyframes kelapKelip {
+            0% { opacity: 1; transform: scale(1); box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4); }
+            50% { opacity: 0.7; transform: scale(0.98); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            100% { opacity: 1; transform: scale(1); box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4); }
+        }
+        .btn-kelap-kelip {
+            animation: kelapKelip 1.5s ease-in-out infinite;
         }
 
         /* Hapus Numeric Up/Down */
@@ -101,7 +112,7 @@
         </div>
     </div>
 
-    <!-- MODAL KONFIRMASI HAPUS UNIVERSAL (SERAGAM UNTUK SEMUA AKSI HAPUS) -->
+    <!-- MODAL KONFIRMASI HAPUS UNIVERSAL -->
     <div id="modalKonfirmasiHapus" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-[90] p-4">
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 w-full max-w-sm overflow-hidden p-6 text-center space-y-4">
             <div class="w-16 h-16 bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-full flex items-center justify-center mx-auto shadow-inner">
@@ -118,7 +129,7 @@
         </div>
     </div>
 
-    <!-- LAYOUT TERSEMBUNYI UNTUK EXPORT REKAPAN PROFESIONAL -->
+    <!-- LAYOUT TERSEMBUNYI UNTUK EXPORT REKAPAN -->
     <div id="exportContainerWrapper" style="position: absolute; left: -9999px; top: 0; z-index: -10;">
         <div id="exportRekapArea" style="width: 800px; background: white; padding: 40px; color: black; font-family: 'Inter', sans-serif;">
             <div style="display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px;">
@@ -153,13 +164,35 @@
                         <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Status</th>
                     </tr>
                 </thead>
-                <tbody id="expTableBody">
-                    <!-- Diisi via JS -->
-                </tbody>
+                <tbody id="expTableBody"></tbody>
             </table>
         </div>
     </div>
-    <!-- AKHIR LAYOUT TERSEMBUNYI -->
+    
+    <!-- LAYOUT TERSEMBUNYI UNTUK EXPORT ARSIP -->
+    <div id="exportArsipWrapper" style="position: absolute; left: -9999px; top: 0; z-index: -10;">
+        <div id="exportArsipArea" style="width: 800px; background: white; padding: 40px; color: black; font-family: 'Inter', sans-serif;">
+            <div style="display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px;">
+                <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/831781eec1c40a9ab82217921961088e1075e044/sbr_logo.png" style="width: 60px; height: 60px; margin-right: 15px;">
+                <div>
+                    <h2 style="margin: 0; font-size: 24px; color: #1e3a8a; font-family: 'Poppins', sans-serif; font-weight: bold;">SBR PUTRA FOOD</h2>
+                    <p style="margin: 0; font-size: 12px; color: #4b5563;">Arsip Data Barang Masuk Keseluruhan</p>
+                </div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px;">
+                <thead>
+                    <tr style="background-color: #1e3a8a; color: white;">
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Tanggal</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Agen & Kurir</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Varian & Qty</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: right;">Nominal</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="expArsipBody"></tbody>
+            </table>
+        </div>
+    </div>
 
     <div class="max-w-[1400px] mx-auto space-y-6">
         <!-- HEADER -->
@@ -218,7 +251,7 @@
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg> Arsip Data
                 </button>
                 <button onclick="toggleModal('modalBarangKeluar')" class="w-full text-left bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 text-rose-800 dark:text-rose-300 px-3 py-2.5 rounded-xl text-sm font-bold transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z"></path></svg> Brg Keluar / Retur
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z"></path></svg> Barang Keluar
                 </button>
                 <button onclick="toggleModal('modalManajemen')" class="w-full text-left bg-gray-50 hover:bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 px-3 py-2.5 rounded-xl text-sm font-bold transition flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> Data Master
@@ -266,7 +299,7 @@
                             <input type="text" id="keterangan_barang" placeholder="Contoh: Catatan khusus / bonus" class="w-full rounded-xl border-gray-300 border p-2 text-sm outline-none focus:border-indigo-500">
                         </div>
                         <div class="bg-indigo-50 dark:bg-slate-800 p-3 rounded-xl text-center border dark:border-slate-700">
-                            <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Estimasi Tagihan</p>
+                            <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Total Harga</p>
                             <p class="text-xl font-poppins-custom text-indigo-700 dark:text-indigo-400" id="nominalKalkulasi">Rp 0</p>
                         </div>
                         <button type="submit" id="btnSimpanCatat" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg transition">Simpan Barang Masuk</button>
@@ -341,7 +374,7 @@
                         <input type="text" id="edit_keterangan" placeholder="Contoh: Catatan khusus / bonus" class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none focus:border-indigo-500 text-gray-700 dark:text-gray-100">
                     </div>
                     <div class="bg-indigo-50 dark:bg-slate-800/50 p-3 rounded-xl text-center border border-indigo-100 dark:border-slate-700">
-                        <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Estimasi Tagihan Update</p>
+                        <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Total Harga Update</p>
                         <p class="text-xl font-poppins-custom text-indigo-700 dark:text-indigo-400" id="edit_nominalKalkulasi">Rp 0</p>
                     </div>
                 </form>
@@ -510,10 +543,11 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 border-b flex justify-between bg-gray-50"><h3 class="text-lg font-bold flex items-center"><svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg> Arsip Lengkap</h3><button onclick="toggleModal('modalArsip')" class="text-2xl">&times;</button></div>
             <div class="p-6 overflow-y-auto flex-1 bg-white">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 bg-gray-50 p-4 rounded-xl border mb-4">
                     <div><label class="text-[10px] font-bold uppercase text-gray-500">Tgl Mulai</label><input type="date" id="fTM" class="w-full border p-2 text-xs rounded-lg outline-none focus:border-amber-500"></div>
                     <div><label class="text-[10px] font-bold uppercase text-gray-500">Tgl Akhir</label><input type="date" id="fTA" class="w-full border p-2 text-xs rounded-lg outline-none focus:border-amber-500"></div>
                     <div><label class="text-[10px] font-bold uppercase text-gray-500">Agen</label><select id="fAg" class="w-full border p-2 text-xs rounded-lg outline-none focus:border-amber-500"><option value="">Semua</option><option value="Jambi">Jambi</option><option value="Jakarta">Jakarta</option></select></div>
+                    <div><label class="text-[10px] font-bold uppercase text-gray-500">Varian</label><select id="fVar" class="w-full border p-2 text-xs rounded-lg outline-none focus:border-amber-500"><option value="">Semua</option></select></div>
                     <div class="flex items-end"><button onclick="muatDataArsip()" class="w-full bg-amber-600 hover:bg-amber-700 text-white p-2 rounded-lg text-xs font-bold transition">Terapkan Filter</button></div>
                 </div>
                 <div class="border rounded-xl overflow-hidden">
@@ -532,6 +566,15 @@
                     </table>
                 </div>
             </div>
+            <!-- FOOTER TOMBOL ARSIP -->
+            <div class="p-4 border-t bg-gray-50 flex justify-between items-center flex-wrap gap-3">
+                <div class="flex gap-2">
+                    <button onclick="exportArsipExcel()" class="px-4 py-2 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition shadow-sm border border-emerald-100">📊 Simpan Excel</button>
+                    <button onclick="exportArsipPDF()" class="px-4 py-2 rounded-xl text-sm font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-sm border border-rose-100">📄 Simpan PDF</button>
+                    <button onclick="exportArsipPNG()" class="px-4 py-2 rounded-xl text-sm font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 transition shadow-sm border border-blue-100">🖼️ Simpan PNG</button>
+                </div>
+                <button onclick="toggleModal('modalArsip')" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-gray-200 text-gray-700 hover:bg-gray-300 transition">Tutup Layar</button>
+            </div>
         </div>
     </div>
 
@@ -540,7 +583,14 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 flex justify-between items-center border-b bg-rose-50"><h3 class="text-lg font-bold text-rose-800 flex items-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z"></path></svg> Daftar Nota Barang Keluar / Retur</h3><button onclick="toggleModal('modalBarangKeluar')" class="text-2xl hover:text-rose-900">&times;</button></div>
             <div class="p-6 overflow-y-auto flex-1 bg-white">
-                <div class="flex justify-between items-center mb-5"><p class="text-sm text-gray-500">Riwayat nota pengeluaran operasional / retur agen.</p><button onclick="bukaModalNotaA6()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2 rounded-xl text-sm transition shadow-sm">+ Buat Nota Baru</button></div>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-3">
+                    <p class="text-sm text-gray-500">Riwayat nota pengeluaran operasional / retur agen.</p>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <input type="date" id="filterNotaTgl" class="border p-2 rounded-xl text-xs outline-none bg-gray-50" onchange="renderListNota()">
+                        <input type="text" id="filterNotaJudul" placeholder="Cari Judul / Isi..." class="border p-2 rounded-xl text-xs outline-none bg-gray-50 flex-1 md:w-48" oninput="renderListNota()">
+                        <button onclick="bukaModalNotaA6()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2 rounded-xl text-sm transition shadow-sm whitespace-nowrap">+ Buat Nota</button>
+                    </div>
+                </div>
                 <div class="border rounded-xl overflow-hidden">
                     <table class="w-full text-sm text-left"><thead class="bg-gray-100 text-xs uppercase text-gray-500"><tr><th class="px-4 py-3">Tgl</th><th class="px-4 py-3">Rincian Judul / Nota</th><th class="px-4 py-3 text-right">Nominal Sisa</th><th class="px-4 py-3 text-center">Aksi</th></tr></thead><tbody id="listNotaKeluar" class="divide-y text-gray-700"></tbody></table>
                 </div>
@@ -549,47 +599,50 @@
     </div>
 
     <!-- MODAL PREVIEW DETAIL NOTA KELUAR -->
-    <div id="modalPreviewNotaKeluar" class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm hidden items-center justify-center z-[70] p-4">
+    <div id="modalPreviewNotaKeluar" class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm hidden items-center justify-center z-[80] p-4">
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="px-6 py-5 bg-gradient-to-r from-rose-500 to-pink-600 text-white flex justify-between items-center">
-                <div>
-                    <h3 class="text-lg font-bold tracking-tight">Pratinjau Detail Nota Keluar</h3>
-                    <p class="text-xs text-rose-100 font-medium" id="previewNotaTgl">-</p>
-                </div>
-                <button onclick="document.getElementById('modalPreviewNotaKeluar').classList.add('hidden')" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
-            </div>
-            <div class="p-6 overflow-y-auto flex-1 space-y-6">
-                <div class="space-y-3">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Daftar Item Barang</p>
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-[11px] font-bold text-gray-400 uppercase border-b border-gray-100 dark:border-slate-800">
-                                <th class="pb-2 text-left">Item / Qty</th>
-                                <th class="pb-2 text-right">Subtotal</th>
-                            </tr>
-                        </thead>
-                        <tbody id="previewNotaItemsBody" class="divide-y divide-gray-50 dark:divide-slate-800 font-medium text-gray-700 dark:text-gray-300"></tbody>
-                    </table>
-                </div>
+            <div class="overflow-y-auto flex-1 bg-gray-100 dark:bg-slate-900 p-4 sm:p-6">
+                <!-- PRINT AREA NOTA KELUAR -->
+                <div id="areaPratinjauNota" class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl border border-gray-200 dark:border-slate-700 space-y-6 relative shadow-sm">
+                    <div class="border-b border-gray-100 dark:border-slate-700 pb-4 flex justify-between items-start">
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-bold text-rose-600">NOTA PENGELUARAN</h2>
+                            <p class="text-xs text-gray-500 font-medium mt-1">SBR Putra Food</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-bold text-gray-800 dark:text-gray-200" id="previewNotaTgl">-</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Daftar Item / Rincian</p>
+                        <table class="w-full text-sm">
+                            <tbody id="previewNotaItemsBody" class="divide-y divide-gray-50 dark:divide-slate-700/50 font-medium text-gray-700 dark:text-gray-300"></tbody>
+                        </table>
+                    </div>
 
-                <div class="flex justify-end pt-2">
-                    <div class="w-full sm:w-[75%] space-y-2.5 bg-gray-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-gray-100 dark:border-slate-800">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Nota</span>
-                            <span class="text-xl font-extrabold text-rose-600 font-poppins-custom" id="previewNotaTotal">Rp 0</span>
+                    <div class="pt-4 border-t border-gray-100 dark:border-slate-700 space-y-2">
+                        <div class="flex justify-between items-center text-xs font-semibold text-gray-600 dark:text-gray-400">
+                            <span>Total Keseluruhan</span>
+                            <span id="previewNotaTotal" class="font-poppins-custom text-gray-900 dark:text-gray-100">Rp 0</span>
                         </div>
                         <div class="flex justify-between items-center text-xs font-semibold text-gray-600 dark:text-gray-400">
-                            <span>Terbayar / Terpakai</span>
-                            <span id="previewNotaTerbayar" class="font-poppins-custom text-gray-800 dark:text-gray-200">Rp 0</span>
+                            <span>Terbayar / Dipakai</span>
+                            <span id="previewNotaTerbayar" class="font-poppins-custom text-gray-900 dark:text-gray-100">Rp 0</span>
                         </div>
-                        <div class="flex justify-between items-center pt-2 border-t border-gray-200/60 dark:border-slate-700">
-                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Sisa Potongan</span>
-                            <span class="text-xl font-extrabold text-emerald-600 font-poppins-custom" id="previewNotaSisa">Rp 0</span>
+                        <div class="flex justify-between items-center pt-2 border-t border-gray-200/60 dark:border-slate-600">
+                            <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Sisa Saldo</span>
+                            <span class="text-lg font-extrabold text-rose-600 font-poppins-custom" id="previewNotaSisa">Rp 0</span>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="p-4 px-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/50 flex justify-end">
+            
+            <div class="p-4 px-6 border-t border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center flex-wrap gap-3">
+                <div class="flex gap-2">
+                    <button onclick="simpanPDF('areaPratinjauNota', 'Nota_Pengeluaran_SBR')" class="px-4 py-2 rounded-xl text-sm font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-sm border border-rose-100">📄 PDF</button>
+                    <button onclick="simpanPNG('areaPratinjauNota', 'Nota_Pengeluaran_SBR')" class="px-4 py-2 rounded-xl text-sm font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 transition shadow-sm border border-blue-100">🖼️ PNG</button>
+                </div>
                 <button onclick="document.getElementById('modalPreviewNotaKeluar').classList.add('hidden')" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 transition">Tutup</button>
             </div>
         </div>
@@ -646,9 +699,12 @@
                 </div>
             </div>
 
-            <div class="p-4 px-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/50 flex justify-end gap-3">
-                <button onclick="document.getElementById('modalNotaA6').classList.add('hidden')" class="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition">Batal</button>
-                <button id="btnSimpanNotaKeluar" onclick="simpanNotaA6()" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition">Simpan Nota</button>
+            <div class="p-4 px-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/50 flex justify-between flex-wrap gap-3">
+                <button onclick="previewCurrentNota()" type="button" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition shadow-sm border border-indigo-100">👁️ Pratinjau & Cetak</button>
+                <div class="flex gap-2">
+                    <button onclick="document.getElementById('modalNotaA6').classList.add('hidden')" class="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-800 transition">Batal</button>
+                    <button id="btnSimpanNotaKeluar" onclick="simpanNotaA6()" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition">Simpan Nota</button>
+                </div>
             </div>
         </div>
     </div>
@@ -753,25 +809,13 @@
                     <div class="space-y-3 relative z-10">
                         <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Rincian Barang Masuk</p>
                         <table class="w-full text-sm">
-                            <thead>
-                                <tr class="text-[11px] font-bold text-gray-400 uppercase border-b border-gray-100">
-                                    <th class="pb-2 text-left">Deskripsi / Varian</th>
-                                    <th class="pb-2 text-right">Subtotal</th>
-                                </tr>
-                            </thead>
                             <tbody id="invListMasuk" class="divide-y divide-gray-50 font-medium text-gray-700"></tbody>
                         </table>
                     </div>
 
                     <div id="invPotonganSection" class="space-y-3 relative z-10">
-                        <p class="text-[11px] font-bold uppercase tracking-wider text-rose-500">Rincian Potongan / Retur</p>
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-rose-500">Rincian Potongan</p>
                         <table class="w-full text-sm">
-                            <thead>
-                                <tr class="text-[11px] font-bold text-rose-400 uppercase border-b border-rose-50">
-                                    <th class="pb-2 text-left">Judul Potongan</th>
-                                    <th class="pb-2 text-right">Nominal</th>
-                                </tr>
-                            </thead>
                             <tbody id="invListKeluar" class="divide-y divide-rose-50 font-medium text-rose-700"></tbody>
                         </table>
                     </div>
@@ -802,11 +846,11 @@
                 <div class="flex gap-2">
                     <button onclick="simpanPDF('printArea', 'Invoice_SBR')" class="px-4 py-2 rounded-xl text-sm font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-sm border border-rose-100">📄 PDF</button>
                     <button onclick="simpanPNG('printArea', 'Invoice_SBR')" class="px-4 py-2 rounded-xl text-sm font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 transition shadow-sm border border-blue-100">🖼️ PNG</button>
+                    <button onclick="window.print()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition shadow-sm">🖨️ Cetak</button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="document.getElementById('modalInvoice').classList.add('hidden')" class="px-4 py-2 rounded-xl text-sm font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 transition">Tutup</button>
-                    <button onclick="window.print()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition shadow-sm">🖨️ Cetak</button>
-                    <button id="btnSimpanInv" onclick="konfirmasiPembayaranDB()" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition">✅ Simpan Inv</button>
+                    <button onclick="kembaliDariInvoice()" class="px-4 py-2 rounded-xl text-sm font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 transition">Kembali</button>
+                    <button id="btnSimpanInv" onclick="konfirmasiPembayaranDB()" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition btn-kelap-kelip">✅ Simpan Inv</button>
                 </div>
             </div>
         </div>
@@ -880,7 +924,7 @@
             toggleModal('modalKonfirmasiHapus');
         }
 
-        // --- EXPORT PDF & PNG UTK INVOICE (DENGAN POPUP) ---
+        // --- EXPORT PDF & PNG UTK INVOICE/NOTA (DENGAN POPUP) ---
         function simpanPDF(elementId, fileName) {
             tampilkanStatusLoading("Menyiapkan Dokumen PDF", "Sedang mengonversi tata letak ke format PDF...");
             const el = document.getElementById(elementId);
@@ -912,6 +956,21 @@
                 alert("Terjadi kesalahan saat menyimpan PNG.");
                 tutupModalStatus();
             });
+        }
+
+        // --- FUNGSI KEMBALI DARI INVOICE ---
+        function kembaliDariInvoice() {
+            document.getElementById('modalInvoice').classList.add('hidden');
+            document.getElementById('modalInvoice').classList.remove('flex');
+            
+            // Cek dari mana modal dibuka, jika tombol Simpan Invoice terlihat berarti dari mode Pembayaran Baru
+            if (document.getElementById('btnSimpanInv').style.display !== 'none') {
+                document.getElementById('modalPembayaran').classList.remove('hidden');
+                document.getElementById('modalPembayaran').classList.add('flex');
+            } else {
+                document.getElementById('modalRiwayatInvoice').classList.remove('hidden');
+                document.getElementById('modalRiwayatInvoice').classList.add('flex');
+            }
         }
 
         // --- EXPORT PDF & PNG KHUSUS REKAP ---
@@ -973,6 +1032,68 @@
             });
         }
 
+        // --- EXPORT PDF, PNG, EXCEL KHUSUS ARSIP ---
+        function exportArsipExcel() {
+            if(!globalArsip || globalArsip.length === 0) return alert("Tidak ada data untuk diekspor.");
+            tampilkanStatusLoading("Menyiapkan Excel", "Memproses data arsip ke format .xlsx...");
+            setTimeout(() => {
+                const dataToExport = globalArsip.map(r => ({
+                    "Tanggal": formatTgl(r.tanggal),
+                    "Agen": r.agen,
+                    "Kurir": r.keterangan_kurir,
+                    "Varian": r.varian,
+                    "Qty Bal": r.qty_bal,
+                    "Qty Karung/Duz": r.qty_karung,
+                    "Nominal": r.total_nominal,
+                    "Keterangan": r.keterangan_barang || '-',
+                    "Status Pembayaran": r.status_pembayaran
+                }));
+                const ws = XLSX.utils.json_to_sheet(dataToExport);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Arsip");
+                XLSX.writeFile(wb, 'Arsip_SBR_' + Date.now() + '.xlsx');
+                tampilkanStatusSukses("File Excel berhasil diunduh.");
+            }, 500);
+        }
+
+        function siapkanDataExportArsip() {
+            document.getElementById('expArsipBody').innerHTML = globalArsip.map(r => {
+                const ket = r.keterangan_barang ? `<br><span style="font-size:10px; color:#666; font-style:italic;">${r.keterangan_barang}</span>` : '';
+                return `<tr>
+                    <td style="padding: 10px; border: 1px solid #ddd; border-bottom: 1px solid #eee;">${formatTgl(r.tanggal)}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; border-bottom: 1px solid #eee;"><strong>${r.agen}</strong><br><span style="font-size:10px; color:#666;">Kurir: ${r.keterangan_kurir}</span></td>
+                    <td style="padding: 10px; border: 1px solid #ddd; border-bottom: 1px solid #eee;">${r.varian} <strong>(${formatQtyDisplay(r)})</strong>${ket}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${formatRupiah(r.total_nominal)}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; border-bottom: 1px solid #eee; text-align: center;">${r.status_pembayaran}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function exportArsipPDF() {
+            if(globalArsip.length === 0) return alert("Data kosong");
+            tampilkanStatusLoading("Menyiapkan PDF Arsip", "Merakit dokumen PDF...");
+            siapkanDataExportArsip();
+            const el = document.getElementById('exportArsipArea');
+            html2pdf().set({
+                margin: 0.3, filename: 'Arsip_SBR_' + Date.now() + '.pdf',
+                image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            }).from(el).save().then(() => tampilkanStatusSukses("File PDF berhasil diunduh.")).catch(() => tutupModalStatus());
+        }
+
+        function exportArsipPNG() {
+            if(globalArsip.length === 0) return alert("Data kosong");
+            tampilkanStatusLoading("Menyiapkan PNG Arsip", "Merender gambar resolusi tinggi...");
+            siapkanDataExportArsip();
+            const el = document.getElementById('exportArsipArea');
+            html2canvas(el, {scale: 2, useCORS: true}).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Arsip_SBR_' + Date.now() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                tampilkanStatusSukses("File gambar berhasil diunduh.");
+            }).catch(() => tutupModalStatus());
+        }
+
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('sidebar-hidden'); }
         function toggleModal(id) {
             const m = document.getElementById(id);
@@ -989,7 +1110,11 @@
                     document.getElementById('splitCash').value = '';
                     document.getElementById('splitTransfer').value = '';
                 }
-                if(id==='modalArsip') muatDataArsip();
+                if(id==='modalArsip') {
+                    const varianList = getLokalData('varian_basreng');
+                    document.getElementById('fVar').innerHTML = '<option value="">Semua</option>' + varianList.map(v => `<option value="${v.nama}">${v.nama}</option>`).join('');
+                    muatDataArsip();
+                }
                 if(id==='modalRiwayatInvoice') muatRiwayatInvoice();
                 if(id==='modalRekapKustom') initModalRekapKustom();
             } else { m.classList.add('hidden'); m.classList.remove('flex'); renderDropdowns(); }
@@ -1303,7 +1428,6 @@
         function bukaModalAksiRekap(id) { selectedRekapId = id; const m = document.getElementById('modalAksiRekap'); m.classList.remove('hidden'); m.classList.add('flex'); }
         function tutupModalAksi() { selectedRekapId = null; const m = document.getElementById('modalAksiRekap'); m.classList.add('hidden'); m.classList.remove('flex'); }
         
-        // DIPERBAIKI: Amankan ID ke variabel lokal sebelum tutupModalAksi mereset selectedRekapId
         function aksiHapusRekap() {
             if(!selectedRekapId) return;
             const idToDel = selectedRekapId;
@@ -1333,11 +1457,13 @@
             const fTM = document.getElementById('fTM').value;
             const fTA = document.getElementById('fTA').value;
             const fAg = document.getElementById('fAg').value;
+            const fVar = document.getElementById('fVar') ? document.getElementById('fVar').value : '';
             
             let q = supabaseClient.from('pencatatan_basreng').select('*').order('tanggal', { ascending: false }).limit(100);
             if(fTM) q = q.gte('tanggal', fTM);
             if(fTA) q = q.lte('tanggal', fTA);
             if(fAg) q = q.eq('agen', fAg);
+            if(fVar) q = q.eq('varian', fVar);
 
             const { data } = await q;
             globalArsip = data || [];
@@ -1374,7 +1500,7 @@
             document.getElementById('titleModalNota').innerText = "Buat Nota Pengeluaran / Retur";
             document.getElementById('notaA6Tgl').valueAsDate = new Date(); 
             document.getElementById('notaA6Judul').value = ''; 
-            document.getElementById('btnSimpanNotaKeluar').innerText = 'Simpan Nota Baru';
+            document.getElementById('btnSimpanNotaKeluar').innerText = 'Simpan Nota';
             notaRows = [{ qty: '', unit: '', nama: '', harga: 0, jml: 0 }]; 
             renderNotaA6(); toggleModal('modalNotaA6'); 
         }
@@ -1420,10 +1546,49 @@
             }
         }
 
+        function previewCurrentNota() {
+            const tgl = document.getElementById('notaA6Tgl').value || new Date().toISOString().split('T')[0];
+            const f = notaRows.filter(x => x.nama.trim() !== '');
+            const t = f.reduce((s, i) => s + i.jml, 0);
+
+            document.getElementById('previewNotaTgl').innerText = `Tgl: ${formatTgl(tgl)}`;
+            document.getElementById('previewNotaTotal').innerText = formatRupiah(t);
+            
+            let terpakai = 0;
+            if (window.editNotaId) {
+                const existing = globalNotaKeluar.find(x => x.id === window.editNotaId);
+                if (existing) terpakai = existing.terpakai || 0;
+            }
+            
+            document.getElementById('previewNotaTerbayar').innerText = formatRupiah(terpakai);
+            document.getElementById('previewNotaSisa').innerText = formatRupiah(t - terpakai);
+            
+            document.getElementById('previewNotaItemsBody').innerHTML = f.map(item => `<tr><td class="py-2.5"><div class="font-bold text-gray-900 dark:text-gray-100">${item.nama || ''}</div><div class="text-sm font-poppins-custom italic text-gray-500 mt-0.5">${item.qty || 0} ${item.unit || ''} x ${formatRupiah(item.harga || 0)}</div></td><td class="py-2.5 text-right font-bold font-poppins-custom align-top">${formatRupiah(item.jml)}</td></tr>`).join('');
+            
+            const m = document.getElementById('modalPreviewNotaKeluar'); 
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+
         async function loadNotaKeluar() {
             const { data } = await supabaseClient.from('nota_keluar').select('*').eq('status_potongan', 'Belum Dipotong').order('tanggal', {ascending: false});
             globalNotaKeluar = data || [];
-            document.getElementById('listNotaKeluar').innerHTML = globalNotaKeluar.map(r => {
+            renderListNota();
+        }
+
+        function renderListNota() {
+            const tgl = document.getElementById('filterNotaTgl').value;
+            const text = document.getElementById('filterNotaJudul').value.toLowerCase();
+            
+            let filtered = globalNotaKeluar;
+            if (tgl) filtered = filtered.filter(x => x.tanggal === tgl);
+            if (text) {
+                filtered = filtered.filter(x => 
+                    (x.judul_nota && x.judul_nota.toLowerCase().includes(text)) || 
+                    (x.rincian && x.rincian.some(r => r.nama.toLowerCase().includes(text)))
+                );
+            }
+            
+            document.getElementById('listNotaKeluar').innerHTML = filtered.map(r => {
                 const judulText = r.judul_nota ? `<span class="font-bold text-gray-800 dark:text-gray-200">${r.judul_nota}</span>` : `<span class="font-medium text-gray-700 dark:text-gray-300">${(r.rincian||[]).map(x=>x.nama).join(', ')}</span>`;
                 return `<tr class="border-b hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition"><td class="px-4 py-3">${formatTgl(r.tanggal)}</td><td class="px-4 py-3"><span onclick="bukaPreviewNotaKeluar('${r.id}')" class="text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline" title="Pratinjau detail">${judulText}</span></td><td class="px-4 py-3 text-right font-poppins-custom font-bold">${formatRupiah(r.total_nominal - (r.terpakai||0))}</td><td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-2"><button onclick="editNK('${r.id}')" class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition">Edit</button><button onclick="hapusNK('${r.id}')" class="px-3 py-1 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-100 transition">Hapus</button></div></td></tr>`;
             }).join('');
@@ -1436,7 +1601,7 @@
             document.getElementById('notaA6Tgl').value = r.tanggal;
             document.getElementById('notaA6Judul').value = r.judul_nota || '';
             notaRows = r.rincian.map(x => ({...x}));
-            document.getElementById('btnSimpanNotaKeluar').innerText = 'Update Rincian Nota';
+            document.getElementById('btnSimpanNotaKeluar').innerText = 'Update Nota';
             renderNotaA6();
             window.editNotaId = r.id;
             toggleModal('modalNotaA6');
@@ -1492,7 +1657,7 @@
         function hapusBarisPotonganLainnya(i) { potLainRows.splice(i, 1); if(potLainRows.length === 0) potLainRows.push({ ket: '', nom: 0 }); renderPotLain(); }
         function uPL(i, f, v) { potLainRows[i][f] = f==='ket'?v:Number(v); hitPay(); }
         function renderPotLain() {
-            document.getElementById('listPotonganLainnya').innerHTML = potLainRows.map((r,i) => `<tr class="border-b border-gray-100 dark:border-slate-800"><td class="py-1.5 pr-1"><input type="text" placeholder="Keterangan" class="w-full border dark:border-slate-700 p-1.5 rounded-lg bg-white dark:bg-slate-900 text-xs outline-none" value="${r.ket}" oninput="uPL(${i},'ket',this.value)"></td><td class="py-1.5 pr-1"><input type="text" placeholder="0" class="w-full border dark:border-slate-700 p-1.5 rounded-lg text-right bg-white dark:bg-slate-900 font-poppins-custom text-xs outline-none" value="${r.nom ? new Intl.NumberFormat('id-ID').format(r.nom) : ''}" oninput="formatInputRibuan(event); uPL(${i},'nom',parseRibuan(this.value))"></td><td class="py-1.5 text-center w-8"><button onclick="hapusBarisPotonganLainnya(${i})" class="text-rose-500 font-bold px-1.5 py-0.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs" title="Hapus Baris">&times;</button></td></tr>`).join(''); hitungTotA6(); // Fixed reference or keep hitPay()
+            document.getElementById('listPotonganLainnya').innerHTML = potLainRows.map((r,i) => `<tr class="border-b border-gray-100 dark:border-slate-800"><td class="py-1.5 pr-1"><input type="text" placeholder="Keterangan" class="w-full border dark:border-slate-700 p-1.5 rounded-lg bg-white dark:bg-slate-900 text-xs outline-none" value="${r.ket}" oninput="uPL(${i},'ket',this.value)"></td><td class="py-1.5 pr-1"><input type="text" placeholder="0" class="w-full border dark:border-slate-700 p-1.5 rounded-lg text-right bg-white dark:bg-slate-900 font-poppins-custom text-xs outline-none" value="${r.nom ? new Intl.NumberFormat('id-ID').format(r.nom) : ''}" oninput="formatInputRibuan(event); uPL(${i},'nom',parseRibuan(this.value))"></td><td class="py-1.5 text-center w-8"><button onclick="hapusBarisPotonganLainnya(${i})" class="text-rose-500 font-bold px-1.5 py-0.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950/50 text-xs" title="Hapus Baris">&times;</button></td></tr>`).join(''); hitPay();
         }
 
         function handleMetodeChange() { const val = document.getElementById('metodeBayar').value; const container = document.getElementById('splitContainer'); if(val.includes('SPLIT')) { container.classList.remove('hidden'); } else { container.classList.add('hidden'); document.getElementById('splitCash').value = ''; document.getElementById('splitTransfer').value = ''; } hitPay(); }
@@ -1505,11 +1670,20 @@
             const pL = potLainRows.filter(x => x.ket.trim() !== '' && x.nom > 0);
             
             let tm = 0, tk = 0;
-            document.getElementById('invListMasuk').innerHTML = invMasuk.map(r=>{ tm+=r.total_nominal; return `<tr><td class="py-2.5"><span class="font-bold">${formatTgl(r.tanggal)}</span> - ${r.varian} (${formatQtyDisplay(r)})${r.keterangan_barang ? `<span class="block text-[11px] italic text-gray-400">${r.keterangan_barang}</span>` : ''}</td><td class="py-2.5 text-right font-bold font-poppins-custom">${formatRupiah(r.total_nominal)}</td></tr>`;}).join('');
+            let htmlM = invMasuk.map(r=>{ tm+=r.total_nominal; return `<tr><td class="py-2.5 font-medium"><span class="font-bold">${formatTgl(r.tanggal)}</span> - ${r.varian} (${formatQtyDisplay(r)})${r.keterangan_barang ? `<span class="block text-[11px] italic text-gray-400">${r.keterangan_barang}</span>` : ''}</td><td class="py-2.5 text-right font-bold font-poppins-custom">${formatRupiah(r.total_nominal)}</td></tr>`;}).join('');
+            
+            if(invMasuk.length > 1) {
+                htmlM += `<tr><td class="py-3 text-right font-bold text-gray-800 border-t border-gray-100 text-[11px] uppercase tracking-wider">Total:</td><td class="py-3 text-right font-extrabold font-poppins-custom text-indigo-600 border-t border-gray-100">${formatRupiah(tm)}</td></tr>`;
+            }
+            document.getElementById('invListMasuk').innerHTML = htmlM;
             
             let htmlK = "";
-            invKeluar.forEach(r=>{ tk+=r.pakai; const titleLbl = r.judul_nota ? r.judul_nota : r.rincian.map(x=>x.nama).join(', '); htmlK+=`<tr><td class="py-2.5"><span class="font-bold">${formatTgl(r.tanggal)}</span> - ${titleLbl}</td><td class="py-2.5 text-right font-bold font-poppins-custom">- ${formatRupiah(r.pakai)}</td></tr>`;});
-            pL.forEach(r=>{ tk+=r.nom; htmlK+=`<tr><td class="py-2.5 font-bold">${r.ket}</td><td class="py-2.5 text-right font-bold font-poppins-custom">- ${formatRupiah(r.nom)}</td></tr>`;});
+            invKeluar.forEach(r=>{ tk+=r.pakai; const titleLbl = r.judul_nota ? r.judul_nota : r.rincian.map(x=>x.nama).join(', '); htmlK+=`<tr><td class="py-2.5 font-medium"><span class="font-bold">${formatTgl(r.tanggal)}</span> - ${titleLbl}</td><td class="py-2.5 text-right font-bold font-poppins-custom text-rose-600">- ${formatRupiah(r.pakai)}</td></tr>`;});
+            pL.forEach(r=>{ tk+=r.nom; htmlK+=`<tr><td class="py-2.5 font-medium">${r.ket}</td><td class="py-2.5 text-right font-bold font-poppins-custom text-rose-600">- ${formatRupiah(r.nom)}</td></tr>`;});
+            
+            if((invKeluar.length + pL.length) > 1) {
+                htmlK += `<tr><td class="py-3 text-right font-bold text-rose-800 border-t border-rose-50 text-[11px] uppercase tracking-wider">Total Potongan:</td><td class="py-3 text-right font-extrabold font-poppins-custom text-rose-600 border-t border-rose-50">- ${formatRupiah(tk)}</td></tr>`;
+            }
             
             if(tk>0){ document.getElementById('invPotonganSection').style.display='block'; document.getElementById('invListKeluar').innerHTML=htmlK; } else document.getElementById('invPotonganSection').style.display='none';
 
@@ -1553,11 +1727,20 @@
             const r = globalRiwayat.find(x => x.id == id);
             document.getElementById('invTanggal').innerText = formatTgl(r.tanggal_cetak);
             document.getElementById('invMetode').innerText = r.metode_bayar;
-            document.getElementById('invListMasuk').innerHTML = r.rincian_masuk.map(m => `<tr><td class="py-2.5"><span class="font-bold">${formatTgl(m.tanggal)}</span> - ${m.varian} (${formatQtyDisplay(m)})${m.keterangan_barang ? `<span class="block text-[11px] italic text-gray-400">${m.keterangan_barang}</span>` : ''}</td><td class="py-2.5 text-right font-bold font-poppins-custom">${formatRupiah(m.total_nominal)}</td></tr>`).join('');
+            
+            let htmlM = r.rincian_masuk.map(m => `<tr><td class="py-2.5 font-medium"><span class="font-bold">${formatTgl(m.tanggal)}</span> - ${m.varian} (${formatQtyDisplay(m)})${m.keterangan_barang ? `<span class="block text-[11px] italic text-gray-400">${m.keterangan_barang}</span>` : ''}</td><td class="py-2.5 text-right font-bold font-poppins-custom">${formatRupiah(m.total_nominal)}</td></tr>`).join('');
+            if(r.rincian_masuk.length > 1) {
+                htmlM += `<tr><td class="py-3 text-right font-bold text-gray-800 border-t border-gray-100 text-[11px] uppercase tracking-wider">Total:</td><td class="py-3 text-right font-extrabold font-poppins-custom text-indigo-600 border-t border-gray-100">${formatRupiah(r.rincian_masuk.reduce((a,b)=>a+Number(b.total_nominal),0))}</td></tr>`;
+            }
+            document.getElementById('invListMasuk').innerHTML = htmlM;
             
             let htmlK = "";
-            (r.rincian_keluar||[]).forEach(k => { const titleLbl = k.judul_nota ? k.judul_nota : (k.rincian||[]).map(x=>x.nama).join(', '); htmlK+=`<tr><td class="py-2.5"><span class="font-bold">${formatTgl(k.tanggal)}</span> - ${titleLbl}</td><td class="py-2.5 text-right font-bold font-poppins-custom">- ${formatRupiah(k.pakai)}</td></tr>`;});
-            (r.potongan_lainnya||[]).forEach(p => { htmlK+=`<tr><td class="py-2.5 font-bold">${p.ket}</td><td class="py-2.5 text-right font-bold font-poppins-custom">- ${formatRupiah(p.nom)}</td></tr>`;});
+            (r.rincian_keluar||[]).forEach(k => { const titleLbl = k.judul_nota ? k.judul_nota : (k.rincian||[]).map(x=>x.nama).join(', '); htmlK+=`<tr><td class="py-2.5 font-medium"><span class="font-bold">${formatTgl(k.tanggal)}</span> - ${titleLbl}</td><td class="py-2.5 text-right font-bold font-poppins-custom text-rose-600">- ${formatRupiah(k.pakai)}</td></tr>`;});
+            (r.potongan_lainnya||[]).forEach(p => { htmlK+=`<tr><td class="py-2.5 font-medium">${p.ket}</td><td class="py-2.5 text-right font-bold font-poppins-custom text-rose-600">- ${formatRupiah(p.nom)}</td></tr>`;});
+            
+            if(((r.rincian_keluar||[]).length + (r.potongan_lainnya||[]).length) > 1) {
+                htmlK += `<tr><td class="py-3 text-right font-bold text-rose-800 border-t border-rose-50 text-[11px] uppercase tracking-wider">Total Potongan:</td><td class="py-3 text-right font-extrabold font-poppins-custom text-rose-600 border-t border-rose-50">- ${formatRupiah(r.total_potongan)}</td></tr>`;
+            }
             
             if(r.total_potongan > 0){ document.getElementById('invPotonganSection').style.display='block'; document.getElementById('invListKeluar').innerHTML=htmlK; } else document.getElementById('invPotonganSection').style.display='none';
             document.getElementById('invSubtotal').innerText = formatRupiah(r.subtotal); document.getElementById('invPotongan').innerText = "- " + formatRupiah(r.total_potongan); document.getElementById('invGrandTotal').innerText = formatRupiah(r.total_bersih);
