@@ -211,8 +211,11 @@
             <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
                 <div class="flex items-center gap-2">
                     <input type="month" id="widgetBulan" class="p-2 border rounded-xl text-xs outline-none dark:bg-slate-800 shadow-sm" onchange="loadWidgets()">
-                    <button onclick="document.documentElement.classList.toggle('dark')" class="p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 text-sm shadow-sm transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    <button onclick="document.documentElement.classList.toggle('dark')" class="p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 active:scale-95 dark:bg-slate-700 text-sm shadow-sm transition">
+                        <!-- Ikon Bulan (Mode Terang) -->
+                        <svg class="w-5 h-5 block dark:hidden text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                        <!-- Ikon Matahari (Mode Gelap) -->
+                        <svg class="w-5 h-5 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     </button>
                 </div>
                 
@@ -232,8 +235,12 @@
                         <p class="text-xs lg:text-sm font-poppins-custom text-indigo-700 dark:text-indigo-300" id="wdgTagihan">Rp 0</p>
                     </div>
                     <div class="bg-emerald-50 dark:bg-slate-800 border border-emerald-200 dark:border-emerald-900 px-3 py-2 rounded-xl text-right shadow-sm flex flex-col justify-between h-[62px] w-[150px]">
-                        <p class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Terbayar (Lunas)</p>
+                        <p class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Terbayar</p>
                         <p class="text-xs lg:text-sm font-poppins-custom text-emerald-700 dark:text-emerald-300" id="wdgLunas">Rp 0</p>
+                    </div>
+                    <div class="bg-rose-50 dark:bg-slate-800 border border-rose-200 dark:border-rose-900 px-3 py-2 rounded-xl text-right shadow-sm flex flex-col justify-between h-[62px] w-[150px]">
+                        <p class="text-[9px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">Nota Barang Keluar</p>
+                        <p class="text-xs lg:text-sm font-poppins-custom text-rose-700 dark:text-rose-300" id="wdgBarangKeluar">Rp 0</p>
                     </div>
                 </div>
             </div>
@@ -533,6 +540,35 @@
                         </div>
                         <button onclick="simpanMappingAgen()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm transition shadow-md">Simpan Pengaturan Agen</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT DATA MASTER BARU (UNTUK BARANG & KURIR) -->
+    <div id="modalEditMaster" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 transition-all">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 w-full max-w-sm overflow-hidden flex flex-col">
+            <div class="px-6 py-5 bg-indigo-50 dark:bg-slate-800 flex justify-between items-center border-b border-indigo-100 dark:border-slate-700">
+                <h3 class="text-lg font-bold text-indigo-800 dark:text-indigo-300" id="titleEditMaster">Edit Data Master</h3>
+                <button onclick="toggleModal('modalEditMaster')" class="text-2xl text-gray-500 hover:text-gray-800 dark:text-gray-400 transition">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 space-y-4 bg-white dark:bg-slate-900">
+                <input type="hidden" id="edit_master_id">
+                <input type="hidden" id="edit_master_type">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Nama</label>
+                    <input type="text" id="edit_master_nama" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:border-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                </div>
+                <div id="edit_master_harga_container">
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Harga/Bal (Rp)</label>
+                    <input type="text" id="edit_master_harga" oninput="formatInputRibuan(event)" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:border-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white font-poppins-custom">
+                </div>
+            </div>
+            <div class="p-4 px-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 flex justify-between items-center gap-3">
+                <button onclick="hapusMasterDariEdit()" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-sm border border-rose-100">Hapus Data</button>
+                <div class="flex gap-2">
+                    <button onclick="toggleModal('modalEditMaster')" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-slate-800 dark:text-gray-300 transition">Batal</button>
+                    <button onclick="simpanEditMaster()" class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-md transition">Simpan</button>
                 </div>
             </div>
         </div>
@@ -1143,8 +1179,10 @@
 
         function renderDropdowns(selectedAgen = null, targetSelectId = 'varian') {
             const varianList = getLokalData('varian_basreng');
-            const kurir = getLokalData('list_kurir');
-            const mapData = getLokalData('agen_varian_map') || {};
+            let kurir = getLokalData('list_kurir');
+            
+            // SORT KURIR A-Z
+            kurir.sort((a, b) => a.nama.localeCompare(b.nama));
 
             if (targetSelectId === 'varian') {
                 document.getElementById('keterangan_kurir').innerHTML = '<option value="" disabled selected>Pilih Kurir</option>' + kurir.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
@@ -1238,8 +1276,89 @@
             else if(tab === 'mapping') renderMappingVarianForm();
         }
 
-        function renderTabelBarang() { document.getElementById('listBarangBody').innerHTML = getLokalData('varian_basreng').map(v => `<tr class="border-b"><td class="p-3 font-medium">${v.nama}</td><td class="p-3 text-right font-bold">${formatRupiah(v.harga)}</td><td class="p-3 text-center"><button onclick="hapusMaster('varian_basreng', '${v.id}')" class="text-rose-500 font-bold bg-rose-50 px-3 py-1 rounded-lg text-xs hover:bg-rose-100 transition">Hapus</button></td></tr>`).join(''); }
-        function renderTabelKurir() { document.getElementById('listKurirBody').innerHTML = getLokalData('list_kurir').map(k => `<tr class="border-b"><td class="p-3 font-medium">${k.nama}</td><td class="p-3 text-center"><button onclick="hapusMaster('list_kurir', '${k.id}')" class="text-rose-500 font-bold bg-rose-50 px-3 py-1 rounded-lg text-xs hover:bg-rose-100 transition">Hapus</button></td></tr>`).join(''); }
+        // --- SISTEM EDIT MASTER BARU ---
+        function renderTabelBarang() { 
+            document.getElementById('listBarangBody').innerHTML = getLokalData('varian_basreng').map(v => `<tr class="border-b"><td class="p-3 font-medium">${v.nama}</td><td class="p-3 text-right font-bold">${formatRupiah(v.harga)}</td><td class="p-3 text-center"><button onclick="bukaModalEditMaster('varian_basreng', '${v.id}')" class="text-indigo-600 font-bold bg-indigo-50 px-3 py-1.5 rounded-lg text-xs hover:bg-indigo-100 transition shadow-sm">Edit</button></td></tr>`).join(''); 
+        }
+        
+        function renderTabelKurir() {
+            let kurirList = getLokalData('list_kurir');
+            // SORT KURIR A-Z
+            kurirList.sort((a, b) => a.nama.localeCompare(b.nama));
+            document.getElementById('listKurirBody').innerHTML = kurirList.map(k => `<tr class="border-b"><td class="p-3 font-medium">${k.nama}</td><td class="p-3 text-center"><button onclick="bukaModalEditMaster('list_kurir', '${k.id}')" class="text-indigo-600 font-bold bg-indigo-50 px-3 py-1.5 rounded-lg text-xs hover:bg-indigo-100 transition shadow-sm">Edit</button></td></tr>`).join('');
+        }
+
+        function bukaModalEditMaster(type, id) {
+            const data = getLokalData(type).find(x => x.id === id);
+            if(!data) return;
+            
+            document.getElementById('edit_master_id').value = id;
+            document.getElementById('edit_master_type').value = type;
+            document.getElementById('edit_master_nama').value = data.nama;
+            
+            const hargaContainer = document.getElementById('edit_master_harga_container');
+            if (type === 'varian_basreng') {
+                hargaContainer.style.display = 'block';
+                document.getElementById('edit_master_harga').value = new Intl.NumberFormat('id-ID').format(data.harga || 0);
+                document.getElementById('titleEditMaster').innerText = 'Edit Varian Barang';
+            } else {
+                hargaContainer.style.display = 'none';
+                document.getElementById('titleEditMaster').innerText = 'Edit Data Kurir';
+            }
+            
+            const m = document.getElementById('modalEditMaster');
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+
+        function simpanEditMaster() {
+            const id = document.getElementById('edit_master_id').value;
+            const type = document.getElementById('edit_master_type').value;
+            const namaBaru = document.getElementById('edit_master_nama').value.trim();
+            const hargaBaru = parseRibuan(document.getElementById('edit_master_harga').value);
+            
+            if(!namaBaru) return alert("Nama tidak boleh kosong!");
+            
+            let list = getLokalData(type);
+            const idx = list.findIndex(x => x.id === id);
+            if(idx > -1) {
+                // Update mapping jika nama varian berubah
+                const namaLama = list[idx].nama;
+                
+                list[idx].nama = namaBaru;
+                if(type === 'varian_basreng') {
+                    list[idx].harga = hargaBaru;
+                    
+                    if(namaLama !== namaBaru) {
+                        let mapData = getLokalData('agen_varian_map') || {};
+                        for(let agen in mapData) {
+                            let varianList = mapData[agen];
+                            const vIdx = varianList.indexOf(namaLama);
+                            if(vIdx > -1) {
+                                varianList[vIdx] = namaBaru;
+                            }
+                        }
+                        setLokalData('agen_varian_map', mapData);
+                    }
+                }
+                
+                setLokalData(type, list);
+                
+                if(type === 'varian_basreng') renderTabelBarang();
+                else renderTabelKurir();
+                
+                renderDropdowns();
+                toggleModal('modalEditMaster');
+            }
+        }
+        
+        function hapusMasterDariEdit() {
+            const id = document.getElementById('edit_master_id').value;
+            const type = document.getElementById('edit_master_type').value;
+            toggleModal('modalEditMaster'); // Tutup modal edit
+            hapusMaster(type, id); // Panggil fungsi hapus
+        }
+
+        // --- AKHIR SISTEM EDIT MASTER BARU ---
 
         function renderMappingVarianForm() {
             const agent = document.getElementById('mapAgentSelect').value;
@@ -1288,10 +1407,18 @@
                 if(r.agen === 'Jambi') tJambi += nom; else if(r.agen === 'Jakarta') tJakarta += nom;
             });
 
+            // FETCH KESELURUHAN SISA BARANG KELUAR YG BELUM DIPOTONG
+            const { data: dKeluar } = await supabaseClient.from('nota_keluar').select('total_nominal, terpakai').eq('status_potongan', 'Belum Dipotong');
+            let tSisaKeluar = 0;
+            (dKeluar||[]).forEach(r => {
+                tSisaKeluar += (Number(r.total_nominal) || 0) - (Number(r.terpakai) || 0);
+            });
+
             document.getElementById('wdgLunas').innerText = formatRupiah(tLunas);
             document.getElementById('wdgTagihan').innerText = formatRupiah(tBelum);
             document.getElementById('wdgJambi').innerText = formatRupiah(tJambi);
             document.getElementById('wdgJakarta').innerText = formatRupiah(tJakarta);
+            document.getElementById('wdgBarangKeluar').innerText = formatRupiah(tSisaKeluar);
             loadDataMasuk();
         }
 
@@ -1563,7 +1690,7 @@
             document.getElementById('previewNotaTerbayar').innerText = formatRupiah(terpakai);
             document.getElementById('previewNotaSisa').innerText = formatRupiah(t - terpakai);
             
-            document.getElementById('previewNotaItemsBody').innerHTML = f.map(item => `<tr><td class="py-2.5"><div class="font-bold text-gray-900 dark:text-gray-100">${item.nama || ''}</div><div class="text-sm font-poppins-custom italic text-gray-500 mt-0.5">${item.qty || 0} ${item.unit || ''} x ${formatRupiah(item.harga || 0)}</div></td><td class="py-2.5 text-right font-bold font-poppins-custom align-top">${formatRupiah(item.jml)}</td></tr>`).join('');
+            document.getElementById('previewNotaItemsBody').innerHTML = f.map(item => `<tr><td class="py-2.5"><div class="font-bold text-gray-900 dark:text-gray-100">${item.nama || ''}</div><div class="text-sm font-poppins-custom italic text-gray-500 mt-0.5">${item.qty || 0} ${item.unit || ''} x ${formatRupiah(item.harga || 0)}</div></td><td class="py-2.5 text-right font-bold font-poppins-custom align-top">${formatRupiah(item.jml || ((item.qty || 0) * (item.harga || 0)))}</td></tr>`).join('');
             
             const m = document.getElementById('modalPreviewNotaKeluar'); 
             m.classList.remove('hidden'); m.classList.add('flex');
@@ -1625,12 +1752,24 @@
         }
 
         let potLainRows = [];
+        
         async function muatDataPembayaran() {
             const ag = document.getElementById('pAg').value;
-            let q = supabaseClient.from('pencatatan_basreng').select('*').eq('status_pembayaran', 'Belum Dibayar');
-            if(ag !== 'Semua') q = q.eq('agen', ag);
-            const { data: dM } = await q;
-            const { data: dK } = await supabaseClient.from('nota_keluar').select('*').eq('status_potongan', 'Belum Dipotong');
+            // FILTER TANGGAL SEKARANG SUDAH AKTIF
+            const pTM = document.getElementById('pTM').value;
+            const pTA = document.getElementById('pTA').value;
+            
+            let qM = supabaseClient.from('pencatatan_basreng').select('*').eq('status_pembayaran', 'Belum Dibayar');
+            if(ag !== 'Semua') qM = qM.eq('agen', ag);
+            if(pTM) qM = qM.gte('tanggal', pTM);
+            if(pTA) qM = qM.lte('tanggal', pTA);
+            
+            let qK = supabaseClient.from('nota_keluar').select('*').eq('status_potongan', 'Belum Dipotong');
+            if(pTM) qK = qK.gte('tanggal', pTM);
+            if(pTA) qK = qK.lte('tanggal', pTA);
+
+            const { data: dM } = await qM;
+            const { data: dK } = await qK;
 
             document.getElementById('payTabMasuk').innerHTML = (dM||[]).map(r => `<tr><td class="px-2 py-2"><input type="checkbox" class="cm" value="${r.id}" data-j='${JSON.stringify(r).replace(/'/g,"&apos;")}' onchange="hitPay()"></td><td class="px-2 py-2"><span class="font-bold block">${formatTgl(r.tanggal)} - ${r.agen}</span><span class="text-[10px]">${r.varian} (${formatQtyDisplay(r)})</span></td><td class="px-2 py-2 text-right font-bold">${formatRupiah(r.total_nominal)}</td></tr>`).join('');
             document.getElementById('payTabKeluar').innerHTML = (dK||[]).map(r => {
@@ -1639,6 +1778,7 @@
                 return `<tr><td class="px-2 py-2"><input type="checkbox" class="ck" value="${r.id}" data-j='${JSON.stringify(r).replace(/'/g,"&apos;")}' onchange="hitPay()"></td><td class="px-2 py-2"><span class="font-bold text-rose-700 block">${formatTgl(r.tanggal)}</span><span class="text-[10px] font-medium truncate block w-32">${titleLbl}</span><span class="text-[10px] italic">Max Sisa: ${formatRupiah(sisa)}</span></td><td class="px-2 py-2"><input type="text" id="ip_${r.id}" class="w-full text-right border p-1.5 rounded-lg text-xs outline-none bg-white dark:bg-slate-900 font-poppins-custom" value="" placeholder="0" oninput="formatInputRibuan(event); hitPay()"></td></tr>`;
             }).join(''); hitPay();
         }
+        
         function toggleCheckAll(t) { const ic = document.getElementById(t==='m'?'cAllM':'cAllK').checked; document.querySelectorAll(t==='m'?'.cm':'.ck').forEach(c=>c.checked=ic); hitPay(); }
         
         function hitPay() {
