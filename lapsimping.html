@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencatatan Kiriman Simping</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300 pb-10">
+
+    <!-- Container Khusus Mobile -->
+    <div class="max-w-md mx-auto min-h-screen flex flex-col bg-white dark:bg-slate-800 shadow-xl overflow-hidden">
+        
+        <!-- Header -->
+        <header class="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-md sticky top-0 z-20">
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-indigo-600 dark:text-indigo-400">Sbr Systems</h1>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-xs text-slate-400 dark:text-slate-400 font-medium">Sistem Online</span>
+                </div>
+            </div>
+            <!-- Tombol Tema Gelap/Terang -->
+            <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:scale-105 transition active:scale-95" aria-label="Toggle Theme">
+                <svg id="sun-icon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="moon-icon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+        </header>
+
+        <!-- Main Content -->
+        <main class="p-5 flex-1 space-y-6">
+            
+            <!-- Form Input -->
+            <section class="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
+                <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">Catat Kiriman Baru</h2>
+                <form id="recordForm" onsubmit="addRecord(event)" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Tanggal</label>
+                        <input type="date" id="tanggal" lang="id" required class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Nama Reseller</label>
+                        <div class="flex gap-2">
+                            <select id="reseller" required class="flex-1 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
+                                <!-- Opsi dimuat dinamis via JS -->
+                            </select>
+                            <button type="button" onclick="openResellerModal()" class="px-3.5 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl font-medium text-sm hover:bg-indigo-100 transition whitespace-nowrap">+ Reseller</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Jumlah Kiriman (Toros)</label>
+                        <input type="number" id="jumlah" min="1" placeholder="Contoh: 50" required class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm shadow-lg shadow-indigo-500/30 transition active:scale-[0.98]">Tambah ke Rekapan</button>
+                </form>
+            </section>
+
+            <!-- Daftar List Hari Ini -->
+            <section class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Daftar Kiriman Masuk</h2>
+                        <p id="formattedDateLabel" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium mt-0.5">-</p>
+                    </div>
+                    <span id="recordCount" class="text-xs bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-semibold px-2.5 py-1 rounded-full">0 item</span>
+                </div>
+                
+                <div id="recordList" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                    <!-- Data list akan masuk lewat JavaScript -->
+                    <div class="text-center py-8 text-slate-400 text-sm">Belum ada catatan hari ini</div>
+                </div>
+            </section>
+
+            <!-- Total Kiriman -->
+            <section class="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg shadow-indigo-500/20 flex justify-between items-center">
+                <div>
+                    <p class="text-xs text-indigo-200 font-medium">Total Kiriman Hari Ini</p>
+                    <p id="totalKiriman" class="text-2xl font-bold mt-0.5">0 Toros</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer / WhatsApp Button -->
+        <footer class="p-5 border-t border-slate-100 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md sticky bottom-0 z-20">
+            <button onclick="sendToWhatsApp()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-semibold text-sm shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                Kirim Laporan ke WhatsApp
+            </button>
+        </footer>
+
+    </div>
+
+    <!-- Modal Tambah Reseller -->
+    <div id="resellerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-5 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl border border-slate-100 dark:border-slate-700">
+            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base">Tambah Reseller Baru</h3>
+            <input type="text" id="newResellerName" placeholder="Nama reseller..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white">
+            <div class="flex gap-2">
+                <button type="button" onclick="closeResellerModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-sm">Batal</button>
+                <button type="button" onclick="addNewReseller()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Aplikasi -->
+    <script>
+        // Set Default Date ke Hari Ini
+        document.getElementById('tanggal').valueAsDate = new Date();
+
+        // Inisialisasi Database LocalStorage untuk Reseller
+        if (!localStorage.getItem('resellers')) {
+            const defaultResellers = ['Sandi', 'Supri', 'Aris', 'Yuno', 'Bu Kartini'];
+            localStorage.setItem('resellers', JSON.stringify(defaultResellers));
+        }
+
+        // Inisialisasi Database LocalStorage untuk Transaksi
+        if (!localStorage.getItem('records')) {
+            localStorage.setItem('records', JSON.stringify([]));
+        }
+
+        // Format Tanggal Indonesia Lengkap (Contoh: Kamis, 30 Juli 2026)
+        function formatIndonesianDate(dateString) {
+            if (!dateString) return '';
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const date = new Date(dateString + 'T00:00:00');
+            return date.toLocaleDateString('id-ID', options);
+        }
+
+        // Load Reseller ke Dropdown
+        function loadResellers() {
+            const resellers = JSON.parse(localStorage.getItem('resellers'));
+            const select = document.getElementById('reseller');
+            select.innerHTML = '<option value="" disabled selected>Pilih Reseller</option>';
+            resellers.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                select.appendChild(opt);
+            });
+        }
+
+        // Tambah Reseller Baru
+        function addNewReseller() {
+            const nameInput = document.getElementById('newResellerName');
+            const name = nameInput.value.trim();
+            if(!name) return alert('Nama reseller tidak boleh kosong!');
+            
+            let resellers = JSON.parse(localStorage.getItem('resellers'));
+            if(resellers.includes(name)) {
+                alert('Reseller sudah ada dalam daftar!');
+                return;
+            }
+            
+            resellers.push(name);
+            localStorage.setItem('resellers', JSON.stringify(resellers));
+            nameInput.value = '';
+            closeResellerModal();
+            loadResellers();
+        }
+
+        function openResellerModal() {
+            document.getElementById('resellerModal').classList.remove('hidden');
+        }
+
+        function closeResellerModal() {
+            document.getElementById('resellerModal').classList.add('hidden');
+        }
+
+        // Tambah Data Kiriman
+        function addRecord(e) {
+            e.preventDefault();
+            const tanggal = document.getElementById('tanggal').value;
+            const reseller = document.getElementById('reseller').value;
+            const jumlah = parseInt(document.getElementById('jumlah').value);
+
+            let records = JSON.parse(localStorage.getItem('records'));
+            records.push({ id: Date.now(), tanggal, reseller, jumlah });
+            localStorage.setItem('records', JSON.stringify(records));
+
+            // Reset Form Input & Dropdown Reseller kembali ke awal
+            document.getElementById('jumlah').value = '';
+            document.getElementById('reseller').selectedIndex = 0;
+            
+            renderRecords();
+        }
+
+        // Hapus Data Kiriman Satuan
+        function deleteRecord(id) {
+            let records = JSON.parse(localStorage.getItem('records'));
+            records = records.filter(item => item.id !== id);
+            localStorage.setItem('records', JSON.stringify(records));
+            renderRecords();
+        }
+
+        // Render Data dan Total ke Layar
+        function renderRecords() {
+            const currentDate = document.getElementById('tanggal').value;
+            
+            // Perbarui label tanggal format lengkap Indonesia
+            document.getElementById('formattedDateLabel').textContent = formatIndonesianDate(currentDate);
+
+            const records = JSON.parse(localStorage.getItem('records'));
+            const filteredRecords = records.filter(item => item.tanggal === currentDate);
+            
+            const listContainer = document.getElementById('recordList');
+            listContainer.innerHTML = '';
+
+            let total = 0;
+
+            if (filteredRecords.length === 0) {
+                listContainer.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">Belum ada catatan untuk tanggal ini</div>`;
+            } else {
+                filteredRecords.forEach((item, index) => {
+                    total += item.jumlah;
+                    const div = document.createElement('div');
+                    div.className = "flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700";
+                    div.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 font-bold text-xs flex items-center justify-center">${index + 1}</span>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">${item.reseller}</p>
+                                <p class="text-xs text-slate-400 font-medium">${item.jumlah} Toros</p>
+                            </div>
+                        </div>
+                        <button onclick="deleteRecord(${item.id})" class="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    `;
+                    listContainer.appendChild(div);
+                });
+            }
+
+            document.getElementById('recordCount').textContent = `${filteredRecords.length} item`;
+            document.getElementById('totalKiriman').textContent = `${total} Toros`;
+        }
+
+        // Event listener saat tanggal diganti agar list menyesuaikan
+        document.getElementById('tanggal').addEventListener('change', renderRecords);
+
+        // Kirim Laporan ke WhatsApp & Reset Daftar Kiriman Tanggal Tersebut
+        function sendToWhatsApp() {
+            const currentDate = document.getElementById('tanggal').value;
+            const allRecords = JSON.parse(localStorage.getItem('records'));
+            const filteredRecords = allRecords.filter(item => item.tanggal === currentDate);
+            
+            if (filteredRecords.length === 0) {
+                alert('Tidak ada data kiriman pada tanggal ini untuk dikirim!');
+                return;
+            }
+
+            const formattedDate = formatIndonesianDate(currentDate);
+
+            let text = `*REKAP LAPORAN MASUK BARANG (SIMPING)*\n`;
+            text += `Tanggal: ${formattedDate}\n\n`;
+
+            let total = 0;
+            filteredRecords.forEach((item, index) => {
+                text += `${index + 1}. *${item.reseller}* : ${item.jumlah} Toros\n`;
+                total += item.jumlah;
+            });
+
+            text += `\n*Total Kiriman Hari Ini: ${total} Toros*\n\n`;
+            text += `_Laporan di catat secara otomatis via Sbr Systems_`;
+
+            const encodedText = encodeURIComponent(text);
+            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+
+            // RESET: Hapus data kiriman untuk tanggal ini dari database setelah dikirim ke WhatsApp
+            const remainingRecords = allRecords.filter(item => item.tanggal !== currentDate);
+            localStorage.setItem('records', JSON.stringify(remainingRecords));
+            
+            // Refresh tampilan list
+            renderRecords();
+        }
+
+        // Mode Gelap/Terang Handler
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Cek Preferensi Tema Tersimpan
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        // Load Awal
+        loadResellers();
+        renderRecords();
+    </script>
+</body>
+</html>
