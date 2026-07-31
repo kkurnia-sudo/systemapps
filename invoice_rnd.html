@@ -359,7 +359,8 @@
         <div class="summary-card">
             <div class="summary-row"><span>Sub Total Pesanan</span><span id="subTotal" style="font-weight: 600; color: var(--text-main); font-style: italic;">Rp 0</span></div>
             <div id="depositListSummary"></div>
-            <div class="summary-row total"><span>Sisa Pembayaran (Due)</span><span id="balanceDue">Rp 0</span></div>
+            <!-- ID DITAMBAHKAN PADA LABEL SISA PEMBAYARAN DI SINI -->
+            <div class="summary-row total"><span id="balanceLabel">Sisa Pembayaran (Due)</span><span id="balanceDue">Rp 0</span></div>
         </div>
     </div>
 
@@ -405,7 +406,8 @@
                 <table style="width: 100%; font-size: 13px;">
                     <tr><td style="padding: 4px; color: #555;">Subtotal</td><td style="padding: 4px; text-align: right; font-weight: 600; font-style: italic;" id="prevSubtotal">-</td></tr>
                     <tbody id="prevDepositBody"></tbody>
-                    <tr><td style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;">SISA PEMBAYARAN</td><td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; color: #10b981!important; font-style: italic;" id="prevBalance">-</td></tr>
+                    <!-- ID DITAMBAHKAN PADA LABEL SISA PEMBAYARAN DI PREVIEW INI -->
+                    <tr><td style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;" id="prevBalanceLabel">SISA PEMBAYARAN</td><td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; color: #10b981!important; font-style: italic;" id="prevBalance">-</td></tr>
                 </table>
             </div>
             <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #777;"><p>Terima Kasih Atas Kepercayaannya<br>Mulus Rahayu, Berkah Salamet<br>**SBR SYSTEMS**</p></div>
@@ -1080,7 +1082,18 @@
             document.getElementById('prevItemsBody').innerHTML = itemsHtml; 
             document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
             document.getElementById('prevDepositBody').innerHTML = depositHtml; 
-            document.getElementById('prevBalance').innerText = formatMoney(balanceDue);
+            
+            // --- LOGIKA BARU UNTUK PREVIEW RIWAYAT ---
+            const prevBalanceLabel = document.getElementById('prevBalanceLabel');
+            const prevBalanceValue = document.getElementById('prevBalance');
+            
+            if (balanceDue < 0) {
+                prevBalanceLabel.innerText = 'KELEBIHAN BAYAR (DEPOSIT)';
+                prevBalanceValue.innerText = formatMoney(Math.abs(balanceDue));
+            } else {
+                prevBalanceLabel.innerText = 'SISA PEMBAYARAN';
+                prevBalanceValue.innerText = formatMoney(balanceDue);
+            }
 
             document.getElementById('invoiceNumber').value = invoiceNo; 
             
@@ -1604,9 +1617,31 @@
             const total = (parseFloat(row.querySelector('.item-qty').value)||0) * (parseFloat(row.querySelector('.item-price').value)||0);
             row.querySelector('.item-total').innerText = formatMoney(total); subtotal += total;
         });
+        
         let totalDeposit = 0; let depositHtml = '';
         depositList.forEach((dep, idx) => { totalDeposit += dep.nom; depositHtml += `<div class="summary-row deposit-row" style="cursor:pointer;" onclick="openDepositModal(${idx})"><span>${dep.ket} <span class="hide-export">✏️</span></span><span style="color:var(--danger); font-weight:600; font-style: italic;">- ${formatMoney(dep.nom)}</span></div>`; });
-        document.getElementById('subTotal').innerText = formatMoney(subtotal); document.getElementById('depositListSummary').innerHTML = depositHtml; document.getElementById('balanceDue').innerText = formatMoney(subtotal - totalDeposit);
+        
+        let balance = subtotal - totalDeposit;
+        
+        document.getElementById('subTotal').innerText = formatMoney(subtotal); 
+        document.getElementById('depositListSummary').innerHTML = depositHtml; 
+        
+        // --- LOGIKA BARU REAL-TIME ---
+        const balanceLabel = document.getElementById('balanceLabel');
+        const balanceValue = document.getElementById('balanceDue');
+        
+        if (balance < 0) {
+            // Jika deposit melebihi tagihan
+            balanceLabel.innerText = 'Kelebihan Bayar (Deposit)';
+            // Gunakan Math.abs() untuk membuang tanda minus agar menjadi angka positif
+            balanceValue.innerText = formatMoney(Math.abs(balance));
+            balanceValue.style.color = 'var(--primary)'; // Tetap warna hijau
+        } else {
+            // Jika tagihan normal / ada sisa due
+            balanceLabel.innerText = 'Sisa Pembayaran (Due)';
+            balanceValue.innerText = formatMoney(balance);
+            balanceValue.style.color = ''; // Kembalikan ke warna default
+        }
     }
 
     function simpanInvoiceAndClose() {
@@ -1665,8 +1700,21 @@
         document.getElementById('prevCustPhone').innerText = customer.phone || '-'; document.getElementById('prevCustAddress').innerText = customer.address || '-';
         document.getElementById('prevDate').innerText = formatCustomDate(new Date());
         
-        document.getElementById('prevItemsBody').innerHTML = itemsHtml; document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
-        document.getElementById('prevDepositBody').innerHTML = depositHtml; document.getElementById('prevBalance').innerText = formatMoney(balanceDue);
+        document.getElementById('prevItemsBody').innerHTML = itemsHtml; 
+        document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
+        document.getElementById('prevDepositBody').innerHTML = depositHtml; 
+        
+        // --- LOGIKA BARU UNTUK PREVIEW ---
+        const prevBalanceLabel = document.getElementById('prevBalanceLabel');
+        const prevBalanceValue = document.getElementById('prevBalance');
+        
+        if (balanceDue < 0) {
+            prevBalanceLabel.innerText = 'KELEBIHAN BAYAR (DEPOSIT)';
+            prevBalanceValue.innerText = formatMoney(Math.abs(balanceDue));
+        } else {
+            prevBalanceLabel.innerText = 'SISA PEMBAYARAN';
+            prevBalanceValue.innerText = formatMoney(balanceDue);
+        }
         
         const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
         if(btnSavePreview) {
