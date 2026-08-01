@@ -496,6 +496,13 @@
             dataProsesKirim = [];
             let adaData = false;
 
+            // Buat salinan data riwayat (jika sedang mode edit)
+            // Ini mencegah baris duplikat mengambil nilai terkirim dari baris pertama terus menerus
+            let dataEditTemp = [];
+            if (editModeKey && dataRiwayatGlobal[editModeKey]) {
+                dataEditTemp = [...dataRiwayatGlobal[editModeKey]];
+            }
+
             barisTabel.forEach((baris, index) => {
                 const nama = baris.querySelector('.inp-nama').value;
                 if (nama !== "") {
@@ -504,10 +511,24 @@
                     const uom = baris.querySelector('.inp-uom').value || "";
                     const ket = baris.querySelector('.inp-ket').value || "";
                     
-                    let valTerkirim = qty;
+                    let valTerkirim = qty; // Default awal adalah sama dengan stok (qty)
+
                     if(editModeKey) {
-                        const existingData = dataRiwayatGlobal[editModeKey].find(d => d.nama_barang === nama);
-                        if(existingData) valTerkirim = existingData.total_terkirim;
+                        // Cari berdasarkan Nama Barang DAN Keterangan agar lebih presisi
+                        let matchIndex = dataEditTemp.findIndex(d => d.nama_barang === nama && d.keterangan === ket);
+                        
+                        // Jika tidak ketemu (misal keterangan diedit di Step 1), cari berdasarkan nama saja
+                        if (matchIndex === -1) {
+                            matchIndex = dataEditTemp.findIndex(d => d.nama_barang === nama);
+                        }
+
+                        if (matchIndex !== -1) {
+                            valTerkirim = dataEditTemp[matchIndex].total_terkirim;
+                            
+                            // Hapus data yang sudah dicocokkan dari array temporary
+                            // agar item duplikat berikutnya otomatis mengambil urutan data selanjutnya
+                            dataEditTemp.splice(matchIndex, 1);
+                        }
                     }
 
                     let valSisa = qty - valTerkirim;
