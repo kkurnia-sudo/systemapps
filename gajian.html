@@ -211,7 +211,7 @@
                     </div>
                     <div class="mt-6 flex justify-between items-center bg-blue-50/50 dark:bg-blue-900/20 p-4 rounded-2xl">
                         <div class="font-bold text-gray-600">Grand Total: <span id="foot-grand-tot" class="text-xl text-blue-600 ml-2">0</span> Pcs</div>
-                        <button onclick="simpanDataHarian()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:-translate-y-1 transition">Simpan Produksi</button>
+                        <button onclick="simpanDataHarian()" id="btn-simpan-harian" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:-translate-y-1 transition">Simpan Produksi</button>
                     </div>
                 </div>
             </div>
@@ -1261,27 +1261,47 @@
         }
 
         async function simpanDataHarian() { 
+            const btnSimpan = document.getElementById('btn-simpan-harian');
+            const originalText = btnSimpan.innerText;
+            
             const tgl = document.getElementById('tgl-harian').value;
             if(!tgl) return alert('Pilih tanggal produksi terlebih dahulu!');
+            
             let batchData = [];
             document.querySelectorAll('.inp-reg').forEach(inp => {
                 const id = parseInt(inp.id.split('-')[1]);
                 const reg = parseInt(inp.value)||0; const lem = parseInt(document.getElementById(`hl-${id}`).value)||0;
                 if(reg > 0 || lem > 0) { batchData.push({ id_kar: id, tgl: tgl, reg: reg, lem: lem }); }
             });
+            
             if(batchData.length === 0) return alert('Isi minimal 1 data karyawan.');
 
-            for(let item of batchData) {
-                let existing = dbProduksi.find(p => p.id_kar === item.id_kar && p.tgl === item.tgl);
-                if(existing) {
-                    await _supabase.from('produksi').update({ reg: item.reg, lem: item.lem }).eq('id_prod', existing.id_prod);
-                } else {
-                    await _supabase.from('produksi').insert([{ id_prod: Date.now() + item.id_kar, id_kar: item.id_kar, tgl: item.tgl, reg: item.reg, lem: item.lem }]);
+            // Mengunci tombol agar tidak dobel klik
+            btnSimpan.disabled = true;
+            btnSimpan.innerText = 'Menyimpan...';
+            btnSimpan.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                for(let item of batchData) {
+                    let existing = dbProduksi.find(p => p.id_kar === item.id_kar && p.tgl === item.tgl);
+                    if(existing) {
+                        await _supabase.from('produksi').update({ reg: item.reg, lem: item.lem }).eq('id_prod', existing.id_prod);
+                    } else {
+                        await _supabase.from('produksi').insert([{ id_prod: Date.now() + item.id_kar, id_kar: item.id_kar, tgl: item.tgl, reg: item.reg, lem: item.lem }]);
+                    }
                 }
+                alert(`Berhasil menyimpan data produksi!`);
+                document.getElementById('tgl-harian').value = '';
+                fetchAllData(); 
+            } catch (err) {
+                console.error("Gagal menyimpan produksi harian: ", err);
+                alert("Terjadi kesalahan saat menyimpan data. Coba lagi.");
+            } finally {
+                // Membuka kunci tombol
+                btnSimpan.disabled = false;
+                btnSimpan.innerText = originalText;
+                btnSimpan.classList.remove('opacity-50', 'cursor-not-allowed');
             }
-            alert(`Berhasil menyimpan data produksi!`);
-            document.getElementById('tgl-harian').value = '';
-            fetchAllData(); 
         }
 
         function formatTanggalPendek(dateStr) { if(!dateStr) return '-'; const [y, m, d] = dateStr.split('-'); return `${d}/${m}`; }
@@ -1540,15 +1560,31 @@
             if(textEl) textEl.innerText = 'Rp ' + formatRibuanStr(total);
         }
 
+        // FUNGSI PERBAIKAN UNTUK SINKRONISASI DATA CETAK GAJI & REKAP
         function tarikDataCetakGaji() {
-            const divId = document.getElementById('cg-divisi').value; const mulai = document.getElementById('cg-mulai').value; const akhir = document.getElementById('cg-akhir').value;
+            const divId = document.getElementById('cg-divisi').value; 
+            const mulai = document.getElementById('cg-mulai').value; 
+            const akhir = document.getElementById('cg-akhir').value;
             const tbody = document.getElementById('tbody-cetak-gaji');
+            
             if(!divId || !mulai || !akhir) return tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-gray-400">Lengkapi periode & divisi.</td></tr>`;
 
             dataRekapAktif = [];
+            
+            // Mengambil daftar tanggal untuk iterasi
+            const arrDates = getDatesBetween(mulai, akhir);
+
             dbKaryawan.filter(k => k.div_id == divId).forEach(k => {
                 let tReg = 0, tLem = 0;
-                dbProduksi.filter(p => p.id_kar === k.id && p.tgl >= mulai && p.tgl <= akhir).forEach(p => { tReg += p.reg; tLem += p.lem; });
+                
+                // Mencegah duplicate entry dengan mencocokkan per tanggal menggunakan find()
+                arrDates.forEach(d => {
+                    let prod = dbProduksi.find(p => p.id_kar === k.id && p.tgl === d);
+                    if(prod) {
+                        tReg += prod.reg;
+                        tLem += prod.lem;
+                    }
+                });
                 
                 if (tReg === 0 && tLem === 0) return;
 
