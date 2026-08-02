@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR | Admin Laporan Driver</title>
+    
+    <!-- Library Supabase & Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Library HTML2Canvas untuk Simpan Gambar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Courier+New:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS VARIABLES: OTOMATIS BERGANTI TEMA */
+        :root {
+            --bg-main: #f4f4f5;
+            --card-bg: #ffffff;
+            --text-main: #27272a;
+            --text-muted: #71717a;
+            --border-color: #e4e4e7;
+            --primary: #18181b;
+            --box-bg: #f4f4f5;
+            --th-bg: #f8fafc;
+            --highlight-bg: #f0fdf4;
+            --highlight-text: #059669;
+            --sisa-bg: #fef08a;
+            --sisa-text: #000000;
+            --success-text: #059669;
+            --danger-text: #dc2626;
+            --warning-text: #d97706;
+            --kas-text: #b45309;
+            --nota-bg: #e0f2fe;
+            --nota-text: #0284c7;
+        }
+
+        /* WARNA SAAT TEMA GELAP (DARK MODE) AKTIF */
+        [data-theme="dark"] {
+            --bg-main: #18181b; 
+            --card-bg: #27272a; 
+            --text-main: #f4f4f5; 
+            --text-muted: #a1a1aa; 
+            --border-color: #3f3f46; 
+            --primary: #ffffff;
+            --box-bg: #18181b;
+            --th-bg: #18181b;
+            --highlight-bg: #064e3b;
+            --highlight-text: #34d399;
+            --sisa-bg: #854d0e;
+            --sisa-text: #ffffff;
+            --success-text: #34d399;
+            --danger-text: #f87171;
+            --warning-text: #fbbf24;
+            --kas-text: #f59e0b;
+            --nota-bg: #0c4a6e;
+            --nota-text: #7dd3fc;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-main); color: var(--text-main); margin: 0; padding: 12px; -webkit-tap-highlight-color: transparent; transition: background-color 0.3s ease, color 0.3s ease; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background-color 0.3s ease; }
+
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        h2 { margin: 0; font-size: 15px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .btn-theme { background: var(--box-bg); border: 1px solid var(--border-color); color: var(--text-main); font-size: 16px; cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; transition: transform 0.2s; }
+        .btn-theme:active { transform: scale(0.9); }
+
+        /* SUMMARY GRID */
+        .summary-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 20px; }
+        @media(min-width: 768px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } }
+        .summary-box { background: var(--box-bg); padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); }
+        @media(min-width: 768px) { .summary-box { display: block; text-align: center; padding: 16px; } }
+        .summary-box p { margin: 0; font-size: 11px; color: var(--text-muted); font-weight: 600; }
+        .summary-box h3 { margin: 0; font-size: 16px; font-weight: 700; }
+
+        /* FILTER KONTROL */
+        .filter-section { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        @media(min-width: 768px) { .filter-section { flex-direction: row; } }
+        .filter-group { display: flex; flex-direction: column; flex: 1; }
+        .filter-group label { font-size: 10px; margin-bottom: 4px; color: var(--text-muted); font-weight: 600; }
+        input[type="date"] { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px; border-radius: 6px; font-family: inherit; width: 100%; box-sizing: border-box; color-scheme: light dark; }
+        .btn-container { display: flex; gap: 8px; margin-top: 4px; }
+        @media(min-width: 768px) { .btn-container { align-items: flex-end; margin-top: 0; flex: 1; } }
+        .btn { padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 12px; width: 100%; letter-spacing: 0.3px; }
+        .btn-tampilkan { background: var(--primary); color: var(--card-bg); border: 1px solid var(--border-color); }
+        .btn-excel { background: #166534; color: white; }
+
+        /* TAMPILAN LAPTOP (Tabel Normal) */
+        .table-container { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { background: var(--th-bg); color: var(--text-muted); padding: 12px 8px; font-size: 11px; font-weight: 600; border-bottom: 2px solid var(--border-color); text-align: center; }
+        td { padding: 12px 8px; border-bottom: 1px solid var(--border-color); font-size: 12px; text-align: center; }
+        .txt-kiri { text-align: left; }
+        .sub-txt { font-size: 10px; color: var(--text-muted); display: block; margin-top: 2px; }
+        .text-bold { font-weight: 600; }
+
+        /* BADGE NOTA BISA DIKLIK */
+        .badge-nota { background: var(--nota-bg); color: var(--nota-text); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; cursor: pointer; display: inline-block; margin-right: 4px; margin-top: 4px; border: 1px solid var(--nota-text); transition: transform 0.1s; }
+        .badge-nota:active { transform: scale(0.95); }
+
+        /* =========================================================
+           TAMPILAN KHUSUS HANDPHONE (Dialog Dinamis Tabel)
+           ========================================================= */
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr { display: block; min-width: unset; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            tr.row-data { border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 16px; background: var(--card-bg); overflow: hidden; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+            td { border: none; border-bottom: 1px solid var(--border-color); position: relative; padding: 10px 12px 10px 45%; text-align: right !important; min-height: 20px; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; }
+            tr.row-data td:nth-of-type(n+6) { display: none !important; }
+            tr.row-data::after { content: "Lihat Rincian Potongan \2192"; display: block; text-align: center; padding: 12px; font-size: 11px; color: var(--highlight-text); font-weight: 700; background: var(--highlight-bg); border-top: 1px solid var(--border-color); }
+            td:before { position: absolute; top: 50%; transform: translateY(-50%); left: 12px; width: 40%; text-align: left; font-weight: 600; font-size: 10px; color: var(--text-muted); }
+            td:nth-of-type(1):before { content: "WAKTU"; } td:nth-of-type(2):before { content: "DRIVER"; } td:nth-of-type(3):before { content: "UNIT"; } td:nth-of-type(4):before { content: "AGEN / NOTA"; } td:nth-of-type(5):before { content: "CASH KOTOR"; } td:nth-of-type(6):before { content: "UANG JALAN"; } td:nth-of-type(7):before { content: "BBM"; } td:nth-of-type(8):before { content: "BONGKAR"; } td:nth-of-type(9):before { content: "LAIN-LAIN"; } td:nth-of-type(10):before { content: "BIAYA DARI"; } td:nth-of-type(11):before { content: "SISA BERSIH"; }
+            td .sub-txt { text-align: right; }
+            tr.mode-dialog { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9000; background: var(--bg-main); margin: 0; border-radius: 0; padding: 16px; overflow-y: auto; cursor: default; }
+            tr.mode-dialog::after { display: none; }
+            tr.mode-dialog td:nth-of-type(n+6) { display: flex !important; }
+            tr.mode-dialog td { background: var(--card-bg); }
+            tr.mode-dialog td:first-of-type { border-top-left-radius: 12px; border-top-right-radius: 12px; }
+            tr.mode-dialog td:last-of-type { border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; border: none; }
+            .dialog-header { margin-bottom: 16px; position: sticky; top: 0; z-index: 10; padding-bottom: 5px; }
+            .btn-kembali { width: 100%; padding: 14px; background: var(--primary); color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+            .btn-kembali:active { transform: scale(0.98); }
+        }
+
+        /* =========================================================
+           UI MODAL PRATINJAU STRUK NOTA (Terintegrasi)
+           ========================================================= */
+        .struk-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 16px; }
+        .struk-overlay.active { display: flex; }
+        
+        .struk-container { background: #27272a; border-radius: 8px; width: 100%; max-width: 380px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #3f3f46; }
+        .struk-header { padding: 14px 16px; background: #18181b; color: white; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px; text-transform: uppercase; }
+        .struk-close { cursor: pointer; color: #a1a1aa; font-size: 20px; line-height: 1; }
+        
+        .struk-paper-area { background: #27272a; margin: 0; padding: 16px 12px; max-height: 60vh; overflow-y: auto; }
+        
+        /* CSS STRUK PERSIS DARI SUMBER */
+        .struk-box { background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; color: #000; font-size: 13px; line-height: 1.4; }
+        .struk-center { text-align: center; }
+        .struk-bold { font-weight: bold; }
+        .struk-title { font-size: 16px; font-weight: bold; margin: 0; font-family: 'Inter', sans-serif; }
+        .struk-separator { border-top: 1px dashed #000; margin: 6px 0; }
+        .struk-double-separator { border-top: 2px double #000; margin: 6px 0; }
+        .struk-row { display: flex; justify-content: space-between; }
+        .struk-item-detail { padding-left: 8px; }
+
+        .struk-footer { padding: 16px; background: #27272a; border-top: 1px solid #3f3f46; }
+        .struk-btn-group { display: flex; gap: 10px; margin-bottom: 12px; }
+        .btn-print-bt { background: #2563eb; color: white; flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-save-jpg { background: #16a34a; color: white; flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        
+        .struk-setting-label { color: white; font-size: 11px; font-weight: bold; display: block; margin-bottom: 6px; text-align: center; }
+        .struk-select { width: 100%; padding: 10px; background: #18181b; color: white; border: 1px solid #3f3f46; border-radius: 6px; font-family: inherit; font-size: 12px; outline: none; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header-container">
+        <h2>LAPORAN DRIVER SBR</h2>
+        <button class="btn-theme" id="btnTheme" onclick="toggleTheme()" title="Ganti Tema">🌙</button>
+    </div>
+
+    <!-- SUMMARY AREA -->
+    <div class="summary-grid">
+        <div class="summary-box">
+            <p>TOTAL KOTOR</p>
+            <h3 id="totKotor" style="color: var(--success-text);">Rp 0</h3>
+        </div>
+        <div class="summary-box">
+            <p>OPERASIONAL</p>
+            <h3 id="totBiaya" style="color: var(--danger-text);">Rp 0</h3>
+        </div>
+        <div class="summary-box">
+            <p>SISA BERSIH</p>
+            <h3 id="totBersih" style="color: var(--warning-text);">Rp 0</h3>
+        </div>
+    </div>
+
+    <!-- FILTER AREA -->
+    <div class="filter-section">
+        <div class="filter-group">
+            <label>DARI TANGGAL</label>
+            <input type="date" id="tglMulai">
+        </div>
+        <div class="filter-group">
+            <label>SAMPAI TANGGAL</label>
+            <input type="date" id="tglSelesai">
+        </div>
+        <div class="btn-container">
+            <button class="btn btn-tampilkan" onclick="muatLaporanDriver()">TAMPILKAN</button>
+            <button class="btn btn-excel" onclick="exportExcelDriver()">EXPORT</button>
+        </div>
+    </div>
+
+    <!-- TABEL UTAMA -->
+    <div class="table-container">
+        <table id="tabelAdminDriver">
+            <thead>
+                <tr>
+                    <th>JAM/TGL</th>
+                    <th>DRIVER</th>
+                    <th>UNIT KENDARAAN</th>
+                    <th>AGEN / NO NOTA</th>
+                    <th>CASH KOTOR (RP)</th>
+                    <th>UANG JALAN (RP)</th>
+                    <th>BBM (RP)</th>
+                    <th>BONGKAR (RP)</th>
+                    <th>LAIN-LAIN (RP)</th>
+                    <th>KAS BIAYA DARI</th>
+                    <th>SISA BERSIH (RP)</th>
+                </tr>
+            </thead>
+            <tbody id="isiTabelDriver">
+                <tr><td colspan="11" style="padding:40px; background:var(--card-bg); text-align:center; color:var(--text-muted);">Tentukan rentang tanggal lalu klik Tampilkan.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==========================================
+     KOMPONEN MODAL STRUK
+     ========================================== -->
+<div class="struk-overlay" id="modalStrukUtama">
+    <div class="struk-container">
+        <div class="struk-header">
+            <span id="judulNotaModal">STRUK DETAIL NOTA</span>
+            <span class="struk-close" onclick="tutupPreviewStruk()">&times;</span>
+        </div>
+        
+        <div class="struk-paper-area" id="teksStrukRender">
+            <!-- Isi struk di-render di sini melalui JS -->
+        </div>
+
+        <div class="struk-footer">
+            <div class="struk-btn-group">
+                <button id="btnCetakBluetooth" class="btn-print-bt" onclick="cetakStrukBluetooth()">🖨️ BLUETOOTH</button>
+                <button id="btnCetakGambar" class="btn-save-jpg" onclick="cetakGambar()">📸 SIMPAN JPG</button>
+            </div>
+            <div>
+                <label class="struk-setting-label">UKURAN KERTAS PRINTER:</label>
+                <select id="lebarKertas" class="struk-select">
+                    <option value="48">80mm (Besar - 48 Karakter)</option>
+                    <option value="32">58mm (Kecil - 32 Karakter)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Konfigurasi Database Supabase
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    let dataStrukAktif = null; // Menyimpan data aktif untuk fungsi print/save
+
+    // ==========================================
+    // LOGIKA MODAL STRUK NOTA TERINTEGRASI
+    // ==========================================
+    function formatTglBulanTahun(tglStr) {
+        if (!tglStr) return "";
+        const [y, m, d] = tglStr.split('-');
+        const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        return `${d} ${namaBulan[parseInt(m)-1]} ${y.slice(-2)}`;
+    }
+
+    async function bukaPreviewStruk(event, noNota) {
+        event.stopPropagation();
+        
+        const overlay = document.getElementById('modalStrukUtama');
+        const konten = document.getElementById('teksStrukRender');
+        document.getElementById('judulNotaModal').innerText = `NOTA: ${noNota}`;
+        
+        overlay.classList.add('active');
+        konten.innerHTML = "<p style='text-align:center; color:white;'>Menarik data dari server...</p>";
+
+        try {
+            // Menarik data persis seperti dari referensi Rekap Terpadu
+            const { data: trx, error: errTrx } = await _sb.from('transaksi').select('*').eq('no_nota', noNota).single();
+            if (errTrx) throw errTrx;
+
+            const { data: detail, error: errDet } = await _sb.from('transaksi_detail').select('*').eq('no_nota', noNota);
+            if (errDet) throw errDet;
+
+            const { data: rawRiwayatBayar, error: errBayar } = await _sb.from('pembayaran_bon')
+                .select('tanggal, bayar_cash, bayar_transfer, keterangan')
+                .eq('no_nota_referensi', noNota);
+
+            let riwayatBayar = rawRiwayatBayar || [];
+            riwayatBayar.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+
+            dataStrukAktif = { trx, detail, riwayatBayar };
+
+            const [y, m, d] = trx.tanggal.split('-');
+            const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
+
+            // Merakit HTML struk sama persis dengan referensi
+            let s = `<div class="struk-box" id="areaCetakStruk">
+                        <div class="struk-center">
+                            <span class="struk-title">SBR PUTRA FOOD</span><br>
+                            Lembang, Bandung Barat<br>
+                        </div>
+                        <div class="struk-separator"></div>
+                        <div class="struk-row"><span>NO: ${trx.no_nota}</span><span>TGL: ${d}-${m}-${y}</span></div>
+                        <div class="struk-center struk-bold" style="font-size:14px; margin: 4px 0;">${trx.nama_agen.toUpperCase()}</div>
+                        <div>DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
+                        <div class="struk-separator"></div>`;
+
+            const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
+            const itemsRetur = detail.filter(i => i.tipe === 'Retur');
+
+            itemsKirim.forEach(i => {
+                s += `<div>${i.nama_barang}</div>`;
+                s += `<div class="struk-row struk-item-detail">
+                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
+                        <span>${(i.subtotal || 0).toLocaleString('id-ID')}</span>
+                      </div>`;
+            });
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-row"><span>TOTAL KIRIM:</span><span>Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}</span></div>`;
+
+            if(itemsRetur.length > 0) {
+                s += `<br><div class="struk-bold">BARANG RETUR:</div>`;
+                itemsRetur.forEach(i => {
+                    s += `<div>[RETUR] ${i.nama_barang}</div>`;
+                    s += `<div class="struk-row struk-item-detail">
+                            <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
+                            <span>-${(i.subtotal || 0).toLocaleString('id-ID')}</span>
+                          </div>`;
+                });
+                s += `<div class="struk-separator"></div>`;
+                s += `<div class="struk-row"><span>TOTAL RETUR:</span><span>Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}</span></div>`;
+            }
+
+            const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
+            let bonLama = trx.bon_lama || 0;
+            let teksBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
+            s += `<br><div class="struk-row"><span>${teksBonLama}</span><span>Rp ${Math.abs(bonLama).toLocaleString('id-ID')}</span></div>`;
+            
+            s += `<div class="struk-double-separator"></div>`;
+            s += `<div class="struk-row struk-bold"><span>TOTAL TAGIHAN:</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-row"><span>Bayar CASH:</span><span>Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-row"><span>Bayar TRF:</span><span>Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+
+            if (riwayatBayar && riwayatBayar.length > 0) {
+                s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
+                riwayatBayar.forEach(p => {
+                    let detailBayar = "";
+                    if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
+                    if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
+                    let ket = p.keterangan ? `<div style="font-size:11px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
+                    let tglIndo = formatTglBulanTahun(p.tanggal);
+                    s += `<div class="struk-row"><span>&nbsp;&nbsp;${tglIndo}</span><span>${detailBayar}</span></div>${ket}`;
+                });
+                s += `<div class="struk-separator"></div>`;
+            }
+
+            let sisaAkhir = trx.sisa_akhir || 0;
+            let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+            s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>${teksSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
+            s += `</div>`;
+
+            konten.innerHTML = s;
+        } catch (e) {
+            konten.innerHTML = `<p style='color:#f87171; text-align:center;'>Gagal memuat struk: ${e.message}</p>`;
+        }
+    }
+
+    function tutupPreviewStruk() {
+        document.getElementById('modalStrukUtama').classList.remove('active');
+        dataStrukAktif = null;
+    }
+
+    function formatBarisKiriKanan(kiri, kanan) {
+        const LEBAR_MAX = parseInt(document.getElementById('lebarKertas').value);
+        let spasi = LEBAR_MAX - (kiri.length + String(kanan).length);
+        if (spasi < 1) spasi = 1;
+        return kiri + " ".repeat(spasi) + kanan + "\n";
+    }
+
+    // Fungsi Cetak Bluetooth diintegrasikan dari referensi
+    async function cetakStrukBluetooth() {
+        if (!navigator.bluetooth) {
+            alert("Browser ini tidak mendukung Web Bluetooth API.");
+            return;
+        }
+        if (!dataStrukAktif) return;
+
+        const { trx, detail, riwayatBayar } = dataStrukAktif;
+        const LEBAR_MAX = parseInt(document.getElementById('lebarKertas').value);
+        const GARIS = "-".repeat(LEBAR_MAX) + "\n";
+        const GARIS_GANDA = "=".repeat(LEBAR_MAX) + "\n";
+
+        let teks = "";
+        const ESC_INIT = "\x1B\x40"; 
+        const ESC_CENTER = "\x1B\x61\x01";
+        const ESC_LEFT = "\x1B\x61\x00";
+        const ESC_BOLD_ON = "\x1B\x45\x01";
+        const ESC_BOLD_OFF = "\x1B\x45\x00";
+
+        const [y, m, d] = trx.tanggal.split('-');
+        const drvGabung = trx.driver_2 ? `${trx.driver_1}/${trx.driver_2}` : trx.driver_1;
+
+        teks += ESC_INIT;
+        teks += ESC_CENTER + ESC_BOLD_ON + "SBR PUTRA FOOD\n" + ESC_BOLD_OFF;
+        teks += "Lembang, Bandung Barat\n";
+        teks += ESC_LEFT + GARIS;
+        teks += formatBarisKiriKanan(`NO: ${trx.no_nota}`, `TGL: ${d}-${m}-${y}`);
+        teks += ESC_CENTER + ESC_BOLD_ON + `${trx.nama_agen.toUpperCase()}\n` + ESC_BOLD_OFF;
+        teks += ESC_LEFT + `DRV: ${drvGabung} [${trx.plat_nomor || '-'}]\n`;
+        teks += GARIS;
+
+        const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
+        const itemsRetur = detail.filter(i => i.tipe === 'Retur');
+
+        itemsKirim.forEach(i => {
+            teks += `${i.nama_barang}\n`;
+            let rincian = `  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`;
+            let sub = `${(i.subtotal || 0).toLocaleString('id-ID')}`;
+            teks += formatBarisKiriKanan(rincian, sub);
+        });
+        teks += GARIS;
+        teks += formatBarisKiriKanan("TOTAL KIRIM:", `Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}`);
+
+        if(itemsRetur.length > 0) {
+            teks += GARIS;
+            teks += ESC_BOLD_ON + "BARANG RETUR:\n" + ESC_BOLD_OFF;
+            itemsRetur.forEach(i => {
+                teks += `[R] ${i.nama_barang}\n`;
+                let rincian = `  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`;
+                let sub = `-${(i.subtotal || 0).toLocaleString('id-ID')}`;
+                teks += formatBarisKiriKanan(rincian, sub);
+            });
+            teks += GARIS;
+            teks += formatBarisKiriKanan("TOTAL RETUR:", `Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}`);
+        }
+
+        const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
+        let bonLama = trx.bon_lama || 0;
+        let teksBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
+        
+        teks += "\n";
+        teks += formatBarisKiriKanan(teksBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`);
+        teks += GARIS_GANDA;
+        teks += ESC_BOLD_ON + formatBarisKiriKanan("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`) + ESC_BOLD_OFF;
+        teks += GARIS;
+        teks += formatBarisKiriKanan("Bayar CASH:", `Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}`);
+        teks += formatBarisKiriKanan("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`);
+        teks += GARIS;
+        
+        if (riwayatBayar && riwayatBayar.length > 0) {
+            teks += ESC_BOLD_ON + "RIWAYAT CICILAN:\n" + ESC_BOLD_OFF;
+            riwayatBayar.forEach(p => {
+                let det = "";
+                if ((p.bayar_cash || 0) > 0) det += `CSH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
+                if ((p.bayar_transfer || 0) > 0) det += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
+                let tglIndo = formatTglBulanTahun(p.tanggal);
+                teks += formatBarisKiriKanan(`  ${tglIndo}`, det.trim());
+            });
+            teks += GARIS;
+        }
+
+        let sisaAkhir = trx.sisa_akhir || 0;
+        let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+        teks += ESC_BOLD_ON + formatBarisKiriKanan(teksSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`) + ESC_BOLD_OFF;
+        teks += GARIS;
+
+        teks += ESC_CENTER + ESC_BOLD_ON + "SBR PUTRA FOOD SYSTEM\n" + ESC_BOLD_OFF;
+        teks += "\n\n\n"; 
+
+        try {
+            document.getElementById('btnCetakBluetooth').innerText = "Menghubungkan...";
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '0000fee7-0000-1000-8000-00805f9b34fb']
+            });
+
+            const server = await device.gatt.connect();
+            
+            let service;
+            const serviceUUIDs = ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '0000fee7-0000-1000-8000-00805f9b34fb'];
+            for (let uuid of serviceUUIDs) {
+                try {
+                    service = await server.getPrimaryService(uuid);
+                    if (service) break;
+                } catch(e) {}
+            }
+            if (!service) throw new Error("Service printer tidak ditemukan.");
+
+            let characteristic;
+            const charUUIDs = ['00002af1-0000-1000-8000-00805f9b34fb', 'beab8f86-ea54-44a6-9817-ffb7db7bd4b2', '0000fec8-0000-1000-8000-00805f9b34fb'];
+            for (let uuid of charUUIDs) {
+                try {
+                    characteristic = await service.getCharacteristic(uuid);
+                    if (characteristic) break;
+                } catch(e) {}
+            }
+            if (!characteristic) throw new Error("Karakteristik write tidak ditemukan.");
+
+            let encoder = new TextEncoder();
+            let dataUint8 = encoder.encode(teks);
+            
+            let chunkSize = 100; 
+            for (let i = 0; i < dataUint8.length; i += chunkSize) {
+                await characteristic.writeValue(dataUint8.slice(i, i + chunkSize));
+                await new Promise(resolve => setTimeout(resolve, 100)); 
+            }
+            
+            device.gatt.disconnect();
+            document.getElementById('btnCetakBluetooth').innerText = "🖨️ BLUETOOTH";
+
+        } catch (error) {
+            console.error(error);
+            alert("Gagal cetak Bluetooth: " + error.message);
+            document.getElementById('btnCetakBluetooth').innerText = "🖨️ BLUETOOTH";
+        }
+    }
+
+    // Fungsi Simpan JPG diintegrasikan dari referensi
+    async function cetakGambar() {
+        const areaStruk = document.getElementById('areaCetakStruk');
+        if (!areaStruk) {
+            alert("Area struk tidak ditemukan!");
+            return;
+        }
+
+        const btn = document.getElementById('btnCetakGambar');
+        const teksAsli = btn.innerText;
+        btn.innerText = "⏳ Proses...";
+        btn.disabled = true;
+
+        try {
+            const canvas = await html2canvas(areaStruk, {
+                scale: 2, 
+                backgroundColor: "#ffffff",
+                logging: false
+            });
+
+            const imageURL = canvas.toDataURL("image/jpeg", 0.9);
+            const downloadLink = document.createElement("a");
+            downloadLink.href = imageURL;
+            
+            let namaFile = "Bukti_Validasi_SBR";
+            if (dataStrukAktif && dataStrukAktif.trx && dataStrukAktif.trx.no_nota) {
+                namaFile += "_" + dataStrukAktif.trx.no_nota;
+            }
+            
+            downloadLink.download = namaFile + ".jpg";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+        } catch (error) {
+            console.error("Error cetak gambar:", error);
+            alert("Gagal memproses gambar: " + error.message);
+        } finally {
+            btn.innerText = teksAsli;
+            btn.disabled = false;
+        }
+    }
+
+    // ==========================================
+    // FITUR TEMA GELAP / TERANG 
+    // ==========================================
+    function toggleTheme() {
+        const body = document.documentElement;
+        const btn = document.getElementById('btnTheme');
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+            btn.innerText = '🌙'; 
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            btn.innerText = '☀️'; 
+        }
+    }
+
+    // ==========================================
+    // LOGIKA UI BARU (KLIK & DIALOG HP)
+    // ==========================================
+    function bukaDetail(elm) {
+        if (window.innerWidth > 768) return; 
+        if (!elm.classList.contains('row-data')) return; 
+        if (elm.classList.contains('mode-dialog')) return; 
+
+        elm.classList.add('mode-dialog');
+        document.body.style.overflow = 'hidden'; 
+        
+        let header = elm.querySelector('.dialog-header');
+        if (!header) {
+            header = document.createElement('div');
+            header.className = 'dialog-header';
+            header.innerHTML = '<button class="btn-kembali" onclick="tutupDetail(event, this)">&larr; KEMBALI KE RINGKASAN</button>';
+            elm.insertBefore(header, elm.firstChild);
+        }
+    }
+
+    function tutupDetail(event, btn) {
+        event.stopPropagation();
+        const tr = btn.closest('tr');
+        tr.classList.remove('mode-dialog');
+        document.body.style.overflow = 'auto'; 
+        const header = tr.querySelector('.dialog-header');
+        if (header) header.remove();
+    }
+
+    window.addEventListener('resize', () => {
+        if(window.innerWidth > 768) {
+            document.querySelectorAll('.mode-dialog').forEach(el => {
+                el.classList.remove('mode-dialog');
+                const btn = el.querySelector('.dialog-header');
+                if(btn) btn.remove();
+            });
+            document.body.style.overflow = 'auto';
+        }
+    });
+
+    // ==========================================
+    // FUNGSI UTAMA (MEMUAT DATA TABEL & LAPORAN)
+    // ==========================================
+    window.onload = () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('tglMulai').value = today;
+        document.getElementById('tglSelesai').value = today;
+    };
+
+    async function muatLaporanDriver() {
+        const tbody = document.getElementById('isiTabelDriver');
+        tbody.innerHTML = "<tr><td colspan='11' style='padding:30px; background:var(--card-bg); text-align:center; color:var(--text-muted);'>Menarik data setoran driver...</td></tr>";
+
+        const tglAwal = document.getElementById('tglMulai').value;
+        const tglAkhir = document.getElementById('tglSelesai').value;
+
+        const { data: laporanData, error: errLaporan } = await _sb.from('rekap_laporan_driver')
+            .select('*')
+            .gte('created_at', `${tglAwal}T00:00:00`)
+            .lte('created_at', `${tglAkhir}T23:59:59`)
+            .order('created_at', { ascending: false });
+
+        if (errLaporan) { alert("Gagal memuat: " + errLaporan.message); return; }
+        
+        if (!laporanData || laporanData.length === 0) { 
+            tbody.innerHTML = "<tr><td colspan='11' style='padding:30px; background:var(--card-bg); text-align:center; color:var(--text-muted);'>Tidak ada setoran driver di tanggal ini.</td></tr>";
+            hitungSummary([]);
+            return; 
+        }
+
+        const { data: transaksiData } = await _sb.from('transaksi').select('no_nota, bayar_cash');
+        const { data: armadaData } = await _sb.from('monitoring_kendaraan').select('plat_nomor, nama_unit');
+
+        tbody.innerHTML = "";
+        
+        const laporanSelesai = laporanData.map(r => {
+            let totalCashNota = 0;
+            let htmlNotaKlik = '-';
+
+            if (r.no_nota && r.no_nota !== '-') {
+                const listNota = r.no_nota.split(',').map(s => s.trim());
+                let kumpulanBadge = [];
+                
+                listNota.forEach(notaSingle => {
+                    const matchTx = transaksiData?.find(t => t.no_nota === notaSingle);
+                    if (matchTx) {
+                        totalCashNota += parseInt(matchTx.bayar_cash || 0);
+                    }
+                    kumpulanBadge.push(`<span class="badge-nota" onclick="bukaPreviewStruk(event, '${notaSingle}')">${notaSingle}</span>`);
+                });
+                
+                htmlNotaKlik = kumpulanBadge.join(' ');
+            }
+            
+            const nominalLain = r.lain_lain || 0; 
+            const totalBiaya = (r.uang_jalan || 0) + (r.uang_bbm || 0) + (r.uang_bongkar || 0) + nominalLain;
+            const sisaBersih = totalCashNota - totalBiaya;
+
+            let namaDriverGabung = r.nama_driver || '-';
+            if (r.driver_2 && r.driver_2 !== '-') {
+                namaDriverGabung += ` / ${r.driver_2}`;
+            }
+
+            const cocokArmada = armadaData?.find(a => a.plat_nomor === r.plat_nomor);
+            const hanyaNamaUnit = cocokArmada ? cocokArmada.nama_unit : (r.plat_nomor || '-');
+            const sumberKasAgen = r.sumber_agen && r.sumber_agen !== '-' ? r.sumber_agen : 'Uang Jalan Driver';
+
+            let teksLainLainFix = "";
+            if (r.ket_lain_lain && r.ket_lain_lain !== "-") {
+                teksLainLainFix = `${r.ket_lain_lain}: Rp ${nominalLain.toLocaleString('id-ID')}`;
+            } else {
+                teksLainLainFix = `Rp ${nominalLain.toLocaleString('id-ID')}`;
+            }
+
+            return {
+                ...r,
+                cash_kotor_riil: totalCashNota,
+                total_biaya_riil: totalBiaya,
+                sisa_inter_bersih: sisaBersih,
+                driver_lengkap: namaDriverGabung,
+                nama_unit_saja: hanyaNamaUnit,
+                sumber_kas_fix: sumberKasAgen,
+                output_lain_lain: teksLainLainFix,
+                html_nota_render: htmlNotaKlik 
+            };
+        });
+
+        laporanSelesai.forEach(r => {
+            const dObj = new Date(r.created_at);
+            const tglIndo = dObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const jamIndo = dObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+            tbody.innerHTML += `
+                <tr class="row-data" onclick="bukaDetail(this)">
+                    <td style="background: var(--th-bg);">${tglIndo}<br><span class="sub-txt">${jamIndo} WIB</span></td>
+                    <td class="text-bold txt-kiri">${r.driver_lengkap}</td>
+                    <td class="text-bold" style="color: var(--text-muted);">${r.nama_unit_saja}</td>
+                    <td class="txt-kiri">${r.nama_agen || '-'}<br><div style="margin-top:6px;">${r.html_nota_render}</div></td>
+                    <td style="color: var(--highlight-text); font-weight:bold;">Rp ${(r.cash_kotor_riil).toLocaleString('id-ID')}</td>
+                    <td>Rp ${(r.uang_jalan || 0).toLocaleString('id-ID')}</td>
+                    <td>Rp ${(r.uang_bbm || 0).toLocaleString('id-ID')}</td>
+                    <td>Rp ${(r.uang_bongkar || 0).toLocaleString('id-ID')}</td>
+                    <td style="font-weight: 500; color: var(--text-muted);">${r.output_lain_lain}</td>
+                    <td style="color: var(--kas-text); font-weight:bold; font-size:11px;">${r.sumber_kas_fix}</td>
+                    <td style="background: var(--sisa-bg); font-weight:bold; color: var(--sisa-text);">Rp ${r.sisa_inter_bersih.toLocaleString('id-ID')}</td>
+                </tr>
+            `;
+        });
+
+        hitungSummary(laporanSelesai);
+    }
+
+    function hitungSummary(data) {
+        let kotor = 0; let biaya = 0; let bersih = 0;
+        if(data && data.length > 0) {
+            data.forEach(r => { kotor += r.cash_kotor_riil; biaya += r.total_biaya_riil; });
+            bersih = kotor - biaya;
+        }
+        document.getElementById('totKotor').innerText = "Rp " + kotor.toLocaleString('id-ID');
+        document.getElementById('totBiaya').innerText = "Rp " + biaya.toLocaleString('id-ID');
+        document.getElementById('totBersih').innerText = "Rp " + bersih.toLocaleString('id-ID');
+    }
+
+    function exportExcelDriver() {
+        const tglFile = document.getElementById('tglMulai').value;
+        const wb = XLSX.utils.table_to_book(document.getElementById("tabelAdminDriver"));
+        XLSX.writeFile(wb, `Laporan_Setoran_Driver_${tglFile}.xlsx`);
+    }
+</script>
+</body>
+</html>
