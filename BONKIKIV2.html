@@ -55,8 +55,10 @@
         .header-actions { display: flex; gap: 8px; }
         .icon-btn { background: var(--bg-color); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text-main); cursor: pointer; transition: 0.2s; }
         .icon-btn.danger { color: var(--danger); background: #fef2f2; }
+        .icon-btn.connected { color: #ffffff !important; background: var(--primary) !important; box-shadow: 0 0 10px rgba(37,99,235,0.4); }
         
         [data-theme="dark"] .icon-btn.danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+        [data-theme="dark"] .icon-btn.connected { background: var(--primary) !important; color: #ffffff !important; }
 
         /* CONTAINER & CARDS */
         .container { padding: 12px; max-width: 600px; margin: 0 auto; }
@@ -105,10 +107,17 @@
         [data-theme="dark"] .alert-danger { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); }
         [data-theme="dark"] .alert-success { background: rgba(16, 185, 129, 0.1); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.2); }
 
-        /* CHECKBOX */
-        .checkbox-wrapper { display: flex; align-items: center; gap: 10px; padding: 14px; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: var(--radius-md); cursor: pointer; margin-bottom: 12px;}
-        .checkbox-wrapper input { width: 20px; height: 20px; accent-color: var(--warning); cursor: pointer; }
-        .checkbox-wrapper span { font-weight: 700; color: #b45309; font-size: 13px; }
+        /* CHECKBOX PERSEKSI & HITBOX FIX */
+        .checkbox-wrapper { 
+            display: flex; align-items: center; gap: 12px; padding: 14px; 
+            background: #fffbeb; border: 1.5px solid #fde68a; border-radius: var(--radius-md); 
+            cursor: pointer; margin-bottom: 12px; user-select: none;
+        }
+        .checkbox-wrapper input[type="checkbox"] { 
+            width: 22px; height: 22px; accent-color: var(--warning); 
+            cursor: pointer; flex-shrink: 0; appearance: auto !important; -webkit-appearance: checkbox !important; 
+        }
+        .checkbox-wrapper span { font-weight: 700; color: #b45309; font-size: 13px; pointer-events: none; }
         
         [data-theme="dark"] .checkbox-wrapper { background: var(--input-bg); border-color: var(--border); }
         [data-theme="dark"] .checkbox-wrapper span { color: #fbbf24; }
@@ -143,7 +152,7 @@
 <header>
     <div class="brand"><i class="ph-fill ph-receipt"></i> SBR Food</div>
     <div class="header-actions">
-        <button class="icon-btn" onclick="openSheet('sheetPrinter')" title="Pengaturan Printer"><i class="ph ph-printer"></i></button>
+        <button class="icon-btn" id="btnPrinterIcon" onclick="openSheet('sheetPrinter')" title="Pengaturan Printer"><i class="ph ph-printer"></i></button>
         <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema"><i class="ph ph-moon"></i></button>
         <button class="icon-btn danger" onclick="resetFormForNewNota()" title="Reset / Nota Baru"><i class="ph ph-arrow-counter-clockwise"></i></button>
     </div>
@@ -157,13 +166,12 @@
         <span id="notifText">AGEN INI PUNYA BON LAMA!</span>
     </div>
 
-    <!-- Info Dasar (Layout Kompak: Driver 1 & Agen di baris 1, Driver 2 & Mobil di baris 2) -->
+    <!-- Info Dasar -->
     <div class="card">
         <div class="form-grid">
             <div class="form-group"><label>No. Nota</label><input type="text" id="noNota" readonly></div>
             <div class="form-group"><label>Tanggal</label><input type="date" id="tglNota"></div>
             
-            <!-- Driver 1 Kiri, Agen Kanan -->
             <div class="form-group">
                 <select id="driver1">
                     <option value="">-- DRIVER 1 --</option>
@@ -175,7 +183,6 @@
                 </select>
             </div>
 
-            <!-- Driver 2 Kiri, Mobil Kanan -->
             <div class="form-group">
                 <select id="driver2">
                     <option value="">-- DRIVER 2 (OPSIONAL) --</option>
@@ -235,8 +242,8 @@
 
     <!-- Pembayaran -->
     <div class="card">
-        <label class="checkbox-wrapper">
-            <input type="checkbox" id="cbTidakTitip" onchange="togglePembayaran()">
+        <label class="checkbox-wrapper" onclick="document.getElementById('cbTidakTitip').click();">
+            <input type="checkbox" id="cbTidakTitip" onchange="togglePembayaran()" onclick="event.stopPropagation();">
             <span>TIDAK TITIP UANG (BON FULL)</span>
         </label>
 
@@ -266,7 +273,6 @@
         </button>
     </div>
 </div>
-
 
 <!-- MODAL: Input Item -->
 <div class="modal-overlay" id="overlayInput" onclick="closeSheet('sheetInput')"></div>
@@ -648,12 +654,18 @@
             document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")";
             document.getElementById('statusBT').style.color = "var(--success)";
 
+            // Ubah ikon printer jadi biru/menyala saat terhubung
+            document.getElementById('btnPrinterIcon').classList.add('connected');
+
             const savedSize = localStorage.getItem('printerSize_' + connectedDeviceId);
             if (savedSize) {
                 document.getElementById('ukuranKertas').value = savedSize;
             }
 
-        } catch (e) { alert("BT Gagal: " + e); }
+        } catch (e) { 
+            alert("BT Gagal: " + e); 
+            document.getElementById('btnPrinterIcon').classList.remove('connected');
+        }
     }
 
     async function printToBT(text) {
