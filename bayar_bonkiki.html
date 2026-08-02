@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Pembayaran Bon</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#ffffff" id="themeColorMeta">
+
+    <!-- Tambahan Library untuk Export JPG & Supabase -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Modern Font & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --input-bg: #fafafa;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #333333;
+            --input-bg: #2d2d2d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background: var(--bg-color); color: var(--text-main); padding-bottom: 120px; font-size: 14px; transition: background 0.3s, color 0.3s; }
+
+        /* HEADER */
+        header { 
+            background: var(--card-bg); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.3s;
+        }
+        .brand { font-weight: 800; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        .brand span { color: var(--success); }
+        .header-actions { display: flex; gap: 8px; align-items: center; }
+        .icon-btn { background: var(--bg-color); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text-main); cursor: pointer; transition: 0.2s; }
+        .icon-btn.danger { color: var(--danger); background: #fef2f2; }
+        
+        [data-theme="dark"] .icon-btn.danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+        /* CONTAINER & CARDS */
+        .container { padding: 12px; max-width: 600px; margin: 0 auto; }
+        .card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: background 0.3s; }
+        
+        /* FORM ELEMENTS (COMPACT GRID) */
+        .row-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group.full { grid-column: span 2; }
+        .form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+        input, select { 
+            width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); 
+            background: var(--input-bg); font-size: 14px; font-weight: 600; color: var(--text-main); outline: none; transition: 0.2s; appearance: none;
+        }
+        input:focus, select:focus { border-color: var(--primary); background: var(--card-bg); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+        
+        /* DISPLAY BOXES */
+        .display-box { background: var(--input-bg); padding: 14px; border-radius: var(--radius-md); border: 1px dashed var(--border); margin-bottom: 12px; transition: background 0.3s, border-color 0.3s; }
+        .display-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
+        .display-row.highlight { font-size: 16px; color: var(--danger); border-top: 1px solid var(--border); padding-top: 8px; margin-top: 10px; font-weight: 700; }
+        
+        /* INFO NOTA TERAKHIR */
+        .info-nota-box { display: none; background: #fff5f5; border: 1px solid #feb2b2; border-radius: var(--radius-md); padding: 12px; margin: 10px 0; font-size: 13px; color: #c53030; }
+        [data-theme="dark"] .info-nota-box { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; }
+        .info-nota-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .info-nota-row span:last-child { font-weight: 700; color: var(--text-main); }
+
+        /* MANUAL INPUT MONEY */
+        .input-manual { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-weight: 700; text-align: right; box-sizing: border-box; font-size: 18px; color: var(--primary); background: var(--input-bg); }
+        [data-theme="dark"] .input-manual { color: #60a5fa; }
+
+        /* SUBMIT BUTTON */
+        .btn-submit { width: 100%; padding: 14px; border: none; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; color: white; background: var(--primary); font-size: 14px; text-transform: uppercase; transition: opacity 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .btn-submit:disabled { background: var(--text-muted); opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+
+        /* TABLES */
+        .table-responsive { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; text-align: left; }
+        th { font-size: 11px; padding: 10px; background: var(--input-bg); border-bottom: 1px solid var(--border); text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+        td { padding: 10px; border-top: 1px solid var(--border); font-size: 13px; font-weight: 600; color: var(--text-main); }
+
+        .nota-link { color: var(--primary); text-decoration: underline; cursor: pointer; font-weight: 700; }
+        
+        /* MODALS */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+        .modal-content { background: var(--card-bg); margin: 5% auto; border-radius: var(--radius-lg); width: 92%; max-width: 480px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .modal-header { background: var(--input-bg); padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); color: var(--text-main); font-weight: 700; }
+        .modal-body { padding: 16px; max-height: 75vh; overflow-y: auto; color: var(--text-main); }
+        .close-btn { font-size: 22px; cursor: pointer; color: var(--text-muted); background: none; border: none; }
+        
+        /* STRUK */
+        .struk-box { background: #ffffff; border: 1px solid #cbd5e1; padding: 18px; border-radius: var(--radius-md); font-family: 'Courier New', Courier, monospace; color: #000000; font-size: 13px; line-height: 1.4; }
+        .struk-center { text-align: center; }
+        .struk-bold { font-weight: bold; }
+        .struk-title { font-size: 16px; font-weight: bold; margin: 0; font-family: 'Inter', sans-serif; }
+        .struk-separator { border-top: 1px dashed #000000; margin: 6px 0; }
+        .struk-double-separator { border-top: 2px double #000000; margin: 6px 0; }
+        .struk-row { display: flex; justify-content: space-between; }
+        .struk-item-detail { padding-left: 8px; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+    <div class="brand"><i class="ph-fill ph-receipt"></i> SBR<span>digital</span> ADMIN</div>
+    <div class="header-actions">
+        <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema"><i class="ph ph-moon"></i></button>
+    </div>
+</header>
+
+<div class="container" id="mainContainer">
+    
+    <div class="card">
+        <div class="row-flex">
+            <div class="form-group"><label>Tanggal</label><input type="date" id="tglBayar"></div>
+            <div class="form-group"><label>Nama Agen</label><select id="pilihAgen" onchange="loadDataAgen()"><option value="">-- PILIH --</option></select></div>
+        </div>
+
+        <div class="display-box">
+            <div class="display-row"><span>Bon Saat Ini:</span><span id="txtBonLama">Rp 0</span></div>
+            <div id="infoNotaTerakhir" class="info-nota-box">
+                <div style="font-weight: 700; border-bottom: 1px dashed currentColor; padding-bottom: 4px; margin-bottom: 6px;">⚠️ DETAIL PENGIRIMAN TERAKHIR:</div>
+                <div class="info-nota-row"><span>No. Nota:</span><span id="txtNotaTerakhir">-</span></div>
+                <div class="info-nota-row"><span>Tgl Kirim:</span><span id="txtTglKirim">-</span></div>
+                <div class="info-nota-row" style="margin-bottom: 0;"><span>Driver:</span><span id="txtDriverKirim">-</span></div>
+            </div>
+            <div class="display-row highlight"><span>Total Tagihan:</span><span id="txtTotalTagihan">Rp 0</span></div>
+        </div>
+
+        <div class="row-flex" style="margin-bottom: 8px;">
+            <div class="form-group"><label>CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungSisa()" onfocus="clearZero(this)" onblur="restoreZero(this)"></div>
+            <div class="form-group"><label>TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungSisa()" onfocus="clearZero(this)" onblur="restoreZero(this)"></div>
+        </div>
+
+        <div class="form-group"><label>Catatan</label><input type="text" id="inputKeterangan" placeholder="Keterangan pembayaran..."></div>
+        <div class="display-box"><div class="display-row" style="color: var(--success);"><span>Sisa Bon Akhir:</span><span id="txtSisaAkhir">Rp 0</span></div></div>
+
+        <button class="btn-submit" id="btnSimpan" onclick="simpanPembayaran()">Simpan Pembayaran</button>
+    </div>
+
+    <div class="card">
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+            <i class="ph-fill ph-clock-counter-clockwise" style="font-size: 16px; color: var(--primary);"></i> Riwayat Pembayaran
+        </div>
+        <div class="table-responsive">
+            <table id="tabelRiwayatBayar">
+                <thead><tr><th>TGL/NOTA</th><th>AGEN</th><th>CASH/TRF</th><th>SISA</th><th>KET</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Struk Digital -->
+<div id="modalDetail" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin:0; font-size:15px;">STRUK DETAIL NOTA</h3>
+            <button class="close-btn" onclick="tutupModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalIsi"></div>
+    </div>
+</div>
+
+<script>
+    // === THEME TOGGLE LOGIC ===
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('sbr_theme', newTheme);
+        updateThemeIcon(newTheme);
+    }
+    
+    function updateThemeIcon(theme) {
+        const btn = document.getElementById('themeToggleBtn');
+        const metaThemeColor = document.getElementById('themeColorMeta');
+        if (theme === 'dark') {
+            btn.innerHTML = '<i class="ph-fill ph-sun" style="color: #fbbf24;"></i>';
+            metaThemeColor.setAttribute("content", "#121212");
+        } else {
+            btn.innerHTML = '<i class="ph ph-moon"></i>';
+            metaThemeColor.setAttribute("content", "#f3f4f6");
+        }
+    }
+
+    const savedTheme = localStorage.getItem('sbr_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    window.addEventListener('DOMContentLoaded', () => updateThemeIcon(savedTheme));
+
+    // === SUPABASE & CORE VARIABLES ===
+    const clientSupabase = supabase.createClient("https://yxcxvkairftqzmptkorr.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs");
+    let listAgen = {};
+
+    function padLR(left, right, width = 48) {
+        let spaces = width - left.length - right.length;
+        if (spaces < 1) spaces = 1;
+        return left + " ".repeat(spaces) + right;
+    }
+
+    async function initHalaman() {
+        document.getElementById('tglBayar').valueAsDate = new Date();
+        const { data: agen } = await clientSupabase.from('agen').select('*');
+        const selAgen = document.getElementById('pilihAgen');
+        selAgen.innerHTML = '<option value="">-- PILIH --</option>';
+        listAgen = {};
+
+        if (agen) {
+            const agenNormal = agen.filter(a => a.type_agen !== 'KHUSUS');
+            agenNormal.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen)).forEach(a => {
+                const labelBon = a.saldo_bon > 0 ? " (!)" : "";
+                selAgen.options.add(new Option(a.nama_agen + labelBon, a.nama_agen));
+                listAgen[a.nama_agen] = a.saldo_bon || 0;
+            });
+        }
+        loadTabelRiwayat();
+    }
+
+    async function loadTabelRiwayat() {
+        const { data: riwayat } = await clientSupabase.from('pembayaran_bon').select('*').order('id', { ascending: false }).limit(10);
+        const tbody = document.querySelector('#tabelRiwayatBayar tbody');
+        tbody.innerHTML = '';
+        if (riwayat) {
+            riwayat.forEach(r => {
+                let linkNotaHtml = r.no_nota_referensi && r.no_nota_referensi !== 'NON-NOTA' 
+                    ? `<span class="nota-link" onclick="bukaStrukNota('${r.no_nota_referensi}')">${r.no_nota_referensi}</span>` 
+                    : `<span style="color:var(--text-muted);">${r.no_nota_referensi || '-'}</span>`;
+
+                tbody.innerHTML += `<tr>
+                    <td>${r.tanggal}<br><small>${linkNotaHtml}</small></td>
+                    <td>${r.nama_agen}</td>
+                    <td>${r.bayar_cash.toLocaleString('id-ID')}<br><span style="color:var(--primary);">${r.bayar_transfer.toLocaleString('id-ID')}</span></td>
+                    <td>${r.sisa_bon_akhir.toLocaleString('id-ID')}</td>
+                    <td style="font-size:11px; color:var(--text-muted);">${r.keterangan || '-'}</td>
+                </tr>`;
+            });
+        }
+    }
+
+    function clearZero(el) { if (el.value === "0" || el.value === 0) el.value = ""; }
+    function restoreZero(el) { if (el.value === "") { el.value = "0"; hitungSisa(); } }
+
+    function formatRupiah(el) { 
+        let cursorPosition = el.selectionStart;
+        let originalLength = el.value.length;
+        let v = el.value.replace(/[^0-9]/g, '');
+        if (v === "") el.value = "0";
+        else el.value = Number(v).toLocaleString('id-ID');
+        let newLength = el.value.length;
+        cursorPosition = cursorPosition + (newLength - originalLength);
+        el.setSelectionRange(cursorPosition, cursorPosition);
+    }
+    
+    function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
+
+    async function loadDataAgen() {
+        const ag = document.getElementById('pilihAgen').value;
+        const bon = listAgen[ag] || 0;
+        document.getElementById('txtBonLama').innerText = "Rp " + bon.toLocaleString('id-ID');
+        document.getElementById('txtTotalTagihan').innerText = "Rp " + bon.toLocaleString('id-ID');
+        const infoNotaBox = document.getElementById('infoNotaTerakhir');
+        
+        if (ag && bon > 0) {
+            document.getElementById('txtNotaTerakhir').innerText = "Memuat...";
+            document.getElementById('txtTglKirim').innerText = "Memuat...";
+            document.getElementById('txtDriverKirim').innerText = "Memuat...";
+            infoNotaBox.style.display = "block";
+
+            const { data: trx } = await clientSupabase.from('transaksi').select('no_nota, tanggal, driver_1, driver_2').eq('nama_agen', ag).order('created_at', { ascending: false }).limit(1);
+
+            if (trx && trx.length > 0) {
+                const t = trx[0];
+                const [y, m, d] = t.tanggal.split('-');
+                const drvGabung = t.driver_2 ? `${t.driver_1} / ${t.driver_2}` : t.driver_1;
+                document.getElementById('txtNotaTerakhir').innerHTML = `<span class="nota-link" onclick="bukaStrukNota('${t.no_nota}')">${t.no_nota}</span>`;
+                document.getElementById('txtTglKirim').innerText = `${d}-${m}-${y}` || '-';
+                document.getElementById('txtDriverKirim').innerText = drvGabung || '-';
+            } else {
+                infoNotaBox.style.display = "none";
+            }
+        } else {
+            infoNotaBox.style.display = "none";
+        }
+        hitungSisa();
+    }
+
+    function hitungSisa() {
+        const ag = document.getElementById('pilihAgen').value;
+        const sisa = (listAgen[ag] || 0) - getAngka('inputCash') - getAngka('inputTrf');
+        document.getElementById('txtSisaAkhir').innerText = "Rp " + sisa.toLocaleString('id-ID');
+    }
+
+    function resetForm() {
+        document.getElementById('tglBayar').valueAsDate = new Date();
+        document.getElementById('pilihAgen').value = "";
+        document.getElementById('inputCash').value = "0";
+        document.getElementById('inputTrf').value = "0";
+        document.getElementById('inputKeterangan').value = "";
+        document.getElementById('txtBonLama').innerText = "Rp 0";
+        document.getElementById('txtTotalTagihan').innerText = "Rp 0";
+        document.getElementById('txtSisaAkhir').innerText = "Rp 0";
+        document.getElementById('infoNotaTerakhir').style.display = "none";
+        const btn = document.getElementById('btnSimpan');
+        btn.disabled = false;
+        btn.innerText = "Simpan Pembayaran";
+    }
+
+    async function simpanPembayaran() {
+        const ag = document.getElementById('pilihAgen').value;
+        if (!ag) return alert("Pilih agen!");
+        
+        const cash = getAngka('inputCash');
+        const trf = getAngka('inputTrf');
+        
+        if (cash === 0 && trf === 0) return alert("Isi nominal pembayaran CASH atau TRANSFER terlebih dahulu!");
+
+        const bonLama = listAgen[ag] || 0;
+        const sisaAkhir = bonLama - cash - trf;
+        
+        const { data: nota } = await clientSupabase.from('transaksi').select('no_nota, id').eq('nama_agen', ag).gt('sisa_akhir', 0).order('id', { ascending: false }).limit(1);
+        const noNotaRef = (nota && nota.length > 0) ? nota[0].no_nota : "NON-NOTA";
+
+        const btn = document.getElementById('btnSimpan');
+        btn.disabled = true;
+        btn.innerText = "MEMPROSES...";
+
+        try {
+            await clientSupabase.from('pembayaran_bon').insert([{
+                no_kuitansi: "KWT-" + Date.now().toString().slice(-6),
+                no_nota_referensi: noNotaRef,
+                tanggal: document.getElementById('tglBayar').value,
+                nama_agen: ag,
+                bon_sebelumnya: bonLama,
+                bayar_cash: cash,
+                bayar_transfer: trf,
+                sisa_bon_akhir: sisaAkhir,
+                keterangan: document.getElementById('inputKeterangan').value
+            }]);
+
+            await clientSupabase.from('agen').update({ saldo_bon: sisaAkhir }).eq('nama_agen', ag);
+            if (nota && nota.length > 0) await clientSupabase.from('transaksi').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
+
+            alert("✅ Sukses Melakukan Pembayaran! Nota Ref: " + noNotaRef);
+            resetForm();
+            await initHalaman();
+        } catch (e) { 
+            alert("❌ Gagal: " + e.message); 
+            btn.disabled = false; 
+            btn.innerText = "Simpan Pembayaran";
+        }
+    }
+
+    function tutupModal() { document.getElementById('modalDetail').style.display = "none"; }
+    window.onclick = (e) => { if (e.target == document.getElementById('modalDetail')) tutupModal(); }
+
+    async function bukaStrukNota(noNota) {
+        if (!noNota || noNota === 'NON-NOTA') return;
+
+        const modalIsi = document.getElementById('modalIsi');
+        modalIsi.innerHTML = "<p style='text-align:center;'>Membuka struk belanja...</p>";
+        document.getElementById('modalDetail').style.display = "block";
+
+        try {
+            const { data: trx } = await clientSupabase.from('transaksi').select('*').eq('no_nota', noNota).single();
+            const { data: detail } = await clientSupabase.from('transaksi_detail').select('*').eq('no_nota', noNota);
+            const { data: riwayatBayar } = await clientSupabase.from('pembayaran_bon').select('tanggal, bayar_cash, bayar_transfer, keterangan').eq('no_nota_referensi', noNota);
+
+            window.currentStrukData = { trx, detail, riwayatBayar };
+
+            const [y, m, d] = trx.tanggal.split('-');
+            const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
+
+            let s = `<div class="struk-box" id="areaStruk">
+                        <div class="struk-center">
+                            <span class="struk-title">SBR PUTRA FOOD</span><br>Lembang, Bandung Barat<br>
+                        </div>
+                        <div class="struk-separator"></div>
+                        <div class="struk-row"><span>NO: ${trx.no_nota}</span><span>TGL: ${d}-${m}-${y}</span></div>
+                        <div class="struk-center struk-bold" style="font-size:14px; margin: 4px 0;">${trx.nama_agen.toUpperCase()}</div>
+                        <div>DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
+                        <div class="struk-separator"></div>`;
+
+            const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
+            const itemsRetur = detail.filter(i => i.tipe === 'Retur');
+
+            itemsKirim.forEach(i => {
+                s += `<div>${i.nama_barang}</div>`;
+                s += `<div class="struk-row struk-item-detail">
+                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
+                        <span>${(i.subtotal || 0).toLocaleString('id-ID')}</span>
+                      </div>`;
+            });
+            
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-row"><span>TOTAL KIRIM:</span><span>Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}</span></div>`;
+            
+            if(itemsRetur.length > 0) {
+                s += `<br><div class="struk-bold">BARANG RETUR:</div>`;
+                itemsRetur.forEach(i => {
+                    s += `<div>[RETUR] ${i.nama_barang}</div>`;
+                    s += `<div class="struk-row struk-item-detail">
+                            <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
+                            <span>-${(i.subtotal || 0).toLocaleString('id-ID')}</span>
+                          </div>`;
+                });
+                s += `<div class="struk-separator"></div>`;
+                s += `<div class="struk-row"><span>TOTAL RETUR:</span><span>Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}</span></div>`;
+            }
+
+            const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
+            let bonLama = trx.bon_lama || 0;
+            let labelBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
+            
+            s += `<br><div class="struk-row"><span>${labelBonLama}</span><span>Rp ${Math.abs(bonLama).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-double-separator"></div>`;
+            s += `<div class="struk-row struk-bold"><span>TOTAL TAGIHAN:</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-row"><span>Bayar CASH:</span><span>Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-row"><span>Bayar TRF:</span><span>Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+
+            if (riwayatBayar && riwayatBayar.length > 0) {
+                s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
+                let riwayatSort = [...riwayatBayar].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+                riwayatSort.forEach(p => {
+                    let detailBayar = "";
+                    if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: ${p.bayar_cash.toLocaleString('id-ID')} `;
+                    if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: ${p.bayar_transfer.toLocaleString('id-ID')}`;
+                    let ket = p.keterangan ? `<div style="font-size:11px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
+                    let tglSplit = p.tanggal.split('-');
+                    let namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+                    let tglIndoFormat = tglSplit.length === 3 ? `${tglSplit[2]} ${namaBulan[parseInt(tglSplit[1])-1]} ${tglSplit[0]}` : p.tanggal;
+                    
+                    s += `<div class="struk-row"><span>&nbsp;&nbsp;${tglIndoFormat}</span><span>${detailBayar}</span></div>${ket}`;
+                });
+                s += `<div class="struk-separator"></div>`;
+            }
+
+            let sisaAkhir = trx.sisa_akhir || 0;
+            let labelSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+            s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
+            s += `</div>`;
+
+            s += `<div class="action-buttons" style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="printStrukBluetooth()" style="flex:1; background:var(--primary); color:white; padding:10px; border:none; border-radius:var(--radius-md); cursor:pointer; font-weight:700;">🖨️ PRINT BLUETOOTH</button>
+                    <button onclick="downloadStrukJPG()" style="flex:1; background:var(--success); color:white; padding:10px; border:none; border-radius:var(--radius-md); cursor:pointer; font-weight:700;">📸 SAVE JPG</button>
+                  </div>`;
+            
+            s += `<div style="margin-top: 12px; text-align: center;">
+                    <label for="printSize" style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Ukuran Kertas Printer: </label>
+                    <select id="printSize" style="margin-top: 4px; padding: 8px; border-radius: var(--radius-md); font-weight: 600; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border); outline: none; cursor: pointer;">
+                        <option value="48">80mm (48 Karakter)</option>
+                        <option value="32">58mm (32 Karakter)</option>
+                    </select>
+                  </div>`;
+            
+            modalIsi.innerHTML = s;
+        } catch (e) {
+            modalIsi.innerHTML = `<p style='color:var(--danger); text-align:center;'>Gagal memuat struk: ${e.message}</p>`;
+        }
+    }
+
+    function generateESCPOS(trx, detail, riwayatBayar, charWidth) {
+        const [y, m, d] = trx.tanggal.split('-');
+        const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
+        const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
+        const itemsRetur = detail.filter(i => i.tipe === 'Retur');
+        const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
+        let bonLama = trx.bon_lama || 0;
+        let labelBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
+        let sisaAkhir = trx.sisa_akhir || 0;
+        let labelSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+
+        let separator = "-".repeat(charWidth);
+        let doubleSeparator = "=".repeat(charWidth);
+
+        let txt = "\x1B\x40"; 
+        txt += "\x1B\x61\x01"; 
+        txt += "SBR PUTRA FOOD\nLembang, Bandung Barat\n";
+        txt += "\x1B\x61\x00"; 
+        txt += separator + "\n";
+        txt += padLR(`NO: ${trx.no_nota}`, `TGL: ${d}-${m}-${y}`, charWidth) + "\n";
+        txt += "\x1B\x61\x01"; 
+        txt += `${trx.nama_agen.toUpperCase()}\n`;
+        txt += `DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]\n`;
+        txt += "\x1B\x61\x00"; 
+        txt += separator + "\n";
+
+        itemsKirim.forEach(i => {
+            txt += `${i.nama_barang}\n`;
+            txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `${(i.subtotal || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+        });
+        txt += separator + "\n";
+        txt += padLR("TOTAL KIRIM:", `Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+
+        if(itemsRetur.length > 0) {
+            txt += "\nBARANG RETUR:\n";
+            itemsRetur.forEach(i => {
+                txt += `[RETUR] ${i.nama_barang}\n`;
+                txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `-${(i.subtotal || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+            });
+            txt += separator + "\n";
+            txt += padLR("TOTAL RETUR:", `Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+        }
+
+        txt += "\n" + padLR(labelBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += doubleSeparator + "\n";
+        txt += padLR("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += separator + "\n";
+        txt += padLR("Bayar CASH:", `Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += padLR("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += separator + "\n";
+
+        if (riwayatBayar && riwayatBayar.length > 0) {
+            txt += "\nRIWAYAT CICILAN:\n";
+            let riwayatSort = [...riwayatBayar].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+            riwayatSort.forEach(p => {
+                let detailBayar = "";
+                if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: ${p.bayar_cash.toLocaleString('id-ID')} `;
+                if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: ${p.bayar_transfer.toLocaleString('id-ID')}`;
+                
+                let tglSplit = p.tanggal.split('-');
+                let namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+                let tglIndoFormat = tglSplit.length === 3 ? `${tglSplit[2]} ${namaBulan[parseInt(tglSplit[1])-1]} ${tglSplit[0]}` : p.tanggal;
+                
+                txt += padLR(`  ${tglIndoFormat}`, detailBayar, charWidth) + "\n";
+                if (p.keterangan) txt += `  (${p.keterangan})\n`;
+            });
+            txt += separator + "\n";
+        }
+
+        txt += padLR(labelSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += separator + "\n";
+        txt += "\x1B\x61\x01"; 
+        txt += "SBR PUTRA FOOD SYSTEM\n\n\n\n";
+        txt += "\x1D\x56\x41\x03"; 
+        
+        return txt;
+    }
+
+    async function printStrukBluetooth() {
+        if (!navigator.bluetooth) {
+            alert("Perangkat atau browser Anda tidak mendukung Web Bluetooth API.");
+            return;
+        }
+
+        const charWidth = parseInt(document.getElementById('printSize').value) || 48;
+        const textToPrint = generateESCPOS(window.currentStrukData.trx, window.currentStrukData.detail, window.currentStrukData.riwayatBayar, charWidth);
+
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '00001101-0000-1000-8000-00805f9b34fb']
+            });
+
+            const server = await device.gatt.connect();
+            const services = await server.getPrimaryServices();
+            let printCharacteristic = null;
+
+            for (let service of services) {
+                const characteristics = await service.getCharacteristics();
+                for (let characteristic of characteristics) {
+                    if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+                        printCharacteristic = characteristic;
+                        break;
+                    }
+                }
+                if (printCharacteristic) break;
+            }
+
+            if (!printCharacteristic) throw new Error("Tidak menemukan karakteristik device.");
+
+            const encoder = new TextEncoder();
+            const data = encoder.encode(textToPrint);
+
+            const CHUNK_SIZE = 100; 
+            for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+                let chunk = data.slice(i, i + CHUNK_SIZE);
+                await printCharacteristic.writeValue(chunk);
+            }
+
+            alert("✅ Perintah cetak berhasil dikirim ke " + device.name);
+        } catch (error) {
+            console.error(error);
+            alert("❌ Gagal mencetak: " + error.message);
+        }
+    }
+
+    function downloadStrukJPG() {
+        const target = document.getElementById('areaStruk');
+        html2canvas(target, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+            let link = document.createElement('a');
+            link.download = `Struk_Digital_${Date.now()}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg');
+            link.click();
+        });
+    }
+
+    window.onload = initHalaman;
+</script>
+</body>
+</html>
