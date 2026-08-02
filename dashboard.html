@@ -31,8 +31,8 @@
             }
         }
 
-        /* 2. Tema Gelap Berdasarkan Jam (Diaktifkan via JavaScript) */
-        body.dark-theme-time {
+        /* 2. Class untuk Paksa Tema (Manual via Tombol) */
+        body.dark-theme {
             --bg-color: #111827;
             --text-main: #f9fafb;
             --text-sub: #9ca3af;
@@ -40,6 +40,16 @@
             --box-active: #374151;
             --shadow-color: rgba(0,0,0,0.25);
             --modal-overlay: rgba(0,0,0,0.7);
+        }
+
+        body.light-theme {
+            --bg-color: #f4f7f6;          
+            --text-main: #333333;         
+            --text-sub: #666666;          
+            --box-bg: #ffffff;            
+            --box-active: #e5e7eb;        
+            --shadow-color: rgba(0,0,0,0.05);
+            --modal-overlay: rgba(0,0,0,0.4);
         }
 
         /* --- STYLING UTAMA --- */
@@ -61,12 +71,42 @@
         .container {
             max-width: 800px; 
             margin: 0 auto; 
+            position: relative;
+        }
+
+        /* --- STYLING TOMBOL KONTROL (TEMA & VIEW) --- */
+        .top-controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: -15px; /* Menarik ke atas agar proporsional dengan header */
+            z-index: 10;
+            position: relative;
+        }
+
+        .icon-btn {
+            background: var(--box-bg);
+            border: none;
+            font-size: 18px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: var(--text-main);
+            box-shadow: 0 2px 5px var(--shadow-color);
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.9);
+            background: var(--box-active);
         }
         
         .header { 
             text-align: center; 
-            margin-bottom: 30px; 
-            padding-top: 10px;
+            margin-bottom: 25px; 
         }
         
         .header h2 { 
@@ -83,22 +123,24 @@
             transition: color 0.4s ease;
         }
         
+        /* --- STYLING MENU GRID (3 KOLOM) --- */
         .menu-grid { 
             display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 15px; 
+            grid-template-columns: repeat(3, 1fr); /* Tiga menu ke pinggir di HP */
+            gap: 12px; 
+            transition: all 0.3s ease;
         }
         
         .menu-box { 
             background: var(--box-bg); 
-            padding: 15px 10px; 
+            padding: 12px 8px; 
             border-radius: 12px; 
             text-align: center; 
             box-shadow: 0 4px 6px var(--shadow-color); 
             text-decoration: none; 
             color: var(--text-main); 
             font-weight: bold; 
-            font-size: 13px; 
+            font-size: 11px; /* Ukuran font disesuaikan agar muat 3 kolom */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -113,8 +155,29 @@
         }
         
         .icon { 
-            font-size: 32px; 
-            margin-bottom: 10px; 
+            font-size: 26px; /* Ikon sedikit diperkecil */
+            margin-bottom: 8px; 
+        }
+
+        /* --- STYLING MENU LIST (DAFTAR CARD KE BAWAH) --- */
+        .menu-grid.list-view {
+            grid-template-columns: 1fr; /* Satu menu lebar penuh */
+            gap: 10px;
+        }
+
+        .menu-grid.list-view .menu-box {
+            aspect-ratio: auto; /* Membuang rasio kotak */
+            flex-direction: row;
+            justify-content: flex-start;
+            padding: 15px 20px;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .menu-grid.list-view .icon {
+            margin-bottom: 0;
+            margin-right: 15px;
+            font-size: 28px;
         }
         
         .logout-btn {
@@ -143,7 +206,7 @@
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: var(--modal-overlay);
-            backdrop-filter: blur(3px); /* Efek blur modern di latar belakang */
+            backdrop-filter: blur(3px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -183,9 +246,9 @@
         .modal-box input {
             width: 100%;
             padding: 15px;
-            font-size: 28px; /* Teks lebih besar */
+            font-size: 28px;
             text-align: center;
-            letter-spacing: 15px; /* Jarak antar bintang/angka renggang */
+            letter-spacing: 15px;
             border: 2px solid var(--box-active);
             border-radius: 10px;
             background: transparent;
@@ -203,7 +266,7 @@
             color: #dc2626;
             font-size: 13px;
             margin: 0 0 15px 0;
-            min-height: 15px; /* Menjaga tinggi agar tombol tidak lompat saat error muncul */
+            min-height: 15px;
             display: none;
         }
 
@@ -243,6 +306,8 @@
 
         @media (min-width: 768px) {
             .menu-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; }
+            /* Desktop list view override */
+            .menu-grid.list-view { grid-template-columns: repeat(2, 1fr); } 
             .menu-box { font-size: 15px; }
             .icon { font-size: 40px; }
         }
@@ -251,27 +316,33 @@
 <body>
 
     <div class="container">
+        <!-- TOMBOL KONTROL -->
+        <div class="top-controls">
+            <button id="btnView" class="icon-btn" title="Ganti Tampilan">📄</button>
+            <button id="btnTheme" class="icon-btn" title="Ganti Tema">☀️</button>
+        </div>
+
         <div class="header">
             <h2>SBR Putra</h2>
             <p>Kkurnia System 2026 V.1.2</p>
         </div>
 
-        <div class="menu-grid">
+        <div id="menuGrid" class="menu-grid">
             <a href="kasbon-tukang.html" class="menu-box">
                 <span class="icon">💸</span>
                 Kasbon Tukang
             </a>
              <!-- Menu yang dikunci (memiliki class 'butuh-pin') -->
-            <a href="Belanja_Renovasi.html" class="menu-box butuh-pinn">
+            <a href="Belanja_Renovasi.html" class="menu-box butuh-pin">
                 <span class="icon">👷‍♂️</span>
                 Catatan Proyek
             </a>
-            <a href="dashboard11.html" class="menu-box butuh-pinn">
-                <span class="icon"></span>
+            <a href="dashboard11.html" class="menu-box butuh-pin">
+                <span class="icon">📝</span>
                 REG SBR
             </a>
             <a href="Rekap-kirim.html" class="menu-box">
-                <span class="icon">🚐🚛🚚</span>
+                <span class="icon">🚐</span>
                 Rekap Kirim
             </a>            
             <a href="Cetak_Print_Bluetooth" class="menu-box">
@@ -304,7 +375,7 @@
             </a>
             <a href="lapsimping.html" class="menu-box">
                 <span class="icon">📑</span>
-                Laporan Harian Simping
+                Lap. Simping
             </a>
             <a href="empit.html" class="menu-box">
                 <span class="icon">💖</span>
@@ -319,7 +390,6 @@
     <div id="pinModal" class="modal-overlay">
         <div class="modal-box">
             <h3>Masukkan PIN</h3>
-            <!-- type="password" menyembunyikan input, inputmode="numeric" memanggil numpad HP -->
             <input type="password" id="pinInput" inputmode="numeric" maxlength="4" placeholder="••••">
             <p id="pinError" class="modal-error">PIN Salah!</p>
             <div class="modal-buttons">
@@ -335,23 +405,55 @@
             console.log("Halaman diakses langsung.");
         }
 
-        // 2. Script mengatur tema gelap
-        function aturTemaOtomatis() {
-            const jamSekarang = new Date().getHours();
-            const mulaiMalam = 18;
-            const mulaiPagi = 6;
-            
-            if (jamSekarang >= mulaiMalam || jamSekarang < mulaiPagi) {
-                document.body.classList.add('dark-theme-time');
-            } else {
-                document.body.classList.remove('dark-theme-time');
-            }
+        // 2. SCRIPT KONTROL TEMA (DARK/LIGHT MODE)
+        const btnTheme = document.getElementById('btnTheme');
+        
+        // Deteksi tema awal (berdasarkan jam atau preferensi OS)
+        const jamSekarang = new Date().getHours();
+        const mulaiMalam = 18;
+        const mulaiPagi = 6;
+        let isDarkMode = (jamSekarang >= mulaiMalam || jamSekarang < mulaiPagi) || window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // Set tema awal dan ikonnya
+        if (isDarkMode) {
+            document.body.classList.add('dark-theme');
+            btnTheme.innerText = '☀️';
+        } else {
+            btnTheme.innerText = '🌙';
         }
-        window.addEventListener('DOMContentLoaded', aturTemaOtomatis);
 
-        // 3. Script untuk Custom Modal PIN
-        const PIN_RAHASIA = "5000"; // Ganti dengan PIN Anda
-        let linkTujuan = ""; // Variabel untuk menyimpan link tujuan sementara
+        btnTheme.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                document.body.classList.remove('light-theme');
+                document.body.classList.add('dark-theme');
+                btnTheme.innerText = '☀️'; // Ikon menuju mode terang
+            } else {
+                document.body.classList.remove('dark-theme');
+                document.body.classList.add('light-theme');
+                btnTheme.innerText = '🌙'; // Ikon menuju mode gelap
+            }
+        });
+
+        // 3. SCRIPT KONTROL TAMPILAN (GRID/LIST)
+        const btnView = document.getElementById('btnView');
+        const menuGridContainer = document.getElementById('menuGrid');
+        let isListView = false;
+
+        btnView.addEventListener('click', () => {
+            isListView = !isListView;
+            if (isListView) {
+                menuGridContainer.classList.add('list-view');
+                btnView.innerText = '🔲'; // Ikon untuk kembali ke mode Grid (Kotak-kotak)
+            } else {
+                menuGridContainer.classList.remove('list-view');
+                btnView.innerText = '📄'; // Ikon untuk kembali ke mode Daftar
+            }
+        });
+
+        // 4. Script untuk Custom Modal PIN
+        const PIN_RAHASIA = "5000"; 
+        let linkTujuan = ""; 
 
         const daftarMenu = document.querySelectorAll('.menu-box');
         const modal = document.getElementById('pinModal');
@@ -364,17 +466,14 @@
         daftarMenu.forEach(function(menu) {
             menu.addEventListener('click', function(event) {
                 if (this.classList.contains('butuh-pin')) {
-                    event.preventDefault(); // Tahan link
-                    linkTujuan = this.getAttribute('href'); // Simpan tujuan
+                    event.preventDefault(); 
+                    linkTujuan = this.getAttribute('href'); 
                     
-                    // Reset input & error
                     inputPin.value = "";
                     pesanError.style.display = "none";
                     
-                    // Tampilkan modal
                     modal.classList.add('show');
                     
-                    // Fokuskan ke kolom input otomatis setelah animasi sebentar
                     setTimeout(() => inputPin.focus(), 100);
                 }
             });
@@ -383,27 +482,23 @@
         // Fungsi menutup modal
         function tutupModal() {
             modal.classList.remove('show');
-            inputPin.value = ""; // Bersihkan input
+            inputPin.value = ""; 
         }
 
         // Fungsi memvalidasi PIN
         function validasiPin() {
             if (inputPin.value === PIN_RAHASIA) {
-                // Jika benar, pindah halaman
                 window.location.href = linkTujuan;
             } else {
-                // Jika salah, tampilkan pesan error & kosongkan form
                 pesanError.style.display = "block";
                 inputPin.value = "";
-                inputPin.focus(); // Fokuskan kembali untuk langsung mengetik ulang
+                inputPin.focus(); 
             }
         }
 
-        // Deteksi klik tombol Batal dan Buka
         tombolBatal.addEventListener('click', tutupModal);
         tombolBuka.addEventListener('click', validasiPin);
 
-        // Memungkinkan menekan tombol 'Enter' pada keyboard/HP untuk submit
         inputPin.addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
                 validasiPin();
