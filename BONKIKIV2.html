@@ -46,6 +46,16 @@
         
         body { background: var(--bg-color); color: var(--text-main); font-size: 14px; transition: background 0.3s, color 0.3s; padding-bottom: 120px;}
 
+        /* HILANGKAN SPINNER PADA INPUT NUMBER */
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
         /* HEADER */
         header { 
             background: var(--card-bg); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
@@ -87,6 +97,7 @@
         .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: var(--success); color: white; }
         .btn-warning { background: var(--warning); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
         .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text-main); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -105,6 +116,13 @@
 
         [data-theme="dark"] .alert-danger { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); }
         [data-theme="dark"] .alert-success { background: rgba(16, 185, 129, 0.1); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.2); }
+        
+        /* ANIMASI KELAP-KELIP */
+        @keyframes blinkWarning {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .blink-anim { animation: blinkWarning 1.2s infinite; }
 
         /* CHECKBOX PERSEKSI */
         .checkbox-wrapper { 
@@ -128,13 +146,13 @@
         [data-theme="dark"] .checkbox-wrapper.cb-blue { background: #031936; border-color: #072f61; }
 		[data-theme="dark"] .checkbox-wrapper.cb-blue span { color: #80a3cf; }
 
-        /* STICKY BOTTOM BAR (MOBILE DEFAULT) */
+        /* STICKY BOTTOM BAR */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); padding: 12px 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 40; border-radius: 20px 20px 0 0; transition: background 0.3s; }
         .summary-flex { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
         .summary-label { font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
         .summary-value { font-size: 20px; font-weight: 800; color: var(--primary); }
         [data-theme="dark"] .summary-value { color: #60a5fa; }
-        .action-grid { display: grid; grid-template-columns: 1fr 44px; gap: 8px; }
+        .action-grid { display: grid; grid-template-columns: 1fr 44px 44px; gap: 8px; }
         .btn-large { padding: 14px; font-size: 14px; border-radius: 12px; }
 
         /* RESPONSIVE DESKTOP LAYOUT */
@@ -149,34 +167,20 @@
             .bottom-bar { position: relative; border-radius: var(--radius-lg); padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 12px; }
         }
 
-        /* MODALS UMUM (MOBILE DEFAULT - BOTTOM SHEET) */
+        /* MODALS UMUM */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         .bottom-sheet { position: fixed; bottom: -100%; left: 0; right: 0; background: var(--card-bg); border-radius: 20px 20px 0 0; padding: 20px; z-index: 101; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
         .bottom-sheet.active { bottom: 0; }
         .sheet-indicator { width: 40px; height: 5px; background: var(--border); border-radius: 10px; margin: 0 auto 16px; }
 
-        /* PERBAIKAN POP-UP MODALS UNTUK TAMPILAN PC (CENTERED) */
         @media (min-width: 768px) {
             .bottom-sheet { 
-                max-width: 450px; 
-                left: 50%; 
-                right: auto; 
-                top: 50%; 
-                bottom: auto; 
-                transform: translate(-50%, -50%) scale(0.9);
-                opacity: 0;
-                visibility: hidden;
-                border-radius: 20px; 
-                transition: 0.3s ease-out; 
+                max-width: 450px; left: 50%; right: auto; top: 50%; bottom: auto; 
+                transform: translate(-50%, -50%) scale(0.9); opacity: 0; visibility: hidden;
+                border-radius: 20px; transition: 0.3s ease-out; 
             }
-            .bottom-sheet.active { 
-                top: 50%;
-                bottom: auto; 
-                transform: translate(-50%, -50%) scale(1); 
-                opacity: 1;
-                visibility: visible;
-            }
+            .bottom-sheet.active { top: 50%; bottom: auto; transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
             .sheet-indicator { display: none; } 
         }
         
@@ -190,10 +194,10 @@
 </head>
 <body>
 
-<!-- Header -->
 <header>
     <div class="brand"><i class="ph-fill ph-receipt"></i> SBR Systems <p style="color: red;">(Nota Digital)</p> </div>
     <div class="header-actions">
+        <button class="icon-btn" onclick="toggleInfoLanjutan()" title="Tampil/Sembunyi Opsi Opsional"><i class="ph ph-eye-slash" id="iconToggleInfo"></i></button>
         <button class="icon-btn" id="btnPrinterIcon" onclick="openSheet('sheetPrinter')" title="Pengaturan Printer"><i class="ph ph-printer"></i></button>
         <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema"><i class="ph ph-moon"></i></button>
         <button class="icon-btn danger" onclick="resetFormForNewNota()" title="Reset / Nota Baru"><i class="ph ph-arrow-counter-clockwise"></i></button>
@@ -203,7 +207,6 @@
 <div class="container">
     <div class="layout-grid">
         
-        <!-- KOLOM KIRI (Untuk Tampilan Desktop) -->
         <div class="col-main">
             <!-- Notifikasi Bon -->
             <div id="notifBon" class="alert alert-danger">
@@ -215,27 +218,35 @@
             <div class="card">
                 <div class="form-grid">
                     <div class="form-group"><label>No. Nota</label><input type="text" id="noNota" readonly></div>
-                    <div class="form-group"><label>Tanggal</label><input type="date" id="tglNota"></div>
+                    
+                    <div class="form-group">
+                        <label>Tanggal</label>
+                        <div style="position: relative; display: flex; align-items: center; width: 100%;">
+                            <input type="text" id="tglNotaDisplay" readonly style="pointer-events: none; background: transparent; position: relative; z-index: 2;">
+                            <input type="date" id="tglNota" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 3; cursor: pointer;" onchange="formatTglDisplay()">
+                        </div>
+                    </div>
                     
                     <div class="form-group">
                         <select id="driver1">
                             <option value="">-- DRIVER 1 --</option>
                         </select>
                     </div>
+
                     <div class="form-group">
                         <select id="pilihAgen" onchange="updateBon()">
                             <option value="">-- PILIH AGEN --</option>
                         </select>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group toggleable-info">
                         <select id="driver2">
                             <option value="">-- DRIVER 2 (OPSIONAL) --</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group toggleable-info">
                         <select id="pilihMobil">
-                            <option value="">-- MOBIL --</option>
+                            <option value="">-- MOBIL (OPSIONAL) --</option>
                         </select>
                     </div>
                 </div>
@@ -272,7 +283,6 @@
             </div>
         </div>
 
-        <!-- KOLOM KANAN (Untuk Tampilan Desktop) -->
         <div class="col-side">
             <!-- Biaya Lain & Penyesuaian -->
             <div class="card" id="cardBiayaLain" style="display: none;">
@@ -284,31 +294,23 @@
                 </div>
             </div>
 
-            <!-- Pembayaran & Ongkos Kirim Manual -->
             <div class="card">
-                
-                <!-- Opsi Checkbox Side-by-Side -->
                 <div class="form-grid" style="margin-bottom: 12px;">
-                    <!-- Checkbox Tambah Ongkir (Kiri) -->
                     <label class="checkbox-wrapper cb-blue" style="margin-bottom: 0;" onclick="document.getElementById('cbOngkir').click();">
                         <input type="checkbox" id="cbOngkir" onchange="toggleOngkir()" onclick="event.stopPropagation();">
                         <span>ONGKIR ?</span>
                     </label>
-                    
-                    <!-- Checkbox Bon Full (Kanan) -->
                     <label class="checkbox-wrapper" style="margin-bottom: 0;" onclick="document.getElementById('cbTidakTitip').click();">
                         <input type="checkbox" id="cbTidakTitip" onchange="togglePembayaran()" onclick="event.stopPropagation();">
                         <span>TIDAK TITIP UANG</span>
                     </label>
                 </div>
                 
-                <!-- Form Input Ongkir (Otomatis Muncul/Hilang di Bawah Checkbox) -->
                 <div class="form-group full" id="boxOngkir" style="display:none; margin-bottom: 12px;">
                     <label>Nominal Ongkos Kirim</label>
                     <input type="text" id="inputOngkir" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
                 </div>
 
-                <!-- Input Tunai & Transfer -->
                 <div class="form-grid">
                     <div class="form-group"><label>Tunai (Cash)</label><input type="text" id="inputCash" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
                     <div class="form-group"><label>Transfer</label><input type="text" id="inputTrf" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
@@ -328,16 +330,46 @@
                     <button class="btn btn-success btn-large" id="btnSimpan" onclick="simpanDanPrint()">
                         <i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT
                     </button>
-                    <button class="btn btn-outline" style="border-radius: 12px;" onclick="resetFormForNewNota()" title="Nota Baru">
-                        <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                    <button class="btn btn-outline" id="btnIconPratinjau" style="border-radius: 12px; border-color: var(--primary); color: var(--primary);" onclick="bukaPratinjau()" title="Pratinjau Nota">
+                        <i class="ph-bold ph-eye" style="font-size: 20px;"></i>
+                    </button>
+                    <button class="btn" style="border-radius: 12px; background: #f97316; color: white; border: none;" onclick="resetFormForNewNota()" title="Nota Baru">
+                        <i class="ph-bold ph-arrow-counter-clockwise" style="font-size: 20px;"></i>
                     </button>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
+<!-- MODAL: Custom Modern Dialog (Alert & Confirm Replacement) -->
+<div class="modal-overlay" id="overlayCustomDialog" style="z-index: 200;" onclick="closeCustomDialog()"></div>
+<div class="bottom-sheet" id="sheetCustomDialog" style="z-index: 201; text-align: center;">
+    <div class="sheet-indicator"></div>
+    <div id="customDialogIcon" style="width: 44px; height: 44px; background: #dbeafe; color: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 0 auto 10px;">
+        <i class="ph-bold ph-info"></i>
+    </div>
+    <h3 id="customDialogTitle" style="margin-bottom: 8px; font-weight: 800; font-size: 16px;">Pemberitahuan</h3>
+    <div id="customDialogMessage" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; text-align: left; background: var(--input-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--border);"></div>
+    <div id="customDialogButtons" class="form-grid"></div>
+</div>
+
+<!-- MODAL: Pilihan Aksi Barang (Edit / Hapus / Kembali) -->
+<div class="modal-overlay" id="overlayAction" onclick="closeSheet('sheetAction')"></div>
+<div class="bottom-sheet" id="sheetAction">
+    <div class="sheet-indicator"></div>
+    <h3 style="margin-bottom: 16px; font-weight: 800; font-size: 16px; text-align: center;" id="actionTitle">Pilih Aksi Barang</h3>
+    
+    <button class="btn btn-primary" style="margin-bottom: 10px;" onclick="doActionEdit()">
+        <i class="ph-bold ph-pencil-simple"></i> Edit Barang Ini
+    </button>
+    <button class="btn btn-danger" style="margin-bottom: 10px;" onclick="doActionDelete()">
+        <i class="ph-bold ph-trash"></i> Hapus Barang Ini
+    </button>
+    <button class="btn btn-outline" onclick="closeSheet('sheetAction')">
+        Batal / Kembali
+    </button>
+</div>
 
 <!-- MODAL: Input Item -->
 <div class="modal-overlay" id="overlayInput" onclick="closeSheet('sheetInput')"></div>
@@ -347,13 +379,11 @@
     
     <div class="form-group" style="margin-bottom: 10px; display: flex; gap: 8px;">
         <select id="modalBarang" style="flex: 1;"><option value="">-- Pilih Barang --</option></select>
-        <!-- Tombol Tambah Keterangan -->
         <button type="button" class="btn btn-outline" style="width: 44px; padding: 0; flex-shrink: 0;" onclick="toggleKeterangan()" title="Tambah Keterangan (Opsional)">
             <i class="ph-bold ph-note-pencil" style="font-size: 18px;"></i>
         </button>
     </div>
     
-    <!-- Box Keterangan (Disembunyikan default) -->
     <div class="form-group full" id="boxKeterangan" style="display: none; margin-bottom: 10px;">
         <input type="text" id="modalKeterangan" placeholder="Isi Keterangan (Opsional)..." style="font-style: italic; font-weight: normal;">
     </div>
@@ -386,7 +416,7 @@
     
     <div class="form-group" style="margin-bottom: 16px;">
         <label>Ukuran Kertas Printer</label>
-        <select id="ukuranKertas" onchange="simpanUkuranKertas()">
+        <select id="ukuranKertas" onchange="syncKertas(this.value)">
             <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
             <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
         </select>
@@ -403,23 +433,87 @@
 <div class="modal-overlay" id="overlayPreview" onclick="closeSheet('sheetPreview')"></div>
 <div class="bottom-sheet" id="sheetPreview" style="text-align: center;">
     <div class="sheet-indicator"></div>
-    <div style="width: 44px; height: 44px; background: #d1fae5; color: #059669; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 0 auto 10px;">
-        <i class="ph-bold ph-check"></i>
+    <h3 style="margin-bottom: 6px; font-weight: 800; font-size: 16px;">Pratinjau Nota</h3>
+    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Pastikan data sudah benar sebelum disimpan.</p>
+    
+    <img id="imgPreviewLaporan" style="width: 100%; max-height: 50vh; object-fit: contain; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; background: #fff;" />
+    
+    <div class="form-group" style="text-align: left; margin-bottom: 16px;">
+        <label>Ukuran Kertas Pencetakan</label>
+        <select id="ukuranKertasPreview" onchange="syncKertas(this.value)">
+            <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
+            <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
+        </select>
     </div>
-    <h3 style="margin-bottom: 6px; font-weight: 800; font-size: 16px;">Laporan Digital Siap!</h3>
-    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Gambar otomatis terunduh ke HP Anda.</p>
     
-    <img id="imgPreviewLaporan" style="width: 100%; max-height: 40vh; object-fit: contain; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; background: #fff;" />
-    
-    <button class="btn btn-primary" onclick="closeSheet('sheetPreview')">Selesai</button>
+    <div class="form-grid">
+        <button class="btn btn-outline" onclick="closeSheet('sheetPreview')">Kembali</button>
+        <button class="btn btn-success" id="btnSimpanPreview" onclick="simpanDanPrint()">
+            <i class="ph-bold ph-printer"></i> Simpan & Print
+        </button>
+    </div>
 </div>
 
-<!-- Wadah Tersembunyi untuk Render Gambar HTML2Canvas -->
-<div class="struk-visual-container">
-    <div id="areaCetakGambar" class="struk-visual"></div>
-</div>
+<div class="struk-visual-container"><div id="areaCetakGambar" class="struk-visual"></div></div>
 
 <script>
+    // --- CUSTOM MODERN DIALOG SYSTEM ---
+    function showCustomAlert(title, message, type = 'info') {
+        document.getElementById('customDialogTitle').innerText = title;
+        document.getElementById('customDialogMessage').innerHTML = message;
+        
+        const iconEl = document.getElementById('customDialogIcon');
+        if (type === 'danger') {
+            iconEl.style.background = '#fee2e2';
+            iconEl.style.color = '#dc2626';
+            iconEl.innerHTML = '<i class="ph-bold ph-warning-circle"></i>';
+        } else if (type === 'success') {
+            iconEl.style.background = '#d1fae5';
+            iconEl.style.color = '#059669';
+            iconEl.innerHTML = '<i class="ph-bold ph-check"></i>';
+        } else {
+            iconEl.style.background = '#dbeafe';
+            iconEl.style.color = '#2563eb';
+            iconEl.innerHTML = '<i class="ph-bold ph-info"></i>';
+        }
+
+        const btnContainer = document.getElementById('customDialogButtons');
+        btnContainer.innerHTML = `<button class="btn btn-primary full" style="grid-column: span 2;" onclick="closeCustomDialog()">OK</button>`;
+        
+        openSheet('sheetCustomDialog');
+    }
+
+    function showCustomConfirm(title, message, onYes, onNo = null) {
+        document.getElementById('customDialogTitle').innerText = title;
+        document.getElementById('customDialogMessage').innerHTML = message;
+        
+        const iconEl = document.getElementById('customDialogIcon');
+        iconEl.style.background = '#fef3c7';
+        iconEl.style.color = '#d97706';
+        iconEl.innerHTML = '<i class="ph-bold ph-question"></i>';
+
+        const btnContainer = document.getElementById('customDialogButtons');
+        btnContainer.innerHTML = `
+            <button class="btn btn-outline" id="dlgBtnNo">Batal</button>
+            <button class="btn btn-primary" id="dlgBtnYes">Ya, Lanjutkan</button>
+        `;
+
+        document.getElementById('dlgBtnNo').onclick = () => {
+            closeCustomDialog();
+            if(onNo) onNo();
+        };
+        document.getElementById('dlgBtnYes').onclick = () => {
+            closeCustomDialog();
+            if(onYes) onYes();
+        };
+
+        openSheet('sheetCustomDialog');
+    }
+
+    function closeCustomDialog() {
+        closeSheet('sheetCustomDialog');
+    }
+
     // --- THEME TOGGLE LOGIC ---
     function toggleTheme() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -445,11 +539,11 @@
     document.documentElement.setAttribute('data-theme', savedTheme);
     window.addEventListener('DOMContentLoaded', () => updateThemeIcon(savedTheme));
 
-    // --- CORE VARIABLES ---
     let btCharacteristic = null;
     let connectedDeviceId = null; 
+    let currentActionIndex = -1;
+    let currentActionMode = '';
 
-    // --- UI HELPERS (BOTTOM SHEETS) ---
     function openSheet(id) {
         document.getElementById(id).classList.add('active');
         document.getElementById('overlay' + id.replace('sheet', '')).classList.add('active');
@@ -459,7 +553,25 @@
         document.getElementById('overlay' + id.replace('sheet', '')).classList.remove('active');
     }
 
-    // Toggle Tampilan Form Keterangan
+    function toggleInfoLanjutan() {
+        const fields = document.querySelectorAll('.toggleable-info');
+        const icon = document.getElementById('iconToggleInfo');
+        const isHidden = fields[0].style.display === 'none';
+        
+        fields.forEach(f => { f.style.display = isHidden ? 'block' : 'none'; });
+        icon.className = isHidden ? 'ph ph-eye-slash' : 'ph ph-eye';
+    }
+
+    function formatTglDisplay() {
+        const tglVal = document.getElementById('tglNota').value;
+        if(!tglVal) return;
+        const d = new Date(tglVal);
+        const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        const dayName = days[d.getDay()];
+        const [y, m, day] = tglVal.split('-');
+        document.getElementById('tglNotaDisplay').value = `${dayName}, ${day}/${m}/${y}`;
+    }
+
     function toggleKeterangan() {
         const box = document.getElementById('boxKeterangan');
         if (box.style.display === 'none') {
@@ -471,19 +583,12 @@
         }
     }
 
-    // Toggle Tampilan Form Ongkos Kirim Manual
     function toggleOngkir() {
         const isChecked = document.getElementById('cbOngkir').checked;
         const boxOngkir = document.getElementById('boxOngkir');
         const inputOngkir = document.getElementById('inputOngkir');
-
-        if (isChecked) {
-            boxOngkir.style.display = 'block';
-            inputOngkir.focus();
-        } else {
-            boxOngkir.style.display = 'none';
-            inputOngkir.value = '0';
-        }
+        if (isChecked) { boxOngkir.style.display = 'block'; inputOngkir.focus(); } 
+        else { boxOngkir.style.display = 'none'; inputOngkir.value = '0'; }
         hitungTotal();
     }
 
@@ -493,8 +598,7 @@
 
     let database = { harga: {}, barang: [] };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
-    let lastPrintText = ""; 
-    let isDeposit = false;
+    let lastPrintText = ""; let isDeposit = false;
 
     function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
 
@@ -504,23 +608,19 @@
         const inputTrf = document.getElementById('inputTrf');
 
         if (isChecked) {
-            inputCash.value = "0";
-            inputTrf.value = "0";
-            inputCash.disabled = true;
-            inputTrf.disabled = true;
-            inputCash.style.opacity = "0.5"; 
-            inputTrf.style.opacity = "0.5";
+            inputCash.value = "0"; inputTrf.value = "0";
+            inputCash.disabled = true; inputTrf.disabled = true;
+            inputCash.style.opacity = "0.5"; inputTrf.style.opacity = "0.5";
         } else {
-            inputCash.disabled = false;
-            inputTrf.disabled = false;
-            inputCash.style.opacity = "1";
-            inputTrf.style.opacity = "1";
+            inputCash.disabled = false; inputTrf.disabled = false;
+            inputCash.style.opacity = "1"; inputTrf.style.opacity = "1";
         }
         hitungTotal();
     }
 
-    function simpanUkuranKertas() {
-        const val = document.getElementById('ukuranKertas').value;
+    function syncKertas(val) {
+        document.getElementById('ukuranKertas').value = val;
+        document.getElementById('ukuranKertasPreview').value = val;
         if (connectedDeviceId) {
             localStorage.setItem('printerSize_' + connectedDeviceId, val);
         }
@@ -528,9 +628,7 @@
 
     async function init() {
         try {
-            const { data: agen, error: errorAgen } = await clientSupabase.from('agen').select('*');
-            if (errorAgen) throw new Error("Gagal muat AGEN: " + errorAgen.message);
-            
+            const { data: agen } = await clientSupabase.from('agen').select('*');
             if(agen) {
                 agen.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
                 const selAgen = document.getElementById('pilihAgen');
@@ -542,9 +640,7 @@
                 });
             }
 
-            const { data: harga, error: errorHarga } = await clientSupabase.from('harga').select('*');
-            if (errorHarga) throw new Error("Gagal muat HARGA: " + errorHarga.message);
-            
+            const { data: harga } = await clientSupabase.from('harga').select('*');
             if(harga) {
                 harga.forEach(h => {
                     if(!database.harga[h.nama_agen]) database.harga[h.nama_agen] = {};
@@ -552,14 +648,11 @@
                 });
             }
 
-            const { data: karyawan, error: errorKaryawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
-            if (errorKaryawan) throw new Error("Gagal muat DRIVER: " + errorKaryawan.message);
-            
+            const { data: karyawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
             const d1 = document.getElementById('driver1');
             const d2 = document.getElementById('driver2');
             if(karyawan) {
                 karyawan.sort((a, b) => a.nama_karyawan.localeCompare(b.nama_karyawan));
-                
                 d1.innerHTML = '<option value="">-- DRIVER 1 --</option>';
                 d2.innerHTML = '<option value="">-- DRIVER 2 (OPSIONAL) --</option>';
                 karyawan.forEach(k => {
@@ -568,24 +661,23 @@
                 });
             }
 
-            const { data: mobil, error: errorMobil } = await clientSupabase.from('kendaraan').select('*');
-            if (errorMobil) throw new Error("Gagal muat MOBIL: " + errorMobil.message);
-            
+            const { data: mobil } = await clientSupabase.from('kendaraan').select('*');
             const selMobil = document.getElementById('pilihMobil');
             if(mobil) {
-                selMobil.innerHTML = '<option value="">-- MOBIL --</option>';
+                selMobil.innerHTML = '<option value="">-- MOBIL (OPSIONAL) --</option>';
                 mobil.forEach(m => selMobil.options.add(new Option(m.plat_nomor, m.plat_nomor)));
             }
 
             resetForm();
         } catch(e) { 
-            alert("🚨 KONEKSI DATABASE ERROR:\n" + e.message); 
-            console.error("Init Error:", e); 
+            showCustomAlert("Koneksi Database Error", e.message, "danger"); 
         }
     }
 
     function resetForm() {
         document.getElementById('tglNota').valueAsDate = new Date();
+        formatTglDisplay(); 
+        
         document.getElementById('noNota').value = "SBR-" + Date.now().toString().slice(-6);
         document.getElementById('pilihAgen').value = "";
         document.getElementById('pilihMobil').value = "";
@@ -595,11 +687,8 @@
         document.getElementById('inputTrf').value = "0";
         document.getElementById('inputBonLama').value = "0";
         
-        document.getElementById('cbOngkir').checked = false;
-        toggleOngkir(); 
-        
-        document.getElementById('cbTidakTitip').checked = false;
-        togglePembayaran();
+        document.getElementById('cbOngkir').checked = false; toggleOngkir(); 
+        document.getElementById('cbTidakTitip').checked = false; togglePembayaran();
         
         document.getElementById('notifBon').style.display = "none";
         document.getElementById('cardBiayaLain').style.display = "none";
@@ -609,14 +698,16 @@
     }
 
     function resetFormForNewNota() {
-        if(confirm("Mulai nota baru / bersihkan form?")) {
+        showCustomConfirm("Nota Baru", "Mulai nota baru / bersihkan form sekarang?", () => {
             resetForm();
             const btn = document.getElementById('btnSimpan');
             btn.disabled = false;
             btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT';
+            const btnModal = document.getElementById('btnSimpanPreview');
+            if(btnModal) { btnModal.disabled = false; btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print'; }
             document.getElementById('btnReprint').disabled = true;
             lastPrintText = "";
-        }
+        });
     }
 
     function updateBon() {
@@ -625,7 +716,6 @@
         isDeposit = saldoBon < 0;
         
         const cardBiaya = document.getElementById('cardBiayaLain');
-        
         if (saldoBon !== 0) {
             cardBiaya.style.display = "block";
             document.getElementById('labelBonUI').innerText = isDeposit ? "Deposit Agen" : "Bon Lama / Tagihan Sebelumnya";
@@ -637,10 +727,9 @@
         
         const notif = document.getElementById('notifBon');
         const notifText = document.getElementById('notifText');
-        
         if (saldoBon > 0) {
             notifText.innerText = "AGEN INI PUNYA BON LAMA!";
-            notif.className = "alert alert-danger";
+            notif.className = "alert alert-danger blink-anim";
             notif.style.display = "flex";
         } else if (saldoBon < 0) {
             notifText.innerText = "AGEN INI PUNYA DEPOSIT!";
@@ -654,7 +743,10 @@
 
     function openItemSheet(mode) { 
         const ag = document.getElementById('pilihAgen').value;
-        if(!ag) return alert("Pilih Agen terlebih dahulu!");
+        if(!ag) {
+            showCustomAlert("Perhatian", "Pilih Agen terlebih dahulu sebelum menambahkan barang!", "danger");
+            return;
+        }
         
         currentMode = mode; editIndex = -1; 
         document.getElementById('sheetInputTitle').innerText = mode === 'Kirim' ? "Tambah Barang Kirim" : "Tambah Barang Retur";
@@ -687,10 +779,16 @@
         const q = parseFloat(document.getElementById('modalQty').value) || 0;
         const k = document.getElementById('modalKeterangan').value.trim();
         
-        if(!b) return alert("Barang belum dipilih!");
+        if(!b) {
+            showCustomAlert("Perhatian", "Barang belum dipilih!", "danger");
+            return;
+        }
         
         const h = database.harga[ag]?.[`${b}_${s}`];
-        if (h === undefined) return alert("Satuan " + s + " tidak tersedia untuk barang ini!");
+        if (h === undefined) {
+            showCustomAlert("Perhatian", "Satuan " + s + " tidak tersedia untuk barang ini!", "danger");
+            return;
+        }
         
         const it = { barang: b, satuan: s, qty: q, harga: h, total: q * h, keterangan: k };
         
@@ -699,6 +797,27 @@
             else (currentMode === 'Kirim' ? itemsKirim : itemsRetur)[editIndex] = it;
         } else { if(q > 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).push(it); }
         render(); closeSheet('sheetInput'); hitungTotal();
+    }
+
+    function openActionSheet(idx, mode) {
+        currentActionIndex = idx;
+        currentActionMode = mode;
+        const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
+        document.getElementById('actionTitle').innerText = item.barang;
+        openSheet('sheetAction');
+    }
+
+    function doActionEdit() {
+        closeSheet('sheetAction');
+        setTimeout(() => { editItem(currentActionIndex, currentActionMode); }, 200);
+    }
+
+    function doActionDelete() {
+        showCustomConfirm("Hapus Barang", "Yakin ingin menghapus barang ini dari daftar?", () => {
+            if(currentActionMode === 'Kirim') itemsKirim.splice(currentActionIndex, 1);
+            else itemsRetur.splice(currentActionIndex, 1);
+            render(); hitungTotal(); closeSheet('sheetAction');
+        });
     }
 
     function editItem(idx, mode) {
@@ -718,7 +837,6 @@
             document.getElementById('modalKeterangan').value = "";
             document.getElementById('boxKeterangan').style.display = "none";
         }
-
         openSheet('sheetInput');
     }
 
@@ -735,7 +853,7 @@
                         ${infoKet}
                     </td>
                     <td style="font-weight:700; color:var(--text-main);">${it.total.toLocaleString()}</td>
-                    <td class="td-action"><button class="icon-btn" style="width:28px; height:28px; background:var(--input-bg);" onclick="editItem(${idx},'${mode}')"><i class="ph-bold ph-pencil-simple"></i></button></td>`;
+                    <td class="td-action"><button class="icon-btn" style="width:28px; height:28px; background:var(--input-bg);" onclick="openActionSheet(${idx},'${mode}')"><i class="ph-bold ph-pencil-simple"></i></button></td>`;
             });
         };
         draw(itemsKirim, 'tabelKirim', 'Kirim'); draw(itemsRetur, 'tabelRetur', 'Retur');
@@ -750,8 +868,7 @@
         const bl_input = getAngka('inputBonLama'); 
         const bl_actual = isDeposit ? -bl_input : bl_input; 
         const ongkir = getAngka('inputOngkir');
-        const cs = getAngka('inputCash'); 
-        const tf = getAngka('inputTrf');
+        const cs = getAngka('inputCash'); const tf = getAngka('inputTrf');
         const sisa = (tk - tr - ongkir + bl_actual - cs - tf);
         
         document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
@@ -782,17 +899,17 @@
             
             document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")";
             document.getElementById('statusBT').style.color = "var(--success)";
-
             document.getElementById('btnPrinterIcon').classList.add('connected');
 
             const savedSize = localStorage.getItem('printerSize_' + connectedDeviceId);
             if (savedSize) {
                 document.getElementById('ukuranKertas').value = savedSize;
+                document.getElementById('ukuranKertasPreview').value = savedSize;
             }
 
         } catch (e) { 
-            alert("BT Gagal: " + e); 
             document.getElementById('btnPrinterIcon').classList.remove('connected');
+            throw e; 
         }
     }
 
@@ -806,17 +923,25 @@
     }
 
     async function reprintLast() {
-        if(!lastPrintText) return alert("Belum ada data cetak terakhir!");
-        if(!btCharacteristic) return alert("Printer belum terhubung!");
+        if(!lastPrintText) {
+            showCustomAlert("Perhatian", "Belum ada data cetak terakhir!", "danger");
+            return;
+        }
+        if(!btCharacteristic) {
+            showCustomAlert("Perhatian", "Printer belum terhubung!", "danger");
+            return;
+        }
         try {
             closeSheet('sheetPrinter');
             let cetakReprint = lastPrintText.replace('[JENIS_CETAKAN]', '*** REPRINT NOTA ***');
             await printToBT(cetakReprint);
-            alert("✅ Berhasil Reprint Nota!");
-        } catch(e) { alert("Reprint Gagal: " + e); }
+            showCustomAlert("Sukses", "Berhasil Reprint Nota!", "success");
+        } catch(e) { 
+            showCustomAlert("Gagal", "Reprint Gagal: " + e, "danger"); 
+        }
     }
 
-    async function buatGambarLaporan(dataStruk) {
+    async function buatGambarLaporan(dataStruk, isSimpan = false) {
         const area = document.getElementById('areaCetakGambar');
         
         let htmlContent = `
@@ -895,14 +1020,96 @@
         const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
         
         document.getElementById('imgPreviewLaporan').src = imgUrl;
-        openSheet('sheetPreview');
 
-        const downloadLink = document.createElement("a");
-        downloadLink.href = imgUrl;
-        downloadLink.download = `Laporan_SBR_${dataStruk.noNota}.jpg`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
+        if (isSimpan) {
+            setTimeout(() => {
+                showCustomConfirm(
+                    "Simpan Gambar Nota",
+                    "Data sukses tersimpan ke Database!<br><br>Apakah Anda ingin mengunduh/download gambar nota digital ini ke perangkat?",
+                    () => {
+                        const downloadLink = document.createElement("a");
+                        downloadLink.href = imgUrl;
+                        downloadLink.download = `Laporan_SBR_${dataStruk.noNota}.jpg`;
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
+                        
+                        closeSheet('sheetPreview');
+                        askResetFormAfterTransaction();
+                    },
+                    () => {
+                        closeSheet('sheetPreview');
+                        askResetFormAfterTransaction();
+                    }
+                );
+            }, 500);
+        }
+    }
+
+    function askResetFormAfterTransaction() {
+        showCustomConfirm(
+            "Nota Baru",
+            "Transaksi selesai diproses sepenuhnya.<br><br>Apakah Anda ingin membersihkan form untuk membuat nota baru?",
+            () => {
+                resetForm();
+                const btn = document.getElementById('btnSimpan');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT';
+                document.getElementById('btnReprint').disabled = true;
+                lastPrintText = "";
+            }
+        );
+    }
+
+    async function bukaPratinjau() {
+        let errorList = [];
+        const ag = document.getElementById('pilihAgen').value;
+        const drv1 = document.getElementById('driver1').value;
+        const mobil = document.getElementById('pilihMobil').value;
+        const drv2 = document.getElementById('driver2').value;
+        
+        const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
+
+        if (!ag) errorList.push("- Agen belum dipilih");
+        if (!drv1) errorList.push("- Driver 1 belum ditentukan/kosong");
+        if (itemsKirim.length === 0 && itemsRetur.length === 0) errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
+        
+        const isTidakTitip = document.getElementById('cbTidakTitip').checked;
+        if (cash === 0 && trf === 0 && !isTidakTitip) errorList.push("- Pembayaran belum diisi (Pilih centang 'TIDAK TITIP UANG' jika memang Bon Full)");
+
+        if (errorList.length > 0) {
+            showCustomAlert("Data Belum Lengkap", "Mohon lengkapi data berikut:<br><br>" + errorList.join("<br>"), "danger");
+            return;
+        }
+
+        const noNota = document.getElementById('noNota').value;
+        const tglVal = document.getElementById('tglNotaDisplay').value; 
+        const tglIndo = tglVal ? tglVal : document.getElementById('tglNota').value; 
+        
+        const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
+        
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
+        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl_input = getAngka('inputBonLama'); const bl_actual = isDeposit ? -bl_input : bl_input;
+        const ongkir = getAngka('inputOngkir');
+        
+        const tagihanBersih = tk - tr - ongkir + bl_actual;
+        const sisa = tagihanBersih - cash - trf;
+
+        const btnPratinjau = document.getElementById('btnIconPratinjau');
+        const originalIcon = btnPratinjau.innerHTML;
+        btnPratinjau.innerHTML = '<i class="ph ph-spinner ph-spin" style="font-size: 20px;"></i>';
+        btnPratinjau.disabled = true;
+        
+        await buatGambarLaporan({
+            noNota, tglIndo, ag, drvGabung, mobil: mobil || '-',
+            itemsKirim, itemsRetur, tk, tr, ongkir,
+            bl_input, tagihanBersih, cash, trf, sisa
+        }, false);
+        
+        btnPratinjau.innerHTML = originalIcon;
+        btnPratinjau.disabled = false;
+        openSheet('sheetPreview');
     }
 
     async function simpanDanPrint() {
@@ -912,68 +1119,65 @@
         const mobil = document.getElementById('pilihMobil').value;
         const drv2 = document.getElementById('driver2').value;
         
-        const cash = getAngka('inputCash');
-        const trf = getAngka('inputTrf');
+        const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
 
         if (!ag) errorList.push("- Agen belum dipilih");
         if (!drv1) errorList.push("- Driver 1 belum ditentukan/kosong");
-        if (!mobil) errorList.push("- Mobil/Plat Nomor belum dipilih");
-        if (itemsKirim.length === 0 && itemsRetur.length === 0) {
-            errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
-        }
+        if (itemsKirim.length === 0 && itemsRetur.length === 0) errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
         
         const isTidakTitip = document.getElementById('cbTidakTitip').checked;
-        if (cash === 0 && trf === 0 && !isTidakTitip) {
-            errorList.push("- Pembayaran belum diisi (Pilih centang 'TIDAK TITIP UANG' jika memang Bon Full)");
-        }
+        if (cash === 0 && trf === 0 && !isTidakTitip) errorList.push("- Pembayaran belum diisi (Pilih centang 'TIDAK TITIP UANG' jika memang Bon Full)");
 
         if (errorList.length > 0) {
-            alert("⚠️ DATA BELUM LENGKAP:\n\n" + errorList.join("\n") + "\n\nSilakan lengkapi terlebih dahulu!");
-            return; 
+            showCustomAlert("Data Belum Lengkap", "Mohon lengkapi data berikut:<br><br>" + errorList.join("<br>"), "danger");
+            return;
+        }
+
+        if (!btCharacteristic) {
+            try {
+                await connectBT();
+            } catch (e) {
+                // Printer connection skipped/cancelled, proceed with digital report
+            }
         }
 
         const btn = document.getElementById('btnSimpan');
+        const btnModal = document.getElementById('btnSimpanPreview'); 
+
         btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> MENYIMPAN...'; btn.disabled = true;
+        if (btnModal) { btnModal.innerHTML = '<i class="ph ph-spinner ph-spin"></i> PROSES...'; btnModal.disabled = true; }
 
         const noNota = document.getElementById('noNota').value;
         const tglInput = document.getElementById('tglNota').value;
-        const [y, m, d] = tglInput.split('-');
-        const tglIndo = `${d}-${m}-${y}`;
+        const tglIndo = document.getElementById('tglNotaDisplay').value;
         const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
         
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        const bl_input = getAngka('inputBonLama');
-        const bl_actual = isDeposit ? -bl_input : bl_input;
+        const bl_input = getAngka('inputBonLama'); const bl_actual = isDeposit ? -bl_input : bl_input;
         const ongkir = getAngka('inputOngkir');
         
         const tagihanBersih = tk - tr - ongkir + bl_actual;
         const sisa = tagihanBersih - cash - trf;
-
         const lebar = parseInt(document.getElementById('ukuranKertas').value); 
         
-        const buatBaris = (l, r) => { 
-            let space = lebar - l.length - String(r).length; 
-            return l + " ".repeat(Math.max(1, space)) + r + "\n"; 
-        };
-
-        const garisStrip = "-".repeat(lebar) + "\n";
-        const garisSamaDengan = "=".repeat(lebar) + "\n";
+        const buatBaris = (l, r) => { let space = lebar - l.length - String(r).length; return l + " ".repeat(Math.max(1, space)) + r + "\n"; };
+        const garisStrip = "-".repeat(lebar) + "\n"; const garisSamaDengan = "=".repeat(lebar) + "\n";
 
         let p = `\x1B\x40`; 
         p += `\x1B\x61\x01\x1B\x45\x01[JENIS_CETAKAN]\n\x1B\x45\x00\n`; 
-        
         p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n`; 
         p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n${garisStrip}`; 
-        p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`); 
+        
+        const stringTglSimple = tglIndo.split(', ')[1] || tglInput;
+        p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${stringTglSimple}`); 
         
         p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`; 
-        p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n${garisStrip}\x1B\x61\x00`;
+        p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil || '-'} ]\n${garisStrip}\x1B\x61\x00`;
         
         p += `\x1B\x21\x00`;
         itemsKirim.forEach(i => { 
-            p += `${i.barang}\n`; 
-            if(i.keterangan) p += `  Ket: ${i.keterangan}\n`;
+            p += `${i.barang}\n`; if(i.keterangan) p += `  Ket: ${i.keterangan}\n`;
             p += buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); 
         });
         p += garisStrip + buatBaris(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString()}`);
@@ -981,8 +1185,7 @@
         if(itemsRetur.length > 0) {
             p += `\n\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
             itemsRetur.forEach(i => { 
-                p += `[RETUR] ${i.barang}\n`; 
-                if(i.keterangan) p += `  Ket: ${i.keterangan}\n`;
+                p += `[RETUR] ${i.barang}\n`; if(i.keterangan) p += `  Ket: ${i.keterangan}\n`;
                 p += buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); 
             });
             p += garisStrip + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString()}`);
@@ -1009,54 +1212,77 @@
         try {
             await clientSupabase.from('transaksi').insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
-                driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
-                total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
-                ongkir: ongkir, 
+                driver_1: drv1, driver_2: drv2, plat_nomor: mobil || '-', 
+                total_kirim: tk, total_retur: tr, bon_lama: bl_actual, ongkir: ongkir, 
                 bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
             }]);
 
             const details = [
-                ...itemsKirim.map(i => ({ 
-                    no_nota: noNota, 
-                    nama_barang: i.keterangan ? `${i.barang} - (${i.keterangan})` : i.barang, 
-                    qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total 
-                })),
-                ...itemsRetur.map(i => ({ 
-                    no_nota: noNota, 
-                    nama_barang: i.keterangan ? `${i.barang} - (${i.keterangan})` : i.barang, 
-                    qty: i.qty, satuan: i.satuan, tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total 
-                }))
+                ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.keterangan ? `${i.barang} - (${i.keterangan})` : i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
+                ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.keterangan ? `${i.barang} - (${i.keterangan})` : i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
             ];
             await clientSupabase.from('transaksi_detail').insert(details);
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
             if (btCharacteristic) {
                 btn.innerHTML = "MENCETAK CUSTOMER...";
+                if (btnModal) btnModal.innerHTML = "MENCETAK CUSTOMER...";
                 let cetakCustomer = p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ===');
                 await printToBT(cetakCustomer);
                 
-                btn.innerHTML = "JEDA... (SIAPKAN KERTAS)";
-                await new Promise(r => setTimeout(r, 5000));
+                await new Promise(r => setTimeout(r, 500)); 
                 
-                btn.innerHTML = "MENCETAK ADMIN...";
-                let cetakAdmin = p.replace('[JENIS_CETAKAN]', '=== LEMBAR ADMIN ===');
-                await printToBT(cetakAdmin);
-            } 
-            
-            lastPrintText = p;
-            document.getElementById('btnReprint').disabled = false;
-            
-            btn.innerHTML = "MEMBUAT LAPORAN DIGITAL...";
-            await buatGambarLaporan({
-                noNota, tglIndo, ag, drvGabung, mobil,
-                itemsKirim, itemsRetur, tk, tr, ongkir,
-                bl_input, tagihanBersih, cash, trf, sisa
-            });
+                // Ganti confirm bawaan dengan custom confirm untuk Lembar Admin
+                showCustomConfirm(
+                    "Cetak Lembar Admin",
+                    "Lembar Customer telah selesai dicetak.<br><br>Apakah Anda ingin lanjut mencetak Lembar Admin?",
+                    async () => {
+                        btn.innerHTML = "MENCETAK ADMIN...";
+                        if (btnModal) btnModal.innerHTML = "MENCETAK ADMIN...";
+                        let cetakAdmin = p.replace('[JENIS_CETAKAN]', '=== LEMBAR ADMIN ===');
+                        await printToBT(cetakAdmin);
+                        
+                        lastPrintText = p; document.getElementById('btnReprint').disabled = false;
+                        btn.innerHTML = "MEMBUAT LAPORAN DIGITAL...";
+                        if (btnModal) btnModal.innerHTML = "MEMBUAT LAPORAN...";
+                        await buatGambarLaporan({
+                            noNota, tglIndo, ag, drvGabung, mobil: mobil || '-',
+                            itemsKirim, itemsRetur, tk, tr, ongkir,
+                            bl_input, tagihanBersih, cash, trf, sisa
+                        }, true); 
+                    },
+                    async () => {
+                        lastPrintText = p; document.getElementById('btnReprint').disabled = false;
+                        btn.innerHTML = "MEMBUAT LAPORAN DIGITAL...";
+                        if (btnModal) btnModal.innerHTML = "MEMBUAT LAPORAN...";
+                        await buatGambarLaporan({
+                            noNota, tglIndo, ag, drvGabung, mobil: mobil || '-',
+                            itemsKirim, itemsRetur, tk, tr, ongkir,
+                            bl_input, tagihanBersih, cash, trf, sisa
+                        }, true);
+                    }
+                );
+            } else {
+                lastPrintText = p; document.getElementById('btnReprint').disabled = false;
+                btn.innerHTML = "MEMBUAT LAPORAN DIGITAL...";
+                if (btnModal) btnModal.innerHTML = "MEMBUAT LAPORAN...";
+                await buatGambarLaporan({
+                    noNota, tglIndo, ag, drvGabung, mobil: mobil || '-',
+                    itemsKirim, itemsRetur, tk, tr, ongkir,
+                    bl_input, tagihanBersih, cash, trf, sisa
+                }, true); 
+            }
 
-            btn.innerHTML = '<i class="ph-bold ph-check"></i> SUKSES DISIMPAN';
-        } catch (e) {
-            alert("❌ DATABASE ERROR: " + (e.message || e));
             btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT'; btn.disabled = false;
+            if (btnModal) {
+                btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print';
+                btnModal.disabled = false;
+            }
+
+        } catch (e) {
+            showCustomAlert("Database Error", (e.message || e), "danger");
+            btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT'; btn.disabled = false;
+            if (btnModal) { btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print'; btnModal.disabled = false; }
         }
     }
 
