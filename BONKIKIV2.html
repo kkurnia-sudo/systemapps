@@ -170,7 +170,7 @@
         /* MODALS UMUM */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .bottom-sheet { position: fixed; bottom: -100%; left: 0; right: 0; background: var(--card-bg); border-radius: 20px 20px 0 0; padding: 20px; z-index: 101; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+        .bottom-sheet { position: fixed; bottom: -100%; left: 0; right: 0; background: var(--card-bg); border-radius: 20px 20px 0 0; padding: 20px; z-index: 101; transition: transform 0.3s ease, bottom 0.3s ease; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; }
         .bottom-sheet.active { bottom: 0; }
         .sheet-indicator { width: 40px; height: 5px; background: var(--border); border-radius: 10px; margin: 0 auto 16px; }
 
@@ -457,6 +457,21 @@
 <div class="struk-visual-container"><div id="areaCetakGambar" class="struk-visual"></div></div>
 
 <script>
+    // --- PENYESUAIAN POSISI MODAL DI ATAS KEYBOARD MOBILE ---
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            const activeSheet = document.querySelector('.bottom-sheet.active');
+            if (activeSheet) {
+                const keyboardHeight = window.innerHeight - window.visualViewport.height;
+                if (keyboardHeight > 50) {
+                    activeSheet.style.bottom = keyboardHeight + 'px';
+                } else {
+                    activeSheet.style.bottom = '0px';
+                }
+            }
+        });
+    }
+
     // --- CUSTOM MODERN DIALOG SYSTEM ---
     function showCustomAlert(title, message, type = 'info') {
         document.getElementById('customDialogTitle').innerText = title;
@@ -545,12 +560,16 @@
     let currentActionMode = '';
 
     function openSheet(id) {
-        document.getElementById(id).classList.add('active');
+        const sheet = document.getElementById(id);
+        sheet.style.bottom = ''; // reset inline style
+        sheet.classList.add('active');
         document.getElementById('overlay' + id.replace('sheet', '')).classList.add('active');
     }
     function closeSheet(id) {
-        document.getElementById(id).classList.remove('active');
+        const sheet = document.getElementById(id);
+        sheet.classList.remove('active');
         document.getElementById('overlay' + id.replace('sheet', '')).classList.remove('active');
+        sheet.style.bottom = '';
     }
 
     function toggleInfoLanjutan() {
@@ -946,7 +965,6 @@
         }
     }
 
-    // Fungsi utama tombol bawah untuk menangani Simpan & Print atau Cetak Ulang
     function handleMainButtonClick() {
         const btn = document.getElementById('btnSimpan');
         if (btn.dataset.action === 'reprint') {
@@ -1066,7 +1084,6 @@
             "Nota Baru",
             "Transaksi selesai diproses sepenuhnya.<br><br>Apakah Anda ingin membersihkan form untuk membuat nota baru?",
             () => {
-                // User memilih Reset Form
                 resetForm();
                 const btn = document.getElementById('btnSimpan');
                 btn.disabled = false;
@@ -1076,7 +1093,6 @@
                 lastPrintText = "";
             },
             () => {
-                // User memilih TIDAK reset form -> Ubah tombol menjadi "Cetak Ulang ?"
                 const btn = document.getElementById('btnSimpan');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="ph-bold ph-printer"></i> Cetak Ulang ?';
@@ -1161,7 +1177,7 @@
             try {
                 await connectBT();
             } catch (e) {
-                // Printer connection skipped, proceed with digital report
+                // Printer connection skipped
             }
         }
 
