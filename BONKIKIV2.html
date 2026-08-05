@@ -327,7 +327,7 @@
                     <div class="summary-value" id="txtGrand">Rp 0</div>
                 </div>
                 <div class="action-grid">
-                    <button class="btn btn-success btn-large" id="btnSimpan" onclick="simpanDanPrint()">
+                    <button class="btn btn-success btn-large" id="btnSimpan" onclick="handleMainButtonClick()">
                         <i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT
                     </button>
                     <button class="btn btn-outline" id="btnIconPratinjau" style="border-radius: 12px; border-color: var(--primary); color: var(--primary);" onclick="bukaPratinjau()" title="Pratinjau Nota">
@@ -703,6 +703,7 @@
             const btn = document.getElementById('btnSimpan');
             btn.disabled = false;
             btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT';
+            btn.dataset.action = '';
             const btnModal = document.getElementById('btnSimpanPreview');
             if(btnModal) { btnModal.disabled = false; btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print'; }
             document.getElementById('btnReprint').disabled = true;
@@ -928,16 +929,30 @@
             return;
         }
         if(!btCharacteristic) {
-            showCustomAlert("Perhatian", "Printer belum terhubung!", "danger");
-            return;
+            try {
+                await connectBT();
+            } catch(e) {
+                showCustomAlert("Perhatian", "Printer belum terhubung!", "danger");
+                return;
+            }
         }
         try {
             closeSheet('sheetPrinter');
             let cetakReprint = lastPrintText.replace('[JENIS_CETAKAN]', '*** REPRINT NOTA ***');
             await printToBT(cetakReprint);
-            showCustomAlert("Sukses", "Berhasil Reprint Nota!", "success");
+            showCustomAlert("Sukses", "Berhasil Cetak Ulang Nota!", "success");
         } catch(e) { 
-            showCustomAlert("Gagal", "Reprint Gagal: " + e, "danger"); 
+            showCustomAlert("Gagal", "Cetak Ulang Gagal: " + e, "danger"); 
+        }
+    }
+
+    // Fungsi utama tombol bawah untuk menangani Simpan & Print atau Cetak Ulang
+    function handleMainButtonClick() {
+        const btn = document.getElementById('btnSimpan');
+        if (btn.dataset.action === 'reprint') {
+            reprintLast();
+        } else {
+            simpanDanPrint();
         }
     }
 
@@ -1051,12 +1066,21 @@
             "Nota Baru",
             "Transaksi selesai diproses sepenuhnya.<br><br>Apakah Anda ingin membersihkan form untuk membuat nota baru?",
             () => {
+                // User memilih Reset Form
                 resetForm();
                 const btn = document.getElementById('btnSimpan');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT';
+                btn.dataset.action = '';
                 document.getElementById('btnReprint').disabled = true;
                 lastPrintText = "";
+            },
+            () => {
+                // User memilih TIDAK reset form -> Ubah tombol menjadi "Cetak Ulang ?"
+                const btn = document.getElementById('btnSimpan');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph-bold ph-printer"></i> Cetak Ulang ?';
+                btn.dataset.action = 'reprint';
             }
         );
     }
@@ -1137,7 +1161,7 @@
             try {
                 await connectBT();
             } catch (e) {
-                // Printer connection skipped/cancelled, proceed with digital report
+                // Printer connection skipped, proceed with digital report
             }
         }
 
@@ -1232,7 +1256,6 @@
                 
                 await new Promise(r => setTimeout(r, 500)); 
                 
-                // Ganti confirm bawaan dengan custom confirm untuk Lembar Admin
                 showCustomConfirm(
                     "Cetak Lembar Admin",
                     "Lembar Customer telah selesai dicetak.<br><br>Apakah Anda ingin lanjut mencetak Lembar Admin?",
@@ -1273,7 +1296,7 @@
                 }, true); 
             }
 
-            btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT'; btn.disabled = false;
+            btn.disabled = false;
             if (btnModal) {
                 btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print';
                 btnModal.disabled = false;
