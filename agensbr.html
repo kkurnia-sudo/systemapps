@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR | Database Agen v4</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --border-color: #334155;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --modal-bg: #1e293b;
+        }
+
+        [data-theme="light"] {
+            --bg-main: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-input: #f8fafc;
+            --border-color: #cbd5e1;
+            --accent: #0284c7;
+            --accent-hover: #0369a1;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --modal-bg: #ffffff;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 10px; 
+            user-select: none;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Sticky Header */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            background: var(--bg-main);
+            padding-bottom: 8px;
+            backdrop-filter: blur(8px);
+        }
+
+        .card { 
+            background: var(--bg-card); 
+            border-radius: 14px; 
+            padding: 14px; 
+            border: 1px solid var(--border-color); 
+            margin-bottom: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .header-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .header-title { 
+            margin: 0; 
+            font-size: 14px; 
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-icon-top {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-icon-top:active { transform: scale(0.95); }
+        .btn-add-main {
+            background: var(--accent);
+            color: #0f172a;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-add-main:active { transform: scale(0.95); background: var(--accent-hover); }
+
+        /* PENCARIAN */
+        .search-container { width: 100%; box-sizing: border-box; }
+        .search-input { 
+            width: 100%; 
+            background: var(--bg-input); 
+            border: 1px solid var(--border-color); 
+            color: var(--text-main); 
+            padding: 10px 14px; 
+            border-radius: 8px; 
+            font-family: inherit; 
+            box-sizing: border-box; 
+            font-size: 13px; 
+            transition: border 0.2s;
+        }
+        .search-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+
+        /* TABLE AREA */
+        .table-container { 
+            width: 100%; 
+            max-height: 70vh; 
+            overflow-x: auto; 
+            border: 1px solid var(--border-color); 
+            border-radius: 10px; 
+            background: var(--bg-card); 
+        }
+        
+        table { width: 100%; border-collapse: collapse; color: var(--text-main); min-width: 650px; } 
+        
+        thead th { 
+            background: var(--bg-input); 
+            color: var(--text-muted); 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+            padding: 12px 8px; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            border-bottom: 1px solid var(--border-color); 
+            text-align: left; 
+            letter-spacing: 0.5px; 
+        }
+        thead th.center { text-align: center; }
+        thead th.right { text-align: right; }
+        
+        td { border-bottom: 1px solid var(--border-color); padding: 10px 8px; font-size: 13px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: rgba(51, 65, 85, 0.15); }
+        
+        .text-bold { font-weight: 700; color: var(--text-main); }
+        .price-text { font-weight: 700; text-align: right; color: var(--success); font-size: 13px; white-space: nowrap; }
+        .nowrap { white-space: nowrap; }
+
+        /* Badge tipe agen */
+        .badge { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; display: inline-block; white-space: nowrap;}
+        .badge-normal { background: rgba(56, 189, 248, 0.15); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); }
+        .badge-khusus { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        /* Kolom Aksi (Hanya Icon Pensil) */
+        .action-cell { display: flex; justify-content: center; align-items: center; }
+        .btn-action-pencil {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            font-size: 13px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .btn-action-pencil:hover { background: rgba(56, 189, 248, 0.2); border-color: var(--accent); }
+
+        /* Action Menu Options Styling */
+        .btn-action-menu {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+        .btn-action-menu:active { transform: scale(0.98); }
+        .btn-action-menu.edit-opt:hover { border-color: var(--warning); color: var(--warning); background: rgba(245, 158, 11, 0.1); }
+        .btn-action-menu.delete-opt:hover { border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .btn-action-menu.cancel-opt:hover { border-color: var(--accent); color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+
+        /* MODAL POPUP */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: var(--modal-bg);
+            width: 100%;
+            max-width: 550px;
+            max-height: 90vh;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -10px 25px rgba(0,0,0,0.3);
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 14px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 15px;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+        .btn-close {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .modal-body {
+            overflow-y: auto;
+            flex: 1;
+            padding-bottom: 10px;
+        }
+
+        /* FORM LAYOUT DALAM MODAL */
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-size: 10px; margin-bottom: 4px; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; }
+        input, select { background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px; border-radius: 8px; font-family: inherit; font-size: 13px; transition: border 0.2s; width: 100%; box-sizing: border-box; }
+        input:focus, select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+        select { cursor: pointer; }
+        
+        .btn-save { background: var(--accent); color: #0f172a; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 700; width: 100%; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; }
+        .btn-save:active { transform: scale(0.98); background: var(--accent-hover); }
+        .btn-batal { background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; font-size: 12px; margin-top: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="sticky-header">
+    <div class="card" style="margin-bottom: 8px;">
+        <div class="header-top-bar">
+            <h2 class="header-title">👨‍👦‍👦 SBR | DATABASE AGEN</h2>
+            <div class="header-actions">
+                <button class="btn-icon-top" id="btnTheme" onclick="toggleTheme()" title="Ubah Tema">🌙</button>
+                <button class="btn-add-main" onclick="openAddModal()">+ Tambah Agen</button>
+            </div>
+        </div>
+        <div class="search-container">
+            <input type="text" id="in_cari" class="search-input" placeholder="🔍 Cari nama agen atau alamat..." onkeyup="cariAgen()">
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th width="35" class="center">NO</th>
+                    <th>NAMA AGEN</th>
+                    <th width="110" class="right">SALDO BON</th>
+                    <th>ALAMAT</th>
+                    <th width="65" class="center">TYPE</th>
+                    <th width="90">NO. TLP</th>
+                    <th width="60" class="center">AKSI</th>
+                </tr>
+            </thead>
+            <tbody id="list-agen">
+                <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Memuat data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Pop-up Form Tambah / Edit Agen -->
+<div id="agenModal" class="modal-overlay" onclick="outsideModalClick(event, 'agenModal')">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="title-form">TAMBAH AGEN BARU</h3>
+            <button class="btn-close" onclick="closeFormModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="edit_id">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>NAMA AGEN</label>
+                    <input type="text" id="in_nama" placeholder="Nama Agen">
+                </div>
+                <div class="form-group">
+                    <label>ALAMAT (KOTA)</label>
+                    <input type="text" id="in_alamat" placeholder="Contoh: CIKARANG">
+                </div>
+                <div class="form-group">
+                    <label>NO. TELEPON</label>
+                    <input type="number" id="in_tlp" placeholder="6281...">
+                </div>
+                <div class="form-group">
+                    <label>TYPE AGEN</label>
+                    <select id="in_type">
+                        <option value="NORMAL">NORMAL</option>
+                        <option value="KHUSUS">KHUSUS</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>SALDO BON AWAL (RP)</label>
+                    <input type="number" id="in_saldo" value="0">
+                </div>
+            </div>
+            <button class="btn-save" id="btn-aksi" onclick="simpanAgen()">SIMPAN DATA AGEN</button>
+            <button class="btn-batal" id="btn-batal" onclick="closeFormModal()" style="display:none;">Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pop-up Menu Aksi (Edit / Hapus / Kembali) -->
+<div id="actionMenuModal" class="modal-overlay" onclick="outsideModalClick(event, 'actionMenuModal')">
+    <div class="modal-content" style="max-width: 400px; border-radius: 20px 20px 0 0; padding: 20px;">
+        <div class="modal-header" style="padding: 0 0 14px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 14px;">
+            <h3 style="margin: 0; font-size: 15px;">PILIH AKSI</h3>
+            <button class="btn-close" onclick="closeActionMenu()">✕</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px;">
+            <button class="btn-action-menu edit-opt" onclick="menuActionEdit()">✏️ Edit Data</button>
+            <button class="btn-action-menu delete-opt" onclick="menuActionDelete()">🗑️ Hapus</button>
+            <button class="btn-action-menu cancel-opt" onclick="closeActionMenu()">↩️ Kembali</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    let currentAgenData = [];
+    let activeRowIndex = null;
+
+    window.onload = () => muatTabelAgen();
+
+    // Dark/Light Theme Handler
+    function toggleTheme() {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        if (isLight) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'dark');
+            document.getElementById('btnTheme').innerText = "🌙";
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            document.getElementById('btnTheme').innerText = "☀️";
+        }
+    }
+
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.getElementById('btnTheme').innerText = "☀️";
+    }
+
+    function openAddModal() {
+        resetForm();
+        document.getElementById('title-form').innerText = "TAMBAH AGEN BARU";
+        document.getElementById('agenModal').classList.add('active');
+    }
+
+    function closeFormModal() {
+        document.getElementById('agenModal').classList.remove('active');
+        resetForm();
+    }
+
+    // Action Menu Handlers
+    function openActionMenu(index) {
+        activeRowIndex = index;
+        document.getElementById('actionMenuModal').classList.add('active');
+    }
+
+    function closeActionMenu() {
+        document.getElementById('actionMenuModal').classList.remove('active');
+    }
+
+    function menuActionEdit() {
+        closeActionMenu();
+        prepareEdit(activeRowIndex);
+    }
+
+    function menuActionDelete() {
+        closeActionMenu();
+        hapusAgen(activeRowIndex);
+    }
+
+    function outsideModalClick(e, modalId) {
+        if (e.target.id === modalId) {
+            if (modalId === 'agenModal') closeFormModal();
+            if (modalId === 'actionMenuModal') closeActionMenu();
+        }
+    }
+
+    async function muatTabelAgen() {
+        const { data, error } = await _sb.from('agen').select('*').order('nama_agen', { ascending: true });
+        
+        if (error) {
+            document.getElementById('list-agen').innerHTML = `<tr><td colspan="7" style="color:var(--danger); text-align:center;">Gagal muat data</td></tr>`;
+            return;
+        }
+
+        currentAgenData = data || [];
+        const listBody = document.getElementById('list-agen');
+        listBody.innerHTML = "";
+
+        if (currentAgenData.length === 0) {
+            listBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Tidak ada data agen.</td></tr>`;
+            return;
+        }
+
+        currentAgenData.forEach((ag, index) => {
+            const tr = document.createElement('tr');
+            const badgeClass = (ag.type_agen || 'NORMAL').toLowerCase() === 'khusus' ? 'badge-khusus' : 'badge-normal';
+
+            tr.innerHTML = `
+                <td align="center" style="color: var(--text-muted); font-size: 11px;">${index + 1}</td>
+                <td class="text-bold">${ag.nama_agen}</td>
+                <td class="price-text nowrap">Rp ${ag.saldo_bon ? ag.saldo_bon.toLocaleString('id-ID') : 0}</td>
+                <td>${ag.alamat}</td>
+                <td align="center"><span class="badge ${badgeClass}">${ag.type_agen || 'NORMAL'}</span></td>
+                <td class="nowrap">${ag.No_tlp || '-'}</td>
+                <td align="center">
+                    <div class="action-cell">
+                        <button class="btn-action-pencil" onclick="openActionMenu(${index})" title="Aksi">✏️</button>
+                    </div>
+                </td>
+            `;
+            listBody.appendChild(tr);
+        });
+        cariAgen();
+    }
+
+    function cariAgen() {
+        const input = document.getElementById('in_cari').value.toUpperCase();
+        const tr = document.querySelectorAll("#list-agen tr");
+        tr.forEach(row => {
+            row.style.display = row.innerText.toUpperCase().includes(input) ? "" : "none";
+        });
+    }
+
+    function prepareEdit(index) {
+        const ag = currentAgenData[index];
+        document.getElementById('title-form').innerText = "EDIT DATA AGEN";
+        document.getElementById('edit_id').value = ag.id;
+        document.getElementById('in_nama').value = ag.nama_agen;
+        document.getElementById('in_alamat').value = ag.alamat;
+        document.getElementById('in_tlp').value = ag.No_tlp;
+        document.getElementById('in_type').value = ag.type_agen || "NORMAL";
+        document.getElementById('in_saldo').value = ag.saldo_bon;
+        
+        const btnAksi = document.getElementById('btn-aksi');
+        btnAksi.innerText = "UPDATE DATA AGEN";
+        btnAksi.style.background = "var(--warning)";
+        document.getElementById('btn-batal').style.display = "block";
+        
+        document.getElementById('agenModal').classList.add('active');
+    }
+
+    async function simpanAgen() {
+        const id = document.getElementById('edit_id').value;
+        const payload = {
+            nama_agen: document.getElementById('in_nama').value,
+            alamat: document.getElementById('in_alamat').value.toUpperCase(),
+            No_tlp: parseInt(document.getElementById('in_tlp').value) || 0,
+            type_agen: document.getElementById('in_type').value,
+            saldo_bon: parseFloat(document.getElementById('in_saldo').value) || 0
+        };
+
+        if(!payload.nama_agen || !payload.alamat) return alert("Data wajib diisi!");
+
+        const btnAksi = document.getElementById('btn-aksi');
+        btnAksi.innerText = "MENYIMPAN...";
+
+        let res;
+        if(id) res = await _sb.from('agen').update(payload).eq('id', id);
+        else res = await _sb.from('agen').insert([payload]);
+
+        if(res.error) {
+            alert(res.error.message);
+            btnAksi.innerText = id ? "UPDATE DATA AGEN" : "SIMPAN DATA AGEN";
+        } else {
+            closeFormModal();
+            muatTabelAgen();
+        }
+    }
+
+    async function hapusAgen(index) {
+        const ag = currentAgenData[index];
+        if(confirm(`Hapus agen ${ag.nama_agen}?`)) {
+            const { error } = await _sb.from('agen').delete().eq('id', ag.id);
+            if(error) alert(error.message);
+            else muatTabelAgen();
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('title-form').innerText = "TAMBAH AGEN BARU";
+        document.getElementById('edit_id').value = "";
+        document.getElementById('in_nama').value = "";
+        document.getElementById('in_alamat').value = "";
+        document.getElementById('in_tlp').value = "";
+        document.getElementById('in_type').value = "NORMAL";
+        document.getElementById('in_saldo').value = "0";
+        document.getElementById('btn-aksi').innerText = "SIMPAN DATA AGEN";
+        document.getElementById('btn-aksi').style.background = "var(--accent)";
+        document.getElementById('btn-batal').style.display = "none";
+    }
+</script>
+</body>
+</html>
