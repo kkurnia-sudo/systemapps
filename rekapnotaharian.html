@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBR | Rekap Terpadu v6.4</title>
+    <title>SBR | Rekap Terpadu v6.5</title>
     <!-- Library Supabase & Excel -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -208,26 +208,26 @@
         .table-pop th { background: var(--bg-input); border-bottom: 1px solid var(--border-color); padding: 10px; }
         .table-pop td { border-bottom: 1px solid var(--border-color); padding: 10px; background: var(--bg-td); }
 
-        /* Khusus Struk (Modern & Minimalis) */
+        /* Khusus Struk (Modern, Minimalis & Rapat/Compact) */
         .struk-box { 
             background: #ffffff !important; 
             border: 1px solid #e2e8f0; 
-            padding: 20px; 
+            padding: 16px; 
             border-radius: 12px; 
             font-family: 'Inter', sans-serif; 
             color: #1f2937 !important; 
-            font-size: 13px; 
-            line-height: 1.6; 
+            font-size: 12px; 
+            line-height: 1.35; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.02);
         }
         .struk-center { text-align: center; }
         .struk-bold { font-weight: 700; color: #111827; }
-        .struk-title { font-size: 18px; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
-        .struk-separator { border-top: 1px solid #e2e8f0; margin: 10px 0; }
-        .struk-double-separator { border-top: 2px solid #cbd5e1; margin: 12px 0; }
+        .struk-title { font-size: 16px; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
+        .struk-separator { border-top: 1px solid #e2e8f0; margin: 6px 0; }
+        .struk-double-separator { border-top: 2px solid #cbd5e1; margin: 8px 0; }
         .struk-row { display: flex; justify-content: space-between; align-items: center; }
-        .struk-item-detail { padding-left: 12px; font-size: 12px; color: #4b5563; }
-        .struk-text-muted { color: #6b7280; font-size: 12px; }
+        .struk-item-detail { padding-left: 10px; font-size: 11px; color: #4b5563; }
+        .struk-text-muted { color: #6b7280; font-size: 11px; }
 
         /* Opsi Printer Area */
         .printer-options {
@@ -450,23 +450,24 @@
             const [y, m, d] = trx.tanggal.split('-');
             const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
 
+            // Desain Struk Lebih Rapat & Ringkas
             let s = `<div class="struk-box" id="areaCetakStruk">
                         <div class="struk-center">
                             <div class="struk-title">SBR PUTRA FOOD</div>
-                            <div class="struk-text-muted" style="margin-top:4px;">Lembang, Bandung Barat</div>
+                            <div class="struk-text-muted" style="margin-top:2px;">Lembang, Bandung Barat</div>
                         </div>
                         <div class="struk-separator"></div>
                         <div class="struk-row struk-text-muted"><span>NO: ${trx.no_nota}</span><span>${d}/${m}/${y}</span></div>
                         
-                        <div class="struk-center struk-bold" style="font-size:16px; margin: 12px 0;">${trx.nama_agen.toUpperCase()}</div>
-                        <div class="struk-text-muted" style="text-align:center; margin-bottom:12px;">DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
+                        <div class="struk-center struk-bold" style="font-size:14px; margin: 6px 0;">${trx.nama_agen.toUpperCase()}</div>
+                        <div class="struk-text-muted" style="text-align:center; margin-bottom:6px;">DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
                         <div class="struk-separator"></div>`;
 
             const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
             const itemsRetur = detail.filter(i => i.tipe === 'Retur');
 
             itemsKirim.forEach(i => {
-                s += `<div style="font-weight:600; margin-top:6px;">${i.nama_barang}</div>`;
+                s += `<div style="font-weight:600; margin-top:4px;">${i.nama_barang}</div>`;
                 s += `<div class="struk-row struk-item-detail">
                         <span>${i.qty} ${i.satuan} <span style="color:#9ca3af;">x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span></span>
                         <span class="struk-bold" style="color:#1f2937;">${(i.subtotal || 0).toLocaleString('id-ID')}</span>
@@ -476,9 +477,9 @@
             s += `<div class="struk-row"><span>Total Kirim</span><span class="struk-bold">Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}</span></div>`;
 
             if(itemsRetur.length > 0) {
-                s += `<br><div class="struk-bold" style="color:#ef4444; font-size:12px;">PENGEMBALIAN (RETUR)</div>`;
+                s += `<div class="struk-bold" style="color:#ef4444; font-size:11px; margin-top:4px;">PENGEMBALIAN (RETUR)</div>`;
                 itemsRetur.forEach(i => {
-                    s += `<div style="font-weight:600; margin-top:6px;">${i.nama_barang}</div>`;
+                    s += `<div style="font-weight:600; margin-top:4px;">${i.nama_barang}</div>`;
                     s += `<div class="struk-row struk-item-detail">
                             <span>${i.qty} ${i.satuan} <span style="color:#9ca3af;">x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span></span>
                             <span class="struk-bold" style="color:#ef4444;">-${(i.subtotal || 0).toLocaleString('id-ID')}</span>
@@ -491,35 +492,35 @@
             const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
             let bonLama = trx.bon_lama || 0;
             let teksBonLama = bonLama < 0 ? "Deposit" : "Bon Lama";
-            s += `<br><div class="struk-row"><span>${teksBonLama}</span><span class="struk-bold">Rp ${Math.abs(bonLama).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-row" style="margin-top:4px;"><span>${teksBonLama}</span><span class="struk-bold">Rp ${Math.abs(bonLama).toLocaleString('id-ID')}</span></div>`;
             
             s += `<div class="struk-double-separator"></div>`;
-            s += `<div class="struk-row struk-bold" style="font-size:15px;"><span>TOTAL TAGIHAN</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-row struk-bold" style="font-size:14px;"><span>TOTAL TAGIHAN</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
             
             // Keterangan Ongkir
             let ketOngkir = trx.ongkir || trx.keterangan_ongkir;
             if (ketOngkir) {
                 let displayOngkir = isNaN(ketOngkir) ? ketOngkir : `Rp ${Number(ketOngkir).toLocaleString('id-ID')}`;
-                s += `<div class="struk-row" style="font-size:12px; color:#6b7280; margin-top:4px;"><span>Biaya Ongkir</span><span>${displayOngkir}</span></div>`;
+                s += `<div class="struk-row" style="font-size:11px; color:#6b7280; margin-top:2px;"><span>Biaya Ongkir</span><span>${displayOngkir}</span></div>`;
             }
 
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-row"><span>Bayar Cash</span><span class="struk-bold">Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
-            s += `<div class="struk-row"><span>Bayar Transfer</span><span class="struk-bold">Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-row" style="margin-top:2px;"><span>Bayar Transfer</span><span class="struk-bold">Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
 
             if (riwayatBayar && riwayatBayar.length > 0) {
-                s += `<br><div class="struk-bold" style="font-size:12px; color:#4b5563;">RIWAYAT CICILAN BAYAR</div>`;
+                s += `<div class="struk-bold" style="font-size:11px; color:#4b5563; margin-top:4px;">RIWAYAT CICILAN BAYAR</div>`;
                 riwayatBayar.forEach(p => {
                     let detailBayar = "";
                     if ((p.bayar_cash || 0) > 0) detailBayar += `CSH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
                     if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
-                    let ket = p.keterangan ? `<div style="font-size:11px; color:#9ca3af; margin-top:2px;">Keterangan: ${p.keterangan}</div>` : '';
+                    let ket = p.keterangan ? `<div style="font-size:10px; color:#9ca3af; margin-top:1px;">Keterangan: ${p.keterangan}</div>` : '';
                     let tglIndo = formatTglBulanTahun(p.tanggal);
                     
-                    s += `<div class="struk-row" style="margin-top:6px;">
+                    s += `<div class="struk-row" style="margin-top:3px;">
                             <span class="struk-text-muted">${tglIndo}</span>
-                            <span class="struk-bold" style="font-size:12px;">${detailBayar}</span>
+                            <span class="struk-bold" style="font-size:11px;">${detailBayar}</span>
                           </div>${ket}`;
                 });
                 s += `<div class="struk-separator"></div>`;
@@ -529,23 +530,23 @@
             let teksSisa = sisaAkhir <= 0 ? "LUNAS" : "SISA BON";
             let colorSisa = sisaAkhir <= 0 ? "#10b981" : "#ef4444";
             
-            s += `<div class="struk-row struk-bold" style="font-size:16px; color:${colorSisa}; margin-top:8px;">
+            s += `<div class="struk-row struk-bold" style="font-size:15px; color:${colorSisa}; margin-top:4px;">
                     <span>${teksSisa}</span>
                     <span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span>
                   </div>`;
             s += `<div class="struk-separator"></div>`;
-            s += `<div class="struk-center struk-bold struk-text-muted" style="margin-top:16px; font-size:11px;">SBR PUTRA FOOD SYSTEM</div>`;
+            s += `<div class="struk-center struk-bold struk-text-muted" style="margin-top:8px; font-size:10px;">SBR PUTRA FOOD SYSTEM</div>`;
             
             s += `</div>`; // Akhir .struk-box
             
             // TOMBOL AKSI & PILIHAN PRINTER
-            s += `<div style="display: flex; gap: 8px; margin-top: 16px;">
-                    <button id="btnCetak" onclick="cetakStrukBluetooth()" style="flex:1; background:var(--btn-primary); color:white; padding:14px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 13px;">🖨️ BLUETOOTH</button>
-                    <button id="btnCetakGambar" onclick="cetakGambar()" style="flex:1; background:var(--btn-excel); color:white; padding:14px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 13px;">📸 SIMPAN JPG</button>
+            s += `<div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button id="btnCetak" onclick="cetakStrukBluetooth()" style="flex:1; background:var(--btn-primary); color:white; padding:12px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 12px;">🖨️ BLUETOOTH</button>
+                    <button id="btnCetakGambar" onclick="cetakGambar()" style="flex:1; background:var(--btn-excel); color:white; padding:12px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 12px;">📸 SIMPAN JPG</button>
                   </div>`;
                   
             s += `<div class="printer-options">
-                    <label for="lebarKertas" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">UKURAN KERTAS PRINT: </label>
+                    <label for="lebarKertas" style="font-size: 11px; font-weight: 600; color: var(--text-muted);">UKURAN KERTAS PRINT: </label>
                     <select id="lebarKertas">
                         <option value="48">80mm (Besar)</option>
                         <option value="32">58mm (Kecil)</option>
