@@ -170,20 +170,33 @@
         /* MODALS UMUM */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .bottom-sheet { position: fixed; bottom: -100%; left: 0; right: 0; background: var(--card-bg); border-radius: 20px 20px 0 0; padding: 20px; z-index: 101; transition: transform 0.3s ease, bottom 0.3s ease; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; }
-        .bottom-sheet.active { bottom: 0; }
-        .sheet-indicator { width: 40px; height: 5px; background: var(--border); border-radius: 10px; margin: 0 auto 16px; }
-
-        @media (min-width: 768px) {
-            .bottom-sheet { 
-                max-width: 450px; left: 50%; right: auto; top: 50%; bottom: auto; 
-                transform: translate(-50%, -50%) scale(0.9); opacity: 0; visibility: hidden;
-                border-radius: 20px; transition: 0.3s ease-out; 
-            }
-            .bottom-sheet.active { top: 50%; bottom: auto; transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
-            .sheet-indicator { display: none; } 
-        }
         
+        /* BOTTOM-SHEET / MODAL CENTERED */
+        .bottom-sheet { 
+            position: fixed; 
+            left: 50%; 
+            top: 50%; 
+            transform: translate(-50%, -50%) scale(0.9); 
+            width: calc(100% - 32px);
+            max-width: 450px;
+            background: var(--card-bg); 
+            border-radius: var(--radius-lg); 
+            padding: 20px; 
+            z-index: 101; 
+            opacity: 0;
+            visibility: hidden;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 0.3s ease, visibility 0.3s ease; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15); 
+            max-height: 85vh; 
+            overflow-y: auto; 
+        }
+        .bottom-sheet.active { 
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1); 
+        }
+        .sheet-indicator { display: none; } 
+
         /* VISUAL STRUK */
         .struk-visual-container { position: absolute; left: -9999px; top: 0; width: 400px; }
         .struk-visual { background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace; font-size: 14px; border: 1px solid #ccc; line-height: 1.4; }
@@ -457,19 +470,24 @@
 <div class="struk-visual-container"><div id="areaCetakGambar" class="struk-visual"></div></div>
 
 <script>
-    // --- PENYESUAIAN POSISI MODAL DI ATAS KEYBOARD MOBILE ---
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', () => {
-            const activeSheet = document.querySelector('.bottom-sheet.active');
-            if (activeSheet) {
-                const keyboardHeight = window.innerHeight - window.visualViewport.height;
-                if (keyboardHeight > 50) {
-                    activeSheet.style.bottom = keyboardHeight + 'px';
-                } else {
-                    activeSheet.style.bottom = '0px';
-                }
+    // --- PENYESUAIAN POSISI MODAL DI TENGAH LAYAR (RESPONSIF KETIKA KEYBOARD MUNCUL) ---
+    function updateModalCentering() {
+        const activeSheet = document.querySelector('.bottom-sheet.active');
+        if (activeSheet) {
+            if (window.visualViewport) {
+                const vv = window.visualViewport;
+                activeSheet.style.top = (vv.offsetTop + vv.height / 2) + 'px';
+            } else {
+                activeSheet.style.top = '50%';
             }
-        });
+            activeSheet.style.left = '50%';
+            activeSheet.style.transform = 'translate(-50%, -50%) scale(1)';
+        }
+    }
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', updateModalCentering);
+        window.visualViewport.addEventListener('scroll', updateModalCentering);
     }
 
     // --- CUSTOM MODERN DIALOG SYSTEM ---
@@ -561,15 +579,14 @@
 
     function openSheet(id) {
         const sheet = document.getElementById(id);
-        sheet.style.bottom = ''; // reset inline style
         sheet.classList.add('active');
         document.getElementById('overlay' + id.replace('sheet', '')).classList.add('active');
+        updateModalCentering();
     }
     function closeSheet(id) {
         const sheet = document.getElementById(id);
         sheet.classList.remove('active');
         document.getElementById('overlay' + id.replace('sheet', '')).classList.remove('active');
-        sheet.style.bottom = '';
     }
 
     function toggleInfoLanjutan() {
