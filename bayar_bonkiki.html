@@ -338,8 +338,18 @@
         const bonLama = listAgen[ag] || 0;
         const sisaAkhir = bonLama - cash - trf;
         
-        const { data: nota } = await clientSupabase.from('transaksi').select('no_nota, id').eq('nama_agen', ag).gt('sisa_akhir', 0).order('id', { ascending: false }).limit(1);
+        // --- BAGIAN YANG DIPERBAIKI ---
+        // Mencari nota terakhir berdasarkan waktu dibuatnya (created_at), 
+        // mengabaikan status apakah sisa_akhir sudah 0 atau belum,
+        // sehingga rekap pembayaran selalu merujuk ke nota pengiriman terakhir.
+        const { data: nota } = await clientSupabase.from('transaksi')
+            .select('no_nota, id')
+            .eq('nama_agen', ag)
+            .order('created_at', { ascending: false })
+            .limit(1);
+            
         const noNotaRef = (nota && nota.length > 0) ? nota[0].no_nota : "NON-NOTA";
+        // ------------------------------
 
         const btn = document.getElementById('btnSimpan');
         btn.disabled = true;
@@ -415,7 +425,6 @@
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-row"><span>TOTAL KIRIM:</span><span>Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}</span></div>`;
             
-            // PERUBAHAN: Teks Keterangan Hitam, Teks Subtotal/Total Retur Merah Bold
             if(itemsRetur.length > 0) {
                 s += `<br><div class="struk-bold" style="color: #000;">BARANG RETUR:</div>`;
                 itemsRetur.forEach(i => {
@@ -437,14 +446,12 @@
             s += `<div class="struk-double-separator"></div>`;
             s += `<div class="struk-row struk-bold"><span>TOTAL TAGIHAN:</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
             
-            // --- MODIFIED: MENAMBAHKAN ONGKIR DI BAWAH TOTAL TAGIHAN PADA STRUK VISUAL ---
             if (trx.ongkir && trx.ongkir > 0) {
                 s += `<div class="struk-row" style="font-size:12px; color:#555;">
                         <span>&nbsp;&nbsp;-Ongkir:</span>
                         <span>Rp ${trx.ongkir.toLocaleString('id-ID')}</span>
                       </div>`;
             }
-            // -----------------------------------------------------------------------------
 
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-row"><span>Bayar CASH:</span><span>Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
@@ -468,7 +475,6 @@
                 s += `<div class="struk-separator"></div>`;
             }
 
-            // PERUBAHAN: Logika Warna Status Sisa Bon / Lunas / Deposit
             let sisaAkhir = Math.round(trx.sisa_akhir || 0);
             let labelSisa = "SISA BON:";
             let colorSisa = "#000";
@@ -523,52 +529,50 @@
         let separator = "-".repeat(charWidth);
         let doubleSeparator = "=".repeat(charWidth);
 
-        let txt = "\x1B\x40"; 
-        txt += "\x1B\x61\x01"; 
-        txt += "SBR PUTRA FOOD\nLembang, Bandung Barat\n";
-        txt += "\x1B\x61\x00"; 
-        txt += separator + "\n";
-        txt += padLR(`NO: ${trx.no_nota}`, `TGL: ${d}-${m}-${y}`, charWidth) + "\n";
-        txt += "\x1B\x61\x01"; 
-        txt += `${trx.nama_agen.toUpperCase()}\n`;
-        txt += `DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]\n`;
-        txt += "\x1B\x61\x00"; 
-        txt += separator + "\n";
+        let txt = "\\x1B\\x40"; 
+        txt += "\\x1B\\x61\\x01"; 
+        txt += "SBR PUTRA FOOD\\nLembang, Bandung Barat\\n";
+        txt += "\\x1B\\x61\\x00"; 
+        txt += separator + "\\n";
+        txt += padLR(`NO: ${trx.no_nota}`, `TGL: ${d}-${m}-${y}`, charWidth) + "\\n";
+        txt += "\\x1B\\x61\\x01"; 
+        txt += `${trx.nama_agen.toUpperCase()}\\n`;
+        txt += `DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]\\n`;
+        txt += "\\x1B\\x61\\x00"; 
+        txt += separator + "\\n";
 
         itemsKirim.forEach(i => {
-            txt += `${i.nama_barang}\n`;
-            txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `${(i.subtotal || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+            txt += `${i.nama_barang}\\n`;
+            txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `${(i.subtotal || 0).toLocaleString('id-ID')}`, charWidth) + "\\n";
         });
-        txt += separator + "\n";
-        txt += padLR("TOTAL KIRIM:", `Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += separator + "\\n";
+        txt += padLR("TOTAL KIRIM:", `Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}`, charWidth) + "\\n";
 
         if(itemsRetur.length > 0) {
-            txt += "\nBARANG RETUR:\n";
+            txt += "\\nBARANG RETUR:\\n";
             itemsRetur.forEach(i => {
-                txt += `[RETUR] ${i.nama_barang}\n`;
-                txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `-${(i.subtotal || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+                txt += `[RETUR] ${i.nama_barang}\\n`;
+                txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `-${(i.subtotal || 0).toLocaleString('id-ID')}`, charWidth) + "\\n";
             });
-            txt += separator + "\n";
-            txt += padLR("TOTAL RETUR:", `Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+            txt += separator + "\\n";
+            txt += padLR("TOTAL RETUR:", `Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}`, charWidth) + "\\n";
         }
 
-        txt += "\n" + padLR(labelBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`, charWidth) + "\n";
-        txt += doubleSeparator + "\n";
-        txt += padLR("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += "\\n" + padLR(labelBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`, charWidth) + "\\n";
+        txt += doubleSeparator + "\\n";
+        txt += padLR("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`, charWidth) + "\\n";
         
-        // --- MODIFIED: MENAMBAHKAN ONGKIR DI BAWAH TOTAL TAGIHAN PADA STRUK BLUETOOTH ---
         if (trx.ongkir && trx.ongkir > 0) {
-            txt += padLR("  -Ongkir:", `Rp ${trx.ongkir.toLocaleString('id-ID')}`, charWidth) + "\n";
+            txt += padLR("  -Ongkir:", `Rp ${trx.ongkir.toLocaleString('id-ID')}`, charWidth) + "\\n";
         }
-        // --------------------------------------------------------------------------------
 
-        txt += separator + "\n";
-        txt += padLR("Bayar CASH:", `Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
-        txt += padLR("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
-        txt += separator + "\n";
+        txt += separator + "\\n";
+        txt += padLR("Bayar CASH:", `Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}`, charWidth) + "\\n";
+        txt += padLR("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`, charWidth) + "\\n";
+        txt += separator + "\\n";
 
         if (riwayatBayar && riwayatBayar.length > 0) {
-            txt += "\nRIWAYAT CICILAN:\n";
+            txt += "\\nRIWAYAT CICILAN:\\n";
             let riwayatSort = [...riwayatBayar].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
             riwayatSort.forEach(p => {
                 let detailBayar = "";
@@ -579,17 +583,17 @@
                 let namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
                 let tglIndoFormat = tglSplit.length === 3 ? `${tglSplit[2]} ${namaBulan[parseInt(tglSplit[1])-1]} ${tglSplit[0]}` : p.tanggal;
                 
-                txt += padLR(`  ${tglIndoFormat}`, detailBayar, charWidth) + "\n";
-                if (p.keterangan) txt += `  (${p.keterangan})\n`;
+                txt += padLR(`  ${tglIndoFormat}`, detailBayar, charWidth) + "\\n";
+                if (p.keterangan) txt += `  (${p.keterangan})\\n`;
             });
-            txt += separator + "\n";
+            txt += separator + "\\n";
         }
 
-        txt += padLR(labelSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`, charWidth) + "\n";
-        txt += separator + "\n";
-        txt += "\x1B\x61\x01"; 
-        txt += "SBR PUTRA FOOD SYSTEM\n\n\n\n";
-        txt += "\x1D\x56\x41\x03"; 
+        txt += padLR(labelSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`, charWidth) + "\\n";
+        txt += separator + "\\n";
+        txt += "\\x1B\\x61\\x01"; 
+        txt += "SBR PUTRA FOOD SYSTEM\\n\\n\\n\\n";
+        txt += "\\x1D\\x56\\x41\\x03"; 
         
         return txt;
     }
@@ -642,7 +646,6 @@
         }
     }
 
-    // PERUBAHAN: Skala export JPG dinaikkan ke 3 untuk ketajaman ekstra (HD) tanpa bikin pecah
     function downloadStrukJPG() {
         const target = document.getElementById('areaStruk');
         html2canvas(target, { scale: 3, backgroundColor: '#ffffff', logging: false }).then(canvas => {
