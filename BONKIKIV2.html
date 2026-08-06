@@ -168,9 +168,24 @@
         }
 
         /* MODALS UMUM */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(0,0,0,0.5); z-index: 100; 
+            opacity: 0; visibility: hidden; 
+            transition: opacity 0.3s ease-out, visibility 0.3s ease-out; 
+            will-change: opacity, visibility; 
+        }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .bottom-sheet { position: fixed; bottom: -100%; left: 0; right: 0; background: var(--card-bg); border-radius: 20px 20px 0 0; padding: 20px; z-index: 101; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+        
+        .bottom-sheet { 
+            position: fixed; bottom: -100%; left: 0; right: 0; 
+            background: var(--card-bg); border-radius: 20px 20px 0 0; padding: 20px; 
+            z-index: 101; 
+            transition: bottom 0.3s ease-out, transform 0.3s ease-out, opacity 0.3s ease-out; 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1); 
+            max-height: 90vh; overflow-y: auto; 
+            will-change: bottom, transform, opacity;
+        }
         .bottom-sheet.active { bottom: 0; }
         .sheet-indicator { width: 40px; height: 5px; background: var(--border); border-radius: 10px; margin: 0 auto 16px; }
 
@@ -178,7 +193,7 @@
             .bottom-sheet { 
                 max-width: 450px; left: 50%; right: auto; top: 50%; bottom: auto; 
                 transform: translate(-50%, -50%) scale(0.9); opacity: 0; visibility: hidden;
-                border-radius: 20px; transition: 0.3s ease-out; 
+                border-radius: 20px; transition: opacity 0.3s ease-out, transform 0.3s ease-out; 
             }
             .bottom-sheet.active { top: 50%; bottom: auto; transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
             .sheet-indicator { display: none; } 
@@ -186,10 +201,22 @@
         
         /* VISUAL STRUK */
         .struk-visual-container { position: absolute; left: -9999px; top: 0; width: 400px; }
-        .struk-visual { background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace; font-size: 14px; border: 1px solid #ccc; line-height: 1.4; }
+        .struk-visual { background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace; font-size: 14px; border: 1px solid #ccc; line-height: 1.4; -webkit-font-smoothing: antialiased; }
         .struk-visual .garis { border-top: 1px dashed #000; margin: 8px 0; }
         .struk-visual .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
         .struk-visual .flex-row { display: flex; justify-content: space-between; }
+        
+        /* PREVIEW IMAGE - Hapus image-rendering kasar agar browser menghaluskan (anti-alias) gambar dengan baik */
+        #imgPreviewLaporan {
+            width: 100%; 
+            max-height: 50vh; 
+            object-fit: contain; 
+            border: 1px solid var(--border); 
+            border-radius: 10px; 
+            margin-bottom: 16px; 
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body>
@@ -436,7 +463,7 @@
     <h3 style="margin-bottom: 6px; font-weight: 800; font-size: 16px;">Pratinjau Nota</h3>
     <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Pastikan data sudah benar sebelum disimpan.</p>
     
-    <img id="imgPreviewLaporan" style="width: 100%; max-height: 50vh; object-fit: contain; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; background: #fff;" />
+    <img id="imgPreviewLaporan" />
     
     <div class="form-group" style="text-align: left; margin-bottom: 16px;">
         <label>Ukuran Kertas Pencetakan</label>
@@ -946,7 +973,6 @@
         }
     }
 
-    // Fungsi utama tombol bawah untuk menangani Simpan & Print atau Cetak Ulang
     function handleMainButtonClick() {
         const btn = document.getElementById('btnSimpan');
         if (btn.dataset.action === 'reprint') {
@@ -992,20 +1018,20 @@
         }
 
         if(dataStruk.itemsRetur.length > 0) {
-            htmlContent += `<div style="font-weight: bold; margin-top: 10px;">BARANG RETUR:</div>`;
+            htmlContent += `<div style="font-weight: bold; margin-top: 10px; color: #000;">BARANG RETUR:</div>`;
             dataStruk.itemsRetur.forEach(i => {
                 const cetakKet = i.keterangan ? `<div style="font-size:12px; color:#555; font-style:italic;"> * Ket: ${i.keterangan}</div>` : '';
                 htmlContent += `
-                    <div style="margin-top: 4px;">[RETUR] ${i.barang}</div>
+                    <div style="margin-top: 4px; color: #000;">[RETUR] ${i.barang}</div>
                     ${cetakKet}
                     <div class="flex-row">
-                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}</span>
-                        <span>-${i.total.toLocaleString('id-ID')}</span>
+                        <span style="color: #000;">&nbsp;&nbsp;${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}</span>
+                        <span style="color: red; font-weight: bold;">-${i.total.toLocaleString('id-ID')}</span>
                     </div>
                 `;
             });
             htmlContent += `<div class="garis"></div>`;
-            htmlContent += `<div class="flex-row" style="font-weight: bold;"><span>TOTAL RETUR:</span><span>Rp ${dataStruk.tr.toLocaleString('id-ID')}</span></div>`;
+            htmlContent += `<div class="flex-row" style="font-weight: bold; color: #000;"><span>TOTAL RETUR:</span><span style="color: red;">-Rp ${dataStruk.tr.toLocaleString('id-ID')}</span></div>`;
         }
         
         htmlContent += `<div class="garis"></div>`;
@@ -1024,14 +1050,30 @@
         htmlContent += `<div class="flex-row"><span>Bayar TRF:</span><span>Rp ${dataStruk.trf.toLocaleString('id-ID')}</span></div>`;
         htmlContent += `<div class="garis"></div>`;
         
-        const labelSisa = dataStruk.sisa < 0 ? "DEPOSIT:" : "SISA BON:";
-        htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px;"><span>${labelSisa}</span><span>Rp ${Math.abs(dataStruk.sisa).toLocaleString('id-ID')}</span></div>`;
+        let sisaAkhir = Math.round(dataStruk.sisa);
+        let labelSisa = "SISA BON:";
+        let colorSisa = "#000";
+
+        if (sisaAkhir > 0) {
+            labelSisa = "SISA BON:";
+            colorSisa = "red";
+        } else if (sisaAkhir === 0) {
+            labelSisa = "LUNAS:";
+            colorSisa = "green";
+        } else {
+            labelSisa = "DEPOSIT:";
+            colorSisa = "green";
+        }
+
+        htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px; color: ${colorSisa};"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+        
         htmlContent += `<div class="garis"></div>`;
         htmlContent += `<div style="text-align: center; margin-top: 30px; font-weight: bold;">SBR PUTRA FOOD SYSTEM</div>`;
 
         area.innerHTML = htmlContent;
 
-        const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", logging: false });
+        // Scale dikurangi menjadi 3 (tengah-tengah yang ideal, tidak pecah tapi tetap high-res untuk didownload)
+        const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff", logging: false });
         const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
         
         document.getElementById('imgPreviewLaporan').src = imgUrl;
@@ -1066,7 +1108,6 @@
             "Nota Baru",
             "Transaksi selesai diproses sepenuhnya.<br><br>Apakah Anda ingin membersihkan form untuk membuat nota baru?",
             () => {
-                // User memilih Reset Form
                 resetForm();
                 const btn = document.getElementById('btnSimpan');
                 btn.disabled = false;
@@ -1076,7 +1117,6 @@
                 lastPrintText = "";
             },
             () => {
-                // User memilih TIDAK reset form -> Ubah tombol menjadi "Cetak Ulang ?"
                 const btn = document.getElementById('btnSimpan');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="ph-bold ph-printer"></i> Cetak Ulang ?';
