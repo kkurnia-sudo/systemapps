@@ -100,6 +100,15 @@
         .badge-nota { background: var(--nota-bg); color: var(--nota-text); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; cursor: pointer; display: inline-block; margin-right: 4px; margin-top: 4px; border: 1px solid var(--nota-text); transition: transform 0.1s; }
         .badge-nota:active { transform: scale(0.95); }
 
+        /* GAYA KHUSUS NAMA AGEN (EYE-CATCHING) */
+        .agen-highlight {
+            font-weight: 800; /* Ekstra tebal */
+            font-style: italic; /* Miring */
+            color: var(--nota-text); /* Warna serasi dengan tema */
+            font-size: 13px; /* Ukuran lebih tegas */
+            letter-spacing: 0.5px;
+        }
+
         /* =========================================================
            TAMPILAN KHUSUS HANDPHONE (Dialog Dinamis Tabel)
            ========================================================= */
@@ -109,6 +118,13 @@
             tr.row-data { border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 16px; background: var(--card-bg); overflow: hidden; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
             td { border: none; border-bottom: 1px solid var(--border-color); position: relative; padding: 10px 12px 10px 45%; text-align: right !important; min-height: 20px; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; }
             tr.row-data td:nth-of-type(n+6) { display: none !important; }
+            
+            /* PERBAIKAN 1: DRIVER HANYA ITALIC DI HP */
+            tr.row-data td:nth-of-type(2) {
+                font-weight: 400 !important; /* Menghilangkan bold */
+                font-style: italic !important; /* Membuat miring */
+            }
+
             tr.row-data::after { content: "Lihat Rincian Potongan \2192"; display: block; text-align: center; padding: 12px; font-size: 11px; color: var(--highlight-text); font-weight: 700; background: var(--highlight-bg); border-top: 1px solid var(--border-color); }
             td:before { position: absolute; top: 50%; transform: translateY(-50%); left: 12px; width: 40%; text-align: left; font-weight: 600; font-size: 10px; color: var(--text-muted); }
             td:nth-of-type(1):before { content: "WAKTU"; } td:nth-of-type(2):before { content: "DRIVER"; } td:nth-of-type(3):before { content: "UNIT"; } td:nth-of-type(4):before { content: "AGEN / NOTA"; } td:nth-of-type(5):before { content: "CASH KOTOR"; } td:nth-of-type(6):before { content: "UANG JALAN"; } td:nth-of-type(7):before { content: "BBM"; } td:nth-of-type(8):before { content: "BONGKAR"; } td:nth-of-type(9):before { content: "LAIN-LAIN"; } td:nth-of-type(10):before { content: "BIAYA DARI"; } td:nth-of-type(11):before { content: "SISA BERSIH"; }
@@ -714,12 +730,13 @@
             const tglIndo = dObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const jamIndo = dObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
+            // PERBAIKAN 2: Terapkan class "agen-highlight" pada nama agen
             tbody.innerHTML += `
                 <tr class="row-data" onclick="bukaDetail(this)">
                     <td style="background: var(--th-bg);">${tglIndo}<br><span class="sub-txt">${jamIndo} WIB</span></td>
                     <td class="text-bold txt-kiri">${r.driver_lengkap}</td>
                     <td class="text-bold" style="color: var(--text-muted);">${r.nama_unit_saja}</td>
-                    <td class="txt-kiri">${r.nama_agen || '-'}<br><div style="margin-top:6px;">${r.html_nota_render}</div></td>
+                    <td class="txt-kiri"><span class="agen-highlight">${r.nama_agen || '-'}</span><br><div style="margin-top:6px;">${r.html_nota_render}</div></td>
                     <td style="color: var(--highlight-text); font-weight:bold;">Rp ${(r.cash_kotor_riil).toLocaleString('id-ID')}</td>
                     <td>Rp ${(r.uang_jalan || 0).toLocaleString('id-ID')}</td>
                     <td>Rp ${(r.uang_bbm || 0).toLocaleString('id-ID')}</td>
