@@ -199,6 +199,7 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="tanggal">Tanggal</label>
+                <!-- Menambahkan min/max/default value dikosongkan -->
                 <input type="date" id="tanggal" required>
             </div>
             <div class="form-group">
@@ -459,6 +460,7 @@
     });
 
     const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+    
     const parseDateSafe = (dateStr) => {
         if (!dateStr) return new Date();
         const formattedStr = dateStr.includes(' ') ? dateStr.replace(' ', 'T') : dateStr;
@@ -488,9 +490,8 @@
     setupRupiahInput('amountTransfer');
     setupRupiahInput('editAmount');
 
-    const tglInput = document.getElementById('tanggal');
-    const dateNow = new Date();
-    tglInput.value = `${dateNow.getFullYear()}-${String(dateNow.getMonth() + 1).padStart(2, '0')}-${String(dateNow.getDate()).padStart(2, '0')}`; 
+    // MENGHAPUS SCRIPT YANG OTOMATIS MENGISI TANGGAL HARI INI DI SINI
+    // Kolom tanggal sekarang akan dibiarkan kosong secara default.
 
     const metodeSelect = document.getElementById('metode');
     const singleAmountContainer = document.getElementById('singleAmountContainer');
@@ -776,6 +777,14 @@
 
     document.getElementById('transactionForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const tanggalInput = document.getElementById('tanggal').value;
+        
+        // VALIDASI TAMBAHAN: Pastikan tanggal terisi (walaupun form required HTML biasanya sudah mencegahnya)
+        if (!tanggalInput) {
+            return alert("Harap isi Kolom Tanggal terlebih dahulu!");
+        }
+
         const type = document.getElementById('type').value;
         const description = document.getElementById('description').value;
         const metode = document.getElementById('metode').value;
@@ -791,7 +800,6 @@
         submitBtn.innerText = 'Menyimpan...';
         submitBtn.disabled = true;
 
-        const tanggalInput = document.getElementById('tanggal').value;
         const now = new Date();
         const created_at_lengkap = `${tanggalInput} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
         
@@ -807,11 +815,8 @@
         if (error) {
             alert('Gagal menyimpan data!'); 
         } else {
-            // MERESET FORM SETELAH BERHASIL DISIMPAN
+            // MERESET FORM SETELAH BERHASIL DISIMPAN (Termasuk mengosongkan input tanggal)
             document.getElementById('transactionForm').reset();
-            
-            // KEMBALIKAN TANGGAL KE HARI INI
-            document.getElementById('tanggal').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             
             // SEMBUNYIKAN KEMBALI FORM SPLIT
             singleAmountContainer.style.display = 'block';
