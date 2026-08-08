@@ -89,7 +89,7 @@
 
         /* TAMPILAN LAPTOP (Tabel Normal) */
         .table-container { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th { background: var(--th-bg); color: var(--text-muted); padding: 12px 8px; font-size: 11px; font-weight: 600; border-bottom: 2px solid var(--border-color); text-align: center; }
         td { padding: 12px 8px; border-bottom: 1px solid var(--border-color); font-size: 12px; text-align: center; }
         .txt-kiri { text-align: left; }
@@ -102,12 +102,22 @@
 
         /* GAYA KHUSUS NAMA AGEN (EYE-CATCHING) */
         .agen-highlight {
-            font-weight: 800; /* Ekstra tebal */
-            font-style: italic; /* Miring */
-            color: var(--nota-text); /* Warna serasi dengan tema */
-            font-size: 13px; /* Ukuran lebih tegas */
+            font-weight: 800;
+            font-style: italic;
+            color: var(--nota-text);
+            font-size: 13px;
             letter-spacing: 0.5px;
         }
+
+        /* UI CEKLIS SETORAN */
+        .setoran-wrapper { display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .setoran-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: var(--success-text); }
+        .badge-setoran { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; transition: all 0.2s ease; cursor: pointer; }
+        .setoran-belum { background: #fee2e2; color: #dc2626; border: 1px solid #f87171; }
+        .setoran-sudah { background: #d1fae5; color: #059669; border: 1px solid #34d399; }
+        
+        [data-theme="dark"] .setoran-belum { background: #7f1d1d; color: #fca5a5; border-color: #991b1b; }
+        [data-theme="dark"] .setoran-sudah { background: #064e3b; color: #6ee7b7; border-color: #047857; }
 
         /* =========================================================
            TAMPILAN KHUSUS HANDPHONE (Dialog Dinamis Tabel)
@@ -117,17 +127,31 @@
             thead tr { position: absolute; top: -9999px; left: -9999px; }
             tr.row-data { border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 16px; background: var(--card-bg); overflow: hidden; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
             td { border: none; border-bottom: 1px solid var(--border-color); position: relative; padding: 10px 12px 10px 45%; text-align: right !important; min-height: 20px; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; }
-            tr.row-data td:nth-of-type(n+6) { display: none !important; }
             
-            /* PERBAIKAN 1: DRIVER HANYA ITALIC DI HP */
+            /* PEMBARUAN: Menyembunyikan kolom rincian potongan (6-11), namun MENAMPILKAN kolom Setoran (12) di tampilan ringkas */
+            tr.row-data td:nth-of-type(n+6):not(:nth-of-type(12)) { display: none !important; }
+            
             tr.row-data td:nth-of-type(2) {
-                font-weight: 400 !important; /* Menghilangkan bold */
-                font-style: italic !important; /* Membuat miring */
+                font-weight: 400 !important;
+                font-style: italic !important;
             }
 
             tr.row-data::after { content: "Lihat Rincian Potongan \2192"; display: block; text-align: center; padding: 12px; font-size: 11px; color: var(--highlight-text); font-weight: 700; background: var(--highlight-bg); border-top: 1px solid var(--border-color); }
             td:before { position: absolute; top: 50%; transform: translateY(-50%); left: 12px; width: 40%; text-align: left; font-weight: 600; font-size: 10px; color: var(--text-muted); }
-            td:nth-of-type(1):before { content: "WAKTU"; } td:nth-of-type(2):before { content: "DRIVER"; } td:nth-of-type(3):before { content: "UNIT"; } td:nth-of-type(4):before { content: "AGEN / NOTA"; } td:nth-of-type(5):before { content: "CASH KOTOR"; } td:nth-of-type(6):before { content: "UANG JALAN"; } td:nth-of-type(7):before { content: "BBM"; } td:nth-of-type(8):before { content: "BONGKAR"; } td:nth-of-type(9):before { content: "LAIN-LAIN"; } td:nth-of-type(10):before { content: "BIAYA DARI"; } td:nth-of-type(11):before { content: "SISA BERSIH"; }
+            
+            td:nth-of-type(1):before { content: "WAKTU"; } 
+            td:nth-of-type(2):before { content: "DRIVER"; } 
+            td:nth-of-type(3):before { content: "UNIT"; } 
+            td:nth-of-type(4):before { content: "AGEN / NOTA"; } 
+            td:nth-of-type(5):before { content: "CASH KOTOR"; } 
+            td:nth-of-type(6):before { content: "UANG JALAN"; } 
+            td:nth-of-type(7):before { content: "BBM"; } 
+            td:nth-of-type(8):before { content: "BONGKAR"; } 
+            td:nth-of-type(9):before { content: "LAIN-LAIN"; } 
+            td:nth-of-type(10):before { content: "BIAYA DARI"; } 
+            td:nth-of-type(11):before { content: "SISA BERSIH"; }
+            td:nth-of-type(12):before { content: "SETORAN"; } /* Label HP untuk Setoran */
+            
             td .sub-txt { text-align: right; }
             tr.mode-dialog { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9000; background: var(--bg-main); margin: 0; border-radius: 0; padding: 16px; overflow-y: auto; cursor: default; }
             tr.mode-dialog::after { display: none; }
@@ -141,7 +165,7 @@
         }
 
         /* =========================================================
-           UI MODAL PRATINJAU STRUK NOTA (Terintegrasi)
+           UI MODAL PRATINJAU STRUK NOTA
            ========================================================= */
         .struk-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 16px; }
         .struk-overlay.active { display: flex; }
@@ -152,7 +176,6 @@
         
         .struk-paper-area { background: #27272a; margin: 0; padding: 16px 12px; max-height: 60vh; overflow-y: auto; }
         
-        /* CSS STRUK PERSIS DARI SUMBER */
         .struk-box { background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; color: #000; font-size: 13px; line-height: 1.4; }
         .struk-center { text-align: center; }
         .struk-bold { font-weight: bold; }
@@ -227,10 +250,11 @@
                     <th>LAIN-LAIN (RP)</th>
                     <th>KAS BIAYA DARI</th>
                     <th>SISA BERSIH (RP)</th>
+                    <th>SETORAN</th>
                 </tr>
             </thead>
             <tbody id="isiTabelDriver">
-                <tr><td colspan="11" style="padding:40px; background:var(--card-bg); text-align:center; color:var(--text-muted);">Tentukan rentang tanggal lalu klik Tampilkan.</td></tr>
+                <tr><td colspan="12" style="padding:40px; background:var(--card-bg); text-align:center; color:var(--text-muted);">Tentukan rentang tanggal lalu klik Tampilkan.</td></tr>
             </tbody>
         </table>
     </div>
@@ -247,7 +271,6 @@
         </div>
         
         <div class="struk-paper-area" id="teksStrukRender">
-            <!-- Isi struk di-render di sini melalui JS -->
         </div>
 
         <div class="struk-footer">
@@ -272,11 +295,8 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    let dataStrukAktif = null; // Menyimpan data aktif untuk fungsi print/save
+    let dataStrukAktif = null;
 
-    // ==========================================
-    // LOGIKA MODAL STRUK NOTA TERINTEGRASI
-    // ==========================================
     function formatTglBulanTahun(tglStr) {
         if (!tglStr) return "";
         const [y, m, d] = tglStr.split('-');
@@ -295,7 +315,6 @@
         konten.innerHTML = "<p style='text-align:center; color:white;'>Menarik data dari server...</p>";
 
         try {
-            // Menarik data persis seperti dari referensi Rekap Terpadu
             const { data: trx, error: errTrx } = await _sb.from('transaksi').select('*').eq('no_nota', noNota).single();
             if (errTrx) throw errTrx;
 
@@ -314,7 +333,6 @@
             const [y, m, d] = trx.tanggal.split('-');
             const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
 
-            // Merakit HTML struk sama persis dengan referensi
             let s = `<div class="struk-box" id="areaCetakStruk">
                         <div class="struk-center">
                             <span class="struk-title">SBR PUTRA FOOD</span><br>
@@ -402,7 +420,6 @@
         return kiri + " ".repeat(spasi) + kanan + "\n";
     }
 
-    // Fungsi Cetak Bluetooth diintegrasikan dari referensi
     async function cetakStrukBluetooth() {
         if (!navigator.bluetooth) {
             alert("Browser ini tidak mendukung Web Bluetooth API.");
@@ -540,7 +557,6 @@
         }
     }
 
-    // Fungsi Simpan JPG diintegrasikan dari referensi
     async function cetakGambar() {
         const areaStruk = document.getElementById('areaCetakStruk');
         if (!areaStruk) {
@@ -583,9 +599,6 @@
         }
     }
 
-    // ==========================================
-    // FITUR TEMA GELAP / TERANG 
-    // ==========================================
     function toggleTheme() {
         const body = document.documentElement;
         const btn = document.getElementById('btnTheme');
@@ -598,9 +611,6 @@
         }
     }
 
-    // ==========================================
-    // LOGIKA UI BARU (KLIK & DIALOG HP)
-    // ==========================================
     function bukaDetail(elm) {
         if (window.innerWidth > 768) return; 
         if (!elm.classList.contains('row-data')) return; 
@@ -638,18 +648,48 @@
         }
     });
 
-    // ==========================================
-    // FUNGSI UTAMA (MEMUAT DATA TABEL & LAPORAN)
-    // ==========================================
     window.onload = () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('tglMulai').value = today;
         document.getElementById('tglSelesai').value = today;
     };
 
+    // FUNGSI UPDATE SETORAN KE SUPABASE 
+    async function updateStatusSetoran(id, isChecked) {
+        const badge = document.getElementById(`badge_setoran_${id}`);
+        
+        // Update UI seketika agar terasa responsif
+        if(isChecked) {
+            badge.className = 'badge-setoran setoran-sudah';
+            badge.innerText = '✅ DISETOR';
+        } else {
+            badge.className = 'badge-setoran setoran-belum';
+            badge.innerText = '❌ BELUM';
+        }
+
+        // Update ke database berdasarkan ID report
+        const { error } = await _sb.from('rekap_laporan_driver')
+            .update({ status_setoran: isChecked })
+            .eq('id', id);
+            
+        if(error) {
+            alert("Gagal menyimpan status setoran: " + error.message);
+            // Revert UI bila terjadi error
+            if(!isChecked) {
+                badge.className = 'badge-setoran setoran-sudah';
+                badge.innerText = '✅ DISETOR';
+                document.getElementById(`cek_${id}`).checked = true;
+            } else {
+                badge.className = 'badge-setoran setoran-belum';
+                badge.innerText = '❌ BELUM';
+                document.getElementById(`cek_${id}`).checked = false;
+            }
+        }
+    }
+
     async function muatLaporanDriver() {
         const tbody = document.getElementById('isiTabelDriver');
-        tbody.innerHTML = "<tr><td colspan='11' style='padding:30px; background:var(--card-bg); text-align:center; color:var(--text-muted);'>Menarik data setoran driver...</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='12' style='padding:30px; background:var(--card-bg); text-align:center; color:var(--text-muted);'>Menarik data setoran driver...</td></tr>";
 
         const tglAwal = document.getElementById('tglMulai').value;
         const tglAkhir = document.getElementById('tglSelesai').value;
@@ -663,7 +703,7 @@
         if (errLaporan) { alert("Gagal memuat: " + errLaporan.message); return; }
         
         if (!laporanData || laporanData.length === 0) { 
-            tbody.innerHTML = "<tr><td colspan='11' style='padding:30px; background:var(--card-bg); text-align:center; color:var(--text-muted);'>Tidak ada setoran driver di tanggal ini.</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='12' style='padding:30px; background:var(--card-bg); text-align:center; color:var(--text-muted);'>Tidak ada setoran driver di tanggal ini.</td></tr>";
             hitungSummary([]);
             return; 
         }
@@ -730,7 +770,11 @@
             const tglIndo = dObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const jamIndo = dObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
-            // PERBAIKAN 2: Terapkan class "agen-highlight" pada nama agen
+            // Pengkondisian status setoran
+            const isChecked = r.status_setoran ? 'checked' : '';
+            const badgeClass = r.status_setoran ? 'setoran-sudah' : 'setoran-belum';
+            const badgeText = r.status_setoran ? '✅ DISETOR' : '❌ BELUM';
+
             tbody.innerHTML += `
                 <tr class="row-data" onclick="bukaDetail(this)">
                     <td style="background: var(--th-bg);">${tglIndo}<br><span class="sub-txt">${jamIndo} WIB</span></td>
@@ -744,6 +788,14 @@
                     <td style="font-weight: 500; color: var(--text-muted);">${r.output_lain_lain}</td>
                     <td style="color: var(--kas-text); font-weight:bold; font-size:11px;">${r.sumber_kas_fix}</td>
                     <td style="background: var(--sisa-bg); font-weight:bold; color: var(--sisa-text);">Rp ${r.sisa_inter_bersih.toLocaleString('id-ID')}</td>
+                    
+                    <!-- SEL SETORAN -->
+                    <td>
+                        <div class="setoran-wrapper" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="cek_${r.id}" class="setoran-checkbox" ${isChecked} onchange="updateStatusSetoran('${r.id}', this.checked)">
+                            <label for="cek_${r.id}" id="badge_setoran_${r.id}" class="badge-setoran ${badgeClass}">${badgeText}</label>
+                        </div>
+                    </td>
                 </tr>
             `;
         });
