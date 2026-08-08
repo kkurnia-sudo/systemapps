@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBR | Rekap Terpadu v7.1</title>
+    <title>SBR | Rekap Terpadu v6.5</title>
     <!-- Library Supabase & Excel -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -882,53 +882,57 @@
     }
 
     function bukaFormEdit() {
-        // Mengarahkan ke file edit_nota.html dan mengirim nomor nota lewat URL
-        window.open("edit_nota.html?nota=" + notaAktifAksi, "_blank");
+        // Logika untuk UI edit form akan dieksekusi dari sini
+        alert("Persiapan membuka form edit untuk nota: " + notaAktifAksi + "\n\n(Nantinya akan merender ulang detail tabel untuk Wipe and Replace)");
         tutupModalAksi();
     }
 
     async function hapusDataTransaksi() {
-        if (confirm(`Peringatan: Anda yakin ingin menghapus SELURUH data untuk nota ${notaAktifAksi}?\nData ini tidak dapat dikembalikan.`)) {
+    if (confirm(`Peringatan: Anda yakin ingin menghapus SELURUH data untuk nota ${notaAktifAksi}?\nData ini tidak dapat dikembalikan.`)) {
+        
+        // 1. Ambil data transaksi terlebih dahulu untuk mengetahui nama_agen-nya
+        const { data: trxData, error: errTrxFind } = await _sb.from('transaksi')
+            .select('nama_agen')
+            .eq('no_nota', notaAktifAksi)
+            .single();
+
+        if (errTrxFind || !trxData) {
+            alert("Gagal menemukan data agen untuk nota ini: " + (errTrxFind ? errTrxFind.message : "Data tidak ada"));
+            return;
+        }
+
+        const namaAgenTarget = trxData.nama_agen;
+
+        // 2. Hapus Detail Dahulu
+        const { error: errDetail } = await _sb.from('transaksi_detail')
+            .delete()
+            .eq('no_nota', notaAktifAksi);
             
-            // 1. Ambil nama agen dari transaksi ini terlebih dahulu
-            const { data: trxData } = await _sb.from('transaksi').select('nama_agen').eq('no_nota', notaAktifAksi).single();
-            
-            // 2. Hapus Detail Dahulu
-            const { error: errDetail } = await _sb.from('transaksi_detail').delete().eq('no_nota', notaAktifAksi);
-            // 3. Kemudian Hapus Master Transaksi
-            const { error: errTrx } = await _sb.from('transaksi').delete().eq('no_nota', notaAktifAksi);
-            
-            if (errTrx || errDetail) {
-                alert("Gagal menghapus data: " + (errTrx ? errTrx.message : errDetail.message));
-            } else {
-                // 4. JADIKAN SALDO BON AGEN = 0 (Sesuai Permintaan)
-                if (trxData && trxData.nama_agen) {
-                    await _sb.from('agen').update({ saldo_bon: 0 }).eq('nama_agen', trxData.nama_agen);
+        // 3. Kemudian Hapus Master Transaksi
+        const { error: errTrx } = await _sb.from('transaksi')
+            .delete()
+            .eq('no_nota', notaAktifAksi);
+        
+        if (errTrx || errDetail) {
+            alert("Gagal menghapus data: " + (errTrx ? errTrx.message : errDetail.message));				
+        } else {
+            // 4. JADIKAN SALDO BON AGEN = 0 DI TABLE "agen"
+            if (namaAgenTarget) {
+                const { error: errAgen } = await _sb.from('agen')
+                    .update({ saldo_bon: 0 })
+                    .eq('nama_agen', namaAgenTarget);
+
+                if (errAgen) {
+                    alert("Nota terhapus, tetapi gagal mereset saldo bon agen: " + errAgen.message);
                 }
-
-                alert("Data berhasil dihapus dari sistem, dan Saldo Bon Agen telah di-Nol-kan!");
-                tutupModalAksi();
-                muatLaporan(); // Me-refresh isi tabel
             }
-		}
-	}
-
-    async function hapusDataTransaksi() {
-        if (confirm(`Peringatan: Anda yakin ingin menghapus SELURUH data untuk nota ${notaAktifAksi}?\nData ini tidak dapat dikembalikan.`)) {
-            // Hapus Detail Dahulu
-            const { error: errDetail } = await _sb.from('transaksi_detail').delete().eq('no_nota', notaAktifAksi);
-            // Kemudian Hapus Master Transaksi
-            const { error: errTrx } = await _sb.from('transaksi').delete().eq('no_nota', notaAktifAksi);
             
-            if (errTrx || errDetail) {
-                alert("Gagal menghapus data: " + (errTrx ? errTrx.message : errDetail.message));
-            } else {
-                alert("Data berhasil dihapus dari sistem!");
-                tutupModalAksi();
-                muatLaporan(); // Me-refresh isi tabel
-            }
+            alert("Data berhasil dihapus dan saldo bon agen telah di-Nol-kan!");
+            tutupModalAksi();
+            muatLaporan(); // Me-refresh isi tabel
         }
     }
+}
 </script>
 
 </body>
