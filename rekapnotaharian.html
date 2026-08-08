@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBR | Rekap Terpadu v6.5</title>
+    <title>SBR | Rekap Terpadu v7.1</title>
     <!-- Library Supabase & Excel -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -250,6 +250,38 @@
         }
         
         .empty-message { padding: 40px !important; color: var(--text-muted) !important; text-align: center; }
+
+        /* --- CSS Tambahan untuk Tombol & Modal Aksi --- */
+        .btn-aksi {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-aksi:hover {
+            background: var(--border-color);
+        }
+
+        .action-menu-btn { 
+            width: 100%; 
+            margin-bottom: 10px; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 13px;
+            transition: opacity 0.2s;
+        }
+        .action-menu-btn:active { opacity: 0.8; transform: scale(0.98); }
+        .btn-edit { background: var(--btn-primary); color: white; }
+        .btn-hapus { background: #ef4444; color: white; }
+        .btn-batal { background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color); }
     </style>
 </head>
 <body>
@@ -289,10 +321,11 @@
                     <th class="hide-mobile">RETUR (▼)</th>
                     <th class="hide-mobile">SISA AKHIR</th>
                     <th class="hide-mobile">STATUS</th>
+                    <th>AKSI</th> <!-- Kolom Baru Ditambahkan Di Sini -->
                 </tr>
             </thead>
             <tbody id="isiTabel">
-                <tr><td colspan="10" class="empty-message">Tentukan tanggal lalu klik Tampilkan Data.</td></tr>
+                <tr><td colspan="11" class="empty-message">Tentukan tanggal lalu klik Tampilkan Data.</td></tr>
             </tbody>
         </table>
     </div>
@@ -306,6 +339,20 @@
             <span class="close-btn" onclick="tutupModal()">&times;</span>
         </div>
         <div class="modal-body" id="modalIsi"></div>
+    </div>
+</div>
+
+<!-- Modal Opsi Aksi Baru -->
+<div id="modalAksi" class="modal">
+    <div class="modal-content" style="max-width: 320px;">
+        <div class="modal-header">
+            <h3 style="margin:0; font-size:14px;">OPSI DATA: <span id="lblNotaAksi"></span></h3>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+            <button class="action-menu-btn btn-edit" onclick="bukaFormEdit()">✏️ EDIT DATA NOTA</button>
+            <button class="action-menu-btn btn-hapus" onclick="hapusDataTransaksi()">🗑️ HAPUS DATA</button>
+            <button class="action-menu-btn btn-batal" onclick="tutupModalAksi()">🔙 KEMBALI</button>
+        </div>
     </div>
 </div>
 
@@ -357,7 +404,7 @@
 
     async function muatLaporan() {
         const body = document.getElementById('isiTabel');
-        body.innerHTML = "<tr><td colspan='10' class='empty-message'>Memproses data Supabase... ⏳</td></tr>";
+        body.innerHTML = "<tr><td colspan='11' class='empty-message'>Memproses data Supabase... ⏳</td></tr>";
 
         const { data, error } = await _sb.from('transaksi')
             .select('*')
@@ -367,7 +414,7 @@
 
         if (error) { alert("Error: " + error.message); return; }
         if (!data || data.length === 0) { 
-            body.innerHTML = "<tr><td colspan='10' class='empty-message'>Data tidak ditemukan untuk rentang tanggal ini.</td></tr>"; 
+            body.innerHTML = "<tr><td colspan='11' class='empty-message'>Data tidak ditemukan untuk rentang tanggal ini.</td></tr>"; 
             dataCacheTransaksi = []; 
             return; 
         }
@@ -391,6 +438,9 @@
                     <td class="hide-mobile link-detail text-retur" onclick="bukaPopUpDetail('${t.no_nota}', 'Retur')">${(t.total_retur || 0).toLocaleString()}</td>
                     <td class="hide-mobile" style="font-weight:700;">${sisaAkhir.toLocaleString()}</td>
                     <td class="hide-mobile"><span class="${sisaAkhir <= 0 ? 'lunas' : 'pending'}">${sisaAkhir <= 0 ? 'LUNAS' : 'PENDING'}</span></td>
+                    
+                    <!-- Kolom Tombol Aksi Baru -->
+                    <td><button class="btn-aksi" onclick="bukaModalAksi('${t.no_nota}')">⚙️ Opsi</button></td>
                 </tr>
             `;
         });
@@ -559,8 +609,9 @@
         }
     }
 
-    function tutupModal() { document.getElementById('modalDetail').style.display = "none"; }
-    window.onclick = (e) => { if (e.target == document.getElementById('modalDetail')) tutupModal(); }
+    function tutupModal() { 
+        document.getElementById('modalDetail').style.display = "none"; 
+    }
 
     function formatBarisKiriKanan(kiri, kanan) {
         const LEBAR_MAX = parseInt(document.getElementById('lebarKertas').value);
@@ -803,6 +854,79 @@
         } finally {
             btn.innerText = teksAsli;
             btn.disabled = false;
+        }
+    }
+
+    // --- FUNGSI TAMBAHAN: AKSI (EDIT & HAPUS) ---
+    let notaAktifAksi = "";
+
+    function bukaModalAksi(noNota) {
+        notaAktifAksi = noNota;
+        document.getElementById('lblNotaAksi').innerText = noNota;
+        document.getElementById('modalAksi').style.display = 'block';
+    }
+
+    function tutupModalAksi() {
+        document.getElementById('modalAksi').style.display = 'none';
+        notaAktifAksi = "";
+    }
+
+    // Menutup modal jika klik di luar area modal (dimodifikasi untuk mendeteksi kedua modal)
+    window.onclick = (e) => { 
+        if (e.target == document.getElementById('modalDetail')) {
+            tutupModal(); 
+        }
+        if (e.target == document.getElementById('modalAksi')) {
+            tutupModalAksi();
+        }
+    }
+
+    function bukaFormEdit() {
+        // Mengarahkan ke file edit_nota.html dan mengirim nomor nota lewat URL
+        window.open("edit_nota.html?nota=" + notaAktifAksi, "_blank");
+        tutupModalAksi();
+    }
+
+    async function hapusDataTransaksi() {
+        if (confirm(`Peringatan: Anda yakin ingin menghapus SELURUH data untuk nota ${notaAktifAksi}?\nData ini tidak dapat dikembalikan.`)) {
+            
+            // 1. Ambil nama agen dari transaksi ini terlebih dahulu
+            const { data: trxData } = await _sb.from('transaksi').select('nama_agen').eq('no_nota', notaAktifAksi).single();
+            
+            // 2. Hapus Detail Dahulu
+            const { error: errDetail } = await _sb.from('transaksi_detail').delete().eq('no_nota', notaAktifAksi);
+            // 3. Kemudian Hapus Master Transaksi
+            const { error: errTrx } = await _sb.from('transaksi').delete().eq('no_nota', notaAktifAksi);
+            
+            if (errTrx || errDetail) {
+                alert("Gagal menghapus data: " + (errTrx ? errTrx.message : errDetail.message));
+            } else {
+                // 4. JADIKAN SALDO BON AGEN = 0 (Sesuai Permintaan)
+                if (trxData && trxData.nama_agen) {
+                    await _sb.from('agen').update({ saldo_bon: 0 }).eq('nama_agen', trxData.nama_agen);
+                }
+
+                alert("Data berhasil dihapus dari sistem, dan Saldo Bon Agen telah di-Nol-kan!");
+                tutupModalAksi();
+                muatLaporan(); // Me-refresh isi tabel
+            }
+		}
+	}
+
+    async function hapusDataTransaksi() {
+        if (confirm(`Peringatan: Anda yakin ingin menghapus SELURUH data untuk nota ${notaAktifAksi}?\nData ini tidak dapat dikembalikan.`)) {
+            // Hapus Detail Dahulu
+            const { error: errDetail } = await _sb.from('transaksi_detail').delete().eq('no_nota', notaAktifAksi);
+            // Kemudian Hapus Master Transaksi
+            const { error: errTrx } = await _sb.from('transaksi').delete().eq('no_nota', notaAktifAksi);
+            
+            if (errTrx || errDetail) {
+                alert("Gagal menghapus data: " + (errTrx ? errTrx.message : errDetail.message));
+            } else {
+                alert("Data berhasil dihapus dari sistem!");
+                tutupModalAksi();
+                muatLaporan(); // Me-refresh isi tabel
+            }
         }
     }
 </script>
