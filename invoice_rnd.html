@@ -415,11 +415,13 @@
         <div style="margin-top: 24px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-white" onclick="toggleModal('previewModal')">Tutup</button>
+                <!-- KELAS DIUBAH MENJADI btn-white AGAR WARNA TEKS TETAP GELAP DI MODE GELAP -->
+                <button class="btn btn-white" onclick="editFromPreview()">✏️ Edit Invoice</button>
                 <button class="btn btn-primary" id="btnSaveInvoicePreview" onclick="simpanInvoiceAndClose()">💾 Simpan Invoice</button>
             </div>
             <div style="display: flex; gap: 10px; margin-left: auto;">
-                <button class="btn btn-secondary" onclick="exportToJPG()">📷 Simpan JPG</button>
-                <button class="btn btn-danger" onclick="exportToPDF()">📄 Simpan PDF</button>
+                <button class="btn btn-secondary" onclick="exportToJPG()" title="Simpan JPG">📷</button>
+                <button class="btn btn-danger" onclick="exportToPDF()" title="Simpan PDF">📄</button>
             </div>
         </div>
     </div>
@@ -915,15 +917,23 @@
             tbody.innerHTML = '<tr><td colspan="7" class="text-center">Belum ada riwayat.</td></tr>'; 
             return; 
         }
-        tbody.innerHTML = data.map(inv => `<tr>
-            <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="openInvoiceActionModal('${inv.invoice_no}')">${inv.invoice_no}</span></td>
-            <td class="text-center">${formatCustomDate(inv.created_at)}</td>
-            <td>${inv.customer_name}</td>
-            <td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
-            <td class="text-right" style="color:var(--danger); font-style: italic;">${formatMoney(inv.deposit)}</td>
-            <td class="text-right" style="font-weight:600; font-style: italic;">${formatMoney(inv.balance_due)}</td>
-            <td class="text-center"><button class="btn-icon-danger" onclick="deleteInvoice('${inv.invoice_no}')">🗑️</button></td>
-        </tr>`).join('');
+        
+        // UPDATE LOGIKA "LUNAS" DI TABEL RIWAYAT
+        tbody.innerHTML = data.map(inv => {
+            const isLunas = parseFloat(inv.balance_due) === 0;
+            const balanceDisplay = isLunas ? 'LUNAS' : formatMoney(inv.balance_due);
+            const balanceColor = isLunas ? 'var(--primary)' : 'inherit';
+            
+            return `<tr>
+                <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="openInvoiceActionModal('${inv.invoice_no}')">${inv.invoice_no}</span></td>
+                <td class="text-center">${formatCustomDate(inv.created_at)}</td>
+                <td>${inv.customer_name}</td>
+                <td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
+                <td class="text-right" style="color:var(--danger); font-style: italic;">${formatMoney(inv.deposit)}</td>
+                <td class="text-right" style="font-weight:600; font-style: italic; color:${balanceColor};">${balanceDisplay}</td>
+                <td class="text-center"><button class="btn-icon-danger" onclick="deleteInvoice('${inv.invoice_no}')">🗑️</button></td>
+            </tr>`;
+        }).join('');
     }
 
     function filterHistoryTable() {
@@ -1037,6 +1047,8 @@
     async function previewInvoiceFromHistory(invoiceNo) {
         if(!isSupabaseConnected) return;
         showLoadingPopup("Memuat Pratinjau...");
+        window.isPreviewFromHistory = true; // Penanda bahwa pratinjau ini dibuka dari riwayat
+        
         try {
             const { data: invData } = await supabaseClient.from('invoices').select('*').eq('invoice_no', invoiceNo).single();
             const { data: itemsData } = await supabaseClient.from('invoice_items').select('*').eq('invoice_no', invoiceNo);
@@ -1083,13 +1095,16 @@
             document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
             document.getElementById('prevDepositBody').innerHTML = depositHtml; 
             
-            // --- LOGIKA BARU UNTUK PREVIEW RIWAYAT ---
+            // --- LOGIKA UPDATE LUNAS UNTUK PREVIEW RIWAYAT ---
             const prevBalanceLabel = document.getElementById('prevBalanceLabel');
             const prevBalanceValue = document.getElementById('prevBalance');
             
             if (balanceDue < 0) {
                 prevBalanceLabel.innerText = 'KELEBIHAN BAYAR (DEPOSIT)';
                 prevBalanceValue.innerText = formatMoney(Math.abs(balanceDue));
+            } else if (balanceDue === 0) {
+                prevBalanceLabel.innerText = 'STATUS PEMBAYARAN';
+                prevBalanceValue.innerText = 'LUNAS';
             } else {
                 prevBalanceLabel.innerText = 'SISA PEMBAYARAN';
                 prevBalanceValue.innerText = formatMoney(balanceDue);
@@ -1626,21 +1641,22 @@
         document.getElementById('subTotal').innerText = formatMoney(subtotal); 
         document.getElementById('depositListSummary').innerHTML = depositHtml; 
         
-        // --- LOGIKA BARU REAL-TIME ---
+        // --- LOGIKA UPDATE LUNAS REAL-TIME ---
         const balanceLabel = document.getElementById('balanceLabel');
         const balanceValue = document.getElementById('balanceDue');
         
         if (balance < 0) {
-            // Jika deposit melebihi tagihan
             balanceLabel.innerText = 'Kelebihan Bayar (Deposit)';
-            // Gunakan Math.abs() untuk membuang tanda minus agar menjadi angka positif
             balanceValue.innerText = formatMoney(Math.abs(balance));
-            balanceValue.style.color = 'var(--primary)'; // Tetap warna hijau
+            balanceValue.style.color = 'var(--primary)'; 
+        } else if (balance === 0) {
+            balanceLabel.innerText = 'Status Pembayaran';
+            balanceValue.innerText = 'LUNAS';
+            balanceValue.style.color = 'var(--primary)'; 
         } else {
-            // Jika tagihan normal / ada sisa due
             balanceLabel.innerText = 'Sisa Pembayaran (Due)';
             balanceValue.innerText = formatMoney(balance);
-            balanceValue.style.color = ''; // Kembalikan ke warna default
+            balanceValue.style.color = ''; 
         }
     }
 
@@ -1648,10 +1664,22 @@
         toggleModal('previewModal');
         simpanInvoice();
     }
+    
+    // FUNGSI BARU: Edit dari Preview Modal
+    function editFromPreview() {
+        toggleModal('previewModal');
+        if (window.isPreviewFromHistory) {
+            const invoiceNo = document.getElementById('invoiceNumber').value;
+            loadInvoiceForEdit(invoiceNo);
+        }
+        // Jika bukan dari history, menutup pratinjau otomatis mengembalikan ke form utama yang sedang diedit.
+    }
 
     function openPreviewModal() {
         if(!currentCustomerId) return showWarningPopup("Pilih Agen!", "Pilih Agen terlebih dahulu sebelum melakukan pratinjau!");
         
+        window.isPreviewFromHistory = false; // Penanda bahwa pratinjau ini dibuka dari proses input/edit form berjalan
+
         const invoiceNo = document.getElementById('invoiceNumber').value;
         const customer = customers.find(c => c.id === currentCustomerId);
         const rows = document.querySelectorAll('#itemsBody tr');
@@ -1704,13 +1732,16 @@
         document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
         document.getElementById('prevDepositBody').innerHTML = depositHtml; 
         
-        // --- LOGIKA BARU UNTUK PREVIEW ---
+        // --- LOGIKA UPDATE LUNAS UNTUK PREVIEW ---
         const prevBalanceLabel = document.getElementById('prevBalanceLabel');
         const prevBalanceValue = document.getElementById('prevBalance');
         
         if (balanceDue < 0) {
             prevBalanceLabel.innerText = 'KELEBIHAN BAYAR (DEPOSIT)';
             prevBalanceValue.innerText = formatMoney(Math.abs(balanceDue));
+        } else if (balanceDue === 0) {
+            prevBalanceLabel.innerText = 'STATUS PEMBAYARAN';
+            prevBalanceValue.innerText = 'LUNAS';
         } else {
             prevBalanceLabel.innerText = 'SISA PEMBAYARAN';
             prevBalanceValue.innerText = formatMoney(balanceDue);
