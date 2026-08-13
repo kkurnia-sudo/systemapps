@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisa Penjualan SBR Putra Food</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', }
+    </script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- SweetAlert2 untuk Popup Notifikasi -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Html2Canvas untuk Export PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- SheetJS (xlsx) untuk Export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        .flex-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen">
+
+    <!-- HEADER -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-chart-pie text-blue-600 dark:text-blue-400 text-2xl"></i>
+                <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 truncate">
+                    Analisa Penjualan SBR Putra Food
+                </h1>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div id="connectionStatus" class="relative group cursor-pointer flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" onclick="fetchData()">
+                    <i id="connectionIcon" class="fa-solid fa-database text-gray-400 text-xl transition-colors"></i>
+                    <span id="connectionDot" class="absolute bottom-1 right-1 w-3 h-3 bg-yellow-400 border-2 border-white dark:border-gray-800 rounded-full transition-colors"></span>
+                </div>
+                <button id="themeToggle" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <i id="themeIcon" class="fa-solid fa-moon text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        
+        <!-- Filter Section -->
+        <section class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wide">Jenis Transaksi</label>
+                    <select id="filterJenis" class="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="all">Semua Jenis</option>
+                        <option value="reguler">Reguler (Dalam Kota)</option>
+                        <option value="dp">Luar Kota (DP)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tanggal Mulai</label>
+                    <input type="date" id="filterStartDate" class="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tanggal Akhir</label>
+                    <input type="date" id="filterEndDate" class="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wide">Agen</label>
+                    <select id="filterAgen" class="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="all">Semua Agen</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wide">Kategori Barang</label>
+                    <select id="filterKategori" class="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="all">Semua Kategori</option>
+                        <option value="aromanis">Aromanis</option>
+                        <option value="non-aromanis">Non Aromanis</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="fetchData()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg p-2 transition shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-filter"></i> Terapkan
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary Cards -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-3">
+                <div class="p-2.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-xl hidden sm:block">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Total Penjualan</p>
+                    <p class="text-base sm:text-lg font-bold" id="summaryTotal">Rp 0</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-3">
+                <div class="p-2.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xl hidden sm:block">
+                    <i class="fa-solid fa-box"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Total Barang (Qty)</p>
+                    <p class="text-base sm:text-lg font-bold" id="summaryQty">0</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-3">
+                <div class="p-2.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg text-xl hidden sm:block">
+                    <i class="fa-solid fa-file-invoice"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Transaksi (Nota)</p>
+                    <p class="text-base sm:text-lg font-bold" id="summaryNota">0</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-3">
+                <div class="p-2.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-xl hidden sm:block">
+                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Total Retur</p>
+                    <p class="text-base sm:text-lg font-bold text-red-500" id="summaryRetur">Rp 0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Aksi Export (Tabel Utama) -->
+        <div class="flex justify-end gap-3">
+            <button onclick="exportToPNG()" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-image"></i> Simpan PNG
+            </button>
+            <button onclick="exportToExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-file-excel"></i> Simpan Excel
+            </button>
+        </div>
+
+        <!-- Tabel Rekap -->
+        <div id="rekapContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-900">
+            <!-- Tabel Terjual -->
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-sm font-semibold mb-3 text-blue-600 dark:text-blue-400 uppercase tracking-wide"><i class="fa-solid fa-boxes-stacked mr-2"></i>Rekap Barang Terjual</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase border-b border-gray-100 dark:border-gray-700">
+                                <th class="p-2 font-medium">Nama Barang</th>
+                                <th class="p-2 font-medium text-center">Kategori</th>
+                                <th class="p-2 font-medium text-right">Qty</th>
+                                <th class="p-2 font-medium text-right">Nominal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableTerjualBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-700">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabel Retur -->
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-sm font-semibold mb-3 text-red-500 uppercase tracking-wide"><i class="fa-solid fa-arrow-rotate-left mr-2"></i>Rekap Barang Retur</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase border-b border-gray-100 dark:border-gray-700">
+                                <th class="p-2 font-medium">Nama Barang</th>
+                                <th class="p-2 font-medium text-center">Kategori</th>
+                                <th class="p-2 font-medium text-right">Qty</th>
+                                <th class="p-2 font-medium text-right">Nominal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableReturBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-700">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grafik -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-sm font-semibold mb-4 text-gray-700 dark:text-gray-300 uppercase tracking-wide"><i class="fa-solid fa-chart-area mr-2 text-blue-500"></i>Tren Penjualan</h3>
+                <div class="relative h-56 w-full">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-sm font-semibold mb-4 text-center text-gray-700 dark:text-gray-300 uppercase tracking-wide">Proporsi Kategori</h3>
+                <div class="relative h-56 w-full flex justify-center">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detail Transaksi Flexbox -->
+        <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"><i class="fa-solid fa-list mr-2 text-blue-500"></i>Daftar Transaksi (Maks 10)</h3>
+            </div>
+            <div class="flex-table-container p-3 flex flex-col gap-2" id="transactionFlexContainer">
+                <!-- Cards -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Pratinjau Struk -->
+    <div id="strukModal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-[#f0f0f0] w-full max-w-md rounded-xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center bg-gray-800 text-white px-4 py-3">
+                <h3 class="font-bold tracking-wider text-sm">PREVIEW STRUK THERMAL</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-4 sm:p-6 overflow-y-auto max-h-[80vh] flex flex-col" id="modalStrukContent">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://yxcxvkairftqzmptkorr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let dataMapTerjual = [];
+        let dataMapRetur = [];
+        let groupedInvoices = {}; 
+
+        // Toggles & Theme
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            themeIcon.classList.replace('fa-moon', 'fa-sun');
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+            }
+            updateChartColors();
+        });
+
+        const formatRupiah = (angka) => {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+        };
+        const formatTitik = (angka) => {
+            return new Intl.NumberFormat('id-ID').format(angka || 0);
+        };
+
+        const formatTanggalStruk = (dateString) => {
+            if (!dateString || dateString === 'N/A') return '';
+            const d = new Date(dateString);
+            if (isNaN(d)) return dateString;
+            const hariList = ['Mgg', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+            const hari = hariList[d.getDay()];
+            const tgl = String(d.getDate()).padStart(2, '0');
+            const bln = String(d.getMonth() + 1).padStart(2, '0');
+            const thn = String(d.getFullYear()).slice(-2);
+            return `${hari} ${tgl}/${bln}/${thn}`;
+        };
+
+        async function fetchAgentList() {
+            try {
+                const [resReguler, resDP] = await Promise.all([
+                    supabaseClient.from('transaksi').select('nama_agen'),
+                    supabaseClient.from('transaksi_dp').select('nama_agen')
+                ]);
+                
+                let allAgents = [];
+                if (resReguler.data) allAgents = allAgents.concat(resReguler.data.map(i => i.nama_agen));
+                if (resDP.data) allAgents = allAgents.concat(resDP.data.map(i => i.nama_agen));
+
+                const uniqueAgen = [...new Set(allAgents)].filter(a => a && a.trim() !== '');
+                
+                const agenSelect = document.getElementById('filterAgen');
+                uniqueAgen.sort().forEach(agen => {
+                    agenSelect.innerHTML += `<option value="${agen}">${agen}</option>`;
+                });
+            } catch (err) {
+                console.error("Gagal mengambil agen:", err);
+            }
+        }
+
+        async function fetchData() {
+            document.getElementById('connectionIcon').classList.add('text-yellow-500', 'fa-beat-fade');
+            
+            const jenisFilter = document.getElementById('filterJenis').value;
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+            const agen = document.getElementById('filterAgen').value;
+            const kategori = document.getElementById('filterKategori').value;
+
+            try {
+                let qHeaderReguler = supabaseClient.from('transaksi').select('no_nota, tanggal, nama_agen, total_retur, bayar_cash, bayar_transfer');
+                let qHeaderDP = supabaseClient.from('transaksi_dp').select('no_nota, tanggal, nama_agen, total_retur, bayar_cash, bayar_transfer');
+
+                if (startDate) { qHeaderReguler = qHeaderReguler.gte('tanggal', startDate); qHeaderDP = qHeaderDP.gte('tanggal', startDate); }
+                if (endDate) { qHeaderReguler = qHeaderReguler.lte('tanggal', endDate); qHeaderDP = qHeaderDP.lte('tanggal', endDate); }
+                if (agen !== 'all') { qHeaderReguler = qHeaderReguler.eq('nama_agen', agen); qHeaderDP = qHeaderDP.eq('nama_agen', agen); }
+
+                const promises = [];
+                if (jenisFilter === 'all' || jenisFilter === 'reguler') promises.push(qHeaderReguler);
+                else promises.push(Promise.resolve({ data: null }));
+                if (jenisFilter === 'all' || jenisFilter === 'dp') promises.push(qHeaderDP);
+                else promises.push(Promise.resolve({ data: null }));
+
+                const [resHeadReguler, resHeadDP] = await Promise.all(promises);
+                
+                let sumTotalRetur = 0;
+                const headerDict = {};
+                const listNotaReguler = [];
+                const listNotaDP = [];
+
+                if (resHeadReguler.data) {
+                    resHeadReguler.data.forEach(h => {
+                        h.jenis_trx = 'Reguler'; headerDict[h.no_nota] = h;
+                        sumTotalRetur += Number(h.total_retur || 0); listNotaReguler.push(h.no_nota);
+                    });
+                }
+                if (resHeadDP.data) {
+                    resHeadDP.data.forEach(h => {
+                        h.jenis_trx = 'DP'; headerDict[h.no_nota] = h;
+                        sumTotalRetur += Number(h.total_retur || 0); listNotaDP.push(h.no_nota);
+                    });
+                }
+
+                if (listNotaReguler.length === 0 && listNotaDP.length === 0) {
+                    processData([], kategori, 0, {});
+                    document.getElementById('connectionIcon').classList.remove('text-yellow-500', 'fa-beat-fade');
+                    return;
+                }
+
+                let combinedDetails = [];
+                if (listNotaReguler.length > 0) {
+                    const { data: dReguler } = await supabaseClient.from('transaksi_detail').select('*').in('no_nota', listNotaReguler);
+                    if(dReguler) combinedDetails = combinedDetails.concat(dReguler);
+                }
+                if (listNotaDP.length > 0) {
+                    const { data: dDP } = await supabaseClient.from('transaksi_detaildp').select('*').in('no_nota', listNotaDP);
+                    if(dDP) combinedDetails = combinedDetails.concat(dDP);
+                }
+
+                const mergedData = combinedDetails.map(d => ({
+                    ...d, transaksi: headerDict[d.no_nota] || {}
+                }));
+
+                processData(mergedData, kategori, sumTotalRetur, headerDict);
+                
+                document.getElementById('connectionIcon').classList.remove('fa-beat-fade', 'text-yellow-500');
+                document.getElementById('connectionIcon').classList.add('text-blue-500');
+
+            } catch (err) {
+                console.error("Gagal Loading Data:", err);
+            }
+        }
+
+        function processData(rawData, filterKategori, globalRetur, headerDict) {
+            let dataTerjualRaw = [];
+            let dataReturRaw = [];
+            groupedInvoices = {}; 
+
+            rawData.forEach(item => {
+                const isAromanis = item.nama_barang && item.nama_barang.toLowerCase().includes('aromanis');
+                item.kategori = isAromanis ? 'Aromanis' : 'Non Aromanis';
+                const isRetur = (item.tipe && item.tipe.toLowerCase().includes('retur')) || item.qty < 0 || item.subtotal < 0;
+
+                if(!groupedInvoices[item.no_nota]) {
+                    groupedInvoices[item.no_nota] = {
+                        no_nota: item.no_nota, tanggal: item.transaksi.tanggal, agen: item.transaksi.nama_agen,
+                        jenis_trx: item.transaksi.jenis_trx, bayar_cash: item.transaksi.bayar_cash || 0,
+                        bayar_transfer: item.transaksi.bayar_transfer || 0, items_kirim: [], items_retur: [],
+                        total_kirim: 0, total_retur: 0
+                    };
+                }
+
+                if(isRetur) {
+                    dataReturRaw.push(item); groupedInvoices[item.no_nota].items_retur.push(item);
+                    groupedInvoices[item.no_nota].total_retur += Math.abs(Number(item.subtotal));
+                } else {
+                    dataTerjualRaw.push(item); groupedInvoices[item.no_nota].items_kirim.push(item);
+                    groupedInvoices[item.no_nota].total_kirim += Number(item.subtotal);
+                }
+            });
+
+            if (filterKategori === 'aromanis') {
+                dataTerjualRaw = dataTerjualRaw.filter(d => d.kategori === 'Aromanis');
+                dataReturRaw = dataReturRaw.filter(d => d.kategori === 'Aromanis');
+            } else if (filterKategori === 'non-aromanis') {
+                dataTerjualRaw = dataTerjualRaw.filter(d => d.kategori === 'Non Aromanis');
+                dataReturRaw = dataReturRaw.filter(d => d.kategori === 'Non Aromanis');
+            }
+
+            const totalNominal = dataTerjualRaw.reduce((sum, i) => sum + Number(i.subtotal), 0);
+            const totalQty = dataTerjualRaw.reduce((sum, i) => sum + Number(i.qty), 0);
+            
+            document.getElementById('summaryTotal').innerText = formatRupiah(totalNominal);
+            document.getElementById('summaryQty').innerText = formatTitik(totalQty);
+            document.getElementById('summaryNota').innerText = Object.keys(groupedInvoices).length;
+            document.getElementById('summaryRetur').innerText = formatRupiah(globalRetur);
+
+            renderTables(dataTerjualRaw, dataReturRaw);
+            renderInvoiceCards();
+            renderCharts(dataTerjualRaw);
+        }
+
+        function renderTables(terjual, retur) {
+            const mapTerjual = {};
+            terjual.forEach(d => {
+                const name = d.nama_barang || '-';
+                if(!mapTerjual[name]) mapTerjual[name] = { nama: name, kategori: d.kategori, qty: 0, satuan: d.satuan, nominal: 0 };
+                mapTerjual[name].qty += Number(d.qty); mapTerjual[name].nominal += Number(d.subtotal);
+            });
+            dataMapTerjual = Object.values(mapTerjual).sort((a,b) => b.qty - a.qty);
+
+            const mapRetur = {};
+            retur.forEach(d => {
+                const name = d.nama_barang || '-';
+                if(!mapRetur[name]) mapRetur[name] = { nama: name, kategori: d.kategori, qty: 0, satuan: d.satuan, nominal: 0 };
+                mapRetur[name].qty += Math.abs(Number(d.qty)); mapRetur[name].nominal += Math.abs(Number(d.subtotal)); 
+            });
+            dataMapRetur = Object.values(mapRetur).sort((a,b) => b.qty - a.qty);
+
+            const tbTerjual = document.getElementById('tableTerjualBody');
+            tbTerjual.innerHTML = dataMapTerjual.map(item => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <td class="p-2 font-medium whitespace-nowrap">${item.nama}</td>
+                    <td class="p-2 text-center"><span class="px-2 py-0.5 text-[10px] rounded bg-gray-100 dark:bg-gray-800">${item.kategori}</span></td>
+                    <td class="p-2 text-right font-semibold">${formatTitik(item.qty)} <span class="text-xs text-gray-500">${item.satuan}</span></td>
+                    <td class="p-2 text-right text-blue-600 dark:text-blue-400 font-semibold">${formatRupiah(item.nominal)}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="4" class="p-4 text-center">Tidak ada data.</td></tr>`;
+
+            const tbRetur = document.getElementById('tableReturBody');
+            tbRetur.innerHTML = dataMapRetur.map(item => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <td class="p-2 font-medium whitespace-nowrap">${item.nama}</td>
+                    <td class="p-2 text-center"><span class="px-2 py-0.5 text-[10px] rounded bg-gray-100 dark:bg-gray-800">${item.kategori}</span></td>
+                    <td class="p-2 text-right font-semibold text-red-500">${formatTitik(item.qty)} <span class="text-xs text-gray-500">${item.satuan}</span></td>
+                    <td class="p-2 text-right text-red-600 dark:text-red-400 font-semibold">${formatRupiah(item.nominal)}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="4" class="p-4 text-center">Tidak ada retur.</td></tr>`;
+        }
+
+        function renderInvoiceCards() {
+            const container = document.getElementById('transactionFlexContainer');
+            
+            // Pengurutan ganda: Berdasarkan Tanggal terbaru, jika sama urutkan berdasarkan Nomor Nota terbaru.
+            const arrInvoices = Object.values(groupedInvoices).sort((a,b) => {
+                const dateDiff = new Date(b.tanggal) - new Date(a.tanggal);
+                if (dateDiff === 0) { return b.no_nota.localeCompare(a.no_nota); }
+                return dateDiff;
+            });
+            
+            // Tampilan Compact, maksimal 10
+            container.innerHTML = arrInvoices.slice().map(inv => {
+                const badgeStyle = inv.jenis_trx === 'DP' ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-indigo-100 text-indigo-700 border-indigo-300';
+                return `
+                <div onclick="openModal('${inv.no_nota}')" class="cursor-pointer flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 transition">
+                    <div class="flex gap-3 items-center">
+                        <div class="hidden sm:flex w-8 h-8 bg-gray-50 dark:bg-gray-800 rounded-full items-center justify-center text-gray-500 text-xs border border-gray-100 dark:border-gray-700">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <div>
+                            <div class="flex gap-2 items-center mb-0.5">
+                                <span class="font-bold text-sm text-blue-600 dark:text-blue-400">${inv.no_nota}</span>
+                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeStyle}">${inv.jenis_trx}</span>
+                            </div>
+                            <div class="text-xs font-semibold text-gray-600 dark:text-gray-400 truncate w-32 sm:w-48">${inv.agen}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] font-medium text-gray-400 mb-0.5"><i class="fa-regular fa-calendar mr-1"></i>${formatTanggalStruk(inv.tanggal)}</div>
+                        <div class="font-bold text-sm text-gray-800 dark:text-gray-100">${formatRupiah(inv.total_kirim - inv.total_retur)}</div>
+                    </div>
+                </div>
+                `;
+            }).join('') || '<div class="p-4 text-center text-sm text-gray-500">Tidak ada transaksi.</div>';
+        }
+
+        function openModal(no_nota) {
+            const inv = groupedInvoices[no_nota];
+            if(!inv) return;
+
+            let itemsHtml = inv.items_kirim.map(i => `
+                <div class="mb-2">
+                    <div class="font-bold text-black">${i.nama_barang}</div>
+                    <div class="flex justify-between text-gray-900">
+                        <span>${i.qty} ${i.satuan} x ${formatTitik(i.harga_satuan)}</span>
+                        <span class="font-bold text-black">${formatTitik(i.subtotal)}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            let returHtml = '';
+            if(inv.items_retur.length > 0) {
+                returHtml = `
+                    <div class="mt-4 border-t-[1.5px] border-dashed border-gray-400 pt-3">
+                        <div class="font-bold text-red-600 mb-2 uppercase text-[11px] tracking-wider">PENGEMBALIAN (RETUR)</div>
+                        ${inv.items_retur.map(i => `
+                            <div class="mb-2 text-red-600">
+                                <div class="font-bold">${i.nama_barang}</div>
+                                <div class="flex justify-between">
+                                    <span>${Math.abs(i.qty)} ${i.satuan} x ${formatTitik(i.harga_satuan)}</span>
+                                    <span class="font-bold">-${formatTitik(Math.abs(i.subtotal))}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="flex justify-between font-bold text-red-600 mt-2">
+                        <span>Total Retur</span>
+                        <span>-Rp ${formatTitik(inv.total_retur)}</span>
+                    </div>
+                `;
+            }
+
+            const totalTagihan = inv.total_kirim - inv.total_retur;
+            const tanggalFormat = formatTanggalStruk(inv.tanggal);
+
+            document.getElementById('modalStrukContent').innerHTML = `
+                <div id="strukPrintArea" class="bg-white p-4 sm:p-5 rounded border border-gray-300 shadow-inner" style="font-family: 'Courier New', Courier, monospace; letter-spacing: -0.3px; color: black !important;">
+                    
+                    <div class="text-center mb-4 text-black">
+                        <h2 class="text-xl font-extrabold uppercase tracking-widest">SBR PUTRA FOOD</h2>
+                        <p class="text-xs font-medium text-gray-700">Lembang, Bandung Barat</p>
+                    </div>
+                    
+                    <div class="flex justify-between text-xs text-gray-600 mb-2 font-semibold">
+                        <span>NO: ${inv.no_nota}</span>
+                        <span>${tanggalFormat}</span>
+                    </div>
+                    
+                    <div class="border-b-[1.5px] border-black mb-4"></div>
+                    
+                    <div class="text-center mb-4 text-black">
+                        <h3 class="text-xl font-extrabold uppercase tracking-widest">${inv.agen}</h3>
+                        <p class="text-[10px] text-gray-600 font-bold uppercase mt-1">JENIS: ${inv.jenis_trx}</p>
+                    </div>
+                    
+                    <div class="text-sm">
+                        ${itemsHtml}
+                        
+                        <div class="border-t border-gray-400 my-2 pt-2 flex justify-between font-bold text-black">
+                            <span>Total Kirim</span>
+                            <span>Rp ${formatTitik(inv.total_kirim)}</span>
+                        </div>
+
+                        ${returHtml}
+
+                        <div class="mt-4 border-t-[3px] border-double border-black pt-2 flex justify-between text-base font-extrabold text-black">
+                            <span>TOTAL TAGIHAN</span>
+                            <span>Rp ${formatTitik(totalTagihan)}</span>
+                        </div>
+
+                        <div class="mt-4 text-xs text-gray-700 font-semibold space-y-1">
+                            <div class="flex justify-between"><span>Bayar Cash</span><span>Rp ${formatTitik(inv.bayar_cash || 0)}</span></div>
+                            <div class="flex justify-between"><span>Bayar Transfer</span><span>Rp ${formatTitik(inv.bayar_transfer || 0)}</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 flex flex-col gap-3">
+                    <button onclick="downloadStrukPNG('${inv.no_nota}')" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-image"></i> Simpan PNG
+                    </button>
+                    <button onclick="printStrukBluetoothWebAPI('${inv.no_nota}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
+                        <i class="fa-brands fa-bluetooth-b"></i> Cetak ke Printer Bluetooth
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('strukModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('strukModal').classList.add('hidden');
+        }
+
+        // --- WEB BLUETOOTH PRINTER API ---
+        async function printStrukBluetoothWebAPI(no_nota) {
+            const inv = groupedInvoices[no_nota];
+            if(!inv) return;
+
+            try {
+                // Web Bluetooth hanya didukung via HTTPS atau Localhost
+                if (!navigator.bluetooth) {
+                    throw new Error("Browser ini tidak mendukung Web Bluetooth. Gunakan Google Chrome versi terbaru di PC atau Android.");
+                }
+
+                Swal.fire({
+                    title: 'Mencari Printer...',
+                    text: 'Silakan pilih Printer Bluetooth Thermal Anda (biasanya bernama RPP02N, MTP-2, atau sejenisnya).',
+                    icon: 'info',
+                    showConfirmButton: false,
+                });
+
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '49535343-fe7d-4ae5-8fa9-9fafd205e455'] 
+                });
+
+                const server = await device.gatt.connect();
+                
+                let writeCharacteristic;
+                const services = await server.getPrimaryServices();
+                for (const service of services) {
+                    const characteristics = await service.getCharacteristics();
+                    for (const char of characteristics) {
+                        if (char.properties.write || char.properties.writeWithoutResponse) {
+                            writeCharacteristic = char;
+                            break;
+                        }
+                    }
+                    if (writeCharacteristic) break;
+                }
+
+                if (!writeCharacteristic) {
+                    throw new Error("Printer terhubung, tapi sistem tidak menemukan protokol cetak yang cocok.");
+                }
+
+                // Menyusun Data ESC/POS Standar untuk Struk 58mm (Kapasitas ~32 karakter per baris)
+                const encoder = new TextEncoder();
+                const padLeft = (text, len) => " ".repeat(Math.max(0, len - text.length)) + text;
+                const padRight = (text, len) => text + " ".repeat(Math.max(0, len - text.length));
+
+                const bytes = [];
+                bytes.push(0x1B, 0x40); // Init printer
+                bytes.push(0x1B, 0x61, 1); // Center align
+                bytes.push(0x1B, 0x45, 1); // Bold ON
+                bytes.push(...encoder.encode("SBR PUTRA FOOD\n"));
+                bytes.push(0x1B, 0x45, 0); // Bold OFF
+                bytes.push(...encoder.encode("Lembang, Bandung Barat\n\n"));
+                
+                bytes.push(0x1B, 0x61, 0); // Left align
+                bytes.push(...encoder.encode(`NO: ${inv.no_nota}    ${formatTanggalStruk(inv.tanggal)}\n`));
+                bytes.push(...encoder.encode("--------------------------------\n"));
+                
+                bytes.push(0x1B, 0x61, 1); // Center align
+                bytes.push(0x1B, 0x45, 1); 
+                bytes.push(...encoder.encode(`${inv.agen}\n`));
+                bytes.push(0x1B, 0x45, 0);
+                bytes.push(...encoder.encode(`JENIS: ${inv.jenis_trx}\n\n`));
+                bytes.push(0x1B, 0x61, 0); // Left align
+
+                // Looping Barang Kirim
+                inv.items_kirim.forEach(i => {
+                    bytes.push(0x1B, 0x45, 1);
+                    bytes.push(...encoder.encode(`${i.nama_barang}\n`));
+                    bytes.push(0x1B, 0x45, 0);
+                    
+                    const strLeft = `${i.qty} ${i.satuan} x ${formatTitik(i.harga_satuan)}`;
+                    const strRight = formatTitik(i.subtotal);
+                    const spaceLen = 32 - strLeft.length - strRight.length;
+                    bytes.push(...encoder.encode(strLeft + " ".repeat(spaceLen > 0 ? spaceLen : 1) + strRight + "\n"));
+                });
+
+                bytes.push(...encoder.encode("--------------------------------\n"));
+                
+                const totalKrm = formatTitik(inv.total_kirim);
+                bytes.push(0x1B, 0x45, 1);
+                bytes.push(...encoder.encode(`Total Kirim${padLeft("Rp " + totalKrm, 32 - 11)}\n`));
+                bytes.push(0x1B, 0x45, 0);
+
+                // Looping Barang Retur
+                if(inv.items_retur.length > 0) {
+                     bytes.push(...encoder.encode("\nPENGEMBALIAN (RETUR)\n"));
+                     inv.items_retur.forEach(i => {
+                         bytes.push(...encoder.encode(`${i.nama_barang}\n`));
+                         const strLeft = `${Math.abs(i.qty)} ${i.satuan} x ${formatTitik(i.harga_satuan)}`;
+                         const strRight = `-${formatTitik(Math.abs(i.subtotal))}`;
+                         const spaceLen = 32 - strLeft.length - strRight.length;
+                         bytes.push(...encoder.encode(strLeft + " ".repeat(spaceLen > 0 ? spaceLen : 1) + strRight + "\n"));
+                     });
+                     
+                     const totalRtr = `-${formatTitik(inv.total_retur)}`;
+                     bytes.push(...encoder.encode(`Total Retur${padLeft("Rp " + totalRtr, 32 - 11)}\n`));
+                }
+
+                bytes.push(...encoder.encode("================================\n"));
+                const grandTtl = formatTitik(inv.total_kirim - inv.total_retur);
+                bytes.push(0x1B, 0x45, 1);
+                bytes.push(...encoder.encode(`TOTAL TAGIHAN${padLeft("Rp " + grandTtl, 32 - 13)}\n\n`));
+                bytes.push(0x1B, 0x45, 0);
+
+                bytes.push(...encoder.encode(`Bayar Cash        Rp ${formatTitik(inv.bayar_cash || 0)}\n`));
+                bytes.push(...encoder.encode(`Bayar Transfer    Rp ${formatTitik(inv.bayar_transfer || 0)}\n`));
+                
+                // Print dan Gulung Kertas (Feed)
+                bytes.push(0x0A, 0x0A, 0x0A, 0x0A);
+                
+                // Menulis Data dalam Pecahan Chunk (Untuk menjaga stabilan Bluetooth Low Energy)
+                const payload = new Uint8Array(bytes);
+                const chunkSize = 200; 
+                for (let i = 0; i < payload.length; i += chunkSize) {
+                    await writeCharacteristic.writeValue(payload.slice(i, i + chunkSize));
+                }
+
+                device.gatt.disconnect();
+                Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Struk selesai dicetak.', timer: 2000, showConfirmButton: false });
+
+            } catch (error) {
+                console.error(error);
+                let pesan = error.message;
+                if(pesan.includes('User cancelled')) {
+                    pesan = "Koneksi ke printer dibatalkan.";
+                }
+                Swal.fire('Gagal Mencetak', pesan, 'error');
+            }
+        }
+
+        function downloadStrukPNG(no_nota) {
+            const el = document.getElementById('strukPrintArea');
+            Swal.fire({ title: 'Menyiapkan Struk...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+            html2canvas(el, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Struk_SBR_${no_nota}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Struk berhasil disimpan.', timer: 1500, showConfirmButton: false });
+            }).catch(err => { Swal.fire('Error', 'Gagal membuat gambar PNG', 'error'); });
+        }
+
+        // ... (Export Rekap Data Excel/PNG dan Charts Tetap Sama Seperti Sebelumnya) ...
+        function exportToPNG() {
+            const el = document.getElementById('rekapContainer');
+            Swal.fire({ title: 'Menyiapkan Gambar...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            html2canvas(el, { scale: 2, backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#f9fafb' }).then(canvas => {
+                const link = document.createElement('a'); link.download = `Rekap_SBR_${new Date().getTime()}.png`;
+                link.href = canvas.toDataURL('image/png'); link.click();
+                Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Gambar rekap barang berhasil disimpan.', confirmButtonColor: '#3b82f6' });
+            }).catch(err => { Swal.fire('Error', 'Gagal membuat gambar PNG', 'error'); });
+        }
+
+        function exportToExcel() {
+            if(dataMapTerjual.length === 0 && dataMapRetur.length === 0) { Swal.fire('Data Kosong', 'Tidak ada data untuk di ekspor.', 'info'); return; }
+            const wb = XLSX.utils.book_new();
+            const formatExcelData = (data) => data.map(i => ({ "Nama Barang": i.nama, "Kategori": i.kategori, "Total Qty": i.qty, "Satuan": i.satuan, "Nominal (Rp)": i.nominal }));
+            const wsTerjual = XLSX.utils.json_to_sheet(formatExcelData(dataMapTerjual)); const wsRetur = XLSX.utils.json_to_sheet(formatExcelData(dataMapRetur));
+            const wscols = [{wch: 35}, {wch: 20}, {wch: 15}, {wch: 10}, {wch: 20}];
+            wsTerjual['!cols'] = wscols; wsRetur['!cols'] = wscols;
+            XLSX.utils.book_append_sheet(wb, wsTerjual, "Barang Terjual"); XLSX.utils.book_append_sheet(wb, wsRetur, "Barang Retur");
+            XLSX.writeFile(wb, `Rekap_SBR_Putra_Food_${new Date().toISOString().slice(0,10)}.xlsx`);
+            Swal.fire({ icon: 'success', title: 'Ekspor Sukses', text: 'File Excel telah berhasil diunduh.', confirmButtonColor: '#10b981' });
+        }
+
+        let trendChartInstance = null; let categoryChartInstance = null;
+        function getChartTextColor() { return document.documentElement.classList.contains('dark') ? '#9ca3af' : '#4b5563'; }
+        function getGridColor() { return document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'; }
+
+        function renderCharts(terjualData) {
+            const textColor = getChartTextColor(); const gridColor = getGridColor();
+            const trendData = {};
+            terjualData.forEach(item => { if(item.transaksi.tanggal) { trendData[item.transaksi.tanggal] = (trendData[item.transaksi.tanggal] || 0) + Number(item.subtotal); } });
+            const labelsTrend = Object.keys(trendData).sort(); const valuesTrend = labelsTrend.map(date => trendData[date]);
+
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            if (trendChartInstance) trendChartInstance.destroy();
+            trendChartInstance = new Chart(ctxTrend, {
+                type: 'line', data: { labels: labelsTrend, datasets: [{ label: 'Penjualan', data: valuesTrend, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 3, tension: 0.4, fill: true, pointBackgroundColor: '#2563eb' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor, drawBorder: false } }, y: { ticks: { color: textColor }, grid: { color: gridColor, drawBorder: false } } } }
+            });
+
+            let tAromanis = 0, tNon = 0;
+            terjualData.forEach(item => { if (item.kategori === 'Aromanis') tAromanis += Number(item.subtotal); else tNon += Number(item.subtotal); });
+
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+            categoryChartInstance = new Chart(ctxCat, {
+                type: 'doughnut', data: { labels: ['Aromanis', 'Non Aromanis'], datasets: [{ data: [tAromanis, tNon], backgroundColor: ['#ec4899', '#9ca3af'], borderWidth: 0, hoverOffset: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
+            });
+        }
+
+        function updateChartColors() {
+            if (trendChartInstance && categoryChartInstance) {
+                const textColor = getChartTextColor(); const gridColor = getGridColor();
+                trendChartInstance.options.scales.x.ticks.color = textColor; trendChartInstance.options.scales.x.grid.color = gridColor;
+                trendChartInstance.options.scales.y.ticks.color = textColor; trendChartInstance.options.scales.y.grid.color = gridColor;
+                trendChartInstance.update(); categoryChartInstance.options.plugins.legend.labels.color = textColor; categoryChartInstance.update();
+            }
+        }
+
+        window.onload = async () => { await fetchAgentList(); fetchData(); };
+    </script>
+</body>
+</html>
