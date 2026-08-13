@@ -623,7 +623,8 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let database = { harga: {}, barang: [] };
+    // --- PERUBAHAN: Menambahkan tipeAgen di database local state ---
+    let database = { harga: {}, barang: [], tipeAgen: {} };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
     let lastPrintText = ""; let isDeposit = false;
 
@@ -664,6 +665,9 @@
                     const labelBon = a.saldo_bon > 0 ? ` (!)` : "";
                     selAgen.options.add(new Option(a.nama_agen + labelBon, a.nama_agen));
                     database.harga[a.nama_agen] = { "bon": a.saldo_bon || 0 };
+                    
+                    // --- PERUBAHAN: Caching data tipe agen ke memory local ---
+                    database.tipeAgen[a.nama_agen] = (a.type_agen || 'NORMAL').toString().toLowerCase();
                 });
             }
 
@@ -1273,8 +1277,13 @@
         p += `\x1B\x61\x01\x1B\x21\x00` + `\n\n\n` + `( ............................ )\n` + garisStrip;
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
+        // --- PERUBAHAN: Penentuan Database Berdasarkan Tipe Agen ---
+        const tipeAgen = database.tipeAgen[ag] || 'reguler';
+        const tabelTransaksi = (tipeAgen === 'khusus') ? 'transaksi_dp' : 'transaksi';
+        const tabelDetail = (tipeAgen === 'khusus') ? 'transaksi_detaildp' : 'transaksi_detail';
+
         try {
-            await clientSupabase.from('transaksi').insert([{
+            await clientSupabase.from(tabelTransaksi).insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
                 driver_1: drv1, driver_2: drv2, plat_nomor: mobil || '-', 
                 total_kirim: tk, total_retur: tr, bon_lama: bl_actual, ongkir: ongkir, 
@@ -1285,8 +1294,9 @@
                 ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.keterangan ? `${i.barang} - (${i.keterangan})` : i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
                 ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.keterangan ? `${i.barang} - (${i.keterangan})` : i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
             ];
-            await clientSupabase.from('transaksi_detail').insert(details);
+            await clientSupabase.from(tabelDetail).insert(details);
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
+        // --- BATAS PERUBAHAN ---
 
             if (btCharacteristic) {
                 btn.innerHTML = "MENCETAK CUSTOMER...";
