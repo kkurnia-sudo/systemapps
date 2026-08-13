@@ -36,7 +36,7 @@
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
         
         .flex-table-container {
-            max-height: 400px;
+            max-height: 450px; /* Sedikit dilebarkan agar muat banyak */
             overflow-y: auto;
         }
     </style>
@@ -149,7 +149,7 @@
             </div>
         </section>
 
-        <!-- Aksi Export (Tabel Utama) -->
+        <!-- Aksi Export -->
         <div class="flex justify-end gap-3">
             <button onclick="exportToPNG()" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg shadow transition flex items-center gap-2">
                 <i class="fa-solid fa-image"></i> Simpan PNG
@@ -176,6 +176,8 @@
                         </thead>
                         <tbody id="tableTerjualBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-700">
                         </tbody>
+                        <tfoot id="tableTerjualFoot">
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -195,6 +197,8 @@
                         </thead>
                         <tbody id="tableReturBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-700">
                         </tbody>
+                        <tfoot id="tableReturFoot">
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -219,7 +223,7 @@
         <!-- Detail Transaksi Flexbox -->
         <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
             <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"><i class="fa-solid fa-list mr-2 text-blue-500"></i>Daftar Transaksi (Maks 10)</h3>
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"><i class="fa-solid fa-list mr-2 text-blue-500"></i>Daftar Transaksi Keseluruhan</h3>
             </div>
             <div class="flex-table-container p-3 flex flex-col gap-2" id="transactionFlexContainer">
                 <!-- Cards -->
@@ -332,6 +336,7 @@
                 const promises = [];
                 if (jenisFilter === 'all' || jenisFilter === 'reguler') promises.push(qHeaderReguler);
                 else promises.push(Promise.resolve({ data: null }));
+                
                 if (jenisFilter === 'all' || jenisFilter === 'dp') promises.push(qHeaderDP);
                 else promises.push(Promise.resolve({ data: null }));
 
@@ -344,19 +349,23 @@
 
                 if (resHeadReguler.data) {
                     resHeadReguler.data.forEach(h => {
-                        h.jenis_trx = 'Reguler'; headerDict[h.no_nota] = h;
-                        sumTotalRetur += Number(h.total_retur || 0); listNotaReguler.push(h.no_nota);
+                        h.jenis_trx = 'Reguler'; 
+                        headerDict[`Reguler_${h.no_nota}`] = h;
+                        sumTotalRetur += Number(h.total_retur || 0); 
+                        listNotaReguler.push(h.no_nota);
                     });
                 }
                 if (resHeadDP.data) {
                     resHeadDP.data.forEach(h => {
-                        h.jenis_trx = 'DP'; headerDict[h.no_nota] = h;
-                        sumTotalRetur += Number(h.total_retur || 0); listNotaDP.push(h.no_nota);
+                        h.jenis_trx = 'DP'; 
+                        headerDict[`DP_${h.no_nota}`] = h;
+                        sumTotalRetur += Number(h.total_retur || 0); 
+                        listNotaDP.push(h.no_nota);
                     });
                 }
 
                 if (listNotaReguler.length === 0 && listNotaDP.length === 0) {
-                    processData([], kategori, 0, {});
+                    processData([], kategori, 0);
                     document.getElementById('connectionIcon').classList.remove('text-yellow-500', 'fa-beat-fade');
                     return;
                 }
@@ -364,18 +373,18 @@
                 let combinedDetails = [];
                 if (listNotaReguler.length > 0) {
                     const { data: dReguler } = await supabaseClient.from('transaksi_detail').select('*').in('no_nota', listNotaReguler);
-                    if(dReguler) combinedDetails = combinedDetails.concat(dReguler);
+                    if(dReguler) combinedDetails = combinedDetails.concat(dReguler.map(d => ({ ...d, source_table: 'Reguler' })));
                 }
                 if (listNotaDP.length > 0) {
                     const { data: dDP } = await supabaseClient.from('transaksi_detaildp').select('*').in('no_nota', listNotaDP);
-                    if(dDP) combinedDetails = combinedDetails.concat(dDP);
+                    if(dDP) combinedDetails = combinedDetails.concat(dDP.map(d => ({ ...d, source_table: 'DP' })));
                 }
 
                 const mergedData = combinedDetails.map(d => ({
-                    ...d, transaksi: headerDict[d.no_nota] || {}
+                    ...d, transaksi: headerDict[`${d.source_table}_${d.no_nota}`] || {}
                 }));
 
-                processData(mergedData, kategori, sumTotalRetur, headerDict);
+                processData(mergedData, kategori, sumTotalRetur);
                 
                 document.getElementById('connectionIcon').classList.remove('fa-beat-fade', 'text-yellow-500');
                 document.getElementById('connectionIcon').classList.add('text-blue-500');
@@ -385,18 +394,22 @@
             }
         }
 
-        function processData(rawData, filterKategori, globalRetur, headerDict) {
+        function processData(rawData, filterKategori, globalRetur) {
             let dataTerjualRaw = [];
             let dataReturRaw = [];
             groupedInvoices = {}; 
 
             rawData.forEach(item => {
+                if (!item.transaksi.tanggal) return; 
+                
                 const isAromanis = item.nama_barang && item.nama_barang.toLowerCase().includes('aromanis');
                 item.kategori = isAromanis ? 'Aromanis' : 'Non Aromanis';
                 const isRetur = (item.tipe && item.tipe.toLowerCase().includes('retur')) || item.qty < 0 || item.subtotal < 0;
 
-                if(!groupedInvoices[item.no_nota]) {
-                    groupedInvoices[item.no_nota] = {
+                const invoiceKey = `${item.source_table}_${item.no_nota}`;
+                if(!groupedInvoices[invoiceKey]) {
+                    groupedInvoices[invoiceKey] = {
+                        invoiceKey: invoiceKey,
                         no_nota: item.no_nota, tanggal: item.transaksi.tanggal, agen: item.transaksi.nama_agen,
                         jenis_trx: item.transaksi.jenis_trx, bayar_cash: item.transaksi.bayar_cash || 0,
                         bayar_transfer: item.transaksi.bayar_transfer || 0, items_kirim: [], items_retur: [],
@@ -405,11 +418,11 @@
                 }
 
                 if(isRetur) {
-                    dataReturRaw.push(item); groupedInvoices[item.no_nota].items_retur.push(item);
-                    groupedInvoices[item.no_nota].total_retur += Math.abs(Number(item.subtotal));
+                    dataReturRaw.push(item); groupedInvoices[invoiceKey].items_retur.push(item);
+                    groupedInvoices[invoiceKey].total_retur += Math.abs(Number(item.subtotal));
                 } else {
-                    dataTerjualRaw.push(item); groupedInvoices[item.no_nota].items_kirim.push(item);
-                    groupedInvoices[item.no_nota].total_kirim += Number(item.subtotal);
+                    dataTerjualRaw.push(item); groupedInvoices[invoiceKey].items_kirim.push(item);
+                    groupedInvoices[invoiceKey].total_kirim += Number(item.subtotal);
                 }
             });
 
@@ -435,6 +448,7 @@
         }
 
         function renderTables(terjual, retur) {
+            // TERJUAL
             const mapTerjual = {};
             terjual.forEach(d => {
                 const name = d.nama_barang || '-';
@@ -442,14 +456,6 @@
                 mapTerjual[name].qty += Number(d.qty); mapTerjual[name].nominal += Number(d.subtotal);
             });
             dataMapTerjual = Object.values(mapTerjual).sort((a,b) => b.qty - a.qty);
-
-            const mapRetur = {};
-            retur.forEach(d => {
-                const name = d.nama_barang || '-';
-                if(!mapRetur[name]) mapRetur[name] = { nama: name, kategori: d.kategori, qty: 0, satuan: d.satuan, nominal: 0 };
-                mapRetur[name].qty += Math.abs(Number(d.qty)); mapRetur[name].nominal += Math.abs(Number(d.subtotal)); 
-            });
-            dataMapRetur = Object.values(mapRetur).sort((a,b) => b.qty - a.qty);
 
             const tbTerjual = document.getElementById('tableTerjualBody');
             tbTerjual.innerHTML = dataMapTerjual.map(item => `
@@ -461,6 +467,26 @@
                 </tr>
             `).join('') || `<tr><td colspan="4" class="p-4 text-center">Tidak ada data.</td></tr>`;
 
+            const totalQtyTerjual = dataMapTerjual.reduce((sum, i) => sum + i.qty, 0);
+            const totalNominalTerjual = dataMapTerjual.reduce((sum, i) => sum + i.nominal, 0);
+            
+            document.getElementById('tableTerjualFoot').innerHTML = dataMapTerjual.length > 0 ? `
+                <tr class="bg-blue-50/50 dark:bg-blue-900/10 font-bold border-t-2 border-blue-200 dark:border-blue-800/50 text-sm">
+                    <td colspan="2" class="p-3 text-center text-blue-800 dark:text-blue-300 uppercase tracking-wider">Grand Total</td>
+                    <td class="p-3 text-right text-blue-800 dark:text-blue-300">${formatTitik(totalQtyTerjual)}</td>
+                    <td class="p-3 text-right text-blue-800 dark:text-blue-300">${formatRupiah(totalNominalTerjual)}</td>
+                </tr>
+            ` : '';
+
+            // RETUR
+            const mapRetur = {};
+            retur.forEach(d => {
+                const name = d.nama_barang || '-';
+                if(!mapRetur[name]) mapRetur[name] = { nama: name, kategori: d.kategori, qty: 0, satuan: d.satuan, nominal: 0 };
+                mapRetur[name].qty += Math.abs(Number(d.qty)); mapRetur[name].nominal += Math.abs(Number(d.subtotal)); 
+            });
+            dataMapRetur = Object.values(mapRetur).sort((a,b) => b.qty - a.qty);
+
             const tbRetur = document.getElementById('tableReturBody');
             tbRetur.innerHTML = dataMapRetur.map(item => `
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
@@ -470,23 +496,33 @@
                     <td class="p-2 text-right text-red-600 dark:text-red-400 font-semibold">${formatRupiah(item.nominal)}</td>
                 </tr>
             `).join('') || `<tr><td colspan="4" class="p-4 text-center">Tidak ada retur.</td></tr>`;
+
+            const totalQtyRetur = dataMapRetur.reduce((sum, i) => sum + i.qty, 0);
+            const totalNominalRetur = dataMapRetur.reduce((sum, i) => sum + i.nominal, 0);
+
+            document.getElementById('tableReturFoot').innerHTML = dataMapRetur.length > 0 ? `
+                <tr class="bg-red-50/50 dark:bg-red-900/10 font-bold border-t-2 border-red-200 dark:border-red-800/50 text-sm">
+                    <td colspan="2" class="p-3 text-center text-red-800 dark:text-red-300 uppercase tracking-wider">Grand Total</td>
+                    <td class="p-3 text-right text-red-800 dark:text-red-300">${formatTitik(totalQtyRetur)}</td>
+                    <td class="p-3 text-right text-red-800 dark:text-red-300">${formatRupiah(totalNominalRetur)}</td>
+                </tr>
+            ` : '';
         }
 
         function renderInvoiceCards() {
             const container = document.getElementById('transactionFlexContainer');
             
-            // Pengurutan ganda: Berdasarkan Tanggal terbaru, jika sama urutkan berdasarkan Nomor Nota terbaru.
             const arrInvoices = Object.values(groupedInvoices).sort((a,b) => {
                 const dateDiff = new Date(b.tanggal) - new Date(a.tanggal);
                 if (dateDiff === 0) { return b.no_nota.localeCompare(a.no_nota); }
                 return dateDiff;
             });
             
-            // Tampilan Compact, maksimal 10
-            container.innerHTML = arrInvoices.slice().map(inv => {
+            // PERUBAHAN: Menghilangkan fungsi .slice(0, 10) untuk menampilkan semua data
+            container.innerHTML = arrInvoices.map(inv => {
                 const badgeStyle = inv.jenis_trx === 'DP' ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-indigo-100 text-indigo-700 border-indigo-300';
                 return `
-                <div onclick="openModal('${inv.no_nota}')" class="cursor-pointer flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 transition">
+                <div onclick="openModal('${inv.invoiceKey}')" class="cursor-pointer flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 transition">
                     <div class="flex gap-3 items-center">
                         <div class="hidden sm:flex w-8 h-8 bg-gray-50 dark:bg-gray-800 rounded-full items-center justify-center text-gray-500 text-xs border border-gray-100 dark:border-gray-700">
                             <i class="fa-solid fa-receipt"></i>
@@ -508,8 +544,8 @@
             }).join('') || '<div class="p-4 text-center text-sm text-gray-500">Tidak ada transaksi.</div>';
         }
 
-        function openModal(no_nota) {
-            const inv = groupedInvoices[no_nota];
+        function openModal(invoiceKey) {
+            const inv = groupedInvoices[invoiceKey];
             if(!inv) return;
 
             let itemsHtml = inv.items_kirim.map(i => `
@@ -590,10 +626,10 @@
                 </div>
 
                 <div class="mt-5 flex flex-col gap-3">
-                    <button onclick="downloadStrukPNG('${inv.no_nota}')" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
+                    <button onclick="downloadStrukPNG('${inv.invoiceKey}')" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
                         <i class="fa-solid fa-image"></i> Simpan PNG
                     </button>
-                    <button onclick="printStrukBluetoothWebAPI('${inv.no_nota}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
+                    <button onclick="printStrukBluetoothWebAPI('${inv.invoiceKey}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
                         <i class="fa-brands fa-bluetooth-b"></i> Cetak ke Printer Bluetooth
                     </button>
                 </div>
@@ -607,21 +643,19 @@
         }
 
         // --- WEB BLUETOOTH PRINTER API ---
-        async function printStrukBluetoothWebAPI(no_nota) {
-            const inv = groupedInvoices[no_nota];
+        async function printStrukBluetoothWebAPI(invoiceKey) {
+            const inv = groupedInvoices[invoiceKey];
             if(!inv) return;
 
             try {
-                // Web Bluetooth hanya didukung via HTTPS atau Localhost
                 if (!navigator.bluetooth) {
                     throw new Error("Browser ini tidak mendukung Web Bluetooth. Gunakan Google Chrome versi terbaru di PC atau Android.");
                 }
 
                 Swal.fire({
                     title: 'Mencari Printer...',
-                    text: 'Silakan pilih Printer Bluetooth Thermal Anda (biasanya bernama RPP02N, MTP-2, atau sejenisnya).',
-                    icon: 'info',
-                    showConfirmButton: false,
+                    text: 'Silakan pilih Printer Bluetooth Thermal Anda.',
+                    icon: 'info', showConfirmButton: false,
                 });
 
                 const device = await navigator.bluetooth.requestDevice({
@@ -637,42 +671,36 @@
                     const characteristics = await service.getCharacteristics();
                     for (const char of characteristics) {
                         if (char.properties.write || char.properties.writeWithoutResponse) {
-                            writeCharacteristic = char;
-                            break;
+                            writeCharacteristic = char; break;
                         }
                     }
                     if (writeCharacteristic) break;
                 }
 
-                if (!writeCharacteristic) {
-                    throw new Error("Printer terhubung, tapi sistem tidak menemukan protokol cetak yang cocok.");
-                }
+                if (!writeCharacteristic) throw new Error("Gagal mengenali protokol cetak printer.");
 
-                // Menyusun Data ESC/POS Standar untuk Struk 58mm (Kapasitas ~32 karakter per baris)
                 const encoder = new TextEncoder();
                 const padLeft = (text, len) => " ".repeat(Math.max(0, len - text.length)) + text;
-                const padRight = (text, len) => text + " ".repeat(Math.max(0, len - text.length));
 
                 const bytes = [];
-                bytes.push(0x1B, 0x40); // Init printer
-                bytes.push(0x1B, 0x61, 1); // Center align
-                bytes.push(0x1B, 0x45, 1); // Bold ON
+                bytes.push(0x1B, 0x40); 
+                bytes.push(0x1B, 0x61, 1); 
+                bytes.push(0x1B, 0x45, 1); 
                 bytes.push(...encoder.encode("SBR PUTRA FOOD\n"));
-                bytes.push(0x1B, 0x45, 0); // Bold OFF
+                bytes.push(0x1B, 0x45, 0); 
                 bytes.push(...encoder.encode("Lembang, Bandung Barat\n\n"));
                 
-                bytes.push(0x1B, 0x61, 0); // Left align
+                bytes.push(0x1B, 0x61, 0); 
                 bytes.push(...encoder.encode(`NO: ${inv.no_nota}    ${formatTanggalStruk(inv.tanggal)}\n`));
                 bytes.push(...encoder.encode("--------------------------------\n"));
                 
-                bytes.push(0x1B, 0x61, 1); // Center align
+                bytes.push(0x1B, 0x61, 1); 
                 bytes.push(0x1B, 0x45, 1); 
                 bytes.push(...encoder.encode(`${inv.agen}\n`));
                 bytes.push(0x1B, 0x45, 0);
                 bytes.push(...encoder.encode(`JENIS: ${inv.jenis_trx}\n\n`));
-                bytes.push(0x1B, 0x61, 0); // Left align
+                bytes.push(0x1B, 0x61, 0); 
 
-                // Looping Barang Kirim
                 inv.items_kirim.forEach(i => {
                     bytes.push(0x1B, 0x45, 1);
                     bytes.push(...encoder.encode(`${i.nama_barang}\n`));
@@ -691,7 +719,6 @@
                 bytes.push(...encoder.encode(`Total Kirim${padLeft("Rp " + totalKrm, 32 - 11)}\n`));
                 bytes.push(0x1B, 0x45, 0);
 
-                // Looping Barang Retur
                 if(inv.items_retur.length > 0) {
                      bytes.push(...encoder.encode("\nPENGEMBALIAN (RETUR)\n"));
                      inv.items_retur.forEach(i => {
@@ -701,7 +728,6 @@
                          const spaceLen = 32 - strLeft.length - strRight.length;
                          bytes.push(...encoder.encode(strLeft + " ".repeat(spaceLen > 0 ? spaceLen : 1) + strRight + "\n"));
                      });
-                     
                      const totalRtr = `-${formatTitik(inv.total_retur)}`;
                      bytes.push(...encoder.encode(`Total Retur${padLeft("Rp " + totalRtr, 32 - 11)}\n`));
                 }
@@ -715,10 +741,8 @@
                 bytes.push(...encoder.encode(`Bayar Cash        Rp ${formatTitik(inv.bayar_cash || 0)}\n`));
                 bytes.push(...encoder.encode(`Bayar Transfer    Rp ${formatTitik(inv.bayar_transfer || 0)}\n`));
                 
-                // Print dan Gulung Kertas (Feed)
-                bytes.push(0x0A, 0x0A, 0x0A, 0x0A);
+                bytes.push(0x0A, 0x0A, 0x0A, 0x0A); 
                 
-                // Menulis Data dalam Pecahan Chunk (Untuk menjaga stabilan Bluetooth Low Energy)
                 const payload = new Uint8Array(bytes);
                 const chunkSize = 200; 
                 for (let i = 0; i < payload.length; i += chunkSize) {
@@ -731,27 +755,26 @@
             } catch (error) {
                 console.error(error);
                 let pesan = error.message;
-                if(pesan.includes('User cancelled')) {
-                    pesan = "Koneksi ke printer dibatalkan.";
-                }
+                if(pesan.includes('User cancelled')) pesan = "Koneksi ke printer dibatalkan.";
                 Swal.fire('Gagal Mencetak', pesan, 'error');
             }
         }
 
-        function downloadStrukPNG(no_nota) {
+        function downloadStrukPNG(invoiceKey) {
+            const inv = groupedInvoices[invoiceKey];
             const el = document.getElementById('strukPrintArea');
             Swal.fire({ title: 'Menyiapkan Struk...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
 
             html2canvas(el, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Struk_SBR_${no_nota}.png`;
+                link.download = `Struk_SBR_${inv.no_nota}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Struk berhasil disimpan.', timer: 1500, showConfirmButton: false });
             }).catch(err => { Swal.fire('Error', 'Gagal membuat gambar PNG', 'error'); });
         }
 
-        // ... (Export Rekap Data Excel/PNG dan Charts Tetap Sama Seperti Sebelumnya) ...
+        // --- EXPORT GLOBAL REKAP ---
         function exportToPNG() {
             const el = document.getElementById('rekapContainer');
             Swal.fire({ title: 'Menyiapkan Gambar...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
