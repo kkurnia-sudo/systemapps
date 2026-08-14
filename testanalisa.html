@@ -36,7 +36,7 @@
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
         
         .flex-table-container {
-            max-height: 450px; /* Sedikit dilebarkan agar muat banyak */
+            max-height: 450px; 
             overflow-y: auto;
         }
     </style>
@@ -75,8 +75,8 @@
                     <label class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wide">Jenis Transaksi</label>
                     <select id="filterJenis" class="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="all">Semua Jenis</option>
-                        <option value="reguler">Reguler (Dalam Kota)</option>
-                        <option value="dp">Luar Kota (DP)</option>
+                        <option value="reguler">Regular</option>
+                        <option value="dp">Khusus</option>
                     </select>
                 </div>
                 <div>
@@ -98,7 +98,7 @@
                     <select id="filterKategori" class="w-full text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="all">Semua Kategori</option>
                         <option value="aromanis">Aromanis</option>
-                        <option value="non-aromanis">Non Aromanis</option>
+                        <option value="barang-lainnya">Barang Lainnya</option>
                     </select>
                 </div>
                 <div class="flex items-end">
@@ -326,8 +326,8 @@
             const kategori = document.getElementById('filterKategori').value;
 
             try {
-                let qHeaderReguler = supabaseClient.from('transaksi').select('no_nota, tanggal, nama_agen, total_retur, bayar_cash, bayar_transfer');
-                let qHeaderDP = supabaseClient.from('transaksi_dp').select('no_nota, tanggal, nama_agen, total_retur, bayar_cash, bayar_transfer');
+                let qHeaderReguler = supabaseClient.from('transaksi').select('*');
+                let qHeaderDP = supabaseClient.from('transaksi_dp').select('*');
 
                 if (startDate) { qHeaderReguler = qHeaderReguler.gte('tanggal', startDate); qHeaderDP = qHeaderDP.gte('tanggal', startDate); }
                 if (endDate) { qHeaderReguler = qHeaderReguler.lte('tanggal', endDate); qHeaderDP = qHeaderDP.lte('tanggal', endDate); }
@@ -349,7 +349,7 @@
 
                 if (resHeadReguler.data) {
                     resHeadReguler.data.forEach(h => {
-                        h.jenis_trx = 'Reguler'; 
+                        h.jenis_trx = 'Regular'; 
                         headerDict[`Reguler_${h.no_nota}`] = h;
                         sumTotalRetur += Number(h.total_retur || 0); 
                         listNotaReguler.push(h.no_nota);
@@ -357,7 +357,7 @@
                 }
                 if (resHeadDP.data) {
                     resHeadDP.data.forEach(h => {
-                        h.jenis_trx = 'DP'; 
+                        h.jenis_trx = 'Khusus'; 
                         headerDict[`DP_${h.no_nota}`] = h;
                         sumTotalRetur += Number(h.total_retur || 0); 
                         listNotaDP.push(h.no_nota);
@@ -403,17 +403,39 @@
                 if (!item.transaksi.tanggal) return; 
                 
                 const isAromanis = item.nama_barang && item.nama_barang.toLowerCase().includes('aromanis');
-                item.kategori = isAromanis ? 'Aromanis' : 'Non Aromanis';
+                item.kategori = isAromanis ? 'Aromanis' : 'Barang Lainnya';
                 const isRetur = (item.tipe && item.tipe.toLowerCase().includes('retur')) || item.qty < 0 || item.subtotal < 0;
 
                 const invoiceKey = `${item.source_table}_${item.no_nota}`;
                 if(!groupedInvoices[invoiceKey]) {
+                    
+                    const tr = item.transaksi || {};
+                    
+                    // Mengambil data driver_1 dan driver_2 sesuai nama kolom di database Akang
+                    const d1 = tr.driver_1 && tr.driver_1 !== 'null' ? tr.driver_1 : '';
+                    const d2 = tr.driver_2 && tr.driver_2 !== 'null' ? tr.driver_2 : '';
+                    let gabungDriver = '-';
+                    if (d1 && d2) gabungDriver = `${d1} & ${d2}`;
+                    else if (d1) gabungDriver = d1;
+                    else if (d2) gabungDriver = d2;
+
+                    const namaMobil = tr.mobil || tr.nama_mobil || tr.kendaraan || tr.plat_nomor || tr.nopol || '-';
+
                     groupedInvoices[invoiceKey] = {
                         invoiceKey: invoiceKey,
-                        no_nota: item.no_nota, tanggal: item.transaksi.tanggal, agen: item.transaksi.nama_agen,
-                        jenis_trx: item.transaksi.jenis_trx, bayar_cash: item.transaksi.bayar_cash || 0,
-                        bayar_transfer: item.transaksi.bayar_transfer || 0, items_kirim: [], items_retur: [],
-                        total_kirim: 0, total_retur: 0
+                        no_nota: item.no_nota, 
+                        tanggal: tr.tanggal, 
+                        agen: tr.nama_agen,
+                        jenis_trx: tr.jenis_trx, 
+                        bayar_cash: tr.bayar_cash || 0,
+                        bayar_transfer: tr.bayar_transfer || 0, 
+                        driver: gabungDriver,
+                        co_driver: '-', // Kosongkan karena diganti driver_1 & driver_2
+                        mobil: (namaMobil !== 'null' && namaMobil !== null && namaMobil !== '') ? namaMobil : '-',
+                        items_kirim: [], 
+                        items_retur: [],
+                        total_kirim: 0, 
+                        total_retur: 0
                     };
                 }
 
@@ -429,9 +451,9 @@
             if (filterKategori === 'aromanis') {
                 dataTerjualRaw = dataTerjualRaw.filter(d => d.kategori === 'Aromanis');
                 dataReturRaw = dataReturRaw.filter(d => d.kategori === 'Aromanis');
-            } else if (filterKategori === 'non-aromanis') {
-                dataTerjualRaw = dataTerjualRaw.filter(d => d.kategori === 'Non Aromanis');
-                dataReturRaw = dataReturRaw.filter(d => d.kategori === 'Non Aromanis');
+            } else if (filterKategori === 'barang-lainnya') {
+                dataTerjualRaw = dataTerjualRaw.filter(d => d.kategori === 'Barang Lainnya');
+                dataReturRaw = dataReturRaw.filter(d => d.kategori === 'Barang Lainnya');
             }
 
             const totalNominal = dataTerjualRaw.reduce((sum, i) => sum + Number(i.subtotal), 0);
@@ -513,14 +535,14 @@
             const container = document.getElementById('transactionFlexContainer');
             
             const arrInvoices = Object.values(groupedInvoices).sort((a,b) => {
+                // Sorting: Menampilkan tanggal terbaru di atas. Jika tanggal sama, urutkan nomor nota terbaru.
                 const dateDiff = new Date(b.tanggal) - new Date(a.tanggal);
                 if (dateDiff === 0) { return b.no_nota.localeCompare(a.no_nota); }
                 return dateDiff;
             });
             
-            // PERUBAHAN: Menghilangkan fungsi .slice(0, 10) untuk menampilkan semua data
             container.innerHTML = arrInvoices.map(inv => {
-                const badgeStyle = inv.jenis_trx === 'DP' ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-indigo-100 text-indigo-700 border-indigo-300';
+                const badgeStyle = inv.jenis_trx === 'Khusus' ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-indigo-100 text-indigo-700 border-indigo-300';
                 return `
                 <div onclick="openModal('${inv.invoiceKey}')" class="cursor-pointer flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 transition">
                     <div class="flex gap-3 items-center">
@@ -582,6 +604,27 @@
 
             const totalTagihan = inv.total_kirim - inv.total_retur;
             const tanggalFormat = formatTanggalStruk(inv.tanggal);
+            
+            // Kalkulasi Sisa Nota
+            const totalBayar = (inv.bayar_cash || 0) + (inv.bayar_transfer || 0);
+            const sisaSaldo = totalTagihan - totalBayar;
+            
+            let sisaHtml = '';
+            if (sisaSaldo > 0) {
+                sisaHtml = `
+                    <div class="mt-2 border-t-[1.5px] border-dashed border-gray-400 pt-2 flex justify-between font-extrabold text-black text-sm">
+                        <span>SISA NOTA</span>
+                        <span>Rp ${formatTitik(sisaSaldo)}</span>
+                    </div>
+                `;
+            } else {
+                sisaHtml = `
+                    <div class="mt-2 border-t-[1.5px] border-dashed border-gray-400 pt-2 flex justify-between font-extrabold text-black text-sm">
+                        <span>STATUS</span>
+                        <span>LUNAS</span>
+                    </div>
+                `;
+            }
 
             document.getElementById('modalStrukContent').innerHTML = `
                 <div id="strukPrintArea" class="bg-white p-4 sm:p-5 rounded border border-gray-300 shadow-inner" style="font-family: 'Courier New', Courier, monospace; letter-spacing: -0.3px; color: black !important;">
@@ -600,7 +643,10 @@
                     
                     <div class="text-center mb-4 text-black">
                         <h3 class="text-xl font-extrabold uppercase tracking-widest">${inv.agen}</h3>
-                        <p class="text-[10px] text-gray-600 font-bold uppercase mt-1">JENIS: ${inv.jenis_trx}</p>
+                        <div class="text-[10px] text-gray-600 font-bold uppercase mt-1">
+                            DRIVER: ${inv.driver}<br>
+                            MOBIL: ${inv.mobil}
+                        </div>
                     </div>
                     
                     <div class="text-sm">
@@ -622,6 +668,8 @@
                             <div class="flex justify-between"><span>Bayar Cash</span><span>Rp ${formatTitik(inv.bayar_cash || 0)}</span></div>
                             <div class="flex justify-between"><span>Bayar Transfer</span><span>Rp ${formatTitik(inv.bayar_transfer || 0)}</span></div>
                         </div>
+                        
+                        ${sisaHtml}
                     </div>
                 </div>
 
@@ -698,7 +746,8 @@
                 bytes.push(0x1B, 0x45, 1); 
                 bytes.push(...encoder.encode(`${inv.agen}\n`));
                 bytes.push(0x1B, 0x45, 0);
-                bytes.push(...encoder.encode(`JENIS: ${inv.jenis_trx}\n\n`));
+                bytes.push(...encoder.encode(`DRIVER: ${inv.driver}\n`));
+                bytes.push(...encoder.encode(`MOBIL: ${inv.mobil}\n\n`));
                 bytes.push(0x1B, 0x61, 0); 
 
                 inv.items_kirim.forEach(i => {
@@ -733,13 +782,26 @@
                 }
 
                 bytes.push(...encoder.encode("================================\n"));
-                const grandTtl = formatTitik(inv.total_kirim - inv.total_retur);
+                const totalTagihan = inv.total_kirim - inv.total_retur;
+                const grandTtl = formatTitik(totalTagihan);
                 bytes.push(0x1B, 0x45, 1);
                 bytes.push(...encoder.encode(`TOTAL TAGIHAN${padLeft("Rp " + grandTtl, 32 - 13)}\n\n`));
                 bytes.push(0x1B, 0x45, 0);
 
                 bytes.push(...encoder.encode(`Bayar Cash        Rp ${formatTitik(inv.bayar_cash || 0)}\n`));
                 bytes.push(...encoder.encode(`Bayar Transfer    Rp ${formatTitik(inv.bayar_transfer || 0)}\n`));
+                
+                const totalBayar = (inv.bayar_cash || 0) + (inv.bayar_transfer || 0);
+                const sisaSaldo = totalTagihan - totalBayar;
+                
+                bytes.push(...encoder.encode("--------------------------------\n"));
+                bytes.push(0x1B, 0x45, 1); 
+                if(sisaSaldo > 0) {
+                    bytes.push(...encoder.encode(`SISA NOTA${padLeft("Rp " + formatTitik(sisaSaldo), 32 - 9)}\n\n`));
+                } else {
+                    bytes.push(...encoder.encode(`STATUS${padLeft("LUNAS", 32 - 6)}\n\n`));
+                }
+                bytes.push(0x1B, 0x45, 0); 
                 
                 bytes.push(0x0A, 0x0A, 0x0A, 0x0A); 
                 
@@ -820,7 +882,7 @@
             const ctxCat = document.getElementById('categoryChart').getContext('2d');
             if (categoryChartInstance) categoryChartInstance.destroy();
             categoryChartInstance = new Chart(ctxCat, {
-                type: 'doughnut', data: { labels: ['Aromanis', 'Non Aromanis'], datasets: [{ data: [tAromanis, tNon], backgroundColor: ['#ec4899', '#9ca3af'], borderWidth: 0, hoverOffset: 4 }] },
+                type: 'doughnut', data: { labels: ['Aromanis', 'Barang Lainnya'], datasets: [{ data: [tAromanis, tNon], backgroundColor: ['#ec4899', '#9ca3af'], borderWidth: 0, hoverOffset: 4 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
             });
         }
