@@ -144,7 +144,10 @@
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Total Retur</p>
-                    <p class="text-base sm:text-lg font-bold text-red-500" id="summaryRetur">Rp 0</p>
+                    <div class="flex items-baseline gap-2 mt-0.5">
+                        <p class="text-base sm:text-lg font-bold text-red-500" id="summaryRetur">Rp 0</p>
+                        <span id="summaryReturPercent" class="text-[12px] font-bold px-1.5 py-0.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hidden">0%</span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -411,7 +414,6 @@
                     
                     const tr = item.transaksi || {};
                     
-                    // Mengambil data driver_1 dan driver_2 sesuai nama kolom di database Akang
                     const d1 = tr.driver_1 && tr.driver_1 !== 'null' ? tr.driver_1 : '';
                     const d2 = tr.driver_2 && tr.driver_2 !== 'null' ? tr.driver_2 : '';
                     let gabungDriver = '-';
@@ -430,7 +432,7 @@
                         bayar_cash: tr.bayar_cash || 0,
                         bayar_transfer: tr.bayar_transfer || 0, 
                         driver: gabungDriver,
-                        co_driver: '-', // Kosongkan karena diganti driver_1 & driver_2
+                        co_driver: '-', 
                         mobil: (namaMobil !== 'null' && namaMobil !== null && namaMobil !== '') ? namaMobil : '-',
                         items_kirim: [], 
                         items_retur: [],
@@ -464,13 +466,24 @@
             document.getElementById('summaryNota').innerText = Object.keys(groupedInvoices).length;
             document.getElementById('summaryRetur').innerText = formatRupiah(globalRetur);
 
+            const returPercentEl = document.getElementById('summaryReturPercent');
+            if (totalNominal > 0) {
+                const percent = (globalRetur / totalNominal) * 100;
+                returPercentEl.innerText = `${percent.toFixed(1)}%`;
+                returPercentEl.classList.remove('hidden');
+            } else if (globalRetur > 0) {
+                returPercentEl.innerText = `100%`;
+                returPercentEl.classList.remove('hidden');
+            } else {
+                returPercentEl.classList.add('hidden');
+            }
+
             renderTables(dataTerjualRaw, dataReturRaw);
             renderInvoiceCards();
             renderCharts(dataTerjualRaw);
         }
 
         function renderTables(terjual, retur) {
-            // TERJUAL
             const mapTerjual = {};
             terjual.forEach(d => {
                 const name = d.nama_barang || '-';
@@ -500,7 +513,6 @@
                 </tr>
             ` : '';
 
-            // RETUR
             const mapRetur = {};
             retur.forEach(d => {
                 const name = d.nama_barang || '-';
@@ -535,7 +547,6 @@
             const container = document.getElementById('transactionFlexContainer');
             
             const arrInvoices = Object.values(groupedInvoices).sort((a,b) => {
-                // Sorting: Menampilkan tanggal terbaru di atas. Jika tanggal sama, urutkan nomor nota terbaru.
                 const dateDiff = new Date(b.tanggal) - new Date(a.tanggal);
                 if (dateDiff === 0) { return b.no_nota.localeCompare(a.no_nota); }
                 return dateDiff;
@@ -605,7 +616,6 @@
             const totalTagihan = inv.total_kirim - inv.total_retur;
             const tanggalFormat = formatTanggalStruk(inv.tanggal);
             
-            // Kalkulasi Sisa Nota
             const totalBayar = (inv.bayar_cash || 0) + (inv.bayar_transfer || 0);
             const sisaSaldo = totalTagihan - totalBayar;
             
@@ -896,7 +906,23 @@
             }
         }
 
-        window.onload = async () => { await fetchAgentList(); fetchData(); };
+        window.onload = async () => { 
+            const today = new Date();
+            
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const startYear = firstDay.getFullYear();
+            const startMonth = String(firstDay.getMonth() + 1).padStart(2, '0');
+            const startDate = String(firstDay.getDate()).padStart(2, '0');
+            document.getElementById('filterStartDate').value = `${startYear}-${startMonth}-${startDate}`;
+
+            const endYear = today.getFullYear();
+            const endMonth = String(today.getMonth() + 1).padStart(2, '0');
+            const endDate = String(today.getDate()).padStart(2, '0');
+            document.getElementById('filterEndDate').value = `${endYear}-${endMonth}-${endDate}`;
+
+            await fetchAgentList(); 
+            fetchData(); 
+        };
     </script>
 </body>
 </html>
