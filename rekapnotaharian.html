@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBR | Rekap Terpadu v6.5</title>
+    <title>SBR | Rekap Terpadu v6.6.2</title>
     <!-- Library Supabase & Excel -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -98,12 +98,12 @@
             margin-bottom: 16px; 
         }
         @media (min-width: 600px) {
-            .filter-section { grid-template-columns: 1fr 1fr; }
+            .filter-section { grid-template-columns: 1fr 1fr 1fr; }
         }
 
         .filter-group { display: flex; flex-direction: column; }
         .filter-group label { font-size: 11px; margin-bottom: 6px; color: var(--text-muted); font-weight: 600; }
-        input[type="date"] { 
+        input[type="date"], select { 
             background: var(--bg-input); 
             border: 1px solid var(--border-color); 
             color: var(--text-main); 
@@ -113,6 +113,7 @@
             width: 100%; 
             box-sizing: border-box; 
             font-size: 14px;
+            outline: none;
         }
         
         .btn-group { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 8px; }
@@ -163,6 +164,7 @@
         .text-retur { color: #ef4444; }
         .lunas { background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; border-radius: 6px; padding: 4px 8px; font-size: 11px;}
         .pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-weight: 700; border-radius: 6px; padding: 4px 8px; font-size: 11px;}
+        .badge-sumber { font-size: 9px; padding: 2px 4px; border-radius: 4px; background: var(--bg-hover); color: var(--text-muted); margin-left: 4px;}
 
         /* Media Query: Sembunyikan kolom yang tidak perlu di HP */
         @media (max-width: 768px) {
@@ -301,6 +303,14 @@
             <label>SAMPAI TANGGAL</label>
             <input type="date" id="tglSelesai">
         </div>
+        <div class="filter-group">
+            <label>TIPE AGEN</label>
+            <select id="filterTipeAgen">
+                <option value="Semua">Semua Tipe</option>
+                <option value="Normal">Agen Normal</option>
+                <option value="Khusus">Agen Khusus (DP)</option>
+            </select>
+        </div>
         <div class="btn-group">
             <button class="btn btn-tampilkan" onclick="muatLaporan()">TAMPILKAN DATA</button>
             <button class="btn btn-excel" onclick="exportKeExcelDenganDetail()">EXPORT EXCEL</button>
@@ -321,7 +331,7 @@
                     <th class="hide-mobile">RETUR (▼)</th>
                     <th class="hide-mobile">SISA AKHIR</th>
                     <th class="hide-mobile">STATUS</th>
-                    <th>AKSI</th> <!-- Kolom Baru Ditambahkan Di Sini -->
+                    <th>AKSI</th>
                 </tr>
             </thead>
             <tbody id="isiTabel">
@@ -372,7 +382,6 @@
         }
     }
 
-    // Cek tema yang tersimpan
     window.onload = () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('tglMulai').value = today;
@@ -392,7 +401,6 @@
     let dataCacheTransaksi = [];
     let dataStrukAktif = null; 
 
-    // Helper Format Tanggal dengan Nama Hari Singkat (contoh: Rab, 5/8/26)
     function formatTanggalHari(tglStr) {
         if (!tglStr) return "";
         const [y, m, d] = tglStr.split('-');
@@ -406,58 +414,93 @@
         const body = document.getElementById('isiTabel');
         body.innerHTML = "<tr><td colspan='11' class='empty-message'>Memproses data Supabase... ⏳</td></tr>";
 
-        const { data, error } = await _sb.from('transaksi')
-            .select('*')
-            .gte('tanggal', document.getElementById('tglMulai').value)
-            .lte('tanggal', document.getElementById('tglSelesai').value)
-            .order('created_at', { ascending: false });
+        const tglMulai = document.getElementById('tglMulai').value;
+        const tglSelesai = document.getElementById('tglSelesai').value;
+        const filterTipe = document.getElementById('filterTipeAgen').value;
 
-        if (error) { alert("Error: " + error.message); return; }
-        if (!data || data.length === 0) { 
-            body.innerHTML = "<tr><td colspan='11' class='empty-message'>Data tidak ditemukan untuk rentang tanggal ini.</td></tr>"; 
+        // Fetch dieksekusi terpisah secara asynchronous agar jika satu gagal, yang lain aman
+        const resNormal = await _sb.from('transaksi').select('*').gte('tanggal', tglMulai).lte('tanggal', tglSelesai);
+        const resDp = await _sb.from('transaksi_dp').select('*').gte('tanggal', tglMulai).lte('tanggal', tglSelesai);
+
+        if (resNormal.error) {
+            alert("Error menarik data Agen Normal: " + resNormal.error.message);
+        }
+
+        if (resDp.error) {
+            console.warn("Peringatan: Gagal mengakses tabel transaksi_dp. Pastikan tabel ini sudah ada di database Anda.", resDp.error.message);
+        }
+
+        let combinedData = [];
+        if (resNormal.data && !resNormal.error) {
+            combinedData.push(...resNormal.data.map(d => ({...d, _tabelAsal: 'transaksi'})));
+        }
+        if (resDp.data && !resDp.error) {
+            combinedData.push(...resDp.data.map(d => ({...d, _tabelAsal: 'transaksi_dp'})));
+        }
+
+        // Terapkan Logika Filter Agen
+        if (filterTipe !== "Semua") {
+            combinedData = combinedData.filter(d => {
+                if (d.tipe_agen) {
+                    return d.tipe_agen.toLowerCase() === filterTipe.toLowerCase();
+                }
+                if (filterTipe === "Normal" && d._tabelAsal === "transaksi") return true;
+                if (filterTipe === "Khusus" && d._tabelAsal === "transaksi_dp") return true;
+                return false;
+            });
+        }
+
+        // Urutkan berdasarkan tanggal/created_at terbaru
+        combinedData.sort((a, b) => new Date(b.created_at || b.tanggal) - new Date(a.created_at || a.tanggal));
+
+        if (combinedData.length === 0) { 
+            body.innerHTML = "<tr><td colspan='11' class='empty-message'>Data tidak ditemukan untuk rentang tanggal/filter ini.</td></tr>"; 
             dataCacheTransaksi = []; 
             return; 
         }
 
-        dataCacheTransaksi = data;
+        dataCacheTransaksi = combinedData;
         body.innerHTML = "";
-        data.forEach(t => {
+        
+        combinedData.forEach(t => {
             const sisaAkhir = t.sisa_akhir || 0; 
             const tglFormatted = formatTanggalHari(t.tanggal);
+            const labelAgen = t.tipe_agen ? t.tipe_agen : (t._tabelAsal === 'transaksi_dp' ? 'Khusus' : 'Normal');
 
             body.innerHTML += `
                 <tr>
                     <td>${tglFormatted}</td>
-                    <td style="text-align:left; font-weight:600;">${t.nama_agen || '-'}</td>
-                    <td><span class="nota-link" onclick="bukaStrukNota('${t.no_nota}')">${t.no_nota || '-'}</span></td>
+                    <td style="text-align:left; font-weight:600;">${t.nama_agen || '-'} <br><span class="badge-sumber">${labelAgen}</span></td>
+                    <td><span class="nota-link" onclick="bukaStrukNota('${t.no_nota}', '${t._tabelAsal}')">${t.no_nota || '-'}</span></td>
                     
                     <td class="hide-mobile">${t.driver_1 || '-'}</td>
                     <td class="hide-mobile">${t.driver_2 || '-'}</td>
                     <td class="hide-mobile">${t.plat_nomor || '-'}</td>
-                    <td class="hide-mobile link-detail text-kirim" onclick="bukaPopUpDetail('${t.no_nota}', 'Kirim')">${(t.total_kirim || 0).toLocaleString()}</td>
-                    <td class="hide-mobile link-detail text-retur" onclick="bukaPopUpDetail('${t.no_nota}', 'Retur')">${(t.total_retur || 0).toLocaleString()}</td>
+                    <td class="hide-mobile link-detail text-kirim" onclick="bukaPopUpDetail('${t.no_nota}', 'Kirim', '${t._tabelAsal}')">${(t.total_kirim || 0).toLocaleString()}</td>
+                    <td class="hide-mobile link-detail text-retur" onclick="bukaPopUpDetail('${t.no_nota}', 'Retur', '${t._tabelAsal}')">${(t.total_retur || 0).toLocaleString()}</td>
                     <td class="hide-mobile" style="font-weight:700;">${sisaAkhir.toLocaleString()}</td>
                     <td class="hide-mobile"><span class="${sisaAkhir <= 0 ? 'lunas' : 'pending'}">${sisaAkhir <= 0 ? 'LUNAS' : 'PENDING'}</span></td>
                     
-                    <!-- Kolom Tombol Aksi Baru -->
-                    <td><button class="btn-aksi" onclick="bukaModalAksi('${t.no_nota}')">⚙️ Opsi</button></td>
+                    <td><button class="btn-aksi" onclick="bukaModalAksi('${t.no_nota}', '${t._tabelAsal}')">⚙️ Opsi</button></td>
                 </tr>
             `;
         });
     }
 
-    async function bukaPopUpDetail(noNota, tipeKlik) {
+    async function bukaPopUpDetail(noNota, tipeKlik, tabelAsal) {
         const modalIsi = document.getElementById('modalIsi');
         document.getElementById('modalJudul').innerText = `RINCIAN ${tipeKlik.toUpperCase()} - ${noNota}`;
         modalIsi.innerHTML = "<p style='text-align:center;'>Mengambil data... ⏳</p>";
         document.getElementById('modalDetail').style.display = "block";
 
-        const { data, error } = await _sb.from('transaksi_detail')
+        const tabelDetail = tabelAsal === 'transaksi_dp' ? 'transaksi_detaildp' : 'transaksi_detail';
+
+        const { data, error } = await _sb.from(tabelDetail)
             .select('nama_barang, qty, satuan')
             .eq('no_nota', noNota)
             .eq('tipe', tipeKlik);
 
-        if (error) { modalIsi.innerHTML = "Gagal: " + error.message; return; }
+        if (error) { modalIsi.innerHTML = "Gagal memuat detail rincian dari database: " + error.message; return; }
         if (!data || data.length === 0) { modalIsi.innerHTML = "<p style='text-align:center;'>Tidak ada rincian data item untuk tipe ini.</p>"; return; }
 
         let html = `<table class="table-pop"><thead><tr><th style="text-align:left;">Barang</th><th>Qty</th><th>Satuan</th></tr></thead><tbody>`;
@@ -475,17 +518,19 @@
         return `${d} ${namaBulan[parseInt(m)-1]} '${y.slice(-2)}`;
     }
 
-    async function bukaStrukNota(noNota) {
+    async function bukaStrukNota(noNota, tabelAsal) {
         const modalIsi = document.getElementById('modalIsi');
         document.getElementById('modalJudul').innerText = `PREVIEW STRUK`;
         modalIsi.innerHTML = "<p style='text-align:center;'>Membuka struk belanja... ⏳</p>";
         document.getElementById('modalDetail').style.display = "block";
+        
+        const tabelDetail = tabelAsal === 'transaksi_dp' ? 'transaksi_detaildp' : 'transaksi_detail';
 
         try {
-            const { data: trx, error: errTrx } = await _sb.from('transaksi').select('*').eq('no_nota', noNota).single();
+            const { data: trx, error: errTrx } = await _sb.from(tabelAsal).select('*').eq('no_nota', noNota).single();
             if (errTrx) throw errTrx;
 
-            const { data: detail, error: errDet } = await _sb.from('transaksi_detail').select('*').eq('no_nota', noNota);
+            const { data: detail, error: errDet } = await _sb.from(tabelDetail).select('*').eq('no_nota', noNota);
             if (errDet) throw errDet;
 
             const { data: rawRiwayatBayar, error: errBayar } = await _sb.from('pembayaran_bon')
@@ -495,12 +540,11 @@
             let riwayatBayar = rawRiwayatBayar || [];
             riwayatBayar.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
 
-            dataStrukAktif = { trx, detail, riwayatBayar };
+            dataStrukAktif = { trx, detail, riwayatBayar, tabelAsal };
 
             const [y, m, d] = trx.tanggal.split('-');
             const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
 
-            // Desain Struk Lebih Rapat & Ringkas
             let s = `<div class="struk-box" id="areaCetakStruk">
                         <div class="struk-center">
                             <div class="struk-title">SBR PUTRA FOOD</div>
@@ -547,7 +591,6 @@
             s += `<div class="struk-double-separator"></div>`;
             s += `<div class="struk-row struk-bold" style="font-size:14px;"><span>TOTAL TAGIHAN</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
             
-            // Keterangan Ongkir
             let ketOngkir = trx.ongkir || trx.keterangan_ongkir;
             if (ketOngkir) {
                 let displayOngkir = isNaN(ketOngkir) ? ketOngkir : `Rp ${Number(ketOngkir).toLocaleString('id-ID')}`;
@@ -587,9 +630,8 @@
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-center struk-bold struk-text-muted" style="margin-top:8px; font-size:10px;">SBR PUTRA FOOD SYSTEM</div>`;
             
-            s += `</div>`; // Akhir .struk-box
+            s += `</div>`;
             
-            // TOMBOL AKSI & PILIHAN PRINTER
             s += `<div style="display: flex; gap: 8px; margin-top: 12px;">
                     <button id="btnCetak" onclick="cetakStrukBluetooth()" style="flex:1; background:var(--btn-primary); color:white; padding:12px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 12px;">🖨️ BLUETOOTH</button>
                     <button id="btnCetakGambar" onclick="cetakGambar()" style="flex:1; background:var(--btn-excel); color:white; padding:12px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 12px;">📸 SIMPAN JPG</button>
@@ -773,35 +815,47 @@
 
         alert("Sedang merakit Excel beserta detail keuangan, mohon tunggu sebentar...");
 
-        const { data: semuaDetail, error } = await _sb.from('transaksi_detail')
-            .select('no_nota, tipe, nama_barang, qty, satuan, harga_satuan, subtotal')
-            .in('no_nota', dataCacheTransaksi.map(t => t.no_nota));
-
-        if (error) {
-            alert("Gagal mengambil detail barang untuk Excel: " + error.message);
-            return;
+        const notaNormal = dataCacheTransaksi.filter(t => t._tabelAsal === 'transaksi').map(t => t.no_nota);
+        const notaDp = dataCacheTransaksi.filter(t => t._tabelAsal === 'transaksi_dp').map(t => t.no_nota);
+        
+        let semuaDetail = [];
+        
+        if(notaNormal.length > 0) {
+            const { data: detailNormal, error: errNormal } = await _sb.from('transaksi_detail')
+                .select('no_nota, tipe, nama_barang, qty, satuan, harga_satuan, subtotal')
+                .in('no_nota', notaNormal);
+            if(detailNormal && !errNormal) semuaDetail.push(...detailNormal);
+        }
+        
+        if(notaDp.length > 0) {
+            const { data: detailDp, error: errDp } = await _sb.from('transaksi_detaildp')
+                .select('no_nota, tipe, nama_barang, qty, satuan, harga_satuan, subtotal')
+                .in('no_nota', notaDp);
+            if(detailDp && !errDp) semuaDetail.push(...detailDp);
+            if(errDp) console.warn("Peringatan menarik detail DP dari tabel transaksi_detaildp:", errDp.message);
         }
 
         let matriksExcel = [];
         matriksExcel.push([
-            "AGEN / NAMA BARANG", "TANGGAL", "NO NOTA", "DRIVER 1", "DRIVER 2", 
+            "AGEN / NAMA BARANG", "TIPE", "TANGGAL", "NO NOTA", "DRIVER 1", "DRIVER 2", 
             "PLAT NOMOR", "KIRIM (RP)", "RETUR (RP)", "BON LAMA (RP)", "CASH (RP)", "TRANSFER (RP)", "SISA AKHIR (RP)", "STATUS"
         ]);
 
         dataCacheTransaksi.forEach(t => {
             const [y, m, d] = t.tanggal.split('-');
             const statusNota = (t.sisa_akhir || 0) <= 0 ? "LUNAS" : "PENDING";
+            const labelAgen = t.tipe_agen ? t.tipe_agen : (t._tabelAsal === 'transaksi_dp' ? 'Khusus' : 'Normal');
 
             matriksExcel.push([
-                t.nama_agen, `${d}-${m}-${y}`, t.no_nota, t.driver_1, t.driver_2, t.plat_nomor,
+                t.nama_agen, labelAgen, `${d}-${m}-${y}`, t.no_nota, t.driver_1, t.driver_2, t.plat_nomor,
                 t.total_kirim || 0, t.total_retur || 0, t.bon_lama || 0, t.bayar_cash || 0, t.bayar_transfer || 0, t.sisa_akhir || 0, statusNota
             ]);
 
             const detailNota = semuaDetail.filter(d => d.no_nota === t.no_nota);
             if (detailNota.length > 0) {
-                matriksExcel.push(["   ↳ DETAIL BARANG:", "Tipe", "Nama Barang", "Qty", "Satuan", "Harga Satuan", "Subtotal Item"]);
+                matriksExcel.push(["   ↳ DETAIL BARANG:", "", "Tipe", "Nama Barang", "Qty", "Satuan", "Harga Satuan", "Subtotal Item"]);
                 detailNota.forEach(item => {
-                    matriksExcel.push(["", `   [${item.tipe}]`, item.nama_barang, item.qty, item.satuan, item.harga_satuan, item.subtotal]);
+                    matriksExcel.push(["", "", `   [${item.tipe}]`, item.nama_barang, item.qty, item.satuan, item.harga_satuan, item.subtotal]);
                 });
                 matriksExcel.push([]); 
             }
@@ -859,9 +913,11 @@
 
     // --- FUNGSI TAMBAHAN: AKSI (EDIT & HAPUS) ---
     let notaAktifAksi = "";
+    let tabelAsalAksi = ""; 
 
-    function bukaModalAksi(noNota) {
+    function bukaModalAksi(noNota, tabelAsal) {
         notaAktifAksi = noNota;
+        tabelAsalAksi = tabelAsal;
         document.getElementById('lblNotaAksi').innerText = noNota;
         document.getElementById('modalAksi').style.display = 'block';
     }
@@ -869,9 +925,9 @@
     function tutupModalAksi() {
         document.getElementById('modalAksi').style.display = 'none';
         notaAktifAksi = "";
+        tabelAsalAksi = "";
     }
 
-    // Menutup modal jika klik di luar area modal (dimodifikasi untuk mendeteksi kedua modal)
     window.onclick = (e) => { 
         if (e.target == document.getElementById('modalDetail')) {
             tutupModal(); 
@@ -882,57 +938,54 @@
     }
 
     function bukaFormEdit() {
-        // Membuka form edit_nota.html di tab baru dengan membawa parameter nomor nota
-        window.open("edit_nota.html?nota=" + notaAktifAksi, "_blank");
+        window.open("edit_nota.html?nota=" + notaAktifAksi + "&sumber=" + tabelAsalAksi, "_blank");
         tutupModalAksi();
     }
 
     async function hapusDataTransaksi() {
-    if (confirm(`Peringatan: Anda yakin ingin menghapus SELURUH data untuk nota ${notaAktifAksi}?\nData ini tidak dapat dikembalikan.`)) {
-        
-        // 1. Ambil data transaksi terlebih dahulu untuk mengetahui nama_agen-nya
-        const { data: trxData, error: errTrxFind } = await _sb.from('transaksi')
-            .select('nama_agen')
-            .eq('no_nota', notaAktifAksi)
-            .single();
-
-        if (errTrxFind || !trxData) {
-            alert("Gagal menemukan data agen untuk nota ini: " + (errTrxFind ? errTrxFind.message : "Data tidak ada"));
-            return;
-        }
-
-        const namaAgenTarget = trxData.nama_agen;
-
-        // 2. Hapus Detail Dahulu
-        const { error: errDetail } = await _sb.from('transaksi_detail')
-            .delete()
-            .eq('no_nota', notaAktifAksi);
+        if (confirm(`Peringatan: Anda yakin ingin menghapus SELURUH data untuk nota ${notaAktifAksi}?\nData ini tidak dapat dikembalikan.`)) {
             
-        // 3. Kemudian Hapus Master Transaksi
-        const { error: errTrx } = await _sb.from('transaksi')
-            .delete()
-            .eq('no_nota', notaAktifAksi);
-        
-        if (errTrx || errDetail) {
-            alert("Gagal menghapus data: " + (errTrx ? errTrx.message : errDetail.message));				
-        } else {
-            // 4. JADIKAN SALDO BON AGEN = 0 DI TABLE "agen"
-            if (namaAgenTarget) {
-                const { error: errAgen } = await _sb.from('agen')
-                    .update({ saldo_bon: 0 })
-                    .eq('nama_agen', namaAgenTarget);
+            const tabelDetail = tabelAsalAksi === 'transaksi_dp' ? 'transaksi_detaildp' : 'transaksi_detail';
 
-                if (errAgen) {
-                    alert("Nota terhapus, tetapi gagal mereset saldo bon agen: " + errAgen.message);
-                }
+            const { data: trxData, error: errTrxFind } = await _sb.from(tabelAsalAksi)
+                .select('nama_agen')
+                .eq('no_nota', notaAktifAksi)
+                .single();
+
+            if (errTrxFind || !trxData) {
+                alert("Gagal menemukan data agen untuk nota ini: " + (errTrxFind ? errTrxFind.message : "Data tidak ada"));
+                return;
             }
+
+            const namaAgenTarget = trxData.nama_agen;
+
+            const { error: errDetail } = await _sb.from(tabelDetail)
+                .delete()
+                .eq('no_nota', notaAktifAksi);
+                
+            const { error: errTrx } = await _sb.from(tabelAsalAksi)
+                .delete()
+                .eq('no_nota', notaAktifAksi);
             
-            alert("Data berhasil dihapus dan saldo bon agen telah di-Nol-kan!");
-            tutupModalAksi();
-            muatLaporan(); // Me-refresh isi tabel
+            if (errTrx || errDetail) {
+                alert("Gagal menghapus data: " + (errTrx ? errTrx.message : errDetail.message));				
+            } else {
+                if (namaAgenTarget) {
+                    const { error: errAgen } = await _sb.from('agen')
+                        .update({ saldo_bon: 0 })
+                        .eq('nama_agen', namaAgenTarget);
+
+                    if (errAgen) {
+                        alert("Nota terhapus, tetapi gagal mereset saldo bon agen: " + errAgen.message);
+                    }
+                }
+                
+                alert("Data berhasil dihapus dan saldo bon agen telah di-Nol-kan!");
+                tutupModalAksi();
+                muatLaporan();
+            }
         }
     }
-}
 </script>
 
 </body>
