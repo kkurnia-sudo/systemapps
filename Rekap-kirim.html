@@ -138,9 +138,9 @@
             <div class="flex items-center justify-between mb-2 px-1">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Riwayat</h2>
                 <select id="filterWaktu" onchange="handleFilterChange()" class="text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 outline-none focus:ring-2 focus:ring-primary text-gray-700 dark:text-gray-300">
-                    <option value="hari_ini">Hari Ini</option>
+                    <option value="hari_ini_besok">Hari Ini & Besok</option>
                     <option value="kemarin">Kemarin</option>
-                    <option value="tiga_hari">3 Hari Terakhir</option>
+                    <option value="dua_hari">2 Hari Terakhir</option>
                     <option value="rentang">Pilih Rentang...</option>
                 </select>
             </div>
@@ -778,15 +778,27 @@
             const filter = document.getElementById('filterWaktu').value; const container = document.getElementById('riwayatDbContainer');
             container.innerHTML = '<p class="text-center text-xs text-gray-500 py-4 italic">Memuat data...</p>';
             let query = supabaseClient.from('rekap_pengiriman').select('*').order('created_at', { ascending: true });
+            
             const today = new Date();
-            if (filter === 'hari_ini') query = query.eq('tanggal', formatTglDB(today));
-            else if (filter === 'kemarin') { let y = new Date(today); y.setDate(y.getDate() - 1); query = query.eq('tanggal', formatTglDB(y)); } 
-            else if (filter === 'tiga_hari') { let t = new Date(today); t.setDate(t.getDate() - 2); query = query.gte('tanggal', formatTglDB(t)).lte('tanggal', formatTglDB(today)); } 
-            else if (filter === 'rentang') {
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            if (filter === 'hari_ini_besok') {
+                query = query.gte('tanggal', formatTglDB(today)).lte('tanggal', formatTglDB(tomorrow));
+            } else if (filter === 'kemarin') { 
+                let y = new Date(today); 
+                y.setDate(y.getDate() - 1); 
+                query = query.eq('tanggal', formatTglDB(y)); 
+            } else if (filter === 'dua_hari') { 
+                let t = new Date(today); 
+                t.setDate(t.getDate() - 1); 
+                query = query.gte('tanggal', formatTglDB(t)).lte('tanggal', formatTglDB(today)); 
+            } else if (filter === 'rentang') {
                 const sEl = document.getElementById('startDate');
                 const eEl = document.getElementById('endDate');
-                const s = sEl.nextElementSibling ? sEl.nextElementSibling.value : sEl.value; 
-                const e = eEl.nextElementSibling ? eEl.nextElementSibling.value : eEl.value;
+                // PERBAIKAN: Ambil langsung dari value input asalnya (format YYYY-MM-DD), bukan dari nextElementSibling
+                const s = sEl.value; 
+                const e = eEl.value;
                 if(s && e) query = query.gte('tanggal', s).lte('tanggal', e); 
                 else return container.innerHTML = '<p class="text-center text-xs text-red-500 py-4">Pilih tanggal mulai dan akhir terlebih dahulu.</p>';
             }
@@ -906,14 +918,14 @@
 
             const filter = document.getElementById('filterWaktu').value;
             let strTgl = "";
-            if (filter === 'hari_ini') strTgl = formatDateCustom(new Date());
+            if (filter === 'hari_ini_besok') strTgl = "HARI INI & BESOK";
             else if (filter === 'kemarin') { let y = new Date(); y.setDate(y.getDate() - 1); strTgl = formatDateCustom(y); } 
-            else if (filter === 'tiga_hari') strTgl = "3 HARI TERAKHIR";
+            else if (filter === 'dua_hari') strTgl = "2 HARI TERAKHIR";
             else if (filter === 'rentang') { 
                 const sEl = document.getElementById('startDate');
                 const eEl = document.getElementById('endDate');
-                const s = sEl.nextElementSibling ? sEl.nextElementSibling.value : sEl.value; 
-                const e = eEl.nextElementSibling ? eEl.nextElementSibling.value : eEl.value;
+                const s = sEl.value; 
+                const e = eEl.value;
                 strTgl = `${s} - ${e}`; 
             }
             
