@@ -104,7 +104,7 @@
             display: inline-block;
             text-align: center;
             line-height: 1.2;
-            max-width: 80px; /* Memaksa teks panjang turun jadi 2 baris */
+            max-width: 80px; 
             white-space: normal;
             word-wrap: break-word;
         }
@@ -188,7 +188,7 @@
                 <svg id="iconSun" style="display:none;" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 <svg id="iconMoon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
             </button>
-            <!-- TOMBOL MANAJEMEN DATA (Tanpa Teks) -->
+            <!-- TOMBOL MANAJEMEN DATA -->
             <button class="btn-icon" onclick="openModalMaster()" title="Manajemen Data Master">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
             </button>
@@ -209,7 +209,7 @@
                     <input type="date" id="inputTanggal" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>Kepada</label>
+                    <label>Kepada (Pembeli)</label>
                     <select id="inputKepada" class="form-control" required>
                         <option value="">-- Pilih Pembeli --</option>
                     </select>
@@ -228,7 +228,7 @@
                         </select>
                         
                         <div class="qty-wrapper">
-                            <input type="number" id="inputUnit" class="form-control" placeholder="Duz/Krg" oninput="hitungBall()">
+                            <input type="number" id="inputUnit" class="form-control" placeholder="Qty" oninput="hitungBall()">
                             <span id="labelUnit" style="font-size:12px; font-weight:700; color:var(--text-main); min-width: 20px;">Dus</span>
                         </div>
                         
@@ -243,7 +243,6 @@
                     <div class="item-list-box" id="listBarangBox">
                         <em style="font-size: 11px; color: var(--text-muted);">Belum ada barang ditambahkan</em>
                     </div>
-                    <!-- Hidden textarea -->
                     <textarea id="inputBarang" class="form-control" style="display:none;" required></textarea>
                 </div>
                 <button type="button" class="btn btn-primary btn-full" onclick="simpanKeSupabase()" id="btnSimpan">
@@ -360,7 +359,7 @@
                 <input type="date" id="editTanggal" class="form-control" required>
             </div>
             <div class="form-group">
-                <label>Kepada</label>
+                <label>Kepada (Pembeli)</label>
                 <select id="editKepada" class="form-control" required></select>
             </div>
             <div class="form-group">
@@ -573,7 +572,12 @@
     async function loadHistory() {
         const tbody = document.getElementById('historyBody');
         try {
-            const { data, error } = await sbClient.from('list_order').select('*').order('id', { ascending: false });
+            // MENGUBAH PENGURUTAN (TANGGAL LAMA DI ATAS)
+            const { data, error } = await sbClient.from('list_order')
+                .select('*')
+                .order('tanggal', { ascending: true }) // Diurutkan berdasarkan tanggal naik
+                .order('id', { ascending: true });     // ID dipakai buat urutan jika tanggalnya sama
+            
             if (error) throw error; 
 
             setConnectionStatus(true);
