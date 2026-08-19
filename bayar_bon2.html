@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - Pembayaran Bon Khusus</title>
+    <title>SBR Putra Food - Pembayaran Bon</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -52,7 +52,7 @@
             position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.3s;
         }
         .brand { font-weight: 800; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
-        .brand span { color: var(--danger); }
+        .brand span { color: var(--warning); }
         .header-actions { display: flex; gap: 8px; align-items: center; }
         .icon-btn { background: var(--bg-color); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text-main); cursor: pointer; transition: 0.2s; }
         .icon-btn.danger { color: var(--danger); background: #fef2f2; }
@@ -123,7 +123,7 @@
 
 <!-- Header -->
 <header>
-    <div class="brand"><i class="ph-fill ph-receipt"></i> SBR Admin <span>Bayar Nota Khusus</span> </div>
+    <div class="brand"><i class="ph-fill ph-receipt"></i> SBR Admin <span>Bayar Nota Khusus</span></div>
     <div class="header-actions">
         <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema"><i class="ph ph-moon"></i></button>
     </div>
@@ -161,7 +161,7 @@
 
     <div class="card">
         <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-            <i class="ph-fill ph-clock-counter-clockwise" style="font-size: 16px; color: var(--primary);"></i> Riwayat Pembayaran (Khusus)
+            <i class="ph-fill ph-clock-counter-clockwise" style="font-size: 16px; color: var(--primary);"></i> Riwayat Pembayaran
         </div>
         <div class="table-responsive">
             <table id="tabelRiwayatBayar">
@@ -219,6 +219,17 @@
         return left + " ".repeat(spaces) + right;
     }
 
+    function formatTanggalSingkat(tglStr) {
+        if (!tglStr) return '-';
+        const parts = tglStr.split('-');
+        if (parts.length !== 3) return tglStr;
+        const d = new Date(parts[0], parseInt(parts[1]) - 1, parts[2]);
+        const hariArr = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        const hari = hariArr[d.getDay()];
+        const yy = parts[0].slice(-2);
+        return `${hari} ${parts[2]}/${parts[1]}/${yy}`;
+    }
+
     async function initHalaman() {
         document.getElementById('tglBayar').valueAsDate = new Date();
         const { data: agen } = await clientSupabase.from('agen').select('*');
@@ -238,37 +249,25 @@
     }
 
     async function loadTabelRiwayat() {
-        const namaAgenKhusus = Object.keys(listAgen);
-        let riwayat = [];
-        
-        if (namaAgenKhusus.length > 0) {
-            const { data } = await clientSupabase
-                .from('pembayaran_bon')
-                .select('*')
-                .in('nama_agen', namaAgenKhusus)
-                .order('id', { ascending: false })
-                .limit(10);
-            riwayat = data;
-        }
-
+        const { data: riwayat } = await clientSupabase.from('pembayaran_bon').select('*').order('id', { ascending: false }).limit(50);
         const tbody = document.querySelector('#tabelRiwayatBayar tbody');
         tbody.innerHTML = '';
-        if (riwayat && riwayat.length > 0) {
-            riwayat.forEach(r => {
+        if (riwayat) {
+            const riwayatFiltered = riwayat.filter(r => listAgen.hasOwnProperty(r.nama_agen)).slice(0, 10);
+            
+            riwayatFiltered.forEach(r => {
                 let linkNotaHtml = r.no_nota_referensi && r.no_nota_referensi !== 'NON-NOTA' 
                     ? `<span class="nota-link" onclick="bukaStrukNota('${r.no_nota_referensi}')">${r.no_nota_referensi}</span>` 
                     : `<span style="color:var(--text-muted);">${r.no_nota_referensi || '-'}</span>`;
 
                 tbody.innerHTML += `<tr>
-                    <td>${r.tanggal}<br><small>${linkNotaHtml}</small></td>
+                    <td>${formatTanggalSingkat(r.tanggal)}<br><small>${linkNotaHtml}</small></td>
                     <td>${r.nama_agen}</td>
                     <td>${r.bayar_cash.toLocaleString('id-ID')}<br><span style="color:var(--primary);">${r.bayar_transfer.toLocaleString('id-ID')}</span></td>
                     <td>${r.sisa_bon_akhir.toLocaleString('id-ID')}</td>
                     <td style="font-size:11px; color:var(--text-muted);">${r.keterangan || '-'}</td>
                 </tr>`;
             });
-        } else {
-             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Belum ada riwayat khusus</td></tr>`;
         }
     }
 
@@ -301,35 +300,19 @@
             document.getElementById('txtDriverKirim').innerText = "Memuat...";
             infoNotaBox.style.display = "block";
 
-            // --- PERBAIKAN: LOGIKA FALLBACK ---
-            // 1. Coba cari nota yang secara spesifik sisa_akhir > 0 (belum lunas)
-            let { data: trx } = await clientSupabase.from('transaksi')
-                .select('no_nota, tanggal, driver_1, driver_2')
-                .eq('nama_agen', ag)
-                .gt('sisa_akhir', 0)
-                .order('created_at', { ascending: false })
-                .limit(1);
-
-            // 2. Jika KOSONG (mungkin data lama nilainya 0 atau null, tapi di tabel agen masih ada bon),
-            // maka otomatis fallback / cadangan: ambil saja nota paling terakhir milik agen tersebut
-            if (!trx || trx.length === 0) {
-                const { data: fallbackTrx } = await clientSupabase.from('transaksi')
-                    .select('no_nota, tanggal, driver_1, driver_2')
-                    .eq('nama_agen', ag)
-                    .order('created_at', { ascending: false })
-                    .limit(1);
-                trx = fallbackTrx;
-            }
+            // PERUBAHAN: menggunakan tabel transaksi_dp
+            const { data: trx } = await clientSupabase.from('transaksi_dp').select('no_nota, tanggal, driver_1, driver_2').eq('nama_agen', ag).order('created_at', { ascending: false }).limit(1);
 
             if (trx && trx.length > 0) {
                 const t = trx[0];
-                const [y, m, d] = t.tanggal.split('-');
                 const drvGabung = t.driver_2 ? `${t.driver_1} / ${t.driver_2}` : t.driver_1;
                 document.getElementById('txtNotaTerakhir').innerHTML = `<span class="nota-link" onclick="bukaStrukNota('${t.no_nota}')">${t.no_nota}</span>`;
-                document.getElementById('txtTglKirim').innerText = `${d}-${m}-${y}` || '-';
+                document.getElementById('txtTglKirim').innerText = formatTanggalSingkat(t.tanggal) || '-';
                 document.getElementById('txtDriverKirim').innerText = drvGabung || '-';
             } else {
-                infoNotaBox.style.display = "none";
+                document.getElementById('txtNotaTerakhir').innerHTML = `<span style="font-size: 11px; color: var(--text-muted); font-style: italic;">Riwayat nota tidak ditemukan</span>`;
+                document.getElementById('txtTglKirim').innerText = '-';
+                document.getElementById('txtDriverKirim').innerText = '-';
             }
         } else {
             infoNotaBox.style.display = "none";
@@ -370,25 +353,14 @@
         const bonLama = listAgen[ag] || 0;
         const sisaAkhir = bonLama - cash - trf;
         
-        // --- PERBAIKAN: LOGIKA FALLBACK ---
-        let { data: nota } = await clientSupabase.from('transaksi')
+        // PERUBAHAN: menggunakan tabel transaksi_dp
+        const { data: nota } = await clientSupabase.from('transaksi_dp')
             .select('no_nota, id')
             .eq('nama_agen', ag)
-            .gt('sisa_akhir', 0) 
             .order('created_at', { ascending: false })
             .limit(1);
-
-        if (!nota || nota.length === 0) {
-            const { data: fallbackNota } = await clientSupabase.from('transaksi')
-                .select('no_nota, id')
-                .eq('nama_agen', ag)
-                .order('created_at', { ascending: false })
-                .limit(1);
-            nota = fallbackNota;
-        }
             
         const noNotaRef = (nota && nota.length > 0) ? nota[0].no_nota : "NON-NOTA";
-        // ------------------------------
 
         const btn = document.getElementById('btnSimpan');
         btn.disabled = true;
@@ -408,7 +380,9 @@
             }]);
 
             await clientSupabase.from('agen').update({ saldo_bon: sisaAkhir }).eq('nama_agen', ag);
-            if (nota && nota.length > 0) await clientSupabase.from('transaksi').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
+            
+            // PERUBAHAN: menggunakan tabel transaksi_dp
+            if (nota && nota.length > 0) await clientSupabase.from('transaksi_dp').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
 
             alert("✅ Sukses Melakukan Pembayaran! Nota Ref: " + noNotaRef);
             resetForm();
@@ -431,13 +405,13 @@
         document.getElementById('modalDetail').style.display = "block";
 
         try {
-            const { data: trx } = await clientSupabase.from('transaksi').select('*').eq('no_nota', noNota).single();
-            const { data: detail } = await clientSupabase.from('transaksi_detail').select('*').eq('no_nota', noNota);
+            // PERUBAHAN: menggunakan tabel transaksi_dp dan transaksi_detaildp
+            const { data: trx } = await clientSupabase.from('transaksi_dp').select('*').eq('no_nota', noNota).single();
+            const { data: detail } = await clientSupabase.from('transaksi_detaildp').select('*').eq('no_nota', noNota);
             const { data: riwayatBayar } = await clientSupabase.from('pembayaran_bon').select('tanggal, bayar_cash, bayar_transfer, keterangan').eq('no_nota_referensi', noNota);
 
             window.currentStrukData = { trx, detail, riwayatBayar };
 
-            const [y, m, d] = trx.tanggal.split('-');
             const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
 
             let s = `<div class="struk-box" id="areaStruk">
@@ -445,9 +419,9 @@
                             <span class="struk-title">SBR PUTRA FOOD</span><br>Lembang, Bandung Barat<br>
                         </div>
                         <div class="struk-separator"></div>
-                        <div class="struk-row"><span>NO: ${trx.no_nota}</span><span>TGL: ${d}-${m}-${y}</span></div>
+                        <div class="struk-row"><span>NO: ${trx.no_nota}</span><span>TGL: ${formatTanggalSingkat(trx.tanggal)}</span></div>
                         <div class="struk-center struk-bold" style="font-size:14px; margin: 4px 0;">${trx.nama_agen.toUpperCase()}</div>
-                        <div>DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
+                        <div class="struk-center">DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
                         <div class="struk-separator"></div>`;
 
             const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
@@ -479,21 +453,25 @@
 
             const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
             let bonLama = trx.bon_lama || 0;
-            let labelBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
             
-            s += `<br><div class="struk-row"><span>${labelBonLama}</span><span>Rp ${Math.abs(bonLama).toLocaleString('id-ID')}</span></div>`;
+            if (bonLama !== 0) {
+                let labelBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
+                s += `<br><div class="struk-row"><span>${labelBonLama}</span><span>Rp ${Math.abs(bonLama).toLocaleString('id-ID')}</span></div>`;
+            } else {
+                s += `<br>`;
+            }
+
             s += `<div class="struk-double-separator"></div>`;
             s += `<div class="struk-row struk-bold"><span>TOTAL TAGIHAN:</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
             
-            s += `<div class="struk-separator"></div>`;
-            
             if (trx.ongkir && trx.ongkir > 0) {
-                s += `<div class="struk-row">
-                        <span>Ongkir:</span>
+                s += `<div class="struk-row" style="font-size:12px; color:#555;">
+                        <span>&nbsp;&nbsp;-Ongkir:</span>
                         <span>Rp ${trx.ongkir.toLocaleString('id-ID')}</span>
                       </div>`;
             }
 
+            s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-row"><span>Bayar CASH:</span><span>Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-row"><span>Bayar TRF:</span><span>Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
@@ -501,16 +479,21 @@
             if (riwayatBayar && riwayatBayar.length > 0) {
                 s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
                 let riwayatSort = [...riwayatBayar].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+                
                 riwayatSort.forEach(p => {
-                    let detailBayar = "";
-                    if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: ${p.bayar_cash.toLocaleString('id-ID')} `;
-                    if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: ${p.bayar_transfer.toLocaleString('id-ID')}`;
                     let ket = p.keterangan ? `<div style="font-size:11px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
-                    let tglSplit = p.tanggal.split('-');
-                    let namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
-                    let tglIndoFormat = tglSplit.length === 3 ? `${tglSplit[2]} ${namaBulan[parseInt(tglSplit[1])-1]} ${tglSplit[0]}` : p.tanggal;
+                    let tglLabel = `&nbsp;&nbsp;${formatTanggalSingkat(p.tanggal)}`;
                     
-                    s += `<div class="struk-row"><span>&nbsp;&nbsp;${tglIndoFormat}</span><span>${detailBayar}</span></div>${ket}`;
+                    if ((p.bayar_cash || 0) > 0) {
+                        let barisKanan = `<span style="width:140px; display:flex; justify-content:space-between;"><span>CASH:</span><span>${p.bayar_cash.toLocaleString('id-ID')}</span></span>`;
+                        s += `<div class="struk-row"><span>${tglLabel}</span>${barisKanan}</div>`;
+                        tglLabel = `&nbsp;&nbsp;<span style="visibility:hidden;">${formatTanggalSingkat(p.tanggal)}</span>`; 
+                    }
+                    if ((p.bayar_transfer || 0) > 0) {
+                        let barisKanan = `<span style="width:140px; display:flex; justify-content:space-between;"><span>TRF:</span><span>${p.bayar_transfer.toLocaleString('id-ID')}</span></span>`;
+                        s += `<div class="struk-row"><span>${tglLabel}</span>${barisKanan}</div>`;
+                    }
+                    if (ket) s += ket;
                 });
                 s += `<div class="struk-separator"></div>`;
             }
@@ -519,18 +502,18 @@
             let labelSisa = "SISA BON:";
             let colorSisa = "#000";
 
-            if (sisaAkhir > 0) {
-                labelSisa = "SISA BON:";
-                colorSisa = "red";
-            } else if (sisaAkhir === 0) {
+            if (sisaAkhir === 0) {
                 labelSisa = "LUNAS:";
                 colorSisa = "green";
-            } else {
+            } else if (sisaAkhir < 0) {
                 labelSisa = "DEPOSIT:";
                 colorSisa = "green";
+            } else {
+                labelSisa = "SISA BON:";
+                colorSisa = "red";
             }
 
-            s += `<div class="struk-row struk-bold" style="font-size:14px; color:${colorSisa};"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-row struk-bold" style="font-size:18px; padding-top:4px; padding-bottom:4px; color:${colorSisa};"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
             
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
@@ -556,15 +539,20 @@
     }
 
     function generateESCPOS(trx, detail, riwayatBayar, charWidth) {
-        const [y, m, d] = trx.tanggal.split('-');
         const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
         const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
         const itemsRetur = detail.filter(i => i.tipe === 'Retur');
         const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
         let bonLama = trx.bon_lama || 0;
-        let labelBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
-        let sisaAkhir = trx.sisa_akhir || 0;
-        let labelSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+        
+        let sisaAkhir = Math.round(trx.sisa_akhir || 0);
+        let labelSisa = "SISA BON:";
+        
+        if (sisaAkhir === 0) {
+            labelSisa = "LUNAS:";
+        } else if (sisaAkhir < 0) {
+            labelSisa = "DEPOSIT:";
+        }
 
         let separator = "-".repeat(charWidth);
         let doubleSeparator = "=".repeat(charWidth);
@@ -574,9 +562,13 @@
         txt += "SBR PUTRA FOOD\nLembang, Bandung Barat\n";
         txt += "\x1B\x61\x00"; 
         txt += separator + "\n";
-        txt += padLR(`NO: ${trx.no_nota}`, `TGL: ${d}-${m}-${y}`, charWidth) + "\n";
+        txt += padLR(`NO: ${trx.no_nota}`, `TGL: ${formatTanggalSingkat(trx.tanggal)}`, charWidth) + "\n";
+        
         txt += "\x1B\x61\x01"; 
+        txt += "\x1D\x21\x01"; // double height ON
         txt += `${trx.nama_agen.toUpperCase()}\n`;
+        txt += "\x1D\x21\x00"; // double height OFF
+        
         txt += `DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]\n`;
         txt += "\x1B\x61\x00"; 
         txt += separator + "\n";
@@ -598,16 +590,21 @@
             txt += padLR("TOTAL RETUR:", `Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
         }
 
-        txt += "\n" + padLR(labelBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`, charWidth) + "\n";
+        if (bonLama !== 0) {
+            let labelBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
+            txt += "\n" + padLR(labelBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`, charWidth) + "\n";
+        } else {
+            txt += "\n";
+        }
+        
         txt += doubleSeparator + "\n";
         txt += padLR("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`, charWidth) + "\n";
         
-        txt += separator + "\n";
-
         if (trx.ongkir && trx.ongkir > 0) {
-            txt += padLR("Ongkir:", `Rp ${trx.ongkir.toLocaleString('id-ID')}`, charWidth) + "\n";
+            txt += padLR("  -Ongkir:", `Rp ${trx.ongkir.toLocaleString('id-ID')}`, charWidth) + "\n";
         }
 
+        txt += separator + "\n";
         txt += padLR("Bayar CASH:", `Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
         txt += padLR("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
         txt += separator + "\n";
@@ -615,22 +612,30 @@
         if (riwayatBayar && riwayatBayar.length > 0) {
             txt += "\nRIWAYAT CICILAN:\n";
             let riwayatSort = [...riwayatBayar].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+            
             riwayatSort.forEach(p => {
-                let detailBayar = "";
-                if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: ${p.bayar_cash.toLocaleString('id-ID')} `;
-                if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: ${p.bayar_transfer.toLocaleString('id-ID')}`;
+                let tglStr = `  ${formatTanggalSingkat(p.tanggal)}`;
                 
-                let tglSplit = p.tanggal.split('-');
-                let namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
-                let tglIndoFormat = tglSplit.length === 3 ? `${tglSplit[2]} ${namaBulan[parseInt(tglSplit[1])-1]} ${tglSplit[0]}` : p.tanggal;
+                if ((p.bayar_cash || 0) > 0) {
+                    let nomCash = p.bayar_cash.toLocaleString('id-ID').padStart(11, ' ');
+                    txt += padLR(tglStr, `CASH: ${nomCash}`, charWidth) + "\n";
+                    tglStr = " ".repeat(tglStr.length); 
+                }
                 
-                txt += padLR(`  ${tglIndoFormat}`, detailBayar, charWidth) + "\n";
+                if ((p.bayar_transfer || 0) > 0) {
+                    let nomTrf = p.bayar_transfer.toLocaleString('id-ID').padStart(11, ' ');
+                    txt += padLR(tglStr, `TRF:  ${nomTrf}`, charWidth) + "\n";
+                }
+                
                 if (p.keterangan) txt += `  (${p.keterangan})\n`;
             });
             txt += separator + "\n";
         }
 
+        txt += "\x1D\x21\x01"; 
         txt += padLR(labelSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += "\x1D\x21\x00"; 
+        
         txt += separator + "\n";
         txt += "\x1B\x61\x01"; 
         txt += "SBR PUTRA FOOD SYSTEM\n\n\n\n";
