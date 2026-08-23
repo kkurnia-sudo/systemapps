@@ -377,7 +377,7 @@
             <option value="transaksi">transaksi</option>
             <option value="transaksi_dp">transaksi_dp</option>
             <option value="transaksi_detail">transaksi_detail</option>
-            <option value="transaksi_detail_dp">transaksi_detail_dp</option>
+            <option value="transaksi_detaildp">transaksi_detaildp</option>
         </select>
     </div>
 
@@ -476,6 +476,13 @@
 
     const delay = ms => new Promise(res => setTimeout(res, ms));
 
+    // Fungsi Pembantu: Reset Bottom Sheet kembali ke mode normal
+    function resetBottomSheetUI() {
+        document.getElementById('btnConfirm').innerText = 'Lanjutkan';
+        document.getElementById('btnCancel').innerText = 'Batal';
+    }
+
+    // Fungsi Custom Bottom Sheet Confirm (Standar)
     function customConfirm(message, isWarning = false) {
         return new Promise((resolve) => {
             const overlay = document.getElementById('modalOverlay');
@@ -485,7 +492,8 @@
             const btnConfirm = document.getElementById('btnConfirm');
             const iconContainer = document.getElementById('sheetIcon');
 
-            msgEl.innerText = message;
+            resetBottomSheetUI(); // Pastikan teks tombol kembali normal
+            msgEl.innerText = message; // Set teks biasa
             
             if (isWarning) {
                 btnConfirm.className = 'btn btn-warning';
@@ -509,6 +517,67 @@
 
             const onConfirm = () => { closeSheet(); resolve(true); };
             const onCancel = () => { closeSheet(); resolve(false); };
+
+            const cleanup = () => {
+                btnConfirm.removeEventListener('click', onConfirm);
+                btnCancel.removeEventListener('click', onCancel);
+                overlay.removeEventListener('click', onCancel);
+            };
+
+            btnConfirm.addEventListener('click', onConfirm);
+            btnCancel.addEventListener('click', onCancel);
+            overlay.addEventListener('click', onCancel);
+        });
+    }
+	
+	// FUNGSI BARU: Pop-up Pemilih Tabel untuk Master Backup
+    function customTableSelector(tables) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('modalOverlay');
+            const sheet = document.getElementById('bottomSheet');
+            const msgEl = document.getElementById('sheetMessage');
+            const btnCancel = document.getElementById('btnCancel');
+            const btnConfirm = document.getElementById('btnConfirm');
+            const iconContainer = document.getElementById('sheetIcon');
+
+            // Setel tampilan khusus untuk pemilihan tabel
+            document.querySelector('.sheet-title').innerText = 'Pilih Tabel Restore';
+            iconContainer.className = 'sheet-icon info';
+            iconContainer.innerHTML = '<i data-feather="check-square"></i>';
+
+            // Buat daftar checkbox HTML untuk setiap tabel
+            let html = '<p style="margin-bottom:12px; font-size:0.9rem; color:var(--text-muted);">Centang tabel yang ingin dipulihkan:</p>';
+            html += '<div style="max-height: 220px; overflow-y: auto; text-align: left; margin-bottom: 20px; padding-right: 4px;">';
+            tables.forEach(table => {
+                html += `<label style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-color); font-weight: 500; cursor: pointer; color: var(--text-main);">
+                    <input type="checkbox" value="${table}" checked style="width: 20px; height: 20px; accent-color: var(--accent-blue);"> ${table}
+                </label>`;
+            });
+            html += '</div>';
+
+            msgEl.innerHTML = html; // Masukkan elemen checkbox ke dalam pesan
+            btnConfirm.className = 'btn btn-primary';
+            btnConfirm.innerText = 'Restore Terpilih';
+            btnCancel.innerText = 'Batal';
+
+            feather.replace();
+            overlay.classList.add('active');
+            sheet.classList.add('active');
+
+            const closeSheet = (selectedTables) => {
+                overlay.classList.remove('active');
+                sheet.classList.remove('active');
+                document.querySelector('.sheet-title').innerText = 'Konfirmasi'; // Kembalikan judul default
+                cleanup();
+                resolve(selectedTables);
+            };
+
+            const onConfirm = () => {
+                const checkboxes = sheet.querySelectorAll('input[type="checkbox"]:checked');
+                const selected = Array.from(checkboxes).map(cb => cb.value);
+                closeSheet(selected);
+            };
+            const onCancel = () => closeSheet(null);
 
             const cleanup = () => {
                 btnConfirm.removeEventListener('click', onConfirm);
@@ -558,16 +627,17 @@
                 triggerDownload(JSON.stringify(data, null, 2), `Backup_${selectedValue}_${dateStr}.json`);
             }
 
-            // SIMPAN SALINAN KE TABEL SUPABASE (system_backups)
+            // SIMPAN SALINAN KE TABEL SUPABASE DENGAN WAKTU DEVICE
             log('Menyimpan salinan backup ke Supabase...');
-            const { error: insertError } = await supabaseClient
-                .from('system_backups')
-                .insert([
-                    {
-                        backup_type: selectedValue,
-                        data_payload: payloadToSave
-                    }
-                ]);
+					const { error: insertError } = await supabaseClient
+				.from('system_backups')
+				.insert([
+					{
+						backup_type: selectedValue,
+						data_payload: payloadToSave,
+						created_at: new Date().toISOString() // <-- Mengambil waktu langsung dari device Anda
+					}
+				]);
 
             if (insertError) {
                 log(`✓ File ter-download, tapi gagal simpan ke cloud: ${insertError.message}`, true);
@@ -580,7 +650,8 @@
         }
     }
 
-    // FUNGSI BACKUP & HAPUS / ARCHIVE (Diperbarui dengan fitur simpan ke Supabase)
+    // FUNGSI BACKUP & HAPUS (Diperbarui: Otomatis simpan ke system_backups + Download Lokal)
+    // FUNGSI BACKUP & HAPUS (Diperbaiki)
     async function backupAndClearData() {
         const tableSelect = document.getElementById('tableSelect');
         const selectedValue = tableSelect.value;
@@ -617,23 +688,28 @@
                 triggerDownload(JSON.stringify(data, null, 2), `Archive_${selectedValue}_${dateStr}.json`);
             }
 
-            // SIMPAN SALINAN KE TABEL SUPABASE SEBELUM DIHAPUS
-            log('Mengamankan salinan ke tabel cloud Supabase...');
+            // PERBAIKAN: Menggunakan dataToBackup, bukan payloadToSave
+            log('Menyimpan salinan ke tabel cloud Supabase...');
             const { error: insertError } = await supabaseClient
                 .from('system_backups')
                 .insert([
                     {
-                        backup_type: `archive_${selectedValue}`,
-                        data_payload: dataToBackup
+                        backup_type: selectedValue === 'semua' ? 'semua' : selectedValue,
+                        data_payload: dataToBackup,
+                        created_at: new Date().toISOString()
                     }
                 ]);
 
             if (insertError) {
-                log(`✗ Peringatan: Gagal menyimpan backup cloud: ${insertError.message}`, true);
+                log(`✗ Gagal simpan ke cloud: ${insertError.message}`, true);
+            } else {
+                log(`✓ File ter-download & salinan cloud tersimpan.`);
             }
 
+            // Jeda halus 1.5 detik
             await delay(1500);
 
+            // Memanggil Custom Confirm Lapis 2
             const finalConfirm = await customConfirm(`File JSON sudah di-download & dicadangkan di cloud! Lanjutkan MENGHAPUS data asli dari database?`, true);
                 
             if (finalConfirm) {
@@ -653,7 +729,7 @@
                         }
                     }
                 }
-                log(`✓ Proses Archive Selesai! Data aman di cloud & HP.`);
+                log(`✓ Proses Selesai! Data aman di cloud & HP, database kembali ringkas.`);
             } else {
                 log('Penghapusan dibatalkan. Data tetap utuh di database.');
             }
@@ -662,75 +738,7 @@
             log(`✗ Gagal memproses data: ${err.message}`, true);
         }
     }
-
-    async function backupAndClearData() {
-        const tableSelect = document.getElementById('tableSelect');
-        const selectedValue = tableSelect.value;
-        const dateStr = new Date().toISOString().split('T')[0];
-
-        const msg1 = `BAHAYA: Anda akan mem-backup sekaligus MENGHAPUS SEMUA DATA di ${selectedValue === 'semua' ? 'SEMUA TABEL' : 'tabel ' + selectedValue}. Lanjutkan?`;
-        const isConfirmed = await customConfirm(msg1, true);
-        
-        if (!isConfirmed) return;
-
-        try {
-            let tablesToProcess = [];
-            let dataToBackup = {};
-
-            if (selectedValue === 'semua') {
-                tablesToProcess = Array.from(tableSelect.options).map(opt => opt.value).filter(val => val !== 'semua');
-                log('Mengumpulkan data semua tabel...');
-                for (const table of tablesToProcess) {
-                    const { data, error } = await supabaseClient.from(table).select('*');
-                    if (error) throw error;
-                    dataToBackup[table] = data || [];
-                }
-                triggerDownload(JSON.stringify(dataToBackup, null, 2), `Master_Archive_${dateStr}.json`);
-            } else {
-                tablesToProcess = [selectedValue];
-                log(`Mengumpulkan data ${selectedValue}...`);
-                const { data, error } = await supabaseClient.from(selectedValue).select('*');
-                if (error) throw error;
-                if (!data || data.length === 0) {
-                    log(`Tabel ${selectedValue} kosong. Tidak ada yang dihapus.`, true);
-                    return;
-                }
-                dataToBackup[selectedValue] = data;
-                triggerDownload(JSON.stringify(data, null, 2), `Archive_${selectedValue}_${dateStr}.json`);
-            }
-
-            await delay(1500);
-
-            const finalConfirm = await customConfirm(`File JSON sudah di-download! Lanjutkan MENGHAPUS data dari database?`, true);
-                
-            if (finalConfirm) {
-                log('Memulai pembersihan data...');
-                for (const table of tablesToProcess) {
-                    const tableData = dataToBackup[table];
-                    if (tableData && tableData.length > 0) {
-                        const firstRow = tableData[0];
-                        const primaryKey = firstRow.id !== undefined ? 'id' : Object.keys(firstRow)[0];
-                        
-                        const { error } = await supabaseClient.from(table).delete().not(primaryKey, 'is', null);
-                        
-                        if (error) {
-                            log(`✗ Gagal menghapus tabel ${table}: ${error.message}`, true);
-                        } else {
-                            log(`✓ Data di tabel ${table} berhasil dikosongkan.`);
-                        }
-                    }
-                }
-                log(`✓ Proses Archive Selesai! Database kembali ringkas.`);
-            } else {
-                log('Penghapusan dibatalkan. Data tetap utuh di database.');
-            }
-
-        } catch (err) {
-            log(`✗ Gagal memproses data: ${err.message}`, true);
-        }
-    }
-
-    // Fungsi untuk mengganti tampilan input berdasarkan sumber restore
+        // Fungsi untuk mengganti tampilan input berdasarkan sumber restore
     function toggleRestoreSource() {
         const source = document.getElementById('restoreSource').value;
         const localGroup = document.getElementById('localFileGroup');
@@ -779,7 +787,7 @@
         }
     }
 
-    // FUNGSI RESTORE (Mendukung File Lokal & Cloud Supabase Sekaligus)
+    // FUNGSI RESTORE (Diperbarui dengan Fitur Pilih Tabel Master)
     async function restoreData() {
         const selectedValue = document.getElementById('tableSelect').value;
         const restoreSource = document.getElementById('restoreSource').value;
@@ -788,7 +796,6 @@
             let jsonData = null;
 
             if (restoreSource === 'local') {
-                // --- PROSES DARI FILE LOKAL ---
                 const fileInput = document.getElementById('fileRestore');
                 const file = fileInput.files[0];
                 if (!file) {
@@ -796,7 +803,6 @@
                     return;
                 }
 
-                // Baca file menggunakan Promise agar rapi
                 jsonData = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = e => {
@@ -808,7 +814,6 @@
                 });
 
             } else {
-                // --- PROSES DARI CLOUD SUPABASE ---
                 const backupId = document.getElementById('cloudBackupSelect').value;
                 if (!backupId) {
                     log('✗ Harap pilih salah satu riwayat backup cloud!', true);
@@ -828,10 +833,10 @@
                 jsonData = data.data_payload;
             }
 
-            // --- EKsekusi RESTORE KE TABEL SUPABASE ---
+            // EKSEKUSI RESTORE
             if (Array.isArray(jsonData)) {
                 if (selectedValue === 'semua') {
-                    log('✗ File/Data ini untuk 1 tabel, tapi di atas Anda memilih mode "SEMUA TABEL".', true);
+                    log('✗ File ini berisi 1 tabel saja, tapi mode "SEMUA TABEL" aktif.', true);
                     return;
                 }
                 log(`Proses restore ke tabel ${selectedValue}...`);
@@ -840,18 +845,29 @@
                 log(`✓ Restore selesai! Data dimasukkan ke tabel ${selectedValue}.`);
 
             } else if (typeof jsonData === 'object') {
-                log(`Master Backup terdeteksi. Memulai restore masal...`);
+                log(`Master Backup terdeteksi. Membuka pilihan tabel...`);
                 const tablesInFile = Object.keys(jsonData);
                 
-                for (const table of tablesInFile) {
+                // MUNCULKAN POP-UP CENTANG TABEL
+                const selectedTables = await customTableSelector(tablesInFile);
+                
+                if (!selectedTables || selectedTables.length === 0) {
+                    log('Restore dibatalkan atau tidak ada tabel yang dicentang.', true);
+                    return;
+                }
+
+                log(`Memulai pemulihan untuk ${selectedTables.length} tabel terpilih...`);
+                for (const table of selectedTables) {
                     const tableData = jsonData[table];
                     if (tableData && tableData.length > 0) {
                         const { error } = await supabaseClient.from(table).upsert(tableData);
                         if (error) throw error;
-                        log(`Tabel ${table} berhasil dipulihkan.`);
+                        log(`✓ Tabel ${table} berhasil dipulihkan.`);
+                    } else {
+                        log(`- Tabel ${table} kosong di data backup, dilewati.`);
                     }
                 }
-                log(`✓ Semua tabel berhasil di-restore dari cadangan!`);
+                log(`✓ Semua tabel terpilih berhasil di-restore!`);
             }
 
         } catch (err) {
