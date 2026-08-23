@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DB Manager</title>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+	<!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #f4f4f5;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #2563eb;
+            --btn-dark: #0f172a;
+            --btn-dark-hover: #334155;
+            --btn-light: #f1f5f9;
+            --btn-light-hover: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 480px;
+            border-radius: 24px;
+            padding: 32px 24px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+            margin-top: 20px;
+        }
+		
+		/* Wadah Header utama diatur ke bawah secara vertikal */
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+		
+        /* Pengaturan 3 Ikon Header Sejajar */
+        .header-icons {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 16px; /* Jarak antar ikon */
+            margin-bottom: 12px;
+        }
+        
+        .header-icons i {
+            color: var(--accent-blue);
+            font-size: 32px; /* Ukuran besar ikon */
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle-text {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 8px 0 0 0;
+        }
+		
+		/* Pengaturan Side-by-Side dengan lebar tidak simetris */
+        .restore-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .restore-row .source-col {
+            flex: 0 0 32%; /* Kolom sumber diperkecil */
+            margin-bottom: 0;
+        }
+        .restore-row .target-col {
+            flex: 1; /* Kolom pilihan file/riwayat mengambil sisa ruang yang luas */
+            margin-bottom: 0;
+        }
+        .restore-row label {
+            font-size: 0.75rem; 
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background-color: #ecfdf5;
+            color: #059669;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            margin-top: 16px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select, input[type="file"] {
+            width: 100%;
+            padding: 14px 16px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 16px;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            appearance: none;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px top 50%;
+            background-size: 12px auto;
+        }
+
+        /* Mempercantik tombol "Choose File" di dalamnya */
+        input[type="file"]::file-selector-button {
+            background-color: var(--btn-light);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-weight: 600;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        input[type="file"]::file-selector-button {
+            background-color: var(--btn-light);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-weight: 600;
+            margin-right: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .btn:active { transform: scale(0.98); }
+        .btn i { width: 20px; height: 20px; }
+
+        .btn-primary { background-color: var(--btn-dark); color: white; margin-top: 12px;}
+        .btn-primary:hover { background-color: var(--btn-dark-hover); }
+
+        .btn-secondary { background-color: var(--accent-blue); color: white; margin-top: 12px; }
+        .btn-secondary:hover { background-color: var(--accent-blue-hover); }
+
+        .btn-warning { background-color: #f59e0b; color: white; margin-top: 12px; }
+        .btn-warning:hover { background-color: #d97706; }
+
+        .btn-light { background-color: var(--btn-light); color: var(--text-main); margin-top: 0 !important; }
+        .btn-light:hover { background-color: var(--btn-light-hover); }
+
+        .divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 32px 0;
+            position: relative;
+        }
+
+        .divider span {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-bg);
+            padding: 0 16px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }        
+
+        .log-area {
+            margin-top: 24px;
+            padding: 16px;
+            background: #f8fafc;
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            min-height: 40px;
+            font-family: monospace;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .success-text { color: #10b981; font-weight: 600; }
+        .error-text { color: #ef4444; font-weight: 600; }
+
+        /* Struktur Bottom Sheet & Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(2px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: var(--card-bg);
+            border-radius: 24px 24px 0 0;
+            padding: 24px 24px 32px 24px;
+            box-sizing: border-box;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1001;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
+        .bottom-sheet.active { transform: translateY(0); }
+        
+        .sheet-handle {
+            width: 40px; height: 5px;
+            background-color: var(--border-color);
+            border-radius: 10px;
+            margin: 0 auto 20px auto;
+        }
+        
+        /* Struktur Bottom Sheet Rata Tengah & Ikon di Atas */
+        .sheet-header {
+            display: flex;
+            flex-direction: column; /* Membuat isi ke bawah (ikon di atas teks) */
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .sheet-title {
+            margin: 0 !important;
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .sheet-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;  /* Ukuran diperbesar */
+            height: 64px; /* Ukuran diperbesar */
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Mengatur ukuran SVG Feather Icon di dalam wadah agar ikut besar */
+        .sheet-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .sheet-icon.warning { background-color: #fef3c7; color: #d97706; }
+        .sheet-icon.info { background-color: #e0f2fe; color: #2563eb; }
+        
+        .sheet-message {
+            margin: 0 0 24px 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            text-align: center; /* Teks pesan rata tengah */
+        }
+        .sheet-actions { display: flex; gap: 12px; }
+        .sheet-actions .btn { flex: 1; margin-top: 0; }
+    </style>
+</head>
+<body>
+
+<!-- WADAH UTAMA APLIKASI -->
+<div class="app-container">
+	<div class="header">
+		<!-- 3 Ikon Sejajar -->
+        <div class="header-icons">
+            <i class="fa-solid fa-file-shield"></i>
+            <i class="fa-solid fa-server"></i>
+            <i class="fa-solid fa-database"></i>
+        </div>
+		
+        <!-- Teks Turun ke Bawah (Terpisah Baris) -->
+        <h2>Data Manager</h2>
+        <p class="subtitle-text">Sbr Systems</p>
+        <div class="status-badge">
+            <span class="pulse-dot"></span>
+            Sistem Online
+        </div>
+    </div>
+
+    <!-- AREA BACKUP -->
+    <div class="input-group">
+        <label for="tableSelect">Pilih Tabel Sumber</label>
+        <select id="tableSelect">
+            <option value="semua">📚 (Master Backup) SEMUA TABEL</option>
+            <option value="agen">agen</option>
+            <option value="barang">barang</option>
+            <option value="harga">harga</option>
+            <option value="rekap_laporan_driver">rekap_laporan_driver</option>
+            <option value="transaksi">transaksi</option>
+            <option value="transaksi_dp">transaksi_dp</option>
+            <option value="transaksi_detail">transaksi_detail</option>
+            <option value="transaksi_detail_dp">transaksi_detail_dp</option>
+        </select>
+    </div>
+
+    <button class="btn btn-primary" onclick="backupData()">
+        <i data-feather="download-cloud"></i> Backup ke JSON
+    </button>
+
+    <button class="btn btn-warning" onclick="backupAndClearData()">
+        <i data-feather="archive"></i> Backup & Kosongkan Data
+    </button>
+
+    <div class="divider">
+        <span>R E S T O R E</span>
+    </div>
+	
+    <!-- AREA RESTORE SIDE-BY-SIDE -->
+    <div class="restore-row">
+        <!-- Kolom Kiri: Sumber Restore -->
+        <div class="input-group source-col">
+            <label for="restoreSource">Sumber</label>
+            <select id="restoreSource" onchange="toggleRestoreSource()">
+                <option value="local">📁 Perangkat</option>
+                <option value="cloud">☁️ Cloud</option>
+            </select>
+        </div>
+
+        <!-- Kolom Kanan: Pilihan File Lokal (Lebih Luas) -->
+        <div class="input-group target-col" id="localFileGroup">
+            <label for="fileRestore">File JSON</label>
+            <input type="file" id="fileRestore" accept=".json">
+        </div>
+
+        <!-- Kolom Kanan: Pilihan Riwayat Cloud (Lebih Luas) -->
+        <div class="input-group target-col" id="cloudBackupGroup" style="display: none;">
+            <label for="cloudBackupSelect">Riwayat Cloud</label>
+            <select id="cloudBackupSelect">
+                <option value="">-- Pilih --</option>
+            </select>
+        </div>
+    </div>
+
+    <button class="btn btn-secondary" onclick="restoreData()">
+        <i data-feather="upload-cloud"></i> Jalankan Restore Data
+    </button>
+
+    <!-- AREA LOG/STATUS -->
+    <div class="log-area" id="logArea">
+        <span style="color: var(--text-muted)">// Menunggu instruksi...</span>
+    </div>
+</div> 
+<!-- AKHIR WADAH UTAMA -->
+
+<!-- WADAH BOTTOM SHEET -->
+<div id="modalOverlay" class="modal-overlay"></div>
+<div id="bottomSheet" class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    
+    <!-- Header dengan Ikon di Atas & Rata Tengah -->
+    <div class="sheet-header">
+        <div id="sheetIcon" class="sheet-icon"></div>
+        <h3 class="sheet-title">Konfirmasi</h3>
+    </div>
+
+    <p class="sheet-message" id="sheetMessage">Pesan konfirmasi di sini...</p>
+    <div class="sheet-actions">
+        <button class="btn btn-light" id="btnCancel">Batal</button>
+        <button class="btn btn-warning" id="btnConfirm">Lanjutkan</button>
+    </div>
+</div>
+
+<script>
+    // Render Feather Icons
+    feather.replace();
+
+    // KREDENSIAL SUPABASE
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs"; 
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const logArea = document.getElementById('logArea');
+
+    function log(message, isError = false) {
+        const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+        logArea.innerHTML = `<span class="${isError ? 'error-text' : 'success-text'}">[${time}] ${message}</span>`;
+    }
+
+    function triggerDownload(content, filename) {
+        const blob = new Blob([content], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    function customConfirm(message, isWarning = false) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('modalOverlay');
+            const sheet = document.getElementById('bottomSheet');
+            const msgEl = document.getElementById('sheetMessage');
+            const btnCancel = document.getElementById('btnCancel');
+            const btnConfirm = document.getElementById('btnConfirm');
+            const iconContainer = document.getElementById('sheetIcon');
+
+            msgEl.innerText = message;
+            
+            if (isWarning) {
+                btnConfirm.className = 'btn btn-warning';
+                iconContainer.className = 'sheet-icon warning';
+                iconContainer.innerHTML = '<i data-feather="alert-triangle"></i>';
+            } else {
+                btnConfirm.className = 'btn btn-primary';
+                iconContainer.className = 'sheet-icon info';
+                iconContainer.innerHTML = '<i data-feather="info"></i>';
+            }
+            
+            feather.replace();
+            overlay.classList.add('active');
+            sheet.classList.add('active');
+
+            const closeSheet = () => {
+                overlay.classList.remove('active');
+                sheet.classList.remove('active');
+                cleanup();
+            };
+
+            const onConfirm = () => { closeSheet(); resolve(true); };
+            const onCancel = () => { closeSheet(); resolve(false); };
+
+            const cleanup = () => {
+                btnConfirm.removeEventListener('click', onConfirm);
+                btnCancel.removeEventListener('click', onCancel);
+                overlay.removeEventListener('click', onCancel);
+            };
+
+            btnConfirm.addEventListener('click', onConfirm);
+            btnCancel.addEventListener('click', onCancel);
+            overlay.addEventListener('click', onCancel);
+        });
+    }
+
+    // FUNGSI BACKUP (Diperbarui: Download lokal + Simpan ke Supabase)
+    async function backupData() {
+        const tableSelect = document.getElementById('tableSelect');
+        const selectedValue = tableSelect.value;
+        const dateStr = new Date().toISOString().split('T')[0];
+
+        try {
+            let payloadToSave = null;
+
+            if (selectedValue === 'semua') {
+                log('Mengambil data dari SEMUA tabel...');
+                let allData = {};
+                const tables = Array.from(tableSelect.options).map(opt => opt.value).filter(val => val !== 'semua');
+
+                for (const table of tables) {
+                    const { data, error } = await supabaseClient.from(table).select('*');
+                    if (error) throw error;
+                    allData[table] = data || [];
+                }
+
+                payloadToSave = allData;
+                triggerDownload(JSON.stringify(allData, null, 2), `Master_Backup_${dateStr}.json`);
+            } else {
+                log(`Memulai backup ${selectedValue}...`);
+                const { data, error } = await supabaseClient.from(selectedValue).select('*');
+                
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    log(`Tabel ${selectedValue} kosong.`, true);
+                    return;
+                }
+
+                payloadToSave = data;
+                triggerDownload(JSON.stringify(data, null, 2), `Backup_${selectedValue}_${dateStr}.json`);
+            }
+
+            // SIMPAN SALINAN KE TABEL SUPABASE (system_backups)
+            log('Menyimpan salinan backup ke Supabase...');
+            const { error: insertError } = await supabaseClient
+                .from('system_backups')
+                .insert([
+                    {
+                        backup_type: selectedValue,
+                        data_payload: payloadToSave
+                    }
+                ]);
+
+            if (insertError) {
+                log(`✓ File ter-download, tapi gagal simpan ke cloud: ${insertError.message}`, true);
+            } else {
+                log(`✓ Berhasil! File ter-download & tersimpan aman di Supabase.`);
+            }
+
+        } catch (err) {
+            log(`✗ Gagal backup: ${err.message}`, true);
+        }
+    }
+
+    // FUNGSI BACKUP & HAPUS / ARCHIVE (Diperbarui dengan fitur simpan ke Supabase)
+    async function backupAndClearData() {
+        const tableSelect = document.getElementById('tableSelect');
+        const selectedValue = tableSelect.value;
+        const dateStr = new Date().toISOString().split('T')[0];
+
+        const msg1 = `BAHAYA: Anda akan mem-backup sekaligus MENGHAPUS SEMUA DATA di ${selectedValue === 'semua' ? 'SEMUA TABEL' : 'tabel ' + selectedValue}. Lanjutkan?`;
+        const isConfirmed = await customConfirm(msg1, true);
+        
+        if (!isConfirmed) return;
+
+        try {
+            let tablesToProcess = [];
+            let dataToBackup = {};
+
+            if (selectedValue === 'semua') {
+                tablesToProcess = Array.from(tableSelect.options).map(opt => opt.value).filter(val => val !== 'semua');
+                log('Mengumpulkan data semua tabel...');
+                for (const table of tablesToProcess) {
+                    const { data, error } = await supabaseClient.from(table).select('*');
+                    if (error) throw error;
+                    dataToBackup[table] = data || [];
+                }
+                triggerDownload(JSON.stringify(dataToBackup, null, 2), `Master_Archive_${dateStr}.json`);
+            } else {
+                tablesToProcess = [selectedValue];
+                log(`Mengumpulkan data ${selectedValue}...`);
+                const { data, error } = await supabaseClient.from(selectedValue).select('*');
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    log(`Tabel ${selectedValue} kosong. Tidak ada yang dihapus.`, true);
+                    return;
+                }
+                dataToBackup[selectedValue] = data;
+                triggerDownload(JSON.stringify(data, null, 2), `Archive_${selectedValue}_${dateStr}.json`);
+            }
+
+            // SIMPAN SALINAN KE TABEL SUPABASE SEBELUM DIHAPUS
+            log('Mengamankan salinan ke tabel cloud Supabase...');
+            const { error: insertError } = await supabaseClient
+                .from('system_backups')
+                .insert([
+                    {
+                        backup_type: `archive_${selectedValue}`,
+                        data_payload: dataToBackup
+                    }
+                ]);
+
+            if (insertError) {
+                log(`✗ Peringatan: Gagal menyimpan backup cloud: ${insertError.message}`, true);
+            }
+
+            await delay(1500);
+
+            const finalConfirm = await customConfirm(`File JSON sudah di-download & dicadangkan di cloud! Lanjutkan MENGHAPUS data asli dari database?`, true);
+                
+            if (finalConfirm) {
+                log('Memulai pembersihan data...');
+                for (const table of tablesToProcess) {
+                    const tableData = dataToBackup[table];
+                    if (tableData && tableData.length > 0) {
+                        const firstRow = tableData[0];
+                        const primaryKey = firstRow.id !== undefined ? 'id' : Object.keys(firstRow)[0];
+                        
+                        const { error } = await supabaseClient.from(table).delete().not(primaryKey, 'is', null);
+                        
+                        if (error) {
+                            log(`✗ Gagal menghapus tabel ${table}: ${error.message}`, true);
+                        } else {
+                            log(`✓ Data di tabel ${table} berhasil dikosongkan.`);
+                        }
+                    }
+                }
+                log(`✓ Proses Archive Selesai! Data aman di cloud & HP.`);
+            } else {
+                log('Penghapusan dibatalkan. Data tetap utuh di database.');
+            }
+
+        } catch (err) {
+            log(`✗ Gagal memproses data: ${err.message}`, true);
+        }
+    }
+
+    async function backupAndClearData() {
+        const tableSelect = document.getElementById('tableSelect');
+        const selectedValue = tableSelect.value;
+        const dateStr = new Date().toISOString().split('T')[0];
+
+        const msg1 = `BAHAYA: Anda akan mem-backup sekaligus MENGHAPUS SEMUA DATA di ${selectedValue === 'semua' ? 'SEMUA TABEL' : 'tabel ' + selectedValue}. Lanjutkan?`;
+        const isConfirmed = await customConfirm(msg1, true);
+        
+        if (!isConfirmed) return;
+
+        try {
+            let tablesToProcess = [];
+            let dataToBackup = {};
+
+            if (selectedValue === 'semua') {
+                tablesToProcess = Array.from(tableSelect.options).map(opt => opt.value).filter(val => val !== 'semua');
+                log('Mengumpulkan data semua tabel...');
+                for (const table of tablesToProcess) {
+                    const { data, error } = await supabaseClient.from(table).select('*');
+                    if (error) throw error;
+                    dataToBackup[table] = data || [];
+                }
+                triggerDownload(JSON.stringify(dataToBackup, null, 2), `Master_Archive_${dateStr}.json`);
+            } else {
+                tablesToProcess = [selectedValue];
+                log(`Mengumpulkan data ${selectedValue}...`);
+                const { data, error } = await supabaseClient.from(selectedValue).select('*');
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    log(`Tabel ${selectedValue} kosong. Tidak ada yang dihapus.`, true);
+                    return;
+                }
+                dataToBackup[selectedValue] = data;
+                triggerDownload(JSON.stringify(data, null, 2), `Archive_${selectedValue}_${dateStr}.json`);
+            }
+
+            await delay(1500);
+
+            const finalConfirm = await customConfirm(`File JSON sudah di-download! Lanjutkan MENGHAPUS data dari database?`, true);
+                
+            if (finalConfirm) {
+                log('Memulai pembersihan data...');
+                for (const table of tablesToProcess) {
+                    const tableData = dataToBackup[table];
+                    if (tableData && tableData.length > 0) {
+                        const firstRow = tableData[0];
+                        const primaryKey = firstRow.id !== undefined ? 'id' : Object.keys(firstRow)[0];
+                        
+                        const { error } = await supabaseClient.from(table).delete().not(primaryKey, 'is', null);
+                        
+                        if (error) {
+                            log(`✗ Gagal menghapus tabel ${table}: ${error.message}`, true);
+                        } else {
+                            log(`✓ Data di tabel ${table} berhasil dikosongkan.`);
+                        }
+                    }
+                }
+                log(`✓ Proses Archive Selesai! Database kembali ringkas.`);
+            } else {
+                log('Penghapusan dibatalkan. Data tetap utuh di database.');
+            }
+
+        } catch (err) {
+            log(`✗ Gagal memproses data: ${err.message}`, true);
+        }
+    }
+
+    // Fungsi untuk mengganti tampilan input berdasarkan sumber restore
+    function toggleRestoreSource() {
+        const source = document.getElementById('restoreSource').value;
+        const localGroup = document.getElementById('localFileGroup');
+        const cloudGroup = document.getElementById('cloudBackupGroup');
+
+        if (source === 'local') {
+            localGroup.style.display = 'block';
+            cloudGroup.style.display = 'none';
+        } else {
+            localGroup.style.display = 'none';
+            cloudGroup.style.display = 'block';
+            fetchCloudBackups(); // Ambil data riwayat dari Supabase saat dipilih
+        }
+    }
+
+    // Fungsi untuk mengambil daftar riwayat backup dari tabel system_backups
+    async function fetchCloudBackups() {
+        const cloudSelect = document.getElementById('cloudBackupSelect');
+        cloudSelect.innerHTML = '<option value="">Memuat daftar dari cloud...</option>';
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('system_backups')
+                .select('id, backup_type, created_at')
+                .order('created_at', { ascending: false })
+                .limit(20); // Ambil 20 riwayat terakhir
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                cloudSelect.innerHTML = '<option value="">Tidak ada riwayat backup di cloud.</option>';
+                return;
+            }
+
+            cloudSelect.innerHTML = '<option value="">-- Pilih Waktu & Tipe Backup --</option>';
+            data.forEach(item => {
+                const dateFormatted = new Date(item.created_at).toLocaleString('id-ID');
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = `[${item.backup_type.toUpperCase()}] - ${dateFormatted}`;
+                cloudSelect.appendChild(option);
+            });
+        } catch (err) {
+            log(`✗ Gagal memuat riwayat cloud: ${err.message}`, true);
+            cloudSelect.innerHTML = '<option value="">Gagal memuat data cloud</option>';
+        }
+    }
+
+    // FUNGSI RESTORE (Mendukung File Lokal & Cloud Supabase Sekaligus)
+    async function restoreData() {
+        const selectedValue = document.getElementById('tableSelect').value;
+        const restoreSource = document.getElementById('restoreSource').value;
+
+        try {
+            let jsonData = null;
+
+            if (restoreSource === 'local') {
+                // --- PROSES DARI FILE LOKAL ---
+                const fileInput = document.getElementById('fileRestore');
+                const file = fileInput.files[0];
+                if (!file) {
+                    log('✗ Harap pilih file JSON terlebih dahulu!', true);
+                    return;
+                }
+
+                // Baca file menggunakan Promise agar rapi
+                jsonData = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        try { resolve(JSON.parse(e.target.result)); } 
+                        catch (err) { reject(new Error('Format file JSON tidak valid.')); }
+                    };
+                    reader.onerror = () => reject(new Error('Gagal membaca file perangkat.'));
+                    reader.readAsText(file);
+                });
+
+            } else {
+                // --- PROSES DARI CLOUD SUPABASE ---
+                const backupId = document.getElementById('cloudBackupSelect').value;
+                if (!backupId) {
+                    log('✗ Harap pilih salah satu riwayat backup cloud!', true);
+                    return;
+                }
+
+                log('Mengambil data backup dari server cloud...');
+                const { data, error } = await supabaseClient
+                    .from('system_backups')
+                    .select('data_payload')
+                    .eq('id', backupId)
+                    .single();
+
+                if (error) throw error;
+                if (!data) throw new Error('Data backup cloud tidak ditemukan.');
+
+                jsonData = data.data_payload;
+            }
+
+            // --- EKsekusi RESTORE KE TABEL SUPABASE ---
+            if (Array.isArray(jsonData)) {
+                if (selectedValue === 'semua') {
+                    log('✗ File/Data ini untuk 1 tabel, tapi di atas Anda memilih mode "SEMUA TABEL".', true);
+                    return;
+                }
+                log(`Proses restore ke tabel ${selectedValue}...`);
+                const { error } = await supabaseClient.from(selectedValue).upsert(jsonData);
+                if (error) throw error;
+                log(`✓ Restore selesai! Data dimasukkan ke tabel ${selectedValue}.`);
+
+            } else if (typeof jsonData === 'object') {
+                log(`Master Backup terdeteksi. Memulai restore masal...`);
+                const tablesInFile = Object.keys(jsonData);
+                
+                for (const table of tablesInFile) {
+                    const tableData = jsonData[table];
+                    if (tableData && tableData.length > 0) {
+                        const { error } = await supabaseClient.from(table).upsert(tableData);
+                        if (error) throw error;
+                        log(`Tabel ${table} berhasil dipulihkan.`);
+                    }
+                }
+                log(`✓ Semua tabel berhasil di-restore dari cadangan!`);
+            }
+
+        } catch (err) {
+            log(`✗ Gagal restore: ${err.message}`, true);
+        }
+    }
+</script>
+
+</body>
+</html>
