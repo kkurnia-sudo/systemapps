@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - Pembayaran Bon</title>
+    <title>SBR Putra Food - Pembayaran DP/Khusus</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -52,7 +52,7 @@
             position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.3s;
         }
         .brand { font-weight: 800; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
-        .brand span { color: var(--warning); }
+        .brand span { color: var(--success); }
         .header-actions { display: flex; gap: 8px; align-items: center; }
         .icon-btn { background: var(--bg-color); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text-main); cursor: pointer; transition: 0.2s; }
         .icon-btn.danger { color: var(--danger); background: #fef2f2; }
@@ -238,6 +238,7 @@
         listAgen = {};
 
         if (agen) {
+            // PERUBAHAN: Hanya mengambil agen dengan tipe 'KHUSUS'
             const agenKhusus = agen.filter(a => a.type_agen === 'KHUSUS');
             agenKhusus.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen)).forEach(a => {
                 const labelBon = a.saldo_bon > 0 ? " (!)" : "";
@@ -249,7 +250,7 @@
     }
 
     async function loadTabelRiwayat() {
-        const { data: riwayat } = await clientSupabase.from('pembayaran_bon2').select('*').order('id', { ascending: false }).limit(50);
+        const { data: riwayat } = await clientSupabase.from('pembayaran_bon').select('*').order('id', { ascending: false }).limit(50);
         const tbody = document.querySelector('#tabelRiwayatBayar tbody');
         tbody.innerHTML = '';
         if (riwayat) {
@@ -300,7 +301,7 @@
             document.getElementById('txtDriverKirim').innerText = "Memuat...";
             infoNotaBox.style.display = "block";
 
-            // PERUBAHAN: menggunakan tabel transaksi_dp
+            // PERUBAHAN: Tabel transaksi_dp
             const { data: trx } = await clientSupabase.from('transaksi_dp').select('no_nota, tanggal, driver_1, driver_2').eq('nama_agen', ag).order('created_at', { ascending: false }).limit(1);
 
             if (trx && trx.length > 0) {
@@ -310,9 +311,7 @@
                 document.getElementById('txtTglKirim').innerText = formatTanggalSingkat(t.tanggal) || '-';
                 document.getElementById('txtDriverKirim').innerText = drvGabung || '-';
             } else {
-                document.getElementById('txtNotaTerakhir').innerHTML = `<span style="font-size: 11px; color: var(--text-muted); font-style: italic;">Riwayat nota tidak ditemukan</span>`;
-                document.getElementById('txtTglKirim').innerText = '-';
-                document.getElementById('txtDriverKirim').innerText = '-';
+                infoNotaBox.style.display = "none";
             }
         } else {
             infoNotaBox.style.display = "none";
@@ -353,21 +352,20 @@
         const bonLama = listAgen[ag] || 0;
         const sisaAkhir = bonLama - cash - trf;
         
-        // PERUBAHAN: menggunakan tabel transaksi_dp
-        const { data: nota } = await clientSupabase.from('transaksi_dp')
+        // PERUBAHAN: Tabel transaksi_dp
+        const { data: semuaNota } = await clientSupabase.from('transaksi_dp')
             .select('no_nota, id')
             .eq('nama_agen', ag)
-            .order('created_at', { ascending: false })
-            .limit(1);
+            .order('created_at', { ascending: false });
             
-        const noNotaRef = (nota && nota.length > 0) ? nota[0].no_nota : "NON-NOTA";
+        const noNotaRef = (semuaNota && semuaNota.length > 0) ? semuaNota[0].no_nota : "NON-NOTA";
 
         const btn = document.getElementById('btnSimpan');
         btn.disabled = true;
         btn.innerText = "MEMPROSES...";
 
         try {
-            await clientSupabase.from('pembayaran_bon2').insert([{
+            await clientSupabase.from('pembayaran_bon').insert([{
                 no_kuitansi: "KWT-" + Date.now().toString().slice(-6),
                 no_nota_referensi: noNotaRef,
                 tanggal: document.getElementById('tglBayar').value,
@@ -381,8 +379,19 @@
 
             await clientSupabase.from('agen').update({ saldo_bon: sisaAkhir }).eq('nama_agen', ag);
             
-            // PERUBAHAN: menggunakan tabel transaksi_dp
-            if (nota && nota.length > 0) await clientSupabase.from('transaksi_dp').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
+            if (semuaNota && semuaNota.length > 0) {
+                // PERUBAHAN: Tabel transaksi_dp
+                await clientSupabase.from('transaksi_dp')
+                    .update({ sisa_akhir: sisaAkhir })
+                    .eq('id', semuaNota[0].id);
+                
+                for (let i = 1; i < semuaNota.length; i++) {
+                    // PERUBAHAN: Tabel transaksi_dp
+                    await clientSupabase.from('transaksi_dp')
+                        .update({ sisa_akhir: 0 })
+                        .eq('id', semuaNota[i].id);
+                }
+            }
 
             alert("✅ Sukses Melakukan Pembayaran! Nota Ref: " + noNotaRef);
             resetForm();
@@ -405,10 +414,10 @@
         document.getElementById('modalDetail').style.display = "block";
 
         try {
-            // PERUBAHAN: menggunakan tabel transaksi_dp dan transaksi_detaildp
+            // PERUBAHAN: Tabel transaksi_dp dan transaksi_detaildp
             const { data: trx } = await clientSupabase.from('transaksi_dp').select('*').eq('no_nota', noNota).single();
             const { data: detail } = await clientSupabase.from('transaksi_detaildp').select('*').eq('no_nota', noNota);
-            const { data: riwayatBayar } = await clientSupabase.from('pembayaran_bon2').select('tanggal, bayar_cash, bayar_transfer, keterangan').eq('no_nota_referensi', noNota);
+            const { data: riwayatBayar } = await clientSupabase.from('pembayaran_bon').select('tanggal, bayar_cash, bayar_transfer, keterangan').eq('no_nota_referensi', noNota);
 
             window.currentStrukData = { trx, detail, riwayatBayar };
 
