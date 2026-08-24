@@ -350,19 +350,20 @@
         const bonLama = listAgen[ag] || 0;
         const sisaAkhir = bonLama - cash - trf;
         
-        const { data: nota } = await clientSupabase.from('transaksi')
+        // Ambil semua histori nota untuk agen ini
+        const { data: semuaNota } = await clientSupabase.from('transaksi')
             .select('no_nota, id')
             .eq('nama_agen', ag)
-            .order('created_at', { ascending: false })
-            .limit(1);
+            .order('created_at', { ascending: false });
             
-        const noNotaRef = (nota && nota.length > 0) ? nota[0].no_nota : "NON-NOTA";
+        const noNotaRef = (semuaNota && semuaNota.length > 0) ? semuaNota[0].no_nota : "NON-NOTA";
 
         const btn = document.getElementById('btnSimpan');
         btn.disabled = true;
         btn.innerText = "MEMPROSES...";
 
         try {
+            // 1. Simpan ke riwayat pembayaran bon
             await clientSupabase.from('pembayaran_bon').insert([{
                 no_kuitansi: "KWT-" + Date.now().toString().slice(-6),
                 no_nota_referensi: noNotaRef,
@@ -375,8 +376,23 @@
                 keterangan: document.getElementById('inputKeterangan').value
             }]);
 
+            // 2. Update Master Agen
             await clientSupabase.from('agen').update({ saldo_bon: sisaAkhir }).eq('nama_agen', ag);
-            if (nota && nota.length > 0) await clientSupabase.from('transaksi').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
+            
+            // 3. --- PERBAIKAN: Update nota secara berurutan (Looping) ---
+            if (semuaNota && semuaNota.length > 0) {
+                // A. Update nota TERBARU (index 0) dengan sisa akhir kalkulasi yang benar
+                await clientSupabase.from('transaksi')
+                    .update({ sisa_akhir: sisaAkhir })
+                    .eq('id', semuaNota[0].id);
+                
+                // B. Nol-kan semua nota LAMA (index 1 dan seterusnya) satu per satu
+                for (let i = 1; i < semuaNota.length; i++) {
+                    await clientSupabase.from('transaksi')
+                        .update({ sisa_akhir: 0 })
+                        .eq('id', semuaNota[i].id);
+                }
+            }
 
             alert("✅ Sukses Melakukan Pembayaran! Nota Ref: " + noNotaRef);
             resetForm();
