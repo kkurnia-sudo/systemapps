@@ -756,7 +756,8 @@
                         if (error) log(`✗ Gagal menghapus tabel ${table}: ${error.message}`, true);
                         else log(`✓ Invoice lunas (sisa = 0) di tabel ${table} berhasil dibersihkan.`);
                     } 
-                    else if (table === 'transaksi_detail' || table === 'transaksi_detail_dp') {
+                    // PERBAIKAN: Menggunakan 'transaksi_detaildp' yang benar
+                    else if (table === 'transaksi_detail' || table === 'transaksi_detaildp') {
                         log(`✓ Tabel ${table} dibersihkan otomatis mengikuti tabel utama (Cascade).`);
                     } 
                     else if (table === 'agen' || table === 'barang' || table === 'harga') {
@@ -829,14 +830,14 @@
         }
     }
 
-    // FUNGSI RESTORE (Diperbarui dengan Auto-Target Tabel)
+    // FUNGSI RESTORE (Diperbarui dengan Urutan Hierarki Foreign Key)
     async function restoreData() {
         let selectedValue = document.getElementById('tableSelect').value;
         const restoreSource = document.getElementById('restoreSource').value;
 
         try {
             let jsonData = null;
-            let fileNameOrType = ''; // Menyimpan info nama file atau tipe backup
+            let fileNameOrType = ''; 
 
             if (restoreSource === 'local') {
                 const fileInput = document.getElementById('fileRestore');
@@ -846,7 +847,7 @@
                     return;
                 }
                 
-                fileNameOrType = file.name; // Ambil nama file dari handphone
+                fileNameOrType = file.name;
 
                 jsonData = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -867,7 +868,6 @@
 
                 log('Mengambil data backup dari server cloud...');
                 
-                // Ambil backup_type juga agar sistem tahu ini data tabel apa
                 const { data, error } = await supabaseClient
                     .from('system_backups')
                     .select('backup_type, data_payload')
@@ -881,14 +881,10 @@
                 fileNameOrType = data.backup_type; 
             }
 
-            // EKSEKUSI RESTORE
             if (Array.isArray(jsonData)) {
-                // AUTO-DETECT TABEL: 
-                // Sistem membaca nama file atau tipe cloud untuk mencari nama tabel yang benar
                 let targetTable = selectedValue;
                 
                 if (restoreSource === 'local') {
-                    // Mendeteksi kata setelah Backup_ atau Archive_
                     const match = fileNameOrType.match(/(?:Backup|Archive|Master)_([a-zA-Z0-9_]+)_\d{4}-\d{2}-\d{2}/);
                     if (match && match[1] && match[1] !== 'semua' && match[1] !== 'all' && match[1] !== 'Archive') {
                         targetTable = match[1];
@@ -904,22 +900,20 @@
                     return;
                 }
 
-                // Ubah tampilan dropdown di layar secara otomatis agar sinkron
                 const tableSelectDropdown = document.getElementById('tableSelect');
                 if([...tableSelectDropdown.options].some(opt => opt.value === targetTable)) {
                     tableSelectDropdown.value = targetTable;
                 }
 
-                log(`Mendeteksi file... Memulai restore otomatis ke tabel: ${targetTable}...`);
+                log(`Mendeteksi file... Memulai restore ke tabel: ${targetTable}...`);
                 const { error } = await supabaseClient.from(targetTable).upsert(jsonData);
                 if (error) throw error;
                 log(`✓ Restore selesai! Data dimasukkan ke tabel ${targetTable}.`);
 
             } else if (typeof jsonData === 'object') {
                 log(`Master Backup terdeteksi. Membuka pilihan tabel...`);
-				// Di dalam blok Array.isArray(jsonData) yang false (typeof == 'object')
                 const tablesInFile = Object.keys(jsonData);
-                // MUNCULKAN POP-UP CENTANG TABEL DENGAN TEKS KHUSUS RESTORE
+                
                 const selectedTables = await customTableSelector(tablesInFile, 'Pilih Tabel Restore', 'Centang tabel yang ingin dipulihkan:', 'Restore Terpilih');
                 
                 if (!selectedTables || selectedTables.length === 0) {
@@ -927,7 +921,28 @@
                     return;
                 }
 
-                log(`Memulai pemulihan untuk ${selectedTables.length} tabel terpilih...`);
+                // ==========================================
+                // PERBAIKAN: MENGURUTKAN TABEL SESUAI HIERARKI
+                // ==========================================
+                const urutanTabel = {
+                    'agen': 1,
+                    'barang': 2,
+                    'harga': 3,
+                    'transaksi': 4,
+                    'transaksi_dp': 5,
+                    'rekap_laporan_driver': 6,
+                    'transaksi_detail': 7,
+                    'transaksi_detaildp': 8
+                };
+
+                selectedTables.sort((a, b) => {
+                    const prioritasA = urutanTabel[a] || 99; // Tabel yang tidak ada di list ditaruh di akhir
+                    const prioritasB = urutanTabel[b] || 99;
+                    return prioritasA - prioritasB;
+                });
+                // ==========================================
+
+                log(`Memulai pemulihan berurutan untuk ${selectedTables.length} tabel...`);
                 for (const table of selectedTables) {
                     const tableData = jsonData[table];
                     if (tableData && tableData.length > 0) {
