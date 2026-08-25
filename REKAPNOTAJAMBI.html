@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Nota - SBR Putra Food (Cabang Jambi)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        
+        .tab-active { background-color: #ffffff; color: #f97316; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); font-weight: 600; }
+        .tab-inactive { color: #64748b; font-weight: 500; }
+        .tab-inactive:hover { color: #f97316; background-color: #ffffff80; }
+        .hide { display: none !important; }
+        
+        input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+        
+        ::-webkit-scrollbar { height: 6px; width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .modal-enter { opacity: 1; transform: scale(1); pointer-events: auto; }
+        .modal-leave { opacity: 0; transform: scale(0.95); pointer-events: none; }
+    </style>
+</head>
+<body class="antialiased selection:bg-orange-200 selection:text-orange-900">
+
+    <!-- Navbar -->
+    <nav class="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-orange-500/30">
+                    <i class="fas fa-store text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg md:text-xl text-slate-800 leading-tight tracking-tight">SBR Putra Food</h1>
+                    <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Rekap Nota - Jambi</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <!-- Tombol Shortcut Bayar Cepat di Navbar -->
+                <button onclick="openNavbarQuickPay()" class="w-9 h-9 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Bayar Cepat Shortcut">
+                    <i class="fas fa-hand-holding-usd text-xs"></i>
+                </button>
+
+                <div class="flex items-center gap-2.5 bg-slate-50 px-3.5 py-2 rounded-full border border-slate-200 shadow-sm">
+                    <div id="conn-indicator" class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500"></span>
+                    </div>
+                    <span id="conn-text" class="text-xs font-semibold text-slate-600">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto p-4 mt-4">
+        
+        <!-- Tab Navigation -->
+        <div class="flex p-1.5 mb-6 bg-slate-200/60 rounded-2xl overflow-x-auto w-fit border border-slate-200/50 shadow-inner">
+            <button onclick="switchTab('form')" id="tab-form" class="py-2.5 px-6 rounded-xl text-sm transition-all duration-200 tab-active flex items-center gap-2 whitespace-nowrap">
+                <i class="fas fa-file-invoice"></i> Buat / Edit Nota
+            </button>
+            <button onclick="switchTab('master')" id="tab-master" class="py-2.5 px-6 rounded-xl text-sm transition-all duration-200 tab-inactive flex items-center gap-2 whitespace-nowrap">
+                <i class="fas fa-box"></i> Data Barang
+            </button>
+            <button onclick="switchTab('history')" id="tab-history" class="py-2.5 px-6 rounded-xl text-sm transition-all duration-200 tab-inactive flex items-center gap-2 whitespace-nowrap">
+                <i class="fas fa-database"></i> Riwayat Database
+            </button>
+        </div>
+
+        <!-- Section: Buat / Edit Nota -->
+        <div id="section-form" class="animate-fade-in">
+            <div id="editModeBadge" class="bg-gradient-to-r from-orange-400 to-orange-600 animate-pulse text-white text-xs font-bold text-center py-2.5 mb-4 tracking-widest uppercase rounded-xl shadow-md hide flex items-center justify-center gap-2">
+                <i class="fas fa-pen"></i> Mode Edit Data Aktif
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- PANEL KIRI -->
+                <div class="lg:w-2/3 flex flex-col gap-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Kepada Yth. (Pelanggan)</label>
+                                <input type="text" id="customerName" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all shadow-inner" value="Bos Agus Jambi">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Tanggal Nota</label>
+                                <input type="date" id="invoiceDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all shadow-inner">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="font-bold text-lg text-slate-800">Daftar Barang</h2>
+                            <button onclick="addItemRow()" class="bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-orange-500 hover:text-white transition-colors duration-200 flex items-center gap-1.5 shadow-sm">
+                                <i class="fas fa-plus"></i> Tambah Baris
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto rounded-xl border border-slate-100 shadow-inner bg-slate-50/30">
+                            <table class="w-full text-left border-collapse min-w-[550px]">
+                                <thead>
+                                    <tr class="bg-slate-100/60 text-slate-500 text-[10px] uppercase tracking-wider font-bold border-b border-slate-200">
+                                        <th class="p-2 w-14 text-center">Qty</th>
+                                        <th class="p-2">Nama Barang</th>
+                                        <th class="p-2 w-16 text-center">Satuan</th>
+                                        <th class="p-2 w-28 text-right">Harga</th>
+                                        <th class="p-2 w-28 text-right">Jumlah</th>
+                                        <th class="p-2 w-16 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Catatan Pengiriman (Opsional)</label>
+                        <input type="text" id="shippingNote" placeholder="Cth: Muat Lembang" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-inner">
+                    </div>
+                </div>
+
+                <!-- PANEL KANAN -->
+                <div class="lg:w-1/3">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 sticky top-24">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                            <h2 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-file-invoice-dollar text-orange-500"></i> Ringkasan Nota
+                            </h2>
+                        </div>
+
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-slate-600 font-medium text-sm">Subtotal:</span>
+                            <span id="summaryGrandTotal" class="text-base font-bold text-slate-800 tracking-tight">Rp 0</span>
+                        </div>
+                        
+                        <div class="mb-4 pt-3 border-t border-slate-100">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Riwayat Pembayaran</span>
+                                <button onclick="addPaymentRow()" class="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 flex items-center gap-1">
+                                    <i class="fas fa-plus text-[10px]"></i> Tambah Bayar
+                                </button>
+                            </div>
+                            
+                            <div id="paymentsContainer" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1"></div>
+                            
+                            <div class="flex justify-between items-center mt-3 pt-2 border-t border-dashed border-slate-200 text-sm">
+                                <span class="text-slate-500 font-medium">Total Dibayar:</span>
+                                <span id="summaryTotalPaid" class="text-emerald-600 font-bold">- Rp 0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 rounded-2xl border transition-colors duration-300 mb-6" id="summaryRemainingContainer">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold uppercase tracking-wider mb-1" id="summaryRemainingLabel">SISA PIUTANG</span>
+                                <span id="summaryRemaining" class="text-2xl font-black tracking-tighter">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2.5">
+                            <button onclick="openPreview()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl shadow-md hover:bg-slate-700 transition-all flex items-center justify-center gap-2 text-sm">
+                                <i class="fas fa-eye text-slate-300"></i> Pratinjau Nota
+                            </button>
+                            
+                            <button id="btnSave" onclick="saveToSupabase()" class="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all text-sm flex items-center justify-center gap-2">
+                                <i class="fas fa-cloud-upload-alt"></i> Simpan ke Database
+                            </button>
+                            
+                            <button id="btnCancelEdit" onclick="resetFormToCreateMode()" class="w-full bg-white text-slate-600 border border-slate-300 font-bold py-2 rounded-xl shadow-sm hover:bg-slate-50 transition-all text-xs hide flex items-center justify-center gap-1.5">
+                                <i class="fas fa-times"></i> Batal Edit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Manajemen Data Barang -->
+        <div id="section-master" class="hide animate-fade-in">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 class="font-bold text-xl text-slate-800">Manajemen Data Barang</h2>
+                    <button onclick="openMasterModal()" class="bg-slate-800 text-white font-bold py-2 px-4 rounded-xl hover:bg-slate-700 transition-colors text-sm flex items-center gap-2 shadow-md">
+                        <i class="fas fa-plus"></i> Tambah Barang
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-left border-collapse"><tbody id="masterBody" class="text-sm"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Riwayat Nota Database -->
+        <div id="section-history" class="hide animate-fade-in">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="font-bold text-xl text-slate-800">Database Nota Live</h2>
+                    </div>
+                    <div class="bg-red-50 border border-red-100 px-4 py-2 rounded-xl flex items-center gap-3">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Piutang:</span>
+                        <span id="headerTotalUnpaidNotes" class="text-lg md:text-xl font-black text-red-600 leading-none">Rp 0 (0 Nota)</span>
+                    </div>
+                </div>
+                <div id="loadingData" class="text-center py-10 text-slate-400 hide"><i class="fas fa-circle-notch fa-spin text-2xl text-orange-400"></i></div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-slate-800 text-slate-100 text-[10px] uppercase tracking-wider font-bold">
+                                <th class="p-3">No. Invoice</th><th class="p-3">Tanggal</th><th class="p-3">Pelanggan</th><th class="p-3 text-right">Total</th><th class="p-3 text-right">Sisa Piutang</th><th class="p-3 text-center">Status</th><th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody" class="text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL AKSI DATABASE -->
+    <div id="modalAction" class="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 modal-leave">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs flex flex-col overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-xs tracking-tight" id="actionModalTitle">Aksi: </h3>
+                <button onclick="closeActionModal()" class="text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-xs"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-3 flex flex-col gap-2">
+                <button id="btnActionPreview" class="w-full text-left px-3.5 py-2.5 bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 font-bold rounded-xl transition-all shadow-sm flex items-center gap-2.5 text-xs">
+                    <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px]"><i class="fas fa-eye"></i></div> Lihat Pratinjau
+                </button>
+                <button id="btnActionQuickPay" class="w-full text-left px-3.5 py-2.5 bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 text-slate-700 font-bold rounded-xl transition-all shadow-sm flex items-center gap-2.5 text-xs">
+                    <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]"><i class="fas fa-hand-holding-usd"></i></div> Bayar Cepat
+                </button>
+                <button id="btnActionEdit" class="w-full text-left px-3.5 py-2.5 bg-white border border-slate-200 hover:border-orange-300 hover:bg-orange-50 text-slate-700 font-bold rounded-xl transition-all shadow-sm flex items-center gap-2.5 text-xs">
+                    <div class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[10px]"><i class="fas fa-edit"></i></div> Edit / Bayar Detail
+                </button>
+                <button id="btnActionDelete" class="w-full text-left px-3.5 py-2.5 bg-white border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-700 font-bold rounded-xl transition-all shadow-sm flex items-center gap-2.5 text-xs mt-0.5">
+                    <div class="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-[10px]"><i class="fas fa-trash-alt"></i></div> Hapus Nota
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BAYAR CEPAT (QUICK PAY) -->
+    <div id="modalQuickPay" class="fixed inset-0 z-[115] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 modal-leave">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
+            <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-sm" id="quickPayTitle">Bayar Cepat Invoice</h3>
+                <button onclick="closeQuickPayModal()" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 flex flex-col gap-4">
+                <div id="quickPaySelectContainer" class="hide">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pilih No. Invoice (Hutang)</label>
+                    <select id="quickPayInvoiceSelect" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Tanggal Pembayaran</label>
+                    <input type="date" id="quickPayDate" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nominal Bayar (Rp)</label>
+                    <input type="text" id="quickPayAmount" oninput="handleQuickPayInput(this)" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="0">
+                </div>
+            </div>
+            <div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
+                <button onclick="closeQuickPayModal()" class="px-5 py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-all">Batal</button>
+                <button id="btnSubmitQuickPay" onclick="submitQuickPay()" class="px-6 py-2.5 text-sm font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2">
+                    <i class="fas fa-check"></i> Simpan & Pratinjau
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH/EDIT DATA BARANG -->
+    <div id="modalMaster" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 modal-leave">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
+            <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800" id="modalMasterTitle">Tambah Barang Baru</h3>
+                <button onclick="closeMasterModal()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 flex flex-col gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Barang</label>
+                    <input type="text" id="newMasterName" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50" placeholder="Contoh: BASRENG KIWARI">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Harga Standar (Rp)</label>
+                    <input type="number" id="newMasterPrice" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50" placeholder="0">
+                </div>
+            </div>
+            <div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
+                <button onclick="closeMasterModal()" class="px-5 py-2 text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-all">Batal</button>
+                <button id="btnSaveMaster" onclick="saveMasterItem()" class="px-6 py-2 text-sm font-bold bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-all shadow-md">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRATINJAU NOTA -->
+    <div id="modalPreview" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 modal-leave">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[95vh] flex flex-col">
+            <div class="p-4 md:px-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-3xl">
+                <h3 class="font-bold text-slate-700 flex items-center gap-2"><i class="fas fa-print text-slate-400"></i> Pratinjau Tampilan Nota</h3>
+                <button onclick="closePreview()" class="text-slate-400 hover:text-red-500 bg-white shadow-sm border border-slate-200 w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 md:p-8 overflow-y-auto flex-1 bg-white" id="invoicePaper"></div>
+            
+            <div class="p-4 md:px-6 border-t border-slate-100 bg-slate-50/50 rounded-b-3xl flex flex-wrap justify-between items-center gap-3">
+                 <button onclick="closePreview()" class="px-4 py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-100">Tutup</button>
+                 <div class="flex items-center gap-2.5">
+                     <button onclick="downloadInvoicePNG()" class="px-4 py-2.5 text-sm font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-600/20 flex items-center gap-1.5">
+                         <i class="fas fa-file-image"></i> Simpan PNG
+                     </button>
+                     <button id="btnPreviewSave" onclick="closePreview(); saveToSupabase();" class="px-5 py-2.5 text-sm font-bold bg-orange-500 text-white rounded-xl hover:bg-orange-600 shadow-md shadow-orange-500/20 flex items-center gap-1.5">
+                         <i class="fas fa-cloud-upload-alt"></i> Simpan ke Database
+                     </button>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://acpkdnktanrucyfyhckw.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U";
+        
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+        });
+
+        let items = [];
+        let payments = [];
+        let masterItems = [];
+        let currentEditingInvoiceNumber = null;
+        let currentInvoiceNumber = ''; 
+        let currentMasterId = null; 
+        let quickPayTargetInvoice = null; 
+        
+        const formatRupiah = (angka) => new Intl.NumberFormat('id-ID').format(angka);
+        const parseNumber = (str) => Number(str.replace(/[^0-9]/g, '')) || 0;
+        const getTodayDate = () => new Date().toISOString().split('T')[0];
+        
+        const generateInvoiceNumber = () => {
+            const randomNum = Math.floor(10000 + Math.random() * 90000); 
+            return `INV_JMB${randomNum}`;
+        };
+        
+        const formatDateID = (dateStr) => {
+            if (!dateStr) return '-';
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${months[parseInt(m)-1]}/${y.slice(2)}`;
+        };
+
+        async function checkConnection() {
+            const ind = document.getElementById('conn-indicator');
+            const txt = document.getElementById('conn-text');
+            try {
+                const { error } = await db.from('invoices_jambi').select('invoice_number').limit(1);
+                if (error) throw error;
+                ind.innerHTML = `<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>`;
+                txt.innerText = 'Tersambung'; txt.className = 'text-xs font-bold text-emerald-600';
+            } catch (error) {
+                ind.innerHTML = `<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>`;
+                txt.innerText = 'Offline'; txt.className = 'text-xs font-bold text-red-600';
+            }
+        }
+
+        async function fetchMasterItems() {
+            try {
+                const { data, error } = await db.from('master_items_jambi').select('*').order('item_name', { ascending: true });
+                if (error) throw error;
+                if (data) {
+                    masterItems = data;
+                    renderMasterTable();
+                    renderItems(); 
+                }
+            } catch (error) { console.warn("Tabel Master Barang gagal dimuat."); }
+        }
+
+        function openMasterModal(id = null, name = '', price = 0) {
+            currentMasterId = id;
+            document.getElementById('modalMasterTitle').innerText = id ? 'Edit Data Barang' : 'Tambah Barang Baru';
+            document.getElementById('newMasterName').value = name;
+            document.getElementById('newMasterPrice').value = price || '';
+            
+            const modal = document.getElementById('modalMaster');
+            modal.classList.remove('modal-leave');
+            modal.classList.add('modal-enter');
+        }
+
+        function closeMasterModal() {
+            const modal = document.getElementById('modalMaster');
+            modal.classList.remove('modal-enter');
+            modal.classList.add('modal-leave');
+            currentMasterId = null;
+        }
+
+        async function saveMasterItem() {
+            const name = document.getElementById('newMasterName').value.toUpperCase();
+            const price = parseNumber(document.getElementById('newMasterPrice').value);
+            
+            if (!name || price <= 0) return alert("Mohon isi nama barang dan harga dengan benar!");
+
+            const btn = document.getElementById('btnSaveMaster');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            try {
+                if (currentMasterId) {
+                    const { error } = await db.from('master_items_jambi')
+                        .update({ item_name: name, default_price: price })
+                        .eq('id', currentMasterId);
+                    if(error) throw error;
+                } else {
+                    const { count, error: countError } = await db.from('master_items_jambi').select('*', { count: 'exact', head: true });
+                    if (countError) throw countError;
+
+                    const nextNumber = (count || 0) + 1;
+                    const customId = `BJB_${String(nextNumber).padStart(2, '0')}`; 
+
+                    const { error } = await db.from('master_items_jambi').insert([{ id: customId, item_name: name, default_price: price }]);
+                    if(error) throw error;
+                }
+                
+                closeMasterModal();
+                fetchMasterItems(); 
+            } catch (error) {
+                alert("Gagal menyimpan ke database.");
+                console.error(error);
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteMasterItem(id) {
+            if(confirm("Yakin ingin menghapus barang ini dari database?")) {
+                await db.from('master_items_jambi').delete().eq('id', id);
+                fetchMasterItems();
+            }
+        }
+
+        function renderMasterTable() {
+            const tbody = document.getElementById('masterBody');
+            if(masterItems.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">Belum ada data barang. Silakan tambahkan.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = masterItems.map((m, idx) => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                    <td class="p-2.5 text-center font-medium text-slate-400 w-12">${idx + 1}</td>
+                    <td class="p-2.5 font-bold text-slate-700">${m.item_name}</td>
+                    <td class="p-2.5 text-right font-medium w-32">Rp ${formatRupiah(m.default_price)}</td>
+                    <td class="p-2.5 text-center w-24">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="openMasterModal('${m.id}', '${m.item_name.replace(/'/g, "\\'")}', ${m.default_price})" class="w-7 h-7 flex items-center justify-center rounded-lg border bg-white text-slate-400 border-slate-200 hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50 transition-colors" title="Edit">
+                                <i class="fas fa-pen text-[10px]"></i>
+                            </button>
+                            <button onclick="deleteMasterItem('${m.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg border bg-white text-slate-400 border-slate-200 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors" title="Hapus">
+                                <i class="fas fa-trash-alt text-[10px]"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.onload = () => {
+            document.getElementById('invoiceDate').value = getTodayDate();
+            document.getElementById('customerName').value = 'Bos Agus Jambi';
+            currentInvoiceNumber = generateInvoiceNumber();
+            checkConnection();
+            fetchMasterItems();
+            countTotalUnpaidNotes();
+            addItemRow(); 
+            addItemRow(); 
+            renderPayments();
+            setInterval(checkConnection, 30000); 
+        };
+
+        function switchTab(tab) {
+            ['form', 'master', 'history'].forEach(t => {
+                document.getElementById(`section-${t}`).classList.add('hide');
+                document.getElementById(`tab-${t}`).classList.replace('tab-active', 'tab-inactive');
+            });
+            document.getElementById(`section-${tab}`).classList.remove('hide');
+            document.getElementById(`tab-${tab}`).classList.replace('tab-inactive', 'tab-active');
+
+            if (tab === 'history') fetchInvoicesFromDB();
+            if (tab === 'master') fetchMasterItems();
+        }
+
+        function addItemRow() {
+            items.push({ id: Date.now() + Math.random(), qty: 0, name: '', note: '', uom: 'Ball', price: 0, showNote: false });
+            renderItems();
+        }
+
+        function removeItemRow(id) {
+            items = items.filter(item => item.id !== id);
+            renderItems(); calculateTotal();
+        }
+
+        function toggleNote(id) {
+            const item = items.find(i => i.id === id);
+            if(item) { item.showNote = !item.showNote; renderItems(); }
+        }
+
+        function handleItemSelect(id, selectElement) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item.name = selectElement.value;
+                const master = masterItems.find(m => m.item_name === item.name);
+                if (master) item.price = master.default_price;
+                renderItems(); calculateTotal();
+            }
+        }
+
+        function handleQtyChange(id, el) {
+            const item = items.find(i => i.id === id);
+            if(item) {
+                item.qty = parseNumber(el.value);
+                document.getElementById(`row-total-${id}`).innerText = formatRupiah(item.qty * item.price);
+                calculateTotal();
+            }
+        }
+
+        function handlePriceChange(id, el) {
+            const item = items.find(i => i.id === id);
+            if(item) {
+                let cursor = el.selectionStart; let oldLen = el.value.length;
+                item.price = parseNumber(el.value);
+                let newVal = item.price === 0 ? '' : formatRupiah(item.price);
+                el.value = newVal; 
+                el.setSelectionRange(cursor + (newVal.length - oldLen), cursor + (newVal.length - oldLen));
+                document.getElementById(`row-total-${id}`).innerText = formatRupiah(item.qty * item.price);
+                calculateTotal();
+            }
+        }
+
+        function handleTextChange(id, field, val) {
+            const item = items.find(i => i.id === id);
+            if(item) item[field] = val;
+        }
+
+        function renderItems() {
+            const tbody = document.getElementById('itemsBody');
+            tbody.innerHTML = items.map(item => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                    <td class="p-1.5 align-top pt-2.5">
+                        <input type="number" min="0" oninput="handleQtyChange(${item.id}, this)" value="${item.qty || ''}" class="w-full bg-white border border-slate-200 rounded-md px-1.5 py-1.5 text-center text-sm font-bold text-slate-700 focus:outline-none focus:border-orange-400" placeholder="0">
+                    </td>
+                    <td class="p-1.5 align-top pt-2.5">
+                        <div class="flex items-center gap-1.5">
+                            <select onchange="handleItemSelect(${item.id}, this)" class="w-full bg-white border border-slate-200 rounded-md px-2 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:border-orange-400 cursor-pointer">
+                                <option value="" disabled ${!item.name ? 'selected' : ''}>-- Pilih Barang --</option>
+                                ${masterItems.map(m => `<option value="${m.item_name}" ${item.name === m.item_name ? 'selected' : ''}>${m.item_name}</option>`).join('')}
+                            </select>
+                            <button onclick="toggleNote(${item.id})" class="shrink-0 w-7 h-7 flex items-center justify-center rounded border ${item.showNote ? 'bg-orange-100 text-orange-600 border-orange-200' : 'bg-white text-slate-400 border-slate-200 hover:text-orange-500'}" title="Tampilkan / Sembunyikan Catatan">
+                                <i class="fas ${item.showNote ? 'fa-eye' : 'fa-eye-slash'} text-xs"></i>
+                            </button>
+                        </div>
+                        <input type="text" oninput="handleTextChange(${item.id}, 'note', this.value)" value="${item.note}" class="${item.showNote ? 'block' : 'hidden'} mt-1.5 w-full bg-orange-50/50 border border-orange-100 text-orange-800 placeholder-orange-300 rounded-md px-2 py-1.5 text-[11px] font-medium outline-none focus:bg-white focus:border-orange-300" placeholder="+ Keterangan">
+                    </td>
+                    <td class="p-1.5 align-top pt-2.5">
+                        <input type="text" oninput="handleTextChange(${item.id}, 'uom', this.value)" value="${item.uom}" class="w-full bg-white border border-slate-200 rounded-md px-1.5 py-1.5 text-center text-xs font-bold text-slate-700 focus:outline-none focus:border-orange-400" placeholder="Uom">
+                    </td>
+                    <td class="p-1.5 align-top pt-2.5">
+                        <input type="text" oninput="handlePriceChange(${item.id}, this)" value="${item.price ? formatRupiah(item.price) : ''}" class="w-full bg-white border border-slate-200 rounded-md px-2 py-1.5 text-right text-sm font-bold text-slate-700 focus:outline-none focus:border-orange-400" placeholder="0">
+                    </td>
+                    <td class="p-1.5 align-top pt-2.5">
+                        <div class="h-8 flex items-center justify-end px-2 text-sm font-black text-slate-700 bg-slate-50/80 rounded-l-md border-y border-l border-slate-100" id="row-total-${item.id}">
+                            ${formatRupiah(item.qty * item.price)}
+                        </div>
+                    </td>
+                    <td class="p-1.5 align-top pt-2.5 text-center bg-slate-50/80 rounded-r-md border-y border-r border-slate-100">
+                        <div class="flex items-center justify-center h-8">
+                            <button onclick="removeItemRow(${item.id})" class="w-7 h-7 flex items-center justify-center rounded border bg-white text-slate-400 border-slate-200 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors" title="Hapus Baris">
+                                <i class="fas fa-trash text-[10px]"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function addPaymentRow() { 
+            payments.push({ id: Date.now() + Math.random(), date: getTodayDate(), amount: 0 }); 
+            renderPayments(); 
+            calculateTotal(); 
+        }
+        
+        function removePaymentRow(id) { 
+            payments = payments.filter(p => p.id !== id); 
+            renderPayments(); 
+            calculateTotal(); 
+        }
+        
+        function handlePaymentAmount(id, el) {
+            const p = payments.find(x => x.id === id);
+            if(p) {
+                let cursor = el.selectionStart; let oldLen = el.value.length;
+                p.amount = parseNumber(el.value);
+                let newVal = p.amount === 0 ? '' : formatRupiah(p.amount);
+                el.value = newVal;
+                el.setSelectionRange(cursor + (newVal.length - oldLen), cursor + (newVal.length - oldLen));
+                calculateTotal();
+            }
+        }
+
+        function renderPayments() {
+            const container = document.getElementById('paymentsContainer');
+            if (payments.length === 0) {
+                container.innerHTML = `<div class="text-[11px] text-slate-400 text-center py-2 bg-slate-50 rounded-xl border border-dashed border-slate-200">Belum ada cicilan/pembayaran</div>`;
+                return;
+            }
+            container.innerHTML = payments.map(p => `
+                <div class="flex items-center gap-1.5 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <input type="date" oninput="(function(e){ payments.find(x => x.id === ${p.id}).date = e.target.value })(event)" value="${p.date}" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 w-32">
+                    <input type="text" oninput="handlePaymentAmount(${p.id}, this)" value="${p.amount ? formatRupiah(p.amount) : ''}" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-right text-xs font-bold text-slate-700 flex-1" placeholder="Nominal (Rp)">
+                    <button onclick="removePaymentRow(${p.id})" class="text-slate-400 hover:text-red-500 px-1"><i class="fas fa-times-circle"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function calculateTotal() {
+            let grandTotal = items.reduce((sum, item) => sum + (item.qty * item.price), 0);
+            let totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+            let remaining = grandTotal - totalPaid;
+
+            document.getElementById('summaryGrandTotal').innerText = `Rp ${formatRupiah(grandTotal)}`;
+            document.getElementById('summaryTotalPaid').innerText = `- Rp ${formatRupiah(totalPaid)}`;
+            
+            const remEl = document.getElementById('summaryRemaining');
+            const remContainer = document.getElementById('summaryRemainingContainer');
+            const remLabel = document.getElementById('summaryRemainingLabel');
+            
+            remEl.innerText = `Rp ${formatRupiah(remaining)}`;
+
+            if(remaining <= 0 && grandTotal > 0) {
+                remContainer.className = "p-4 rounded-2xl border transition-colors duration-300 bg-emerald-50 border-emerald-200 text-emerald-700 mb-6";
+                remLabel.innerText = "STATUS: LUNAS";
+            } else {
+                remContainer.className = "p-4 rounded-2xl border transition-colors duration-300 bg-red-50 border-red-200 text-red-600 shadow-inner shadow-red-500/10 mb-6";
+                remLabel.innerText = "SISA PIUTANG";
+            }
+        }
+
+        function openPreview() {
+            const modal = document.getElementById('modalPreview');
+            const paper = document.getElementById('invoicePaper');
+            
+            const cust = document.getElementById('customerName').value || '.........................';
+            const dateStr = document.getElementById('invoiceDate').value;
+            const note = document.getElementById('shippingNote').value;
+            
+            let grandTotal = 0;
+            let rowsHTML = items.filter(i => i.qty > 0 && i.name).map((i) => {
+                let total = i.qty * i.price;
+                grandTotal += total;
+                let noteHtml = i.note ? `<br><span style="font-size: 11px; color: #f97316; font-weight: 500;">*${i.note}</span>` : '';
+                return `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 10px 0; text-align: center; font-size: 13px; font-weight: bold;">${i.qty} <span style="font-size:12px; color:#64748b; font-weight: 600;">${i.uom}</span></td>
+                        <td style="padding: 10px 0; font-size: 13px; font-weight: 600;">${i.name}${noteHtml}</td>
+                        <td style="padding: 10px 0; text-align: right; font-size: 13px;">${formatRupiah(i.price)}</td>
+                        <td style="padding: 10px 0; text-align: right; font-size: 13px; font-weight: bold;">${formatRupiah(total)}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            let paymentsHTML = '';
+            let paidTotal = 0;
+            payments.filter(p => p.amount > 0).forEach((p) => {
+                paidTotal += p.amount;
+                paymentsHTML += `
+                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; color: #64748b;">
+                        <span>Bayar tgl ${formatDateID(p.date)}</span>
+                        <span>- Rp ${formatRupiah(p.amount)}</span>
+                    </div>
+                `;
+            });
+
+            let remaining = grandTotal - paidTotal;
+            
+            let lunasStampHtml = remaining <= 0 && grandTotal > 0 
+                ? `<div style="display:inline-block; border: 4px solid #10b981; color: #10b981; padding: 8px 24px; border-radius: 8px; font-weight: 900; font-size: 28px; transform: rotate(-8deg); letter-spacing: 2px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.1);">LUNAS</div>`
+                : '';
+
+            let shippingHtml = note ? `<div style="margin-top: 15px; font-size: 12px; color: #64748b;"><strong>Catatan Pengiriman:</strong> ${note}</div>` : '';
+
+            paper.dataset.inv = currentInvoiceNumber;
+            paper.dataset.cust = cust;
+
+            paper.innerHTML = `
+                <div style="max-width: 100%; font-family: 'Inter', sans-serif; color: #1e293b; background: #ffffff; padding: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
+                        <div>
+                            <h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ea580c; letter-spacing: -0.5px;">SBR PUTRA FOOD</h1>
+                            <p style="margin: 4px 0 0 0; font-size: 11px; color: #64748b;">Bandung, Jawa Barat</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <h2 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; text-transform: uppercase;">${currentInvoiceNumber}</h2>
+                            <p style="margin: 4px 0 0 0; font-size: 12px; font-weight: bold; color: #64748b;">Tgl: ${formatDateID(dateStr)}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 25px;">
+                        <p style="margin: 0 0 4px 0; font-size: 11px; color: #64748b;">Kepada Yth:</p>
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 800; text-transform: uppercase;">${cust}</h3>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                                <th style="padding: 10px 0; text-align: center; font-size: 11px; color: #64748b; text-transform: uppercase; width: 80px;">Qty</th>
+                                <th style="padding: 10px 0; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase;">Nama Barang</th>
+                                <th style="padding: 10px 0; text-align: right; font-size: 11px; color: #64748b; text-transform: uppercase; width: 100px;">Harga</th>
+                                <th style="padding: 10px 0; text-align: right; font-size: 11px; color: #64748b; text-transform: uppercase; width: 120px;">Jumlah</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHTML || '<tr><td colspan="4" style="text-align:center; padding: 20px; color:#94a3b8; font-size: 12px;">Belum ada barang yang diinput.</td></tr>'}
+                        </tbody>
+                    </table>
+
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
+                        <div style="padding-bottom: 10px;">
+                            ${lunasStampHtml}
+                        </div>
+                        <div style="width: 280px;">
+                            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px;">
+                                <span style="color: #64748b;">Subtotal</span>
+                                <span style="font-weight: bold;">Rp ${formatRupiah(grandTotal)}</span>
+                            </div>
+                            
+                            <div style="padding: 4px 0; border-bottom: 1px solid #f1f5f9;">
+                                ${paymentsHTML || '<div style="font-size: 12px; color: #94a3b8; text-align: right;">Belum ada pembayaran</div>'}
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 2px solid #e2e8f0; font-size: 13px;">
+                                <span style="color: #64748b; font-weight: bold;">Total Dibayar</span>
+                                <span style="font-weight: bold; color: #10b981;">- Rp ${formatRupiah(paidTotal)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 16px;">
+                                <span style="font-weight: bold; color: #0f172a;">Sisa Piutang</span>
+                                <span style="font-weight: 900; color: #ef4444;">Rp ${formatRupiah(remaining)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    ${shippingHtml}
+                </div>
+            `;
+            
+            document.getElementById('btnPreviewSave').style.display = 'flex';
+            modal.classList.remove('modal-leave');
+            modal.classList.add('modal-enter');
+        }
+
+        async function previewFromHistory(invoiceNum) {
+            try {
+                const { data: invData } = await db.from('invoices_jambi').select('*').eq('invoice_number', invoiceNum).single();
+                const { data: itemsData } = await db.from('invoice_items_jambi').select('*').eq('invoice_number', invoiceNum);
+                const { data: payData } = await db.from('invoice_payments_jambi').select('*').eq('invoice_number', invoiceNum);
+
+                const paper = document.getElementById('invoicePaper');
+                
+                let grandTotal = 0;
+                let rowsHTML = itemsData.map((i) => {
+                    let total = i.qty * i.price;
+                    grandTotal += total;
+                    let noteHtml = i.item_note ? `<br><span style="font-size: 11px; color: #f97316; font-weight: 500;">*${i.item_note}</span>` : '';
+                    let uomHtml = i.item_uom ? `<span style="font-size:12px; color:#64748b; font-weight: 600;">${i.item_uom}</span>` : '';
+                    return `
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px 0; text-align: center; font-size: 13px; font-weight: bold;">${i.qty} ${uomHtml}</td>
+                            <td style="padding: 10px 0; font-size: 13px; font-weight: 600;">${i.item_name}${noteHtml}</td>
+                            <td style="padding: 10px 0; text-align: right; font-size: 13px;">${formatRupiah(i.price)}</td>
+                            <td style="padding: 10px 0; text-align: right; font-size: 13px; font-weight: bold;">${formatRupiah(total)}</td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                let paymentsHTML = '';
+                let paidTotal = 0;
+                payData.forEach((p) => {
+                    paidTotal += p.amount;
+                    paymentsHTML += `
+                        <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; color: #64748b;">
+                            <span>Bayar tgl ${formatDateID(p.payment_date)}</span>
+                            <span>- Rp ${formatRupiah(p.amount)}</span>
+                        </div>
+                    `;
+                });
+
+                let remaining = grandTotal - paidTotal;
+                
+                let lunasStampHtml = remaining <= 0 && grandTotal > 0 
+                    ? `<div style="display:inline-block; border: 4px solid #10b981; color: #10b981; padding: 8px 24px; border-radius: 8px; font-weight: 900; font-size: 28px; transform: rotate(-8deg); letter-spacing: 2px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.1);">LUNAS</div>`
+                    : '';
+
+                let shippingHtml = invData.shipping_note ? `<div style="margin-top: 15px; font-size: 12px; color: #64748b;"><strong>Catatan Pengiriman:</strong> ${invData.shipping_note}</div>` : '';
+
+                paper.dataset.inv = invoiceNum;
+                paper.dataset.cust = invData.customer_name;
+
+                paper.innerHTML = `
+                    <div style="max-width: 100%; font-family: 'Inter', sans-serif; color: #1e293b; background: #ffffff; padding: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
+                            <div>
+                                <h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ea580c; letter-spacing: -0.5px;">SBR PUTRA FOOD</h1>
+                                <p style="margin: 4px 0 0 0; font-size: 11px; color: #64748b;">Bandung, Jawa Barat</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <h2 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; text-transform: uppercase;">${invoiceNum}</h2>
+                                <p style="margin: 4px 0 0 0; font-size: 12px; font-weight: bold; color: #64748b;">Tgl: ${formatDateID(invData.invoice_date)}</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <p style="margin: 0 0 4px 0; font-size: 11px; color: #64748b;">Kepada Yth:</p>
+                            <h3 style="margin: 0; font-size: 16px; font-weight: 800; text-transform: uppercase;">${invData.customer_name}</h3>
+                        </div>
+
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <thead>
+                                <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                                    <th style="padding: 10px 0; text-align: center; font-size: 11px; color: #64748b; text-transform: uppercase; width: 80px;">Qty</th>
+                                    <th style="padding: 10px 0; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase;">Nama Barang</th>
+                                    <th style="padding: 10px 0; text-align: right; font-size: 11px; color: #64748b; text-transform: uppercase; width: 100px;">Harga</th>
+                                    <th style="padding: 10px 0; text-align: right; font-size: 11px; color: #64748b; text-transform: uppercase; width: 120px;">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHTML}
+                            </tbody>
+                        </table>
+
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
+                            <div style="padding-bottom: 10px;">
+                                ${lunasStampHtml}
+                            </div>
+                            <div style="width: 280px;">
+                                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px;">
+                                    <span style="color: #64748b;">Subtotal</span>
+                                    <span style="font-weight: bold;">Rp ${formatRupiah(grandTotal)}</span>
+                                </div>
+                                
+                                <div style="padding: 4px 0; border-bottom: 1px solid #f1f5f9;">
+                                    ${paymentsHTML || '<div style="font-size: 12px; color: #94a3b8; text-align: right;">Belum ada pembayaran</div>'}
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 2px solid #e2e8f0; font-size: 13px;">
+                                    <span style="color: #64748b; font-weight: bold;">Total Dibayar</span>
+                                    <span style="font-weight: bold; color: #10b981;">- Rp ${formatRupiah(paidTotal)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 16px;">
+                                    <span style="font-weight: bold; color: #0f172a;">Sisa Piutang</span>
+                                    <span style="font-weight: 900; color: #ef4444;">Rp ${formatRupiah(remaining)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        ${shippingHtml}
+                    </div>
+                `;
+                
+                document.getElementById('btnPreviewSave').style.display = 'none';
+                
+                const modal = document.getElementById('modalPreview');
+                modal.classList.remove('modal-leave');
+                modal.classList.add('modal-enter');
+            } catch (error) {
+                alert("Gagal memuat pratinjau dari database.");
+            }
+        }
+
+        function closePreview() {
+            const modal = document.getElementById('modalPreview');
+            modal.classList.remove('modal-enter');
+            modal.classList.add('modal-leave');
+        }
+
+        function downloadInvoicePNG() {
+            const element = document.getElementById('invoicePaper');
+            const invNum = element.dataset.inv || 'Invoice';
+            const custNameRaw = element.dataset.cust || 'Nota';
+            const custName = custNameRaw.replace(/[^a-zA-Z0-9]/g, '_');
+            
+            html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${invNum}_${custName}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        async function countTotalUnpaidNotes() {
+            try {
+                const { data, count, error } = await db.from('invoices_jambi')
+                    .select('remaining_amount', { count: 'exact' })
+                    .gt('remaining_amount', 0);
+                    
+                if (error) throw error;
+
+                const displayCount = count || 0;
+                const totalPiutang = data ? data.reduce((sum, inv) => sum + Number(inv.remaining_amount), 0) : 0;
+
+                const headerEl = document.getElementById('headerTotalUnpaidNotes');
+                if (headerEl) {
+                    headerEl.innerText = `Rp ${formatRupiah(totalPiutang)} (${displayCount} Nota)`;
+                }
+            } catch (err) {
+                console.error("Gagal memuat total piutang:", err);
+            }
+        }
+
+        function resetFormToCreateMode() {
+            currentEditingInvoiceNumber = null;
+            currentInvoiceNumber = generateInvoiceNumber();
+            document.getElementById('customerName').value = 'Bos Agus Jambi';
+            document.getElementById('shippingNote').value = '';
+            document.getElementById('invoiceDate').value = getTodayDate();
+            items = []; payments = [];
+            addItemRow(); addItemRow(); 
+            renderPayments(); calculateTotal();
+            
+            document.getElementById('editModeBadge').classList.add('hide');
+            document.getElementById('btnCancelEdit').classList.add('hide');
+            
+            const btnSave = document.getElementById('btnSave');
+            btnSave.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Simpan ke Database';
+            btnSave.classList.replace('from-blue-500', 'from-orange-500');
+            btnSave.classList.replace('to-blue-600', 'to-orange-600');
+            btnSave.classList.replace('shadow-blue-500/30', 'shadow-orange-500/30');
+        }
+
+        async function loadInvoiceForEdit(invoiceNum) {
+            try {
+                const { data: invData } = await db.from('invoices_jambi').select('*').eq('invoice_number', invoiceNum).single();
+                const { data: itemsData } = await db.from('invoice_items_jambi').select('*').eq('invoice_number', invoiceNum);
+                const { data: payData } = await db.from('invoice_payments_jambi').select('*').eq('invoice_number', invoiceNum);
+
+                currentEditingInvoiceNumber = invoiceNum;
+                currentInvoiceNumber = invData.invoice_number || generateInvoiceNumber(); 
+                document.getElementById('customerName').value = invData.customer_name;
+                document.getElementById('invoiceDate').value = invData.invoice_date;
+                document.getElementById('shippingNote').value = invData.shipping_note || '';
+
+                items = itemsData.map(item => ({
+                    id: Date.now() + Math.random(), qty: item.qty, name: item.item_name, note: item.item_note || '', uom: item.item_uom || 'Ball', price: item.price, showNote: !!item.item_note
+                }));
+
+                payments = payData.map(p => ({
+                    id: Date.now() + Math.random(), date: p.payment_date, amount: p.amount
+                }));
+
+                renderItems(); 
+                renderPayments(); 
+                calculateTotal();
+
+                document.getElementById('editModeBadge').classList.remove('hide');
+                document.getElementById('btnCancelEdit').classList.remove('hide');
+                
+                const btnSave = document.getElementById('btnSave');
+                btnSave.innerHTML = '<i class="fas fa-save"></i> Update Data';
+                btnSave.classList.replace('from-orange-500', 'from-blue-500');
+                btnSave.classList.replace('to-orange-600', 'to-blue-600');
+                btnSave.classList.replace('shadow-orange-500/30', 'shadow-blue-500/30');
+
+                switchTab('form'); window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch(e) { alert("Gagal memuat nota!"); }
+        }
+
+        async function saveToSupabase() {
+            const customer = document.getElementById('customerName').value;
+            const date = document.getElementById('invoiceDate').value;
+            const note = document.getElementById('shippingNote').value;
+
+            if(!customer) return alert("Mohon isi nama pelanggan!");
+            
+            const validItems = items.filter(i => i.qty > 0 && i.name);
+            if(validItems.length === 0) return alert("Pilih minimal 1 barang dan isi jumlahnya (Qty)!");
+
+            const btnSave = document.getElementById('btnSave');
+            const originalBtnHtml = btnSave.innerHTML;
+            btnSave.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memproses...';
+            btnSave.disabled = true;
+            btnSave.classList.add('opacity-75', 'cursor-not-allowed');
+
+            try {
+                let grandTotal = validItems.reduce((sum, item) => sum + (item.qty * item.price), 0);
+                let totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+                let remaining = grandTotal - totalPaid;
+
+                if (currentEditingInvoiceNumber) {
+                    await db.from('invoices_jambi').update({ customer_name: customer, invoice_date: date, shipping_note: note, grand_total: grandTotal, remaining_amount: remaining }).eq('invoice_number', currentEditingInvoiceNumber);
+                    await db.from('invoice_items_jambi').delete().eq('invoice_number', currentEditingInvoiceNumber);
+                    await db.from('invoice_payments_jambi').delete().eq('invoice_number', currentEditingInvoiceNumber);
+                    
+                    const itemsToInsert = validItems.map(item => ({ invoice_number: currentEditingInvoiceNumber, qty: item.qty, item_name: item.name, item_uom: item.uom, item_note: item.note, price: item.price }));
+                    await db.from('invoice_items_jambi').insert(itemsToInsert);
+                    
+                    if (payments.length > 0) {
+                        const paymentsToInsert = payments.map(p => ({ invoice_number: currentEditingInvoiceNumber, payment_date: p.date, amount: p.amount }));
+                        await db.from('invoice_payments_jambi').insert(paymentsToInsert);
+                    }
+                } else {
+                    await db.from('invoices_jambi').insert([{ invoice_number: currentInvoiceNumber, customer_name: customer, invoice_date: date, shipping_note: note, grand_total: grandTotal, remaining_amount: remaining }]);
+                    
+                    const itemsToInsert = validItems.map(item => ({ invoice_number: currentInvoiceNumber, qty: item.qty, item_name: item.name, item_uom: item.uom, item_note: item.note, price: item.price }));
+                    await db.from('invoice_items_jambi').insert(itemsToInsert);
+                    
+                    if (payments.length > 0) {
+                        const paymentsToInsert = payments.map(p => ({ invoice_number: currentInvoiceNumber, payment_date: p.date, amount: p.amount }));
+                        await db.from('invoice_payments_jambi').insert(paymentsToInsert);
+                    }
+                }
+                
+                resetFormToCreateMode();
+                countTotalUnpaidNotes();
+                switchTab('history');
+            } catch (error) {
+                alert("Gagal memproses data: " + error.message);
+                console.error(error);
+            } finally {
+                btnSave.innerHTML = originalBtnHtml; btnSave.disabled = false; btnSave.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        }
+
+        // --- MANAJEMEN MODAL AKSI & BAYAR CEPAT ---
+        function openActionModal(invNum) {
+            document.getElementById('actionModalTitle').innerText = `Aksi: ${invNum}`;
+            
+            document.getElementById('btnActionPreview').onclick = () => { closeActionModal(); previewFromHistory(invNum); };
+            document.getElementById('btnActionQuickPay').onclick = () => { closeActionModal(); openQuickPayModal(invNum); };
+            document.getElementById('btnActionEdit').onclick = () => { closeActionModal(); loadInvoiceForEdit(invNum); };
+            document.getElementById('btnActionDelete').onclick = () => { closeActionModal(); deleteInvoiceFromDB(invNum); };
+            
+            const modal = document.getElementById('modalAction');
+            modal.classList.remove('modal-leave');
+            modal.classList.add('modal-enter');
+        }
+
+        function closeActionModal() {
+            const modal = document.getElementById('modalAction');
+            modal.classList.remove('modal-enter');
+            modal.classList.add('modal-leave');
+        }
+
+        // Fungsi Shortcut Navbar Bayar Cepat dengan Format Baru
+        async function openNavbarQuickPay() {
+            try {
+                const { data, error } = await db.from('invoices_jambi').select('invoice_number, invoice_date, remaining_amount').gt('remaining_amount', 0).order('created_at', { ascending: false });
+                if (error) throw error;
+                if (!data || data.length === 0) return alert("Tidak ada nota dengan status hutang saat ini.");
+
+                const selectEl = document.getElementById('quickPayInvoiceSelect');
+                selectEl.innerHTML = data.map(inv => {
+                    let formattedDate = formatDateID(inv.invoice_date);
+                    return `<option value="${inv.invoice_number}">${inv.invoice_number} - ${formattedDate} - (Sisa Rp ${formatRupiah(inv.remaining_amount)})</option>`;
+                }).join('');
+                
+                document.getElementById('quickPaySelectContainer').classList.remove('hide');
+                quickPayTargetInvoice = selectEl.value;
+                selectEl.onchange = (e) => { quickPayTargetInvoice = e.target.value; };
+
+                document.getElementById('quickPayTitle').innerText = 'Bayar Cepat (Shortcut)';
+                document.getElementById('quickPayDate').value = getTodayDate();
+                document.getElementById('quickPayAmount').value = '';
+
+                const modal = document.getElementById('modalQuickPay');
+                modal.classList.remove('modal-leave');
+                modal.classList.add('modal-enter');
+            } catch (err) {
+                alert("Gagal memuat daftar hutang.");
+            }
+        }
+
+        function openQuickPayModal(invNum) {
+            quickPayTargetInvoice = invNum;
+            document.getElementById('quickPaySelectContainer').classList.add('hide');
+            document.getElementById('quickPayTitle').innerText = `Bayar Cepat: ${invNum}`;
+            document.getElementById('quickPayDate').value = getTodayDate();
+            document.getElementById('quickPayAmount').value = '';
+
+            const modal = document.getElementById('modalQuickPay');
+            modal.classList.remove('modal-leave');
+            modal.classList.add('modal-enter');
+        }
+
+        function closeQuickPayModal() {
+            const modal = document.getElementById('modalQuickPay');
+            modal.classList.remove('modal-enter');
+            modal.classList.add('modal-leave');
+            quickPayTargetInvoice = null;
+        }
+
+        function handleQuickPayInput(el) {
+            let val = parseNumber(el.value);
+            el.value = val === 0 ? '' : formatRupiah(val);
+        }
+
+        async function submitQuickPay() {
+            if (!quickPayTargetInvoice) return;
+            const targetInv = quickPayTargetInvoice; 
+            const payDate = document.getElementById('quickPayDate').value;
+            const payAmount = parseNumber(document.getElementById('quickPayAmount').value);
+
+            if (payAmount <= 0) return alert("Mohon masukkan nominal pembayaran yang valid!");
+
+            const btn = document.getElementById('btnSubmitQuickPay');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            btn.disabled = true;
+
+            try {
+                const { data: invData, error: invErr } = await db.from('invoices_jambi').select('*').eq('invoice_number', targetInv).single();
+                if (invErr) throw invErr;
+
+                const { data: payData, error: payErr } = await db.from('invoice_payments_jambi').select('*').eq('invoice_number', targetInv);
+                if (payErr) throw payErr;
+
+                let totalPaidBefore = payData.reduce((sum, p) => sum + Number(p.amount), 0);
+                let newTotalPaid = totalPaidBefore + payAmount;
+                let newRemaining = Number(invData.grand_total) - newTotalPaid;
+
+                const { error: insertPayErr } = await db.from('invoice_payments_jambi').insert([{
+                    invoice_number: targetInv,
+                    payment_date: payDate,
+                    amount: payAmount
+                }]);
+                if (insertPayErr) throw insertPayErr;
+
+                const { error: updateInvErr } = await db.from('invoices_jambi').update({
+                    remaining_amount: newRemaining
+                }).eq('invoice_number', targetInv);
+                if (updateInvErr) throw updateInvErr;
+
+                closeQuickPayModal();
+                countTotalUnpaidNotes();
+                fetchInvoicesFromDB();
+
+                previewFromHistory(targetInv);
+            } catch (error) {
+                alert("Gagal memproses pembayaran cepat: " + error.message);
+                console.error(error);
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+
+        async function fetchInvoicesFromDB() {
+            const tbody = document.getElementById('historyBody');
+            const loader = document.getElementById('loadingData');
+            tbody.innerHTML = ''; loader.classList.add('hide');
+            try {
+                const { data } = await db.from('invoices_jambi').select('*').order('created_at', { ascending: false });
+                countTotalUnpaidNotes(); 
+                if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-12 text-center text-slate-400 font-medium">Belum ada nota tersimpan.</td></tr>'; return; }
+
+                tbody.innerHTML = data.map(inv => {
+                    const isLunas = inv.remaining_amount <= 0;
+                    return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                        <td class="p-3 font-bold text-slate-700">${inv.invoice_number || '-'}</td>
+                        <td class="p-3 font-medium text-slate-500 text-xs">${formatDateID(inv.invoice_date)}</td>
+                        <td class="p-3 font-bold text-slate-700 uppercase">${inv.customer_name}</td>
+                        <td class="p-3 text-right font-bold text-slate-700">Rp ${formatRupiah(inv.grand_total)}</td>
+                        <td class="p-3 text-right font-black ${isLunas ? 'text-emerald-500' : 'text-red-500'}">Rp ${formatRupiah(inv.remaining_amount)}</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold ${isLunas ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
+                                ${isLunas ? 'LUNAS' : 'HUTANG'}
+                            </span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <div class="flex justify-center gap-1.5">
+                                <button onclick="openActionModal('${inv.invoice_number}')" class="w-8 h-8 flex items-center justify-center rounded-lg border bg-white text-slate-500 border-slate-200 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-colors shadow-sm" title="Opsi Aksi">
+                                    <i class="fas fa-pen text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    `;
+                }).join('');
+            } catch (error) {}
+        }
+        
+        async function deleteInvoiceFromDB(invNum) {
+            if(confirm("Yakin hapus nota ini? Data yang terhapus tidak bisa dikembalikan.")) { 
+                await db.from('invoices_jambi').delete().eq('invoice_number', invNum); 
+                fetchInvoicesFromDB(); 
+            }
+        }
+    </script>
+</body>
+</html>
