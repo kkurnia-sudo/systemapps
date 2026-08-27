@@ -10,6 +10,9 @@
     <script>
         tailwind.config = { darkMode: 'class', theme: { extend: {} } }
     </script>
+	
+	<!-- Chart.js untuk Analitik -->
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Supabase, html2canvas (PNG), html2pdf (PDF), SheetJS (Excel) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -31,10 +34,26 @@
         .dark .text-gray-800 { color: #f8fafc; }
         .dark .text-gray-600, .dark .text-gray-500 { color: #94a3b8; }
         
-        /* Transisi Halus Sidebar */
-        #sidebar { transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); max-width: 280px; opacity: 1; transform: translateX(0); }
-        #sidebar.sidebar-hidden { max-width: 0; opacity: 0; padding-left: 0; padding-right: 0; margin-right: 0; border-width: 0; transform: translateX(-20px); pointer-events: none; overflow: hidden; }
-
+		/* Transisi Halus Sidebar */
+		#sidebar { 
+			transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
+			max-height: 600px; /* Cukup tinggi untuk menampung isi */
+			max-width: 100%; 
+			opacity: 1; 
+			overflow: hidden; 
+		}
+		@media (min-width: 1024px) {
+			#sidebar { max-width: 280px; }
+		}
+		#sidebar.sidebar-hidden { 
+			max-height: 0; /* Menghilangkan efek menggantung */
+			max-width: 0; 
+			opacity: 0; 
+			padding: 0; /* Hilangkan padding atas-bawah-kiri-kanan */
+			margin: 0; 
+			border-width: 0; 
+			pointer-events: none; 
+		}
         /* Animasi Kelap-Kelip (Blinking) untuk Tombol Simpan Invoice */
         @keyframes kelapKelip {
             0% { opacity: 1; transform: scale(1); box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4); }
@@ -241,35 +260,54 @@
                         <p class="text-[9px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">Nota Plastik / Lainnya</p>
                         <p class="text-xs lg:text-sm font-poppins-custom text-rose-700 dark:text-rose-300" id="wdgBarangKeluar">Rp 0</p>
                     </div>
+					<!-- Widget Estimasi Bersih (Hijau) -->
+					<div id="widgetEstimasiBersih" class="bg-emerald-50 dark:bg-slate-800 border border-emerald-200 dark:border-emerald-900 px-3 py-2 rounded-xl text-right shadow-sm flex flex-col justify-between h-[62px] w-[150px]">
+						<p class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Estimasi Bersih</p>
+						<p class="text-xs lg:text-sm font-poppins-custom text-emerald-700 dark:text-emerald-300" id="wdgEstimasiBersih">Rp 0</p>
+					</div>
                 </div>
             </div>
         </header>
 
         <!-- LAYOUT UTAMA DENGAN SIDEBAR -->
         <div class="flex flex-col lg:flex-row gap-6 items-start relative">
-            <!-- SIDEBAR NAVIGASI -->
-            <aside id="sidebar" class="w-full lg:w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-4 space-y-2 shrink-0">
-                <p class="text-[10px] font-extrabold uppercase text-gray-400 tracking-wider px-2 mb-1">Navigasi Menu</p>
-                <button onclick="toggleModal('modalRekapKustom')" class="w-full text-left bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/30 text-purple-800 dark:text-purple-300 px-3 py-2.5 rounded-xl text-sm font-bold transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Rekap Kustom
-                </button>
-                <button onclick="toggleModal('modalArsip')" class="w-full text-left bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 px-3 py-2.5 rounded-xl text-sm font-bold transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg> Arsip Data
-                </button>
-                <button onclick="toggleModal('modalBarangKeluar')" class="w-full text-left bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 text-rose-800 dark:text-rose-300 px-3 py-2.5 rounded-xl text-sm font-bold transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z"></path></svg> Barang Keluar
-                </button>
-                <button onclick="toggleModal('modalManajemen')" class="w-full text-left bg-gray-50 hover:bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 px-3 py-2.5 rounded-xl text-sm font-bold transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> Data Master
-                </button>
-                <button onclick="toggleModal('modalPembayaran')" class="w-full text-left bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 px-3 py-2.5 rounded-xl text-sm font-bold transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg> Pembayaran
-                </button>
-                <button onclick="toggleModal('modalRiwayatInvoice')" class="w-full text-left bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 px-3 py-2.5 rounded-xl text-sm font-bold transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Riwayat Invoice
-                </button>
-            </aside>
-
+		<!-- SIDEBAR NAVIGASI -->
+		<aside id="sidebar" class="w-full lg:w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-4 shrink-0">
+			<p class="text-[10px] font-extrabold uppercase text-gray-400 tracking-wider px-2 mb-3 lg:mb-1 w-full text-center lg:text-left">Navigasi Menu</p>
+			
+			<!-- Kontainer Grid 2 Kolom untuk HP, Stack Vertikal untuk Desktop -->
+			<div class="grid grid-cols-2 gap-2 lg:flex lg:flex-col lg:gap-0 lg:space-y-2">
+				<button onclick="toggleModal('modalRekapKustom')" class="w-full text-left bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/30 text-purple-800 dark:text-purple-300 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center">
+					<svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> 
+					<span class="truncate">Rekap Kustom</span>
+				</button>
+				
+				<button onclick="toggleModal('modalArsip')" class="w-full text-left bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center">
+					<svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg> 
+					<span class="truncate">Arsip Data</span>
+				</button>
+				
+				<button onclick="toggleModal('modalBarangKeluar')" class="w-full text-left bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 text-rose-800 dark:text-rose-300 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center">
+					<svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z"></path></svg> 
+					<span class="truncate">Barang Keluar</span>
+				</button>
+				
+				<button onclick="toggleModal('modalManajemen')" class="w-full text-left bg-gray-50 hover:bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center">
+					<svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
+					<span class="truncate">Data Master</span>
+				</button>
+				
+				<button onclick="toggleModal('modalPembayaran')" class="w-full text-left bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center">
+					<svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg> 
+					<span class="truncate">Pembayaran</span>
+				</button>
+				
+				<button onclick="toggleModal('modalRiwayatInvoice')" class="w-full text-left bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center">
+					<svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> 
+					<span class="truncate">Riwayat Invoice</span>
+				</button>
+			</div>
+		</aside>
             <!-- KONTEN UTAMA -->
             <div class="flex-1 w-full grid grid-cols-1 xl:grid-cols-12 gap-6 min-w-0">
                 <div class="glass-card p-6 xl:col-span-4 h-fit border border-gray-100 dark:border-slate-700">
@@ -450,26 +488,41 @@
     </div>
 </div>
 
-                    <!-- KARTU HASIL RINGKASAN (KPI) -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="bg-indigo-50 dark:bg-slate-800 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900 text-center">
-                            <p class="text-[10px] font-bold uppercase text-indigo-500">Total Nominal</p>
-                            <p class="text-base md:text-lg font-poppins-custom text-indigo-700 dark:text-indigo-300 mt-1" id="sumNominal">Rp 0</p>
-                        </div>
-                        <div class="bg-emerald-50 dark:bg-slate-800 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900 text-center">
-                            <p class="text-[10px] font-bold uppercase text-emerald-500">Total Ball</p>
-                            <p class="text-base md:text-lg font-poppins-custom text-emerald-700 dark:text-emerald-300 mt-1" id="sumBal">0 Ball</p>
-                        </div>
-                        <div class="bg-amber-50 dark:bg-slate-800 p-4 rounded-xl border border-amber-100 dark:border-amber-900 text-center">
-                            <p class="text-[10px] font-bold uppercase text-amber-500">Total Karung / Duz</p>
-                            <p class="text-base md:text-lg font-poppins-custom text-amber-700 dark:text-amber-300 mt-1" id="sumKarung">0 Krg / Duz</p>
-                        </div>
-                        <div class="bg-blue-50 dark:bg-slate-800 p-4 rounded-xl border border-blue-100 dark:border-blue-900 text-center">
-                            <p class="text-[10px] font-bold uppercase text-blue-500">Jumlah Transaksi</p>
-                            <p class="text-base md:text-lg font-poppins-custom text-blue-700 dark:text-blue-300 mt-1" id="sumTransaksi">0 Nota</p>
-                        </div>
-                    </div>
+	<!-- KARTU HASIL RINGKASAN (KPI) -->
+	<div id="containerKpiRekap" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+		<div class="bg-indigo-50 dark:bg-slate-800 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900 text-center">
+			<p class="text-[10px] font-bold uppercase text-indigo-500">Total Nominal</p>
+			<p class="text-base md:text-lg font-poppins-custom text-indigo-700 dark:text-indigo-300 mt-1" id="sumNominal">Rp 0</p>
+		</div>
+		<div class="bg-emerald-50 dark:bg-slate-800 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900 text-center">
+			<p class="text-[10px] font-bold uppercase text-emerald-500">Total Ball</p>
+			<p class="text-base md:text-lg font-poppins-custom text-emerald-700 dark:text-emerald-300 mt-1" id="sumBal">0 Ball</p>
+		</div>
+		<div class="bg-amber-50 dark:bg-slate-800 p-4 rounded-xl border border-amber-100 dark:border-amber-900 text-center">
+			<p class="text-[10px] font-bold uppercase text-amber-500">Total Karung / Duz</p>
+			<p class="text-base md:text-lg font-poppins-custom text-amber-700 dark:text-amber-300 mt-1" id="sumKarung">0 Krg / Duz</p>
+		</div>
+		<div class="bg-blue-50 dark:bg-slate-800 p-4 rounded-xl border border-blue-100 dark:border-blue-900 text-center">
+			<p class="text-[10px] font-bold uppercase text-blue-500">Jumlah Transaksi</p>
+			<p class="text-base md:text-lg font-poppins-custom text-blue-700 dark:text-blue-300 mt-1" id="sumTransaksi">0 Nota</p>
+		</div>
+	</div>
 
+	<!-- GRAFIK ANALITIK (TREN & BEBAN KERJA) -->
+	<div id="containerGrafikRekap" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6 mb-2 no-print">
+		<!-- Chart Tren Harian (Line) -->
+		<div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm">
+			<div style="position: relative; height: 240px; width: 100%;">
+				<canvas id="chartTrenHarian"></canvas>
+			</div>
+		</div>
+		<!-- Chart Beban Kurir (Bar Horizontal) -->
+		<div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm">
+			<div style="position: relative; height: 240px; width: 100%;">
+				<canvas id="chartBebanKurir"></canvas>
+			</div>
+		</div>
+	</div>
                     <!-- TABEL RINCIAN HASIL FILTER -->
                     <div class="space-y-2">
                         <p class="text-xs font-bold uppercase text-gray-500 text-center py-2">Daftar Rincian Berdasarkan Filter Di Atas</p>
@@ -576,6 +629,18 @@
                                 <input type="checkbox" id="toggleWdgBarangKeluar" class="w-4 h-4 text-indigo-600 rounded" checked onchange="simpanPengaturanWidget()">
                                 <span class="text-sm font-medium text-gray-800">Widget Nota Barang Keluar</span>
                             </label>
+							<label class="flex items-center gap-2.5 p-2 bg-gray-50 rounded-lg border cursor-pointer hover:bg-gray-100 transition">
+								<input type="checkbox" id="toggleWdgEstimasiBersih" class="w-4 h-4 text-emerald-600 rounded" checked onchange="simpanPengaturanWidget()">
+								<span class="text-sm font-medium text-gray-800">Widget Estimasi Bersih</span>
+							</label>
+							<label class="flex items-center gap-2.5 p-2 bg-gray-50 rounded-lg border cursor-pointer hover:bg-gray-100 transition">
+								<input type="checkbox" id="toggleKpiRekap" class="w-4 h-4 text-indigo-600 rounded" checked onchange="simpanPengaturanWidget()">
+								<span class="text-sm font-medium text-gray-800">Widget Kartu KPI (Rekap Kustom)</span>
+							</label>
+							<label class="flex items-center gap-2.5 p-2 bg-gray-50 rounded-lg border cursor-pointer hover:bg-gray-100 transition">
+								<input type="checkbox" id="toggleGrafikRekap" class="w-4 h-4 text-indigo-600 rounded" checked onchange="simpanPengaturanWidget()">
+								<span class="text-sm font-medium text-gray-800">Widget Grafik Analitik (Rekap Kustom)</span>
+							</label>
                         </div>
                         <p class="text-[10px] text-gray-400 mt-2">*Pengaturan ini tersimpan secara otomatis di perangkat Anda.</p>
                     </div>
@@ -1448,37 +1513,131 @@
         }
 
         async function jalankanRekapKustom() {
-            const tglMulai = document.getElementById('rekapTglMulai').value;
-            const tglAkhir = document.getElementById('rekapTglAkhir').value;
-            const agen = document.getElementById('rekapAgen').value;
-            const varian = document.getElementById('rekapVarian').value;
-            const status = document.getElementById('rekapStatus').value; // Tambahan
+			const tglMulai = document.getElementById('rekapTglMulai').value;
+			const tglAkhir = document.getElementById('rekapTglAkhir').value;
+			const agen = document.getElementById('rekapAgen').value;
+			const varian = document.getElementById('rekapVarian').value;
+			const status = document.getElementById('rekapStatus').value; 
 
-            let q = supabaseClient.from('pencatatan_basreng').select('*').order('tanggal', { ascending: false });
-            if (tglMulai) q = q.gte('tanggal', tglMulai);
-            if (tglAkhir) q = q.lte('tanggal', tglAkhir);
-            if (agen !== 'Semua') q = q.eq('agen', agen);
-            if (varian !== 'Semua') q = q.eq('varian', varian);
-            if (status !== 'Semua') q = q.eq('status_pembayaran', status); // Tambahan
+			let q = supabaseClient.from('pencatatan_basreng').select('*').order('tanggal', { ascending: false });
+			if (tglMulai) q = q.gte('tanggal', tglMulai);
+			if (tglAkhir) q = q.lte('tanggal', tglAkhir);
+			if (agen !== 'Semua') q = q.eq('agen', agen);
+			if (varian !== 'Semua') q = q.eq('varian', varian);
+			if (status !== 'Semua') q = q.eq('status_pembayaran', status); 
 
-            const { data, error } = await q;
-            if (error) return alert(error.message);
+			const { data, error } = await q;
+			if (error) return alert(error.message);
 
-            window.globalRekapKustomData = data || [];
-            let totalNominal = 0, totalBal = 0, totalKrgDuz = 0;
-            (data || []).forEach(r => { totalNominal += Number(r.total_nominal)||0; totalBal += Number(r.qty_bal)||0; totalKrgDuz += Number(r.qty_karung)||0; });
+			window.globalRekapKustomData = data || [];
+			let totalNominal = 0, totalBal = 0, totalKrgDuz = 0;
+			(data || []).forEach(r => { 
+				totalNominal += Number(r.total_nominal)||0; 
+				totalBal += Number(r.qty_bal)||0; 
+				totalKrgDuz += Number(r.qty_karung)||0; 
+			});
 
-            document.getElementById('sumNominal').innerText = formatRupiah(totalNominal);
-            document.getElementById('sumBal').innerText = `${totalBal} Ball`;
-            document.getElementById('sumKarung').innerText = `${totalKrgDuz} Krg/Duz`;
-            document.getElementById('sumTransaksi').innerText = `${(data||[]).length} Nota`;
+			document.getElementById('sumNominal').innerText = formatRupiah(totalNominal);
+			document.getElementById('sumBal').innerText = `${totalBal} Ball`;
+			document.getElementById('sumKarung').innerText = `${totalKrgDuz} Krg/Duz`;
+			document.getElementById('sumTransaksi').innerText = `${(data||[]).length} Nota`;
 
-            document.getElementById('rekapKustomTableBody').innerHTML = (data || []).map((r, index) => {
-                const ketHtml = r.keterangan_barang ? `<span class="block text-[11px] italic text-gray-400 mt-1">${r.keterangan_barang}</span>` : '';
-                const bgRow = index % 2 === 1 ? 'bg-gray-50 dark:bg-slate-800/50' : 'bg-white dark:bg-slate-900';
-                return `<tr class="${bgRow}"><td class="px-3 py-2.5">${formatTgl(r.tanggal)}</td><td class="px-3 py-2.5"><span class="font-bold block">${r.agen}</span><span class="text-[10px] text-gray-400">Kurir: ${r.keterangan_kurir}</span></td><td class="px-3 py-2.5">${r.varian} <span class="font-bold text-indigo-500">(${formatQtyDisplay(r)})</span>${ketHtml}</td><td class="px-3 py-2.5 text-right font-bold font-poppins-custom">${formatRupiah(r.total_nominal)}</td><td class="px-3 py-2.5 text-center"><span class="px-2 py-1 rounded text-[10px] font-bold ${r.status_pembayaran==='Lunas'?'bg-emerald-50 text-emerald-600':'bg-rose-50 text-rose-600'}">${r.status_pembayaran}</span></td></tr>`;
-            }).join('');
-        }
+			// BAGIAN INI YANG SEBELUMNYA HILANG: Kode untuk mencetak baris ke dalam tabel rincian
+			document.getElementById('rekapKustomTableBody').innerHTML = (data || []).map((r, index) => {
+				const ketHtml = r.keterangan_barang ? `<span class="block text-[11px] italic text-gray-400 mt-1">${r.keterangan_barang}</span>` : '';
+				const bgRow = index % 2 === 1 ? 'bg-gray-50 dark:bg-slate-800/50' : 'bg-white dark:bg-slate-900';
+				return `<tr class="${bgRow}"><td class="px-3 py-2.5">${formatTgl(r.tanggal)}</td><td class="px-3 py-2.5"><span class="font-bold block">${r.agen}</span><span class="text-[10px] text-gray-400">Kurir: ${r.keterangan_kurir}</span></td><td class="px-3 py-2.5">${r.varian} <span class="font-bold text-indigo-500">(${formatQtyDisplay(r)})</span>${ketHtml}</td><td class="px-3 py-2.5 text-right font-bold font-poppins-custom">${formatRupiah(r.total_nominal)}</td><td class="px-3 py-2.5 text-center"><span class="px-2 py-1 rounded text-[10px] font-bold ${r.status_pembayaran==='Lunas'?'bg-emerald-50 text-emerald-600':'bg-rose-50 text-rose-600'}">${r.status_pembayaran}</span></td></tr>`;
+			}).join('');
+
+			// Memanggil grafik agar sinkron dengan hasil filter di atas
+			renderGrafikAnalitik(data || []);
+		}        
+		
+		// Variabel global untuk menyimpan instance grafik
+		let chartTrenInstance = null;
+		let chartKurirInstance = null;
+
+		function renderGrafikAnalitik(data) {
+			if (!window.Chart) return; // Mencegah error jika Chart.js gagal dimuat
+
+			// 1. Olah Data untuk Tren Harian (Total Penjualan per Tanggal)
+			const trenData = {};
+			// Sortir data urut dari tanggal paling lama ke terbaru agar grafik mengalir ke kanan
+			const dataUrutTanggal = [...data].sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+			
+			dataUrutTanggal.forEach(r => {
+				const tgl = formatTgl(r.tanggal);
+				if (!trenData[tgl]) trenData[tgl] = 0;
+				trenData[tgl] += (Number(r.total_nominal) || 0); // Mengukur dari Total Nominal
+			});
+
+			// 2. Olah Data untuk Beban Kurir (Jumlah Nota yang diantar)
+			const kurirData = {};
+			data.forEach(r => {
+				const kurir = r.keterangan_kurir || 'Tanpa Kurir';
+				if (!kurirData[kurir]) kurirData[kurir] = 0;
+				kurirData[kurir] += 1; 
+			});
+			// Sortir kurir dari nota terbanyak
+			const sortedKurir = Object.entries(kurirData).sort((a, b) => b[1] - a[1]);
+
+			// Hapus grafik lama jika pengguna mengubah filter
+			if (chartTrenInstance) chartTrenInstance.destroy();
+			if (chartKurirInstance) chartKurirInstance.destroy();
+
+			// Render Line Chart (Tren Harian)
+			const ctxTren = document.getElementById('chartTrenHarian').getContext('2d');
+			chartTrenInstance = new Chart(ctxTren, {
+				type: 'line',
+				data: {
+					labels: Object.keys(trenData),
+					datasets: [{
+						label: 'Total Transaksi (Rp)',
+						data: Object.values(trenData),
+						borderColor: '#6366f1', // Warna Indigo
+						backgroundColor: 'rgba(99, 102, 241, 0.1)',
+						borderWidth: 2,
+						pointBackgroundColor: '#ffffff',
+						pointBorderColor: '#6366f1',
+						tension: 0.3, // Membuat garis sedikit melengkung (smooth)
+						fill: true
+					}]
+				},
+				options: {
+					responsive: true, maintainAspectRatio: false,
+					plugins: {
+						title: { display: true, text: 'Tren Transaksi Harian', font: { family: 'Poppins', size: 14 } },
+						legend: { display: false }
+					},
+					scales: {
+						y: { ticks: { callback: function(value) { return 'Rp ' + (value/1000000) + 'Jt'; } } }
+					}
+				}
+			});
+
+			// Render Horizontal Bar Chart (Beban Kerja Kurir)
+			const ctxKurir = document.getElementById('chartBebanKurir').getContext('2d');
+			chartKurirInstance = new Chart(ctxKurir, {
+				type: 'bar',
+				data: {
+					labels: sortedKurir.map(k => k[0]),
+					datasets: [{
+						label: 'Jumlah Nota',
+						data: sortedKurir.map(k => k[1]),
+						backgroundColor: '#f43f5e', // Warna Rose
+						borderRadius: 4
+					}]
+				},
+				options: {
+					responsive: true, maintainAspectRatio: false,
+					indexAxis: 'y', // Mengubah menjadi bar horizontal
+					plugins: {
+						title: { display: true, text: 'Beban Kerja Kurir (Jumlah Nota)', font: { family: 'Poppins', size: 14 } },
+						legend: { display: false }
+					}
+				}
+			});
+		}
 
         function gantiTab(tab) {
             document.getElementById('viewBarang').classList.toggle('hidden', tab !== 'barang');
@@ -1612,68 +1771,130 @@
         });
 
         // WIDGET UPDATED
-        async function loadWidgets() {
-            const b = document.getElementById('widgetBulan').value;
-            let dMulai = `${b}-01`, dAkhir = new Date(b.substring(0,4), b.substring(5,7), 0).toISOString().split('T')[0];
-            const { data } = await supabaseClient.from('pencatatan_basreng').select('agen, total_nominal, status_pembayaran').gte('tanggal', dMulai).lte('tanggal', dAkhir);
-            
-            let tBelum = 0;
-            let tJambiBelum = 0, cJambiBelum = 0;
-            let tJakartaBelum = 0, cJakartaBelum = 0;
+		async function loadWidgets() {
+			const b = document.getElementById('widgetBulan').value;
+			let dMulai = `${b}-01`, dAkhir = new Date(b.substring(0,4), b.substring(5,7), 0).toISOString().split('T')[0];
+			const { data } = await supabaseClient.from('pencatatan_basreng').select('agen, total_nominal, status_pembayaran').gte('tanggal', dMulai).lte('tanggal', dAkhir);
+			
+			let tBelum = 0;
+			let tJambiBelum = 0, cJambiBelum = 0;
+			let tJakartaBelum = 0, cJakartaBelum = 0;
 
-            (data||[]).forEach(r => { 
-                const nom = Number(r.total_nominal) || 0;
-                if(r.status_pembayaran !== 'Lunas') { 
-                    tBelum += nom; 
-                    if(r.agen === 'Jambi') {
-                        tJambiBelum += nom;
-                        cJambiBelum++; 
-                    } else if(r.agen === 'Jakarta') {
-                        tJakartaBelum += nom;
-                        cJakartaBelum++;
-                    }
-                }
-            });
+			(data||[]).forEach(r => { 
+				const nom = Number(r.total_nominal) || 0;
+				if(r.status_pembayaran !== 'Lunas') { 
+					tBelum += nom; 
+					if(r.agen === 'Jambi') {
+						tJambiBelum += nom;
+						cJambiBelum++; 
+					} else if(r.agen === 'Jakarta') {
+						tJakartaBelum += nom;
+						cJakartaBelum++;
+					}
+				}
+			});
 
-            // FETCH KESELURUHAN SISA BARANG KELUAR YG BELUM DIPOTONG
-            const { data: dKeluar } = await supabaseClient.from('nota_keluar').select('total_nominal, terpakai').eq('status_potongan', 'Belum Dipotong');
-            let tSisaKeluar = 0;
-            (dKeluar||[]).forEach(r => {
-                tSisaKeluar += (Number(r.total_nominal) || 0) - (Number(r.terpakai) || 0);
-            });
+			// FETCH KESELURUHAN SISA BARANG KELUAR YG BELUM DIPOTONG
+			const { data: dKeluar } = await supabaseClient.from('nota_keluar').select('total_nominal, terpakai').eq('status_potongan', 'Belum Dipotong');
+			let tSisaKeluar = 0;
+			(dKeluar||[]).forEach(r => {
+				tSisaKeluar += (Number(r.total_nominal) || 0) - (Number(r.terpakai) || 0);
+			});
 
-            // Injeksi ke HTML dengan tag span untuk teks nota kecil dan italic
-            document.getElementById('wdgJambi').innerHTML = `${formatRupiah(tJambiBelum)} <span class="text-[10px] italic font-normal text-indigo-500 dark:text-indigo-400">(${cJambiBelum} nota)</span>`;
-            document.getElementById('wdgJakarta').innerHTML = `${formatRupiah(tJakartaBelum)} <span class="text-[10px] italic font-normal text-indigo-500 dark:text-indigo-400">(${cJakartaBelum} nota)</span>`;
-            
-            document.getElementById('wdgTagihan').innerText = formatRupiah(tBelum);
-            document.getElementById('wdgBarangKeluar').innerText = formatRupiah(tSisaKeluar);
-            loadDataMasuk();
-        }
+			// KALKULASI ESTIMASI BERSIH
+			let estimasiBersih = tBelum - tSisaKeluar;
+			if (estimasiBersih < 0) estimasiBersih = 0;
+
+			// Injeksi ke HTML
+			document.getElementById('wdgJambi').innerHTML = `${formatRupiah(tJambiBelum)} <span class="text-[10px] italic font-normal text-indigo-500 dark:text-indigo-400">(${cJambiBelum} nota)</span>`;
+			document.getElementById('wdgJakarta').innerHTML = `${formatRupiah(tJakartaBelum)} <span class="text-[10px] italic font-normal text-indigo-500 dark:text-indigo-400">(${cJakartaBelum} nota)</span>`;
+			
+			document.getElementById('wdgTagihan').innerText = formatRupiah(tBelum);
+			document.getElementById('wdgBarangKeluar').innerText = formatRupiah(tSisaKeluar);
+			document.getElementById('wdgEstimasiBersih').innerText = formatRupiah(estimasiBersih);
+			
+			loadDataMasuk();
+		}
+
+		function simpanPengaturanWidget() {
+			const setting = {
+				jambiJakarta: document.getElementById('toggleWdgJambiJakarta').checked,
+				totalSisa: document.getElementById('toggleWdgTotalSisa').checked,
+				barangKeluar: document.getElementById('toggleWdgBarangKeluar').checked,
+				estimasiBersih: document.getElementById('toggleWdgEstimasiBersih').checked, // Tambahan
+				kpiRekap: document.getElementById('toggleKpiRekap') ? document.getElementById('toggleKpiRekap').checked : true,
+				grafikRekap: document.getElementById('toggleGrafikRekap') ? document.getElementById('toggleGrafikRekap').checked : true
+			};
+			localStorage.setItem('widgetSettingsSBR', JSON.stringify(setting));
+			terapkanPengaturanWidget();
+		}
+
+		function terapkanPengaturanWidget() {
+			const saved = localStorage.getItem('widgetSettingsSBR');
+			if (saved) {
+				const setting = JSON.parse(saved);
+				
+				const showKpi = setting.kpiRekap !== undefined ? setting.kpiRekap : true;
+				const showGrafik = setting.grafikRekap !== undefined ? setting.grafikRekap : true;
+				const showEstimasi = setting.estimasiBersih !== undefined ? setting.estimasiBersih : true;
+
+				if(document.getElementById('toggleWdgJambiJakarta')) document.getElementById('toggleWdgJambiJakarta').checked = setting.jambiJakarta;
+				if(document.getElementById('toggleWdgTotalSisa')) document.getElementById('toggleWdgTotalSisa').checked = setting.totalSisa;
+				if(document.getElementById('toggleWdgBarangKeluar')) document.getElementById('toggleWdgBarangKeluar').checked = setting.barangKeluar;
+				if(document.getElementById('toggleWdgEstimasiBersih')) document.getElementById('toggleWdgEstimasiBersih').checked = showEstimasi; // Tambahan
+				
+				if(document.getElementById('toggleKpiRekap')) document.getElementById('toggleKpiRekap').checked = showKpi;
+				if(document.getElementById('toggleGrafikRekap')) document.getElementById('toggleGrafikRekap').checked = showGrafik;
+
+				document.getElementById('widgetJambiJakarta').style.display = setting.jambiJakarta ? 'flex' : 'none';
+				document.getElementById('widgetTotalSisa').style.display = setting.totalSisa ? 'flex' : 'none';
+				document.getElementById('widgetBarangKeluar').style.display = setting.barangKeluar ? 'flex' : 'none';
+				
+				// Atur display widget baru
+				if(document.getElementById('widgetEstimasiBersih')) document.getElementById('widgetEstimasiBersih').style.display = showEstimasi ? 'flex' : 'none';
+				
+				if(document.getElementById('containerKpiRekap')) document.getElementById('containerKpiRekap').style.display = showKpi ? '' : 'none';
+				if(document.getElementById('containerGrafikRekap')) document.getElementById('containerGrafikRekap').style.display = showGrafik ? '' : 'none';
+			}
+		}
 
         function simpanPengaturanWidget() {
-            const setting = {
-                jambiJakarta: document.getElementById('toggleWdgJambiJakarta').checked,
-                totalSisa: document.getElementById('toggleWdgTotalSisa').checked,
-                barangKeluar: document.getElementById('toggleWdgBarangKeluar').checked
-            };
-            localStorage.setItem('widgetSettingsSBR', JSON.stringify(setting));
-            terapkanPengaturanWidget();
-        }
+			const setting = {
+				jambiJakarta: document.getElementById('toggleWdgJambiJakarta').checked,
+				totalSisa: document.getElementById('toggleWdgTotalSisa').checked,
+				barangKeluar: document.getElementById('toggleWdgBarangKeluar').checked,
+				// Tambahan 2 variabel baru
+				kpiRekap: document.getElementById('toggleKpiRekap').checked,
+				grafikRekap: document.getElementById('toggleGrafikRekap').checked
+			};
+			localStorage.setItem('widgetSettingsSBR', JSON.stringify(setting));
+			terapkanPengaturanWidget();
+		}
 
-        function terapkanPengaturanWidget() {
-            const saved = localStorage.getItem('widgetSettingsSBR');
-            if (saved) {
-                const setting = JSON.parse(saved);
-                if(document.getElementById('toggleWdgJambiJakarta')) document.getElementById('toggleWdgJambiJakarta').checked = setting.jambiJakarta;
-                if(document.getElementById('toggleWdgTotalSisa')) document.getElementById('toggleWdgTotalSisa').checked = setting.totalSisa;
-                if(document.getElementById('toggleWdgBarangKeluar')) document.getElementById('toggleWdgBarangKeluar').checked = setting.barangKeluar;
+		function terapkanPengaturanWidget() {
+			const saved = localStorage.getItem('widgetSettingsSBR');
+			if (saved) {
+				const setting = JSON.parse(saved);
+				
+				// Mencegah error jika user lama belum punya settingan baru ini (default true)
+				const showKpi = setting.kpiRekap !== undefined ? setting.kpiRekap : true;
+				const showGrafik = setting.grafikRekap !== undefined ? setting.grafikRekap : true;
 
-                document.getElementById('widgetJambiJakarta').style.display = setting.jambiJakarta ? 'flex' : 'none';
-                document.getElementById('widgetTotalSisa').style.display = setting.totalSisa ? 'flex' : 'none';
-                document.getElementById('widgetBarangKeluar').style.display = setting.barangKeluar ? 'flex' : 'none';
-            }
-        }
+				if(document.getElementById('toggleWdgJambiJakarta')) document.getElementById('toggleWdgJambiJakarta').checked = setting.jambiJakarta;
+				if(document.getElementById('toggleWdgTotalSisa')) document.getElementById('toggleWdgTotalSisa').checked = setting.totalSisa;
+				if(document.getElementById('toggleWdgBarangKeluar')) document.getElementById('toggleWdgBarangKeluar').checked = setting.barangKeluar;
+				if(document.getElementById('toggleKpiRekap')) document.getElementById('toggleKpiRekap').checked = showKpi;
+				if(document.getElementById('toggleGrafikRekap')) document.getElementById('toggleGrafikRekap').checked = showGrafik;
+
+				document.getElementById('widgetJambiJakarta').style.display = setting.jambiJakarta ? 'flex' : 'none';
+				document.getElementById('widgetTotalSisa').style.display = setting.totalSisa ? 'flex' : 'none';
+				document.getElementById('widgetBarangKeluar').style.display = setting.barangKeluar ? 'flex' : 'none';
+				
+				// Logika hide/show untuk area Rekap Kustom
+				if(document.getElementById('containerKpiRekap')) document.getElementById('containerKpiRekap').style.display = showKpi ? '' : 'none';
+				if(document.getElementById('containerGrafikRekap')) document.getElementById('containerGrafikRekap').style.display = showGrafik ? '' : 'none';
+			}
+		}
 
         // Kalkulasi Input Utama
         function kalkulasiKarungKeBal() {
@@ -2492,7 +2713,7 @@
 						<td class="border border-gray-300 dark:border-slate-700 p-2 align-top">
 							<span class="font-bold">${judulText}</span>
 							${detailHtml}
-							<div class="text-[9px] text-rose-600 dark:text-rose-400 italic mt-1 font-medium bg-rose-50 dark:bg-rose-900/30 inline-block px-1.5 py-0.5 rounded">* Terpakai dari Nota: ${formatRupiah(r.terpakai||0)} / ${formatRupiah(r.total_nominal)}</div>
+							<div class="text-[9px] text-rose-600 dark:text-rose-400 italic mt-1 font-medium bg-rose-50 dark:bg-rose-900/30 inline-block px-1.5 py-0.5 rounded">* Jumlah Nota ${formatRupiah(r.total_nominal)} / Terbayar: ${formatRupiah(r.terpakai||0)}</div>
 						</td>
 						<td class="border border-gray-300 dark:border-slate-700 p-2 text-right font-bold text-rose-600 dark:text-rose-400 align-top">${formatRupiah(sisa)}</td>
 					</tr>`;
