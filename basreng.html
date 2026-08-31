@@ -364,7 +364,7 @@
                             <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
                             Rekapan Berjalan
                         </h2>
-                        <select id="filterAgen" onchange="loadDataMasuk()" class="rounded-xl border-gray-300 border p-1.5 text-sm font-medium"><option value="Semua">Semua Agen</option><option value="Jambi">Jambi</option><option value="Jakarta">Jakarta</option></select>
+                        <select id="filterAgen" onchange="currentPageBerjalan=1; loadDataMasuk()" class="rounded-xl border-gray-300 border p-1.5 text-sm font-medium"><option value="Semua">Semua Agen</option><option value="Jambi">Jambi</option><option value="Jakarta">Jakarta</option></select>
                     </div>
                     <div class="overflow-y-auto max-h-[520px] border border-gray-100 dark:border-slate-700 rounded-xl">
                         <table class="w-full text-sm text-left">
@@ -380,6 +380,18 @@
                             <tbody id="tableBody" class="divide-y divide-gray-100 dark:divide-slate-700"></tbody>
                         </table>
                     </div>
+					<!-- TAMBAHAN: Tombol Paginasi UI -->
+					<div class="flex justify-between items-center mt-4 px-2">
+						<button id="btnPrevBerjalan" onclick="gantiHalamanBerjalan(-1)" class="px-4 py-2 bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold transition hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
+							&#8592; Sebelumnya
+						</button>
+						<span class="text-xs font-bold text-gray-500 dark:text-gray-400">
+							Halaman <span id="lblHalamanBerjalan" class="text-indigo-600 font-extrabold text-sm">1</span>
+						</span>
+						<button id="btnNextBerjalan" onclick="gantiHalamanBerjalan(1)" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold transition hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+							Selanjutnya &#8594;
+						</button>
+					</div>
                 </div>
             </div>
         </div>
@@ -1303,12 +1315,20 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let globalRekapMasuk = [];
+		// Variabel untuk melacak halaman
+		let currentPageBerjalan = 1;
+		const itemsPerPage = 50; // Menampilkan 50 data per halaman
         let globalNotaKeluar = [];
         let globalRiwayatNotaKeluar = [];
         let globalRiwayat = [];
         let globalArsip = [];
         let deleteActionCallback = null;
         let pendingDeleteCallback = null;
+		
+		function gantiHalamanBerjalan(arah) {
+			currentPageBerjalan += arah;
+			loadDataMasuk();
+		}
 
         // --- GLOBAL VARIABLES UNTUK DATA MASTER DARI SUPABASE ---
         let globalMasterVarian = [];
@@ -2145,18 +2165,43 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
         }
 
         async function loadDataMasuk() {
-            const f = document.getElementById('filterAgen').value;
-            let q = supabaseClient.from('pencatatan_basreng').select('*').order('tanggal', {ascending: false});
-            if(f !== 'Semua') q = q.eq('agen', f);
-            const { data } = await q;
-            globalRekapMasuk = data || [];
-            
-            document.getElementById('tableBody').innerHTML = globalRekapMasuk.map((r, index) => {
-                const ketBarangHtml = r.keterangan_barang ? `<span class="block text-xs italic text-gray-400 dark:text-gray-500 mt-0.5">${r.keterangan_barang}</span>` : '';
-                const bgRow = index % 2 === 1 ? 'bg-gray-100 dark:bg-slate-800' : 'bg-white dark:bg-slate-900';
-                return `<tr class="${bgRow} hover:bg-gray-200/60 dark:hover:bg-slate-700/70 transition"><td class="px-4 py-3">${formatTgl(r.tanggal)}</td><td class="px-4 py-3"><span class="font-bold block">${r.agen}</span><span class="text-[10px] text-gray-400">${r.keterangan_kurir}</span></td><td class="px-4 py-3">${r.varian} <span class="font-bold text-indigo-500">(${formatQtyDisplay(r)})</span>${ketBarangHtml}</td><td class="px-4 py-3 text-right font-bold font-poppins-custom">${formatRupiah(r.total_nominal)}</td><td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-2"><span class="text-[10px] px-2 py-0.5 rounded font-bold ${r.status_pembayaran==='Lunas'?'bg-emerald-50 text-emerald-600':'bg-rose-50 text-rose-600'}">${r.status_pembayaran}</span><button onclick="bukaModalAksiRekap('${r.id}')" class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-gray-200/80 dark:hover:bg-slate-800 transition" title="Edit / Hapus"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg></button></div></td></tr>`;
-            }).join('');
-        }
+			const f = document.getElementById('filterAgen').value;
+			
+			// 1. Hitung titik mulai (from) dan batas akhir (to) baris yang ditarik
+			const from = (currentPageBerjalan - 1) * itemsPerPage;
+			const to = from + itemsPerPage - 1;
+
+			// 2. Tambahkan parameter count untuk mengetahui total seluruh data di database
+			let q = supabaseClient
+				.from('pencatatan_basreng')
+				.select('*', { count: 'exact' }) 
+				.order('tanggal', {ascending: false})
+				.range(from, to); // 3. Batasi tarikan data sesuai perhitungan halaman
+
+			if(f !== 'Semua') q = q.eq('agen', f);
+			
+			const { data, count, error } = await q;
+			
+			if (error) {
+				alert("Gagal memuat data: " + error.message);
+				return;
+			}
+
+			globalRekapMasuk = data || [];
+			
+			// Render tabel HTML (KODE ASLI ANDA TETAP SAMA)
+			document.getElementById('tableBody').innerHTML = globalRekapMasuk.map((r, index) => {
+				const ketBarangHtml = r.keterangan_barang ? `<span class="block text-xs italic text-gray-400 dark:text-gray-500 mt-0.5">${r.keterangan_barang}</span>` : '';
+				const bgRow = index % 2 === 1 ? 'bg-gray-100 dark:bg-slate-800' : 'bg-white dark:bg-slate-900';
+				return `<tr class="${bgRow} hover:bg-gray-200/60 dark:hover:bg-slate-700/70 transition"><td class="px-4 py-3">${formatTgl(r.tanggal)}</td><td class="px-4 py-3"><span class="font-bold block">${r.agen}</span><span class="text-[10px] text-gray-400">${r.keterangan_kurir}</span></td><td class="px-4 py-3">${r.varian} <span class="font-bold text-indigo-500">(${formatQtyDisplay(r)})</span>${ketBarangHtml}</td><td class="px-4 py-3 text-right font-bold font-poppins-custom">${formatRupiah(r.total_nominal)}</td><td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-2"><span class="text-[10px] px-2 py-0.5 rounded font-bold ${r.status_pembayaran==='Lunas'?'bg-emerald-50 text-emerald-600':'bg-rose-50 text-rose-600'}">${r.status_pembayaran}</span><button onclick="bukaModalAksiRekap('${r.id}')" class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-gray-200/80 dark:hover:bg-slate-800 transition" title="Edit / Hapus"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg></button></div></td></tr>`;
+			}).join('');
+
+			// 4. Update status tombol Paginasi di UI
+			document.getElementById('lblHalamanBerjalan').innerText = currentPageBerjalan;
+			document.getElementById('btnPrevBerjalan').disabled = currentPageBerjalan === 1;
+			// Nonaktifkan tombol Next jika data sudah di ujung
+			document.getElementById('btnNextBerjalan').disabled = (to >= count - 1) || data.length < itemsPerPage;
+		}
 
         async function muatDataArsip() {
             const fTM = document.getElementById('fTM').value;
