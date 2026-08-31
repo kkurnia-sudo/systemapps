@@ -398,33 +398,25 @@
     </button>
 </div>
 
-<!-- MODAL: Input Item -->
-<div class="modal-overlay" id="overlayInput" onclick="closeSheet('sheetInput')"></div>
-<div class="bottom-sheet" id="sheetInput">
-    <div class="sheet-indicator"></div>
-    <h3 style="margin-bottom: 16px; font-weight: 800; font-size: 16px;" id="sheetInputTitle">Tambah Item</h3>
-    
-    <div class="form-group" style="margin-bottom: 10px; display: flex; gap: 8px;">
-        <select id="modalBarang" style="flex: 1;"><option value="">-- Pilih Barang --</option></select>
-        <button type="button" class="btn btn-outline" style="width: 44px; padding: 0; flex-shrink: 0;" onclick="toggleKeterangan()" title="Tambah Keterangan (Opsional)">
-            <i class="ph-bold ph-note-pencil" style="font-size: 18px;"></i>
-        </button>
-    </div>
-    
-    <div class="form-group full" id="boxKeterangan" style="display: none; margin-bottom: 10px;">
-        <input type="text" id="modalKeterangan" placeholder="Isi Keterangan (Opsional)..." style="font-style: italic; font-weight: normal;">
-    </div>
+	<!-- MODAL: Input Item Multi Baris -->
+	<div class="modal-overlay" id="overlayInput" onclick="closeSheet('sheetInput')"></div>
+	<div class="bottom-sheet" id="sheetInput">
+		<div class="sheet-indicator"></div>
+		<h3 style="margin-bottom: 16px; font-weight: 800; font-size: 16px;" id="sheetInputTitle">Tambah Item</h3>
+		
+		<!-- Wadah untuk baris input dinamis -->
+		<div id="multiItemContainer" style="max-height: 50vh; overflow-y: auto; overflow-x: hidden; padding: 2px;">
+		</div>
+		
+		<button class="btn btn-outline" style="width: 100%; margin: 12px 0; border-style: dashed;" onclick="addInputRow()">
+			<i class="ph-bold ph-plus"></i> Tambah Baris
+		</button>
 
-    <div class="form-grid">
-        <div class="form-group"><select id="modalSatuan"><option>Ball</option><option>Pack</option><option>Pcs</option></select></div>
-        <div class="form-group"><input type="number" id="modalQty" placeholder="Jumlah" value="0" style="text-align: right;" onfocus="clearZero(this)"></div>
-    </div>
-    
-    <div class="form-grid" style="margin-top: 20px;">
-        <button class="btn btn-outline" onclick="closeSheet('sheetInput')">Batal</button>
-        <button class="btn btn-primary" onclick="addItem()">Simpan Item</button>
-    </div>
-</div>
+		<div class="form-grid">
+			<button class="btn btn-outline" onclick="closeSheet('sheetInput')">Batal</button>
+			<button class="btn btn-primary" onclick="saveMultipleItems()">Simpan Barang</button>
+		</div>
+	</div>
 
 <!-- MODAL: Printer Settings -->
 <div class="modal-overlay" id="overlayPrinter" onclick="closeSheet('sheetPrinter')"></div>
@@ -599,17 +591,7 @@
         document.getElementById('tglNotaDisplay').value = `${dayName}, ${day}/${m}/${y}`;
     }
 
-    function toggleKeterangan() {
-        const box = document.getElementById('boxKeterangan');
-        if (box.style.display === 'none') {
-            box.style.display = 'block';
-            document.getElementById('modalKeterangan').focus();
-        } else {
-            box.style.display = 'none';
-            document.getElementById('modalKeterangan').value = '';
-        }
-    }
-
+    
     function toggleOngkir() {
         const isChecked = document.getElementById('cbOngkir').checked;
         const boxOngkir = document.getElementById('boxOngkir');
@@ -773,63 +755,41 @@
         hitungTotal();
     }
 
-    function openItemSheet(mode) { 
-        const ag = document.getElementById('pilihAgen').value;
-        if(!ag) {
-            showCustomAlert("Perhatian", "Pilih Agen terlebih dahulu sebelum menambahkan barang!", "danger");
-            return;
-        }
-        
-        currentMode = mode; editIndex = -1; 
-        document.getElementById('sheetInputTitle').innerText = mode === 'Kirim' ? "Tambah Barang Kirim" : "Tambah Barang Retur";
-        
-        const mBarang = document.getElementById('modalBarang');
-        mBarang.innerHTML = '<option value="">-- Pilih Barang --</option>';
-        mBarang.disabled = false;
-        
-        const daftarHargaAgen = database.harga[ag];
-        let listBarangTersedia = [];
-        for (let key in daftarHargaAgen) {
-            if (key !== "bon") {
-                const namaB = key.split('_')[0];
-                if (!listBarangTersedia.includes(namaB)) listBarangTersedia.push(namaB);
-            }
-        }
-        listBarangTersedia.sort().forEach(b => { mBarang.options.add(new Option(b, b)); });
-        
-        document.getElementById('modalQty').value = "0";
-        document.getElementById('modalKeterangan').value = "";
-        document.getElementById('boxKeterangan').style.display = "none";
+    let availableItemsOptions = ""; // Menyimpan cache opsi dropdown barang
 
-        openSheet('sheetInput'); 
-    }
+	function openItemSheet(mode) { 
+		const ag = document.getElementById('pilihAgen').value;
+		if(!ag) {
+			showCustomAlert("Perhatian", "Pilih Agen terlebih dahulu sebelum menambahkan barang!", "danger");
+			return;
+		}
+		
+		currentMode = mode; editIndex = -1; 
+		document.getElementById('sheetInputTitle').innerText = mode === 'Kirim' ? "Tambah Barang Kirim" : "Tambah Barang Retur";
+		
+		// Generate opsi dropdown barang berdasarkan agen
+		availableItemsOptions = '<option value="">-- Pilih Barang --</option>';
+		const daftarHargaAgen = database.harga[ag];
+		let listBarangTersedia = [];
+		for (let key in daftarHargaAgen) {
+			if (key !== "bon") {
+				const namaB = key.split('_')[0];
+				if (!listBarangTersedia.includes(namaB)) listBarangTersedia.push(namaB);
+			}
+		}
+		listBarangTersedia.sort().forEach(b => { availableItemsOptions += `<option value="${b}">${b}</option>`; });
+		
+		// Kosongkan container dan buat 3 baris default
+		const container = document.getElementById('multiItemContainer');
+		container.innerHTML = '';
+		addInputRow();
+		addInputRow();
+		addInputRow();
 
-    function addItem() {
-        const ag = document.getElementById('pilihAgen').value;
-        const b = document.getElementById('modalBarang').value;
-        const s = document.getElementById('modalSatuan').value;
-        const q = parseFloat(document.getElementById('modalQty').value) || 0;
-        const k = document.getElementById('modalKeterangan').value.trim();
-        
-        if(!b) {
-            showCustomAlert("Perhatian", "Barang belum dipilih!", "danger");
-            return;
-        }
-        
-        const h = database.harga[ag]?.[`${b}_${s}`];
-        if (h === undefined) {
-            showCustomAlert("Perhatian", "Satuan " + s + " tidak tersedia untuk barang ini!", "danger");
-            return;
-        }
-        
-        const it = { barang: b, satuan: s, qty: q, harga: h, total: q * h, keterangan: k };
-        
-        if (editIndex > -1) {
-            if(q === 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).splice(editIndex, 1);
-            else (currentMode === 'Kirim' ? itemsKirim : itemsRetur)[editIndex] = it;
-        } else { if(q > 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).push(it); }
-        render(); closeSheet('sheetInput'); hitungTotal();
-    }
+		openSheet('sheetInput'); 
+	}
+
+    
 
     function openActionSheet(idx, mode) {
         currentActionIndex = idx;
@@ -852,26 +812,7 @@
         });
     }
 
-    function editItem(idx, mode) {
-        currentMode = mode; editIndex = idx; 
-        const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
-        
-        document.getElementById('sheetInputTitle').innerText = "Edit Item";
-        document.getElementById('modalBarang').innerHTML = `<option value="${item.barang}">${item.barang}</option>`;
-        document.getElementById('modalBarang').disabled = true;
-        document.getElementById('modalSatuan').value = item.satuan; 
-        document.getElementById('modalQty').value = item.qty;
-        
-        if (item.keterangan) {
-            document.getElementById('modalKeterangan').value = item.keterangan;
-            document.getElementById('boxKeterangan').style.display = "block";
-        } else {
-            document.getElementById('modalKeterangan').value = "";
-            document.getElementById('boxKeterangan').style.display = "none";
-        }
-        openSheet('sheetInput');
-    }
-
+   
     function render() {
         const draw = (data, id, mode) => {
             const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
@@ -1360,6 +1301,160 @@
     }
 
     window.onload = init;
+	
+
+	function openItemSheet(mode) { 
+		const ag = document.getElementById('pilihAgen').value;
+		if(!ag) {
+			showCustomAlert("Perhatian", "Pilih Agen terlebih dahulu sebelum menambahkan barang!", "danger");
+			return;
+		}
+		
+		currentMode = mode; editIndex = -1; 
+		document.getElementById('sheetInputTitle').innerText = mode === 'Kirim' ? "Tambah Barang Kirim" : "Tambah Barang Retur";
+		
+		// Generate opsi dropdown barang berdasarkan agen
+		availableItemsOptions = '<option value="">-- Pilih Barang --</option>';
+		const daftarHargaAgen = database.harga[ag];
+		let listBarangTersedia = [];
+		for (let key in daftarHargaAgen) {
+			if (key !== "bon") {
+				const namaB = key.split('_')[0];
+				if (!listBarangTersedia.includes(namaB)) listBarangTersedia.push(namaB);
+			}
+		}
+		listBarangTersedia.sort().forEach(b => { availableItemsOptions += `<option value="${b}">${b}</option>`; });
+		
+		// Kosongkan container dan buat 3 baris default
+		const container = document.getElementById('multiItemContainer');
+		container.innerHTML = '';
+		addInputRow();
+		addInputRow();
+		addInputRow();
+
+		openSheet('sheetInput'); 
+	}
+
+	function addInputRow(itemVal = "", uomVal = "Ball", qtyVal = "0", ketVal = "") {
+		const container = document.getElementById('multiItemContainer');
+		const rowId = 'row_' + Math.random().toString(36).substr(2, 9);
+		const ketId = 'ket_' + rowId;
+		
+		// Tampilan diset ke grid 5 kolom: [Ikon] [Barang] [Satuan] [Qty] [Hapus]
+		const rowHtml = `
+			<div class="item-input-row" id="${rowId}" style="background: var(--card-bg); padding: 6px; border-radius: 6px; margin-bottom: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+				
+				<div style="display: grid; grid-template-columns: 28px 1fr 65px 50px 28px; gap: 4px; align-items: center;">
+					
+					<!-- Ikon Keterangan -->
+					<button type="button" class="icon-btn" style="width: 28px; height: 34px; border-radius: 6px; margin: 0; background: var(--bg-color); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted);" onclick="const ket = document.getElementById('${ketId}'); ket.style.display = ket.style.display === 'none' ? 'block' : 'none';" title="Catatan Barang">
+						<i class="ph-bold ph-note-pencil"></i>
+					</button>
+					
+					<select class="input-barang" style="padding: 4px; font-size: 13px; border-radius: 6px; height: 34px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-weight: 600;">
+						${availableItemsOptions}
+					</select>
+					
+					<select class="input-satuan" style="padding: 4px 2px; font-size: 12px; border-radius: 6px; height: 34px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); text-align: center;">
+						<option value="Ball" ${uomVal === 'Ball' ? 'selected' : ''}>Ball</option>
+						<option value="Pack" ${uomVal === 'Pack' ? 'selected' : ''}>Pack</option>
+						<option value="Pcs"  ${uomVal === 'Pcs' ? 'selected' : ''}>Pcs</option>
+					</select>
+					
+					<input type="number" class="input-qty" placeholder="Qty" value="${qtyVal}" style="padding: 4px 2px; font-size: 14px; font-weight: 700; border-radius: 6px; height: 34px; text-align: center; border: 1px solid var(--border); background: var(--input-bg); color: var(--primary);" onfocus="clearZero(this)">
+					
+					<button type="button" class="icon-btn danger" style="width: 28px; height: 34px; font-size: 14px; border-radius: 6px; margin: 0; display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('${rowId}').remove()" title="Hapus Baris">
+						<i class="ph-bold ph-trash"></i>
+					</button>
+					
+				</div>
+				
+				<!-- Input Keterangan disembunyikan secara ID -->
+				<input type="text" id="${ketId}" class="input-ket" placeholder="Catatan/Keterangan (opsional)..." value="${ketVal}" style="padding: 6px 8px; margin-top: 4px; font-size: 11px; font-style: italic; border-radius: 6px; width: 100%; border: 1px dashed var(--border); background: transparent; display: ${ketVal ? 'block' : 'none'};">
+				
+			</div>
+		`;
+		container.insertAdjacentHTML('beforeend', rowHtml);
+
+		// Set value barang jika mode edit
+		if (itemVal) {
+			const lastRow = container.lastElementChild;
+			lastRow.querySelector('.input-barang').value = itemVal;
+		}
+	}
+	function saveMultipleItems() {
+		const ag = document.getElementById('pilihAgen').value;
+		const rows = document.querySelectorAll('.item-input-row');
+		
+		let tempItems = [];
+		let hasError = false;
+
+		// Looping seluruh baris yang ada di modal
+		rows.forEach(row => {
+			const b = row.querySelector('.input-barang').value;
+			const s = row.querySelector('.input-satuan').value;
+			const q = parseFloat(row.querySelector('.input-qty').value) || 0;
+			const k = row.querySelector('.input-ket').value.trim();
+
+			// Hanya simpan jika barang dipilih dan Qty lebih dari 0
+			if (b && q > 0) {
+				const h = database.harga[ag]?.[`${b}_${s}`];
+				if (h === undefined) {
+					showCustomAlert("Perhatian", `Satuan ${s} tidak tersedia untuk barang ${b}!`, "danger");
+					hasError = true;
+					return;
+				}
+				tempItems.push({ barang: b, satuan: s, qty: q, harga: h, total: q * h, keterangan: k });
+			} else if (editIndex > -1 && b && q === 0) {
+				// Mode edit: Jika Qty diubah jadi 0, hapus baris
+				tempItems.push({ deleteFlag: true });
+			}
+		});
+
+		if (hasError) return; 
+
+		if (editIndex > -1) {
+			if (tempItems.length > 0) {
+				const updatedItem = tempItems[0];
+				if (updatedItem.deleteFlag) {
+					(currentMode === 'Kirim' ? itemsKirim : itemsRetur).splice(editIndex, 1);
+				} else {
+					(currentMode === 'Kirim' ? itemsKirim : itemsRetur)[editIndex] = updatedItem;
+				}
+			}
+		} else {
+			tempItems.forEach(it => {
+				(currentMode === 'Kirim' ? itemsKirim : itemsRetur).push(it);
+			});
+		}
+		
+		render(); 
+		closeSheet('sheetInput'); 
+		hitungTotal();
+	}
+
+	function editItem(idx, mode) {
+		currentMode = mode; editIndex = idx; 
+		const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
+		
+		availableItemsOptions = `<option value="${item.barang}">${item.barang}</option>`;
+		
+		document.getElementById('sheetInputTitle').innerText = "Edit Item";
+		
+		const container = document.getElementById('multiItemContainer');
+		container.innerHTML = '';
+		
+		// Render 1 baris saja dengan isi data barang yang mau diedit
+		addInputRow(item.barang, item.satuan, item.qty, item.keterangan || "");
+		
+		const lastRow = container.lastElementChild;
+		lastRow.querySelector('.input-barang').disabled = true;
+		const delBtn = lastRow.querySelector('.icon-btn.danger');
+		if(delBtn) delBtn.style.display = 'none'; // Hilangkan tombol (X) saat mode edit
+
+		openSheet('sheetInput');
+	}
+	
 </script>
 </body>
 </html>
