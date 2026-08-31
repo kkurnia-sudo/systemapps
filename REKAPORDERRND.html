@@ -171,6 +171,17 @@
             table.history-table th, table.history-table td { padding: 10px 8px; }
             .qty-wrapper span { font-size: 11px !important; }
         }
+		
+		/* Menghilangkan spinner pada input type number */
+		input[type="number"]::-webkit-inner-spin-button,
+		input[type="number"]::-webkit-outer-spin-button {
+			-webkit-appearance: none;
+			margin: 0;
+		}
+
+		input[type="number"] {
+			-moz-appearance: textfield; /* Untuk Firefox */
+		}		
     </style>
 </head>
 <body>
@@ -207,7 +218,7 @@
             <form id="orderForm">
                 <div class="form-group">
                     <label>Tanggal Order</label>
-                    <input type="date" id="inputTanggal" class="form-control" required>
+                    <input type="date" id="inputTanggal" class="form-control">
                 </div>
                 <div class="form-group">
                     <label>Kepada (Pembeli)</label>
@@ -256,9 +267,12 @@
         <!-- HISTORY / RIWAYAT -->
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 class="card-title" style="margin-bottom: 0;">2. Riwayat Order</h2>
-                <button class="btn btn-success" style="width: auto; padding: 6px 12px;" onclick="generatePreview()">Buat Rekapan</button>
-            </div>
+				<h2 class="card-title" style="margin-bottom: 0;">2. Riwayat Order Aktif</h2>
+				<div style="display: flex; gap: 8px;">
+					<button class="btn btn-outline" style="padding: 6px 12px;" onclick="bukaModalArsip()">📂 Arsip Selesai</button>
+					<button class="btn btn-success" style="padding: 6px 12px;" onclick="generatePreview()">Buat Rekapan</button>
+				</div>
+			</div>
             
             <div class="table-responsive">
                 <table class="history-table">
@@ -357,7 +371,7 @@
             <input type="hidden" id="editId">
             <div class="form-group">
                 <label>Tanggal Order</label>
-                <input type="date" id="editTanggal" class="form-control" required>
+                <input type="date" id="editTanggal" class="form-control">
             </div>
             <div class="form-group">
                 <label>Kepada (Pembeli)</label>
@@ -368,14 +382,64 @@
                 <select id="editLokasi" class="form-control" required></select>
             </div>
             <div class="form-group">
-                <label>Barang (Bisa Edit Langsung)</label>
-                <textarea id="editBarang" class="form-control" rows="4" required></textarea>
-            </div>
+			<label>Barang</label>
+			<div class="item-builder">
+				<select id="editPilihBarang" class="form-control" onchange="updateEditQtyUI()">
+					<option value="">- Pilih Barang -</option>
+				</select>
+				
+				<div class="qty-wrapper">
+					<input type="number" id="editInputUnit" class="form-control" placeholder="Duz/Krg" oninput="hitungEditBall()">
+					<span id="editLabelUnit" style="font-size:12px; font-weight:700; color:var(--text-main); min-width: 20px;">Dus</span>
+				</div>
+				
+				<div class="qty-wrapper">
+					<input type="number" id="editInputBall" class="form-control" placeholder="Ball" readonly style="background:var(--table-hover); border-color:var(--border); cursor:not-allowed;">
+					<span style="font-size:12px; font-weight:700; color:var(--text-main);">Ball</span>
+				</div>
+				
+				<button type="button" class="btn btn-outline" style="padding: 8px 12px;" onclick="addBarangToEditList()">+</button>
+			</div>
+			
+			<div class="item-list-box" id="editListBarangBox">
+				<em style="font-size: 11px; color: var(--text-muted);">Belum ada barang</em>
+			</div>
+			<label>Keterangan / Edit Manual (Opsional):</label>
+			<textarea id="editBarang" class="form-control" rows="3"></textarea>
+		</div>
             <div style="display: flex; gap: 10px; margin-top: 15px;">
                 <button type="button" class="btn btn-primary btn-full" onclick="simpanEdit()">Update</button>
                 <button type="button" class="btn btn-danger" onclick="hapusDariEdit()">Hapus</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Modal Arsip Order -->
+<div class="modal-overlay" id="modalArsipOrder">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2 style="font-size: 16px;">Riwayat Order Selesai (Terkirim)</h2>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="hapusArsipTerpilih()">Hapus Terpilih</button>
+                <button class="close-btn" onclick="closeModal('modalArsipOrder')">&times;</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkAllArsip" onclick="toggleAllArsip()"></th>
+                        <th>Tanggal</th>
+                        <th>Kepada</th>
+                        <th style="text-align:center;">Terkirim</th>
+                    </tr>
+                </thead>
+                <tbody id="arsipBody">
+                    <tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -427,9 +491,12 @@
     }
 
     function formatTanggal(dateString) {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString('id-ID', options);
-    }
+		if (!dateString) return "Menunggu informasi lebih lanjut";
+		const d = new Date(dateString);
+		if (isNaN(d.getTime())) return "Menunggu informasi lebih lanjut";
+		const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+		return d.toLocaleDateString('id-ID', options);
+	}
 
     async function initApp() {
         initTheme(); 
@@ -437,7 +504,7 @@
             if (typeof supabase === 'undefined') throw new Error("Sistem gagal memuat library database.");
             sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-            document.getElementById('inputTanggal').valueAsDate = new Date();
+            document.getElementById('inputTanggal').value = "";
             document.getElementById('headerDateRed').innerText = formatTanggal(new Date());
 
             loadDataFromLocalStorage();
@@ -471,7 +538,8 @@
             {id: 'editKepada', data: masterData.kepada, placeholder: '-- Pembeli --'},
             {id: 'inputLokasi', data: masterData.lokasi, placeholder: '-- Pilih Lokasi --'},
             {id: 'editLokasi', data: masterData.lokasi, placeholder: '-- Lokasi --'},
-            {id: 'pilihBarang', data: masterData.barang, placeholder: '-- Pilih Barang --'}
+            {id: 'pilihBarang', data: masterData.barang, placeholder: '-- Pilih Barang --'},
+			{id: 'editPilihBarang', data: masterData.barang, placeholder: '-- Pilih Barang --'}
         ];
 
         selects.forEach(sel => {
@@ -569,14 +637,67 @@
             hiddenArea.value = tempItems.join('\n'); 
         }
     }
+	
+	let tempEditItems = []; // Tambahkan di bagian paling atas bersama let tempItems = [];
+
+	function updateEditQtyUI() {
+		const info = getMultiplierAndUnit(document.getElementById('editPilihBarang').value);
+		document.getElementById('editLabelUnit').innerText = info.unit;
+		hitungEditBall();
+	}
+
+	function hitungEditBall() {
+		const unitVal = parseFloat(document.getElementById('editInputUnit').value) || 0;
+		const info = getMultiplierAndUnit(document.getElementById('editPilihBarang').value);
+		const totalBall = unitVal * info.multiplier;
+		document.getElementById('editInputBall').value = totalBall > 0 ? totalBall : '';
+	}
+
+	function addBarangToEditList() {
+		const nama = document.getElementById('editPilihBarang').value;
+		const unitVal = document.getElementById('editInputUnit').value.trim();
+		const ballVal = document.getElementById('editInputBall').value;
+		
+		if(!nama || !unitVal) { alert('Isi Qty dengan benar!'); return; }
+		
+		const info = getMultiplierAndUnit(nama);
+		tempEditItems.push(`${unitVal} ${info.unit} (${ballVal} Ball) - ${nama}`);
+		
+		document.getElementById('editPilihBarang').value = '';
+		document.getElementById('editInputUnit').value = '';
+		document.getElementById('editInputBall').value = '';
+		updateEditQtyUI(); 
+		renderEditListBarang();
+	}
+
+	function hapusBarangDariEditList(index) { 
+		tempEditItems.splice(index, 1); 
+		renderEditListBarang(); 
+	}
+
+	function renderEditListBarang() {
+		const box = document.getElementById('editListBarangBox');
+		const textAreaArea = document.getElementById('editBarang');
+		
+		if(tempEditItems.length === 0) {
+			box.innerHTML = '<em style="font-size: 11px; color: var(--text-muted);">Belum ada barang</em>';
+		} else {
+			box.innerHTML = '';
+			tempEditItems.forEach((item, idx) => {
+				box.innerHTML += `<div class="item-row"><span>• ${item}</span><span class="remove-item" onclick="hapusBarangDariEditList(${idx})">&times;</span></div>`;
+			});
+		}
+		textAreaArea.value = tempEditItems.join('\n'); 
+	}
 
     async function loadHistory() {
         const tbody = document.getElementById('historyBody');
         try {
             const { data, error } = await sbClient.from('list_order')
-                .select('*')
-                .order('tanggal', { ascending: true }) 
-                .order('id', { ascending: true });     
+				.select('*')
+				.eq('status_kirim', false) // Tambahkan baris ini
+				.order('tanggal', { ascending: true }) 
+				.order('id', { ascending: true });     
             
             if (error) throw error; 
 
@@ -624,44 +745,70 @@
     }
 
     async function simpanKeSupabase() {
-        const btn = document.getElementById('btnSimpan');
-        const orderData = {
-            tanggal: document.getElementById('inputTanggal').value,
-            kepada: document.getElementById('inputKepada').value,
-            lokasi: document.getElementById('inputLokasi').value,
-            barang: document.getElementById('inputBarang').value,
-            status_kirim: false
-        };
+		const btn = document.getElementById('btnSimpan');
+		const rawTanggal = document.getElementById('inputTanggal').value;
 
-        if(!orderData.tanggal || !orderData.kepada || !orderData.lokasi || !orderData.barang) { alert('Lengkapi semua data!'); return; }
-        
-        btn.innerHTML = 'Menyimpan...'; btn.disabled = true;
+		const orderData = {
+			tanggal: rawTanggal ? rawTanggal : null,
+			kepada: document.getElementById('inputKepada').value,
+			lokasi: document.getElementById('inputLokasi').value,
+			barang: document.getElementById('inputBarang').value,
+			status_kirim: false
+		};
 
-        try {
-            const { error } = await sbClient.from('list_order').insert([orderData]);
-            if (error) throw error;
-            
-            document.getElementById('orderForm').reset();
-            document.getElementById('inputTanggal').valueAsDate = new Date();
-            tempItems = []; renderListBarang();
-            await loadHistory();
-        } catch (err) { alert('Error: ' + err.message); } 
-        finally { btn.innerHTML = 'Simpan Order'; btn.disabled = false; }
-    }
+		// Validasi diubah dengan menghilangkan pengecekan orderData.tanggal
+		if(!orderData.kepada || !orderData.lokasi || !orderData.barang) { 
+			alert('Lengkapi data pembeli, lokasi, dan barang!'); 
+			return; 
+		}
+
+		btn.innerHTML = 'Menyimpan...'; btn.disabled = true;
+
+		try {
+			const { error } = await sbClient.from('list_order').insert([orderData]);
+			if (error) throw error;
+
+			document.getElementById('orderForm').reset();
+			document.getElementById('inputTanggal').value = "";
+			tempItems = []; renderListBarang();
+			await loadHistory();
+		} catch (err) { alert('Error: ' + err.message); } 
+		finally { btn.innerHTML = 'Simpan Order'; btn.disabled = false; }
+	}
 
     async function updateStatusKirim(id, isChecked) {
-        try {
-            const { error } = await sbClient.from('list_order').update({ status_kirim: isChecked }).eq('id', id);
-            if (error) throw error;
-        } catch (err) { alert('Gagal update: ' + err.message); loadHistory(); }
-    }
+		if (isChecked) {
+			const konfirmasi = confirm("Pesanan ini sudah terkirim? Klik OK untuk memindahkannya ke Riwayat Arsip.");
+			if (!konfirmasi) {
+				loadHistory(); // Batalkan centang jika user klik Cancel
+				return;
+			}
+		} else {
+			const konfirmasi = confirm("Kembalikan pesanan ini ke daftar order aktif?");
+			if (!konfirmasi) {
+				bukaModalArsip(); // Batalkan jika user klik Cancel di dalam arsip
+				return;
+			}
+		}
+
+		try {
+			const { error } = await sbClient.from('list_order').update({ status_kirim: isChecked }).eq('id', id);
+			if (error) throw error;
+			
+			loadHistory(); // Refresh tabel utama
+			if (!isChecked) bukaModalArsip(); // Refresh arsip jika sedang dibuka
+		} catch (err) { 
+			alert('Gagal update: ' + err.message); 
+			loadHistory(); 
+		}
+	}
 
     function openEditModal(id) {
         const order = globalOrders.find(o => o.id === id);
         if(!order) return;
 
         document.getElementById('editId').value = order.id;
-        document.getElementById('editTanggal').value = order.tanggal;
+        document.getElementById('editTanggal').value = order.tanggal || '';
         
         let selKepada = document.getElementById('editKepada');
         if(![...selKepada.options].some(opt => opt.value === order.kepada)) selKepada.innerHTML += `<option value="${order.kepada}">${order.kepada}</option>`;
@@ -671,25 +818,34 @@
         if(![...selLokasi.options].some(opt => opt.value === order.lokasi)) selLokasi.innerHTML += `<option value="${order.lokasi}">${order.lokasi}</option>`;
         selLokasi.value = order.lokasi;
 
-        document.getElementById('editBarang').value = order.barang;
-        document.getElementById('modalEditOrder').style.display = 'flex';
+        // Masukkan ini ke bagian paling bawah di dalam fungsi openEditModal(id)
+		if(order.barang) {
+			tempEditItems = order.barang.split('\n').filter(item => item.trim() !== '');
+		} else {
+			tempEditItems = [];
+		}
+		renderEditListBarang();
+
+		document.getElementById('modalEditOrder').style.display = 'flex';
     }
 
     async function simpanEdit() {
-        const id = document.getElementById('editId').value;
-        const dataEdit = {
-            tanggal: document.getElementById('editTanggal').value,
-            kepada: document.getElementById('editKepada').value,
-            lokasi: document.getElementById('editLokasi').value,
-            barang: document.getElementById('editBarang').value
-        };
+		const id = document.getElementById('editId').value;
+		const rawTanggal = document.getElementById('editTanggal').value;
 
-        try {
-            const { error } = await sbClient.from('list_order').update(dataEdit).eq('id', id);
-            if(error) throw error;
-            closeModal('modalEditOrder'); loadHistory();
-        } catch(err) { alert('Gagal update: ' + err.message); }
-    }
+		const dataEdit = {
+			tanggal: rawTanggal ? rawTanggal : null,
+			kepada: document.getElementById('editKepada').value,
+			lokasi: document.getElementById('editLokasi').value,
+			barang: document.getElementById('editBarang').value
+		};
+
+		try {
+			const { error } = await sbClient.from('list_order').update(dataEdit).eq('id', id);
+			if(error) throw error;
+			closeModal('modalEditOrder'); loadHistory();
+		} catch(err) { alert('Gagal update: ' + err.message); }
+	}
 
     async function hapusDariEdit() {
         const id = document.getElementById('editId').value;
@@ -748,6 +904,79 @@
     }
 
     window.onload = initApp;
+	
+	async function bukaModalArsip() {
+		document.getElementById('modalArsipOrder').style.display = 'flex';
+		const tbody = document.getElementById('arsipBody');
+		tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuat arsip...</td></tr>';
+		
+		try {
+			const { data, error } = await sbClient.from('list_order')
+				.select('*')
+				.eq('status_kirim', true)
+				.order('tanggal', { ascending: false });
+				
+			if (error) throw error;
+			
+			tbody.innerHTML = '';
+			if(data.length === 0) {
+				tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Belum ada order selesai.</td></tr>';
+				return;
+			}
+
+			data.forEach(order => {
+				tbody.innerHTML += `
+					<tr style="opacity: 0.8;">
+						<td style="text-align:center;"><input type="checkbox" class="arsip-checkbox" value="${order.id}"></td>
+						<td>${formatTanggal(order.tanggal)}</td>
+						<td><a class="link-detail" onclick="lihatRincianOrder(${order.id})">${order.kepada}</a></td>
+						<td style="text-align:center;">
+							<input type="checkbox" class="check-kirim" checked onchange="updateStatusKirim(${order.id}, this.checked)">
+						</td>
+					</tr>
+				`;
+			});
+		} catch (err) { alert("Gagal memuat arsip: " + err.message); }
+	}
+	
+	function toggleAllArsip() {
+		const isChecked = document.getElementById('checkAllArsip').checked;
+		document.querySelectorAll('.arsip-checkbox').forEach(cb => cb.checked = isChecked);
+	}
+
+	async function hapusArsipTerpilih() {
+		const checkboxes = document.querySelectorAll('.arsip-checkbox:checked');
+		if (checkboxes.length === 0) { 
+			alert('Ceklis minimal 1 order yang ingin dihapus dari arsip.'); 
+			return; 
+		}
+
+		const konfirmasi = confirm(`Yakin ingin menghapus permanen ${checkboxes.length} data arsip ini? Data yang dihapus tidak bisa dikembalikan.`);
+		if (!konfirmasi) return;
+
+		// Kumpulkan semua ID yang dicentang
+		const idsToDelete = Array.from(checkboxes).map(cb => parseInt(cb.value));
+		const btn = document.querySelector('#modalArsipOrder .btn-danger');
+		btn.innerHTML = 'Menghapus...'; btn.disabled = true;
+
+		try {
+			// Hapus banyak data sekaligus berdasarkan daftar ID
+			const { error } = await sbClient.from('list_order')
+				.delete()
+				.in('id', idsToDelete);
+				
+			if (error) throw error;
+			
+			document.getElementById('checkAllArsip').checked = false; 
+			bukaModalArsip(); 
+		} catch (err) { 
+			alert('Gagal menghapus arsip: ' + err.message); 
+		} finally {
+			btn.innerHTML = 'Hapus Terpilih'; btn.disabled = false;
+		}
+	}
+	
+	
 </script>
 </body>
 </html>
