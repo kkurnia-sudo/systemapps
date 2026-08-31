@@ -1314,7 +1314,11 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
         async function openNavbarQuickPay() {
             try {
-                const { data, error } = await db.from('invoices_jambi').select('invoice_number, invoice_date, remaining_amount').gt('remaining_amount', 0).order('created_at', { ascending: false });
+                // Hanya mengambil 50 data terbaru untuk halaman pertama
+				const { data, error } = await db.from('invoices_jambi')
+				  .select('*')
+				  .order('created_at', { ascending: false })
+				  .range(0, 49);
                 if (error) throw error;
                 if (!data || data.length === 0) return alert("Tidak ada nota dengan status hutang saat ini.");
 
@@ -1424,7 +1428,12 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 			loader.classList.remove('hide');
 			
 			try {
-				const { data } = await db.from('invoices_jambi').select('*').order('created_at', { ascending: false });
+				// Saat tombol 'hutang' diklik, tarik hanya yang berstatus hutang dari database
+				const { data } = await db.from('invoices_jambi')
+				  .select('*')
+				  .gt('remaining_amount', 0)
+				  .order('created_at', { ascending: false })
+				  .range(0, 49);
 				allInvoicesData = data || [];
 				countTotalUnpaidNotes(); 
 				applyHistoryFilter(currentHistoryFilter); 
