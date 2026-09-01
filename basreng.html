@@ -231,7 +231,6 @@
 					Rekap Total
 				</button>
     
-				<input type="month" id="widgetBulan" class="p-2 border rounded-xl text-xs outline-none dark:bg-slate-800 shadow-sm" onchange="loadWidgets()">
 				<!-- Tombol Dark Mode -->
                     <button onclick="document.documentElement.classList.toggle('dark')" class="p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 active:scale-95 dark:bg-slate-700 text-sm shadow-sm transition">
                         <!-- Ikon Bulan (Mode Terang) -->
@@ -1439,10 +1438,15 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 			if(isDark) document.documentElement.classList.remove('dark');
 			
 			const el = document.getElementById(elementId);
+			
+			// PERBAIKAN: Tambahkan scrollY: 0, set margin rapi, dan aktifkan pagebreak
             const opt = {
-					margin: 0.2, filename: fileName + '_' + Date.now() + '.pdf',
-					image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true },
-					jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+					margin: 0.3, 
+					filename: fileName + '_' + Date.now() + '.pdf',
+					image: { type: 'jpeg', quality: 0.98 }, 
+					html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, // scrollY: 0 mencegah blank space di atas
+					jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }, // Gunakan A4 agar proporsional
+					pagebreak: { mode: 'css', avoid: 'tr' } // Mencegah tabel terpotong di tengah baris
 				};
 				
             html2pdf().set(opt).from(el).save().then(() => {
@@ -1452,7 +1456,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 					if(isDark) document.documentElement.classList.add('dark');
 					alert("Terjadi kesalahan saat menyimpan PDF."); tutupModalStatus(); 
 				});
-			}
+		}
 
         function simpanPNG(elementId, fileName) {
             tampilkanStatusLoading("Merender Gambar PNG", "Sedang memproses tampilan menjadi gambar beresolusi tinggi...");
@@ -1884,49 +1888,53 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 
         // WIDGET UPDATED
 		async function loadWidgets() {
-			const b = document.getElementById('widgetBulan').value;
-			let dMulai = `${b}-01`, dAkhir = new Date(b.substring(0,4), b.substring(5,7), 0).toISOString().split('T')[0];
-			const { data } = await supabaseClient.from('pencatatan_basreng').select('agen, total_nominal, status_pembayaran').gte('tanggal', dMulai).lte('tanggal', dAkhir);
-			
-			let tBelum = 0;
-			let tJambiBelum = 0, cJambiBelum = 0;
-			let tJakartaBelum = 0, cJakartaBelum = 0;
+            try {
+                // 1. Hitung Piutang Masuk (Hanya yang 'Belum Dibayar') dari Semua Bulan
+                const { data: masukData, error: errMasuk } = await supabaseClient
+                    .from('pencatatan_basreng')
+                    .select('agen, total_nominal')
+                    .eq('status_pembayaran', 'Belum Dibayar');
+                    
+                if (errMasuk) throw errMasuk;
 
-			(data||[]).forEach(r => { 
-				const nom = Number(r.total_nominal) || 0;
-				if(r.status_pembayaran !== 'Lunas') { 
-					tBelum += nom; 
-					if(r.agen === 'Jambi') {
-						tJambiBelum += nom;
-						cJambiBelum++; 
-					} else if(r.agen === 'Jakarta') {
-						tJakartaBelum += nom;
-						cJakartaBelum++;
-					}
-				}
-			});
+                let sumJambi = 0; let countJambi = 0;
+                let sumJakarta = 0; let countJakarta = 0;
 
-			// FETCH KESELURUHAN SISA BARANG KELUAR YG BELUM DIPOTONG
-			const { data: dKeluar } = await supabaseClient.from('nota_keluar').select('total_nominal, terpakai').eq('status_potongan', 'Belum Dipotong');
-			let tSisaKeluar = 0;
-			(dKeluar||[]).forEach(r => {
-				tSisaKeluar += (Number(r.total_nominal) || 0) - (Number(r.terpakai) || 0);
-			});
+                (masukData || []).forEach(r => {
+                    const nom = Number(r.total_nominal) || 0;
+                    if (r.agen === 'Jambi') { sumJambi += nom; countJambi++; }
+                    if (r.agen === 'Jakarta') { sumJakarta += nom; countJakarta++; }
+                });
 
-			// KALKULASI ESTIMASI BERSIH
-			let estimasiBersih = tBelum - tSisaKeluar;
-			if (estimasiBersih < 0) estimasiBersih = 0;
+                document.getElementById('wdgJambi').innerHTML = `${formatRupiah(sumJambi)} <span class="text-[10px] font-normal text-indigo-400">(${countJambi} nota)</span>`;
+                document.getElementById('wdgJakarta').innerHTML = `${formatRupiah(sumJakarta)} <span class="text-[10px] font-normal text-indigo-400">(${countJakarta} nota)</span>`;
 
-			// Injeksi ke HTML
-			document.getElementById('wdgJambi').innerHTML = `${formatRupiah(tJambiBelum)} <span class="text-[10px] italic font-normal text-indigo-500 dark:text-indigo-400">(${cJambiBelum} nota)</span>`;
-			document.getElementById('wdgJakarta').innerHTML = `${formatRupiah(tJakartaBelum)} <span class="text-[10px] italic font-normal text-indigo-500 dark:text-indigo-400">(${cJakartaBelum} nota)</span>`;
-			
-			document.getElementById('wdgTagihan').innerText = formatRupiah(tBelum);
-			document.getElementById('wdgBarangKeluar').innerText = formatRupiah(tSisaKeluar);
-			document.getElementById('wdgEstimasiBersih').innerText = formatRupiah(estimasiBersih);
-			
-			loadDataMasuk();
-		}
+                const totalTagihan = sumJambi + sumJakarta;
+                document.getElementById('wdgTagihan').innerText = formatRupiah(totalTagihan);
+
+                // 2. Hitung Sisa Nota Keluar dari Semua Waktu
+                const { data: keluarData, error: errKeluar } = await supabaseClient
+                    .from('nota_keluar')
+                    .select('total_nominal, terpakai');
+                    
+                if (errKeluar) throw errKeluar;
+
+                let totalSisaKeluar = 0;
+                (keluarData || []).forEach(r => {
+                    const sisa = (Number(r.total_nominal) || 0) - (Number(r.terpakai) || 0);
+                    if (sisa > 0) totalSisaKeluar += sisa;
+                });
+
+                document.getElementById('wdgBarangKeluar').innerText = formatRupiah(totalSisaKeluar);
+
+                // 3. Estimasi Bersih
+                const estimasi = totalTagihan - totalSisaKeluar;
+                document.getElementById('wdgEstimasiBersih').innerText = formatRupiah(estimasi);
+
+            } catch (error) {
+                console.error("Gagal load widget:", error);
+            }
+        }
 
 		function simpanPengaturanWidget() {
 			const setting = {
@@ -2654,7 +2662,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 
         // --- INISIALISASI ---
         document.getElementById('tanggal').valueAsDate = new Date();
-        document.getElementById('widgetBulan').value = new Date().toISOString().slice(0,7);
+        //document.getElementById('widgetBulan').value = new Date().toISOString().slice(0,7);
         
         // Memuat master data, setting localStorage, lalu data widget
         fetchMasterData().then(() => {
@@ -2751,8 +2759,9 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                         document.getElementById('rtInvTgl').innerText = formatTgl(inv.tanggal_cetak);
                         document.getElementById('rtInvMetode').innerText = inv.metode_bayar;
                         
-                        document.getElementById('rtInvBody').innerHTML = (inv.rincian_masuk || []).map(m => `
-							<tr>
+                        // ... KODE BARU ...
+						document.getElementById('rtInvBody').innerHTML = (inv.rincian_masuk || []).map(m => `
+							<tr style="page-break-inside: avoid;">
 								<td class="py-1 border-b border-gray-200 dark:border-slate-700"><strong>${m.varian}</strong> <span class="text-[10px] text-gray-500 dark:text-gray-400 italic">(${m.agen} - ${m.keterangan_kurir})</span></td>
 								<td class="py-1 text-right font-bold border-b border-gray-200 dark:border-slate-700">${formatRupiah(m.total_nominal)}</td>
 							</tr>
@@ -2808,7 +2817,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 						totalNominal += nom;
 						const kurir = r.keterangan_kurir || '-';
 						const ket = r.keterangan_barang ? '| ' + r.keterangan_barang : '';
-						return `<tr><td class="border border-gray-300 dark:border-slate-700 p-2 align-top">${formatTgl(r.tanggal)}</td><td class="border border-gray-300 dark:border-slate-700 p-2 align-top"><span class="font-bold">${r.varian} (${formatQtyDisplay(r)})</span><br><span class="text-[10px] text-gray-500 dark:text-gray-400 italic">Kurir: ${kurir} ${ket}</span></td><td class="border border-gray-300 dark:border-slate-700 p-2 text-right font-bold align-top">${formatRupiah(nom)}</td></tr>`;
+						return `<tr style="page-break-inside: avoid;"><td class="border border-gray-300 dark:border-slate-700 p-2 align-top">${formatTgl(r.tanggal)}</td><td class="border border-gray-300 dark:border-slate-700 p-2 align-top"><span class="font-bold">${r.varian} (${formatQtyDisplay(r)})</span><br><span class="text-[10px] text-gray-500 dark:text-gray-400 italic">Kurir: ${kurir} ${ket}</span></td><td class="border border-gray-300 dark:border-slate-700 p-2 text-right font-bold align-top">${formatRupiah(nom)}</td></tr>`;
 					}).join('');
 					document.getElementById(elementBody).innerHTML = html || `<tr><td colspan="3" class="border border-gray-300 dark:border-slate-700 p-3 text-center text-gray-400 italic text-xs">- Tidak ada tagihan tertunggak -</td></tr>`;
                     document.getElementById(elementTotal).innerText = formatRupiah(totalNominal);
@@ -2845,7 +2854,8 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 						detailHtml = `<div class="mt-1.5 mb-1">${listItems}</div>`;
 					}
 
-                    return `<tr>
+                    // ... KODE BARU ...
+					return `<tr style="page-break-inside: avoid;">
 						<td class="border border-gray-300 dark:border-slate-700 p-2 align-top">${formatTgl(r.tanggal)}</td>
 						<td class="border border-gray-300 dark:border-slate-700 p-2 align-top">
 							<span class="font-bold">${judulText}</span>
