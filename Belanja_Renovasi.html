@@ -561,20 +561,33 @@
     });
 
     async function fetchTransactions() {
-        let { data, error } = await supabase.from(TABLE_NAME).select('*').order('created_at', { ascending: true });
-        if (error) return console.error('Error fetching data:', error);
-        
-        if (filterStartDate && filterEndDate) {
-            const startLimit = new Date(`${filterStartDate}T00:00:00`);
-            const endLimit = new Date(`${filterEndDate}T23:59:59`);
-            data = data.filter(tx => {
-                const txDate = parseDateSafe(tx.created_at);
-                return txDate >= startLimit && txDate <= endLimit;
-            });
-        }
-        
-        renderTable(data);
-    }
+		// 1. Buat dasar query (belum dieksekusi)
+		let query = supabase
+			.from(TABLE_NAME)
+			.select('*')
+			.order('created_at', { ascending: true });
+
+		// 2. Jika filter aktif, tambahkan syarat (kondisi) ke dalam query
+		if (filterStartDate && filterEndDate) {
+			// Konversi batas waktu awal dan akhir hari ke format ISO
+			const startLimit = new Date(`${filterStartDate}T00:00:00.000Z`).toISOString();
+			const endLimit = new Date(`${filterEndDate}T23:59:59.999Z`).toISOString();
+			
+			// Gunakan fungsi Supabase .gte (>=) dan .lte (<=)
+			query = query.gte('created_at', startLimit).lte('created_at', endLimit);
+		}
+
+		// 3. Eksekusi query ke server Supabase
+		let { data, error } = await query;
+		
+		if (error) {
+			console.error('Error fetching data:', error);
+			return;
+		}
+		
+		// 4. Kirim data yang sudah tersaring oleh server ke tabel
+		renderTable(data);
+	}
 
     function renderTable(data) {
         const tableBody = document.getElementById('tableBody');
