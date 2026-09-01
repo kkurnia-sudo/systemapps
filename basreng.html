@@ -911,9 +911,8 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                             <span>Total Keseluruhan</span>
                             <span id="previewNotaTotal" class="font-poppins-custom text-gray-900 dark:text-gray-100">Rp 0</span>
                         </div>
-                        <div class="flex justify-between items-center text-xs font-semibold text-gray-600 dark:text-gray-400">
-							<span id="labelTerbayarNota">Terbayar</span>
-							<span id="previewNotaTerbayar" class="font-poppins-custom text-gray-900 dark:text-gray-100">Rp 0</span>
+                        <div id="previewNotaTerbayarContainer" class="space-y-1 w-full">
+							<!-- Rincian cicilan terbayar akan di-generate oleh JavaScript di sini -->
 						</div>
                         <div class="flex justify-between items-center pt-2 border-t border-gray-200/60 dark:border-slate-600">
                             <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Sisa Saldo</span>
@@ -2339,36 +2338,33 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
         }
 
         function previewCurrentNota() {
-            const tgl = document.getElementById('notaA6Tgl').value || new Date().toISOString().split('T')[0];
-            const f = notaRows.filter(x => x.nama.trim() !== '');
-            const t = f.reduce((s, i) => s + i.jml, 0);
+			const tgl = document.getElementById('notaA6Tgl').value || new Date().toISOString().split('T')[0];
+			const f = notaRows.filter(x => x.nama.trim() !== '');
+			const t = f.reduce((s, i) => s + i.jml, 0);
 
-            document.getElementById('previewNotaTgl').innerText = `Tgl: ${formatTgl(tgl)}`;
-            document.getElementById('previewNotaTotal').innerText = formatRupiah(t);
-            
-            let terpakai = 0;
-            if (window.editNotaId) {
-                const existing = globalNotaKeluar.find(x => x.id === window.editNotaId);
-                if (existing) terpakai = existing.terpakai || 0;
-            }
-            
-            document.getElementById('previewNotaTerbayar').innerText = formatRupiah(terpakai);
-            document.getElementById('previewNotaSisa').innerText = formatRupiah(t - terpakai);
-            
-			// --- TAMBAHAN LOGIKA LABEL TERBAYAR (LIVE PREVIEW) ---
-			const labelTerbayar = document.getElementById('labelTerbayarNota');
-			if (terpakai > 0 && tglPotong) {
-				labelTerbayar.innerText = `Terbayar ${formatTgl(tglPotong).replace(/\//g, ' ')}`;
-			} else {
-				labelTerbayar.innerText = 'Terbayar';
-			}
-			// -----------------------------------------------------
+			document.getElementById('previewNotaTgl').innerText = `Tgl: ${formatTgl(tgl)}`;
+			document.getElementById('previewNotaTotal').innerText = formatRupiah(t);
 			
-            document.getElementById('previewNotaItemsBody').innerHTML = f.map(item => `<tr><td class="py-2.5"><div class="font-bold text-gray-900 dark:text-gray-100">${item.nama || ''}</div><div class="text-sm font-poppins-custom italic text-gray-500 mt-0.5">${item.qty || 0} ${item.unit || ''} x ${formatRupiah(item.harga || 0)}</div></td><td class="py-2.5 text-right font-bold font-poppins-custom align-top">${formatRupiah(item.jml || ((item.qty || 0) * (item.harga || 0)))}</td></tr>`).join('');
-            
-            const m = document.getElementById('modalPreviewNotaKeluar'); 
-            m.classList.remove('hidden'); m.classList.add('flex');
-        }
+			let terpakai = 0;
+			if (window.editNotaId) {
+				const existing = globalNotaKeluar.find(x => x.id === window.editNotaId);
+				if (existing) terpakai = existing.terpakai || 0;
+			}
+			
+			document.getElementById('previewNotaSisa').innerText = formatRupiah(t - terpakai);
+			document.getElementById('previewNotaItemsBody').innerHTML = f.map(item => `<tr><td class="py-2.5"><div class="font-bold text-gray-900 dark:text-gray-100">${item.nama || ''}</div><div class="text-sm font-poppins-custom italic text-gray-500 mt-0.5">${item.qty || 0} ${item.unit || ''} x ${formatRupiah(item.harga || 0)}</div></td><td class="py-2.5 text-right font-bold font-poppins-custom align-top">${formatRupiah(item.jml || ((item.qty || 0) * (item.harga || 0)))}</td></tr>`).join('');
+			
+			// Tampilan standar untuk Nota yang belum disimpan / baru dibuat
+			document.getElementById('previewNotaTerbayarContainer').innerHTML = `
+				<div class="flex justify-between items-center text-xs font-semibold text-gray-600 dark:text-gray-400">
+					<span>Terbayar</span>
+					<span class="font-poppins-custom text-gray-900 dark:text-gray-100">${formatRupiah(terpakai)}</span>
+				</div>
+			`;
+
+			const m = document.getElementById('modalPreviewNotaKeluar'); 
+			m.classList.remove('hidden'); m.classList.add('flex');
+		}
 
         async function loadNotaKeluar() {
             const { data } = await supabaseClient.from('nota_keluar').select('*').eq('status_potongan', 'Belum Dipotong').order('tanggal', {ascending: false});
@@ -2442,27 +2438,75 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
             toggleModal('modalNotaA6');
         }
 
-        function bukaPreviewNotaKeluar(id, source = 'aktif') {
-            const r = source === 'riwayat' ? globalRiwayatNotaKeluar.find(x => x.id == id) : globalNotaKeluar.find(x => x.id == id);
-            if(!r) return;
-            document.getElementById('previewNotaTgl').innerText = `Tgl: ${formatTgl(r.tanggal)}`;
-            document.getElementById('previewNotaTotal').innerText = formatRupiah(r.total_nominal);
-            document.getElementById('previewNotaTerbayar').innerText = formatRupiah(r.terpakai || 0);
-            document.getElementById('previewNotaSisa').innerText = formatRupiah(r.total_nominal - (r.terpakai || 0));
-            
-					// --- TAMBAHAN LOGIKA LABEL TERBAYAR ---
-			const labelTerbayar = document.getElementById('labelTerbayarNota');
-			if (r.terpakai > 0 && r.tanggal_potong) {
-				// Replace garis miring bawaan formatTgl menjadi spasi
-				labelTerbayar.innerText = `Terbayar ${formatTgl(r.tanggal_potong).replace(/\//g, ' ')}`;
-			} else {
-				labelTerbayar.innerText = 'Terbayar';
-			}
-			// --------------------------------------			
+        async function bukaPreviewNotaKeluar(id, source = 'aktif') {
+			const r = source === 'riwayat' ? globalRiwayatNotaKeluar.find(x => x.id == id) : globalNotaKeluar.find(x => x.id == id);
+			if(!r) return;
+			
+			document.getElementById('previewNotaTgl').innerText = `Tgl: ${formatTgl(r.tanggal)}`;
+			document.getElementById('previewNotaTotal').innerText = formatRupiah(r.total_nominal);
+			document.getElementById('previewNotaSisa').innerText = formatRupiah(r.total_nominal - (r.terpakai || 0));
 			
 			document.getElementById('previewNotaItemsBody').innerHTML = (r.rincian || []).map(item => `<tr><td class="py-2.5"><div class="font-bold text-gray-900 dark:text-gray-100">${item.nama || ''}</div><div class="text-sm font-poppins-custom italic text-gray-500 mt-0.5">${item.qty || 0} ${item.unit || ''} x ${formatRupiah(item.harga || 0)}</div></td><td class="py-2.5 text-right font-bold font-poppins-custom align-top">${formatRupiah(item.jml || ((item.qty || 0) * (item.harga || 0)))}</td></tr>`).join('');
-            const m = document.getElementById('modalPreviewNotaKeluar'); m.classList.remove('hidden'); m.classList.add('flex');
-        }
+			
+			const m = document.getElementById('modalPreviewNotaKeluar'); 
+			m.classList.remove('hidden'); m.classList.add('flex');
+
+			// Kosongkan dan beri status loading sementara
+			const containerTerbayar = document.getElementById('previewNotaTerbayarContainer');
+			containerTerbayar.innerHTML = `<div class="flex justify-between items-center text-[10px] italic text-gray-400"><span>Mencari histori cicilan...</span></div>`;
+
+			try {
+				// Tarik semua histori dari invoice
+				const { data: allRiwayat } = await supabaseClient.from('riwayat_invoice').select('tanggal_cetak, rincian_keluar');
+				
+				let historiBayar = [];
+				(allRiwayat || []).forEach(inv => {
+					let klr = inv.rincian_keluar || [];
+					if (typeof klr === 'string') {
+						try { klr = JSON.parse(klr); } catch(e) { klr = []; }
+					}
+					// Cari apakah nota ini terpotong di invoice tersebut
+					const found = klr.find(x => String(x.id) === String(id));
+					if (found && found.pakai > 0) {
+						historiBayar.push({ tgl: inv.tanggal_cetak, nominal: found.pakai });
+					}
+				});
+
+				// Jika belum pernah dibayar sama sekali
+				if (historiBayar.length === 0) {
+					containerTerbayar.innerHTML = `
+						<div class="flex justify-between items-center text-xs font-semibold text-gray-600 dark:text-gray-400">
+							<span>Terbayar</span>
+							<span class="font-poppins-custom text-gray-900 dark:text-gray-100">Rp 0</span>
+						</div>`;
+				} else {
+					// Urutkan tanggal dari yang terlama ke terbaru
+					historiBayar.sort((a,b) => new Date(a.tgl) - new Date(b.tgl));
+					
+					let htmlRiwayat = historiBayar.map(h => {
+						const tglFormat = formatTgl(h.tgl).replace(/\//g, ' '); // Menjadi "23 Ags 26"
+						return `
+						<div class="flex justify-between items-center text-xs font-semibold text-gray-600 dark:text-gray-400">
+							<span>Terbayar ${tglFormat}</span>
+							<span class="font-poppins-custom text-gray-900 dark:text-gray-100">${formatRupiah(h.nominal)}</span>
+						</div>`;
+					}).join('');
+
+					// Tambahkan baris total terbayar jika cicilan lebih dari 1 kali
+					if (historiBayar.length > 1) {
+						const totalBayar = historiBayar.reduce((sum, item) => sum + item.nominal, 0);
+						htmlRiwayat += `
+						<div class="flex justify-between items-center text-xs font-bold text-gray-800 dark:text-gray-200 border-t border-gray-200/60 dark:border-slate-700 pt-1.5 mt-1.5">
+							<span>Total Keseluruhan Terbayar</span>
+							<span class="font-poppins-custom">${formatRupiah(totalBayar)}</span>
+						</div>`;
+					}
+					containerTerbayar.innerHTML = htmlRiwayat;
+				}
+			} catch (error) {
+				containerTerbayar.innerHTML = `<div class="text-xs text-rose-500">Gagal memuat histori.</div>`;
+			}
+		}
 
         function hapusNK(id) {
             bukaModalKonfirmasiHapus("Hapus Nota Keluar?", "Nota pengeluaran/retur ini akan dihapus permanen.", async () => {
@@ -2792,14 +2836,17 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                     document.getElementById('rtInvoiceSection').style.display = 'none';
                 }
 
-                // 2. Ambil Sisa Piutang Berjalan & Potongan yang belum selesai
-                const [resMasuk, resKeluar] = await Promise.all([
-                    supabaseClient.from('pencatatan_basreng').select('*').eq('status_pembayaran', 'Belum Dibayar').order('tanggal', { ascending: true }),
-                    supabaseClient.from('nota_keluar').select('*').eq('status_potongan', 'Belum Dipotong').order('tanggal', { ascending: true })
-                ]);
+                // 2. Ambil Sisa Piutang Berjalan, Potongan, & Riwayat Invoice (untuk cek tanggal terbayar)
+				const [resMasuk, resKeluar, resRiwayatAll] = await Promise.all([
+					supabaseClient.from('pencatatan_basreng').select('*').eq('status_pembayaran', 'Belum Dibayar').order('tanggal', { ascending: true }),
+					supabaseClient.from('nota_keluar').select('*').eq('status_potongan', 'Belum Dipotong').order('tanggal', { ascending: true }),
+					supabaseClient.from('riwayat_invoice').select('tanggal_cetak, rincian_keluar') // Tambahan untuk menarik histori
+				]);
 
-                if (resMasuk.error) throw new Error("Data Masuk: " + resMasuk.error.message);
-                if (resKeluar.error) throw new Error("Data Keluar: " + resKeluar.error.message);
+				if (resMasuk.error) throw new Error("Data Masuk: " + resMasuk.error.message);
+				if (resKeluar.error) throw new Error("Data Keluar: " + resKeluar.error.message);
+
+				const allRiwayat = resRiwayatAll.data || [];
 
                 const tglSekarang = new Date();
                 const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][tglSekarang.getDay()];
@@ -2828,23 +2875,22 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                 totJakarta = renderTabelPiutang(dataMasuk.filter(x => x.agen === 'Jakarta'), 'rtJakartaBody', 'rtJakartaTotal');
 
                 // 4. RENDER NOTA KELUAR 
-                const htmlKeluar = dataKeluar.map(r => {
-                    const sisa = Number(r.total_nominal || 0) - Number(r.terpakai || 0);
-                    if (sisa <= 0) return ''; 
-                    
-                    totKeluar += sisa;
-                    let rincianArr = r.rincian || [];
-                    if (typeof rincianArr === 'string') {
-                        try { rincianArr = JSON.parse(rincianArr); } catch(e) { rincianArr = []; }
-                    }
+				const htmlKeluar = dataKeluar.map(r => {
+					const sisa = Number(r.total_nominal || 0) - Number(r.terpakai || 0);
+					if (sisa <= 0) return ''; 
+					
+					totKeluar += sisa;
+					let rincianArr = r.rincian || [];
+					if (typeof rincianArr === 'string') {
+						try { rincianArr = JSON.parse(rincianArr); } catch(e) { rincianArr = []; }
+					}
 
-                    let judulText = r.judul_nota;
-                    if (!judulText || judulText.trim() === '') {
-                        judulText = rincianArr.length > 0 ? rincianArr.map(x => x.nama).join(', ') : 'Potongan Lainnya';
-                    }
+					let judulText = r.judul_nota;
+					if (!judulText || judulText.trim() === '') {
+						judulText = rincianArr.length > 0 ? rincianArr.map(x => x.nama).join(', ') : 'Potongan Lainnya';
+					}
 
-                    let detailHtml = '';
-                    // Sesuaikan juga template detailHtml di atasnya:
+					let detailHtml = '';
 					if (tampilkanDetailKlr && rincianArr.length > 0) {
 						const listItems = rincianArr.map(item => `
 							<div class="text-[10px] text-gray-600 dark:text-gray-400 pl-2 border-l-2 border-rose-300 dark:border-rose-700/50 ml-1 mb-0.5">
@@ -2854,17 +2900,48 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 						detailHtml = `<div class="mt-1.5 mb-1">${listItems}</div>`;
 					}
 
-                    // ... KODE BARU ...
+					// --- LOGIKA BARU: CARI HISTORI PEMBAYARAN DARI INVOICE ---
+					let riwayatPembayaran = [];
+					allRiwayat.forEach(inv => {
+						let klr = inv.rincian_keluar || [];
+						if (typeof klr === 'string') {
+							try { klr = JSON.parse(klr); } catch(e) { klr = []; }
+						}
+						// Cari apakah nota ini ada di dalam invoice tersebut
+						const found = klr.find(x => String(x.id) === String(r.id));
+						if (found && found.pakai > 0) {
+							riwayatPembayaran.push({ tgl: inv.tanggal_cetak, nominal: found.pakai });
+						}
+					});
+
+					let pembayaranHtml = '';
+					if (riwayatPembayaran.length > 0) {
+						riwayatPembayaran.sort((a,b) => new Date(a.tgl) - new Date(b.tgl)); // Urutkan tanggal dari terlama ke terbaru
+						const listBayar = riwayatPembayaran.map(p => `<div>${formatTgl(p.tgl)} = ${formatRupiah(p.nominal)}</div>`).join('');
+						
+						pembayaranHtml = `
+						<div class="text-[9px] text-emerald-700 dark:text-emerald-400 mt-1.5 font-medium bg-emerald-50 dark:bg-emerald-900/30 block px-2 py-1.5 rounded border border-emerald-100 dark:border-emerald-800/50 w-max">
+							<div class="font-bold text-emerald-800 dark:text-emerald-300 mb-0.5">* Terbayar:</div>
+							<div class="pl-1.5 space-y-0.5 border-l-2 border-emerald-300 dark:border-emerald-600 ml-1">
+								${listBayar}
+							</div>
+						</div>`;
+					}
+					// ---------------------------------------------------------
+
 					return `<tr style="page-break-inside: avoid;">
 						<td class="border border-gray-300 dark:border-slate-700 p-2 align-top">${formatTgl(r.tanggal)}</td>
 						<td class="border border-gray-300 dark:border-slate-700 p-2 align-top">
 							<span class="font-bold">${judulText}</span>
 							${detailHtml}
-							<div class="text-[9px] text-rose-600 dark:text-rose-400 italic mt-1 font-medium bg-rose-50 dark:bg-rose-900/30 inline-block px-1.5 py-0.5 rounded">* Jumlah Nota ${formatRupiah(r.total_nominal)} / Terbayar: ${formatRupiah(r.terpakai||0)}</div>
+							<div class="mt-2">
+								<div class="text-[9px] text-rose-600 dark:text-rose-400 italic font-medium bg-rose-50 dark:bg-rose-900/30 inline-block px-1.5 py-0.5 rounded">* Jumlah Nota ${formatRupiah(r.total_nominal)}</div>
+								${pembayaranHtml}
+							</div>
 						</td>
 						<td class="border border-gray-300 dark:border-slate-700 p-2 text-right font-bold text-rose-600 dark:text-rose-400 align-top">${formatRupiah(sisa)}</td>
 					</tr>`;
-                }).join('');
+				}).join('');
                 
                 document.getElementById('rtKeluarBody').innerHTML = htmlKeluar || `<tr><td colspan="3" class="border border-gray-300 p-3 text-center text-gray-400 italic text-xs">- Tidak ada nota keluar / potongan -</td></tr>`;
                 document.getElementById('rtKeluarTotal').innerText = "- " + formatRupiah(totKeluar);
