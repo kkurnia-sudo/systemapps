@@ -114,7 +114,7 @@
             <button onclick="switchTab('history')" id="tab-history" class="py-2.5 px-6 rounded-xl text-sm transition-all duration-200 tab-inactive flex items-center gap-2 whitespace-nowrap">
                 <i class="fas fa-database"></i> Riwayat Database
             </button>
-            <!-- TAb BARU: PENGATURAN -->
+            <!-- Tab: PENGATURAN -->
             <button onclick="switchTab('settings')" id="tab-settings" class="py-2.5 px-6 rounded-xl text-sm transition-all duration-200 tab-inactive flex items-center gap-2 whitespace-nowrap">
                 <i class="fas fa-cog"></i> Backup/Restore
             </button>
@@ -489,6 +489,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         </div>
     </div>
 
+    <!-- SCRIPT UTAMA -->
     <script>
         const SUPABASE_URL = "https://acpkdnktanrucyfyhckw.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U";
@@ -702,16 +703,95 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             setInterval(checkConnection, 30000); 
         };
 
-        function switchTab(tab) {
-			// --- TAMBAHAN KODE KEAMANAN PIN UNTUK TAB PENGATURAN ---
-			if (tab === 'settings') {
-				const pin = prompt("Masukkan PIN untuk mengakses Pengaturan:");
-				if (pin !== "749947") {
-					alert("PIN Salah! Akses ke menu Pengaturan ditolak.");
-					return; // Batalkan perpindahan tab jika PIN salah atau dibatalkan
-				}
+        // --- SISTEM MODAL PIN & TAB PENGATURAN ---
+        let pendingPinAction = null;
+        let pendingPinData = null;
+
+        function openPinModal(action, data = null, title = "Otorisasi PIN", desc = "Masukkan PIN untuk melanjutkan") {
+            pendingPinAction = action;
+            pendingPinData = data;
+            
+            document.getElementById('pinModalTitle').innerText = title;
+            document.getElementById('pinModalDesc').innerText = desc;
+            document.getElementById('pinErrorMessage').classList.add('hide');
+            
+            const pinInput = document.getElementById('pinInput');
+            pinInput.value = '';
+            pinInput.type = 'password';
+            document.getElementById('pinToggleIcon').className = 'fas fa-eye';
+
+            const modal = document.getElementById('modalPin');
+            modal.classList.remove('modal-leave');
+            modal.classList.add('modal-enter');
+            
+            setTimeout(() => pinInput.focus(), 150);
+        }
+
+        function closePinModal() {
+            const modal = document.getElementById('modalPin');
+            modal.classList.remove('modal-enter');
+            modal.classList.add('modal-leave');
+            pendingPinAction = null;
+            pendingPinData = null;
+        }
+
+        function togglePinVisibility() {
+            const input = document.getElementById('pinInput');
+            const icon = document.getElementById('pinToggleIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        // Event listener dengan pengaman (null-check) untuk Enter di input PIN
+        const pinInputEl = document.getElementById('pinInput');
+        if (pinInputEl) {
+            pinInputEl.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') submitPin();
+            });
+        }
+
+        function submitPin() {
+			const pin = document.getElementById('pinInput').value.trim();
+			
+			
+			if (pin !== "749947") {
+				document.getElementById('pinErrorMessage').classList.remove('hide');
+				document.getElementById('pinInput').value = '';
+				document.getElementById('pinInput').focus();
+				return;
 			}
-			// -------------------------------------------------------
+
+			// 1. Amankan / simpan dulu nilai aksinya ke variabel lokal sebelum modal ditutup
+			const actionToRun = pendingPinAction;
+			const dataToRun = pendingPinData;
+
+			// 2. Baru tutup modal
+			closePinModal();
+			
+			console.log("PIN Benar! Menjalankan aksi:", actionToRun);
+
+			// 3. Jalankan aksi berdasarkan variabel lokal yang aman
+			if (actionToRun === 'settings') {
+				forceSwitchTab('settings');
+			} else if (actionToRun === 'reset') {
+				executeResetData(dataToRun);
+			}
+		}
+
+        function switchTab(tab) {
+			if (tab === 'settings') {
+				openPinModal('settings', null, 'Akses Pengaturan', 'Masukkan PIN untuk membuka menu Pengaturan.');
+				return; 
+			}
+			forceSwitchTab(tab);
+		}
+
+        function forceSwitchTab(tab) {
             ['form', 'master', 'history', 'settings'].forEach(t => {
                 document.getElementById(`section-${t}`).classList.add('hide');
                 document.getElementById(`tab-${t}`).classList.replace('tab-active', 'tab-inactive');
@@ -1314,12 +1394,12 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
         async function openNavbarQuickPay() {
             try {
-                // Hanya mengambil 50 data terbaru untuk halaman pertama
 				const { data, error } = await db.from('invoices_jambi')
 				  .select('*')
-				  .order('created_at', { ascending: false })
-				  .range(0, 49);
-                if (error) throw error;
+				  .gt('remaining_amount', 0)
+				  .order('created_at', { ascending: false });
+                
+				if (error) throw error;
                 if (!data || data.length === 0) return alert("Tidak ada nota dengan status hutang saat ini.");
 
                 const selectEl = document.getElementById('quickPayInvoiceSelect');
@@ -1428,7 +1508,6 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 			loader.classList.remove('hide');
 			
 			try {
-				// Saat tombol 'hutang' diklik, tarik hanya yang berstatus hutang dari database
 				const { data } = await db.from('invoices_jambi')
 				  .select('*')
 				  .gt('remaining_amount', 0)
@@ -1500,7 +1579,6 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 			}).join('');
 		}
 		
-        
         async function deleteInvoiceFromDB(invNum) {
             if(confirm("Yakin hapus nota ini? Data yang terhapus tidak bisa dikembalikan.")) { 
                 await db.from('invoices_jambi').delete().eq('invoice_number', invNum); 
@@ -1537,6 +1615,33 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 			closeResetModal();
 			resetFormToCreateMode(); 
 		}
+
+        function resetDataConfirm(type) {
+            openPinModal('reset', type, 'Zona Berbahaya!', 'Masukkan PIN untuk konfirmasi hapus data:');
+        }
+
+        async function executeResetData(type) {
+            try {
+                if (type === 'transaksi') {
+                    await db.from('invoice_items_jambi').delete().neq('invoice_number', 'RESET');
+                    await db.from('invoice_payments_jambi').delete().neq('invoice_number', 'RESET');
+                    await db.from('invoices_jambi').delete().neq('invoice_number', 'RESET');
+                    alert("Data Pencatatan & Nota berhasil dikosongkan.");
+                } else if (type === 'all') {
+                    await db.from('invoice_items_jambi').delete().neq('invoice_number', 'RESET');
+                    await db.from('invoice_payments_jambi').delete().neq('invoice_number', 'RESET');
+                    await db.from('invoices_jambi').delete().neq('invoice_number', 'RESET');
+                    await db.from('master_items_jambi').delete().neq('id', 'RESET');
+                    alert("Semua data, termasuk data barang, berhasil dikosongkan.");
+                }
+                
+                fetchMasterItems();
+                fetchInvoicesFromDB();
+                countTotalUnpaidNotes();
+            } catch (e) {
+                alert("Gagal mereset data: " + e.message);
+            }
+        }
 		
 		async function openMassDownloadModal() {
 			const unpaidInvoices = allInvoicesData.filter(inv => inv.remaining_amount > 0);
@@ -1685,10 +1790,6 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 			`;
 		}
 
-        // ==========================================
-        //  FUNGSI BACKUP, RESTORE & RESET DATABASE
-        // ==========================================
-        
         async function exportDatabase() {
             try {
                 const btn = document.getElementById('btnBackup');
@@ -1751,8 +1852,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                     if (data.invoice_payments_jambi && data.invoice_payments_jambi.length > 0)
                         await db.from('invoice_payments_jambi').upsert(data.invoice_payments_jambi);
 
-                    alert("Restore berhasil! Jangan lupa untuk menjalankan SQL Reset Sequence di dashboard Supabase agar ID tabel tidak error.");
-                    
+                    alert("Restore berhasil!");
                     btn.innerHTML = originalHtml;
                     btn.disabled = false;
                     
@@ -1767,37 +1867,6 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             reader.readAsText(file);
         }
 
-        async function resetDataConfirm(type) {
-            const pin = prompt("TINDAKAN BERBAHAYA!\nMasukkan PIN Otorisasi (Hint: 749) untuk konfirmasi penghapusan:");
-            if (pin !== "749947") {
-                alert("PIN Salah atau konfirmasi dibatalkan.");
-                return;
-            }
-
-            try {
-                if (type === 'transaksi') {
-                    // Karena Supabase API tidak mengizinkan delete seluruh baris tanpa kondisi dengan mode public anon, 
-                    // kita gunakan filter ".neq('invoice_number', 'RESET')" agar mengenai semua data (karena tidak ada ID bernama RESET)
-                    await db.from('invoice_items_jambi').delete().neq('invoice_number', 'RESET');
-                    await db.from('invoice_payments_jambi').delete().neq('invoice_number', 'RESET');
-                    await db.from('invoices_jambi').delete().neq('invoice_number', 'RESET');
-                    alert("Data Pencatatan & Nota berhasil dikosongkan.");
-                } else if (type === 'all') {
-                    await db.from('invoice_items_jambi').delete().neq('invoice_number', 'RESET');
-                    await db.from('invoice_payments_jambi').delete().neq('invoice_number', 'RESET');
-                    await db.from('invoices_jambi').delete().neq('invoice_number', 'RESET');
-                    await db.from('master_items_jambi').delete().neq('id', 'RESET');
-                    alert("Semua data, termasuk data barang, berhasil dikosongkan.");
-                }
-                
-                fetchMasterItems();
-                fetchInvoicesFromDB();
-                countTotalUnpaidNotes();
-            } catch (e) {
-                alert("Gagal mereset data: " + e.message);
-            }
-        }
-
         function copySQLSequence() {
             const sqlText = document.getElementById('sqlSequenceCode').innerText;
             navigator.clipboard.writeText(sqlText).then(() => {
@@ -1807,6 +1876,38 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             });
         }
     </script>
+
+	<!-- MODAL PIN OTORISASI -->
+	<div id="modalPin" class="fixed inset-0 z-[150] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 modal-leave">
+		<div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden border border-slate-100">
+			<div class="p-6 flex flex-col gap-4">
+				<div class="flex items-center gap-3">
+					<div class="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl shadow-inner">
+						<i class="fas fa-lock"></i>
+					</div>
+					<div>
+						<h3 class="font-bold text-lg text-slate-800" id="pinModalTitle">Otorisasi PIN</h3>
+						<p class="text-xs text-slate-500" id="pinModalDesc">Masukkan PIN untuk melanjutkan</p>
+					</div>
+				</div>
+
+				<div class="relative mt-2">
+					<input type="password" id="pinInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-2xl font-bold tracking-[0.2em] text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-center shadow-inner placeholder:text-slate-300 placeholder:tracking-normal placeholder:text-base" placeholder="••••••" maxlength="6">
+					
+					<button type="button" onclick="togglePinVisibility()" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-orange-500 transition-colors focus:outline-none">
+						<i class="fas fa-eye" id="pinToggleIcon"></i>
+					</button>
+				</div>
+				<p id="pinErrorMessage" class="text-xs font-bold text-red-500 text-center hide animate-pulse">PIN Salah! Silakan coba lagi.</p>
+			</div>
+			
+			<div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
+				<button onclick="closePinModal()" class="px-5 py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-all">Batal</button>
+				<button onclick="submitPin()" class="px-6 py-2.5 text-sm font-bold bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-all shadow-md shadow-slate-800/20">Konfirmasi</button>
+			</div>
+		</div>
+	</div>
+
 	<!-- MODAL KONFIRMASI RESET FORM -->
 	<div id="modalConfirmReset" class="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 modal-leave">
 		<div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden">
