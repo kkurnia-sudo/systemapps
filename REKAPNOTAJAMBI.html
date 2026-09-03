@@ -205,7 +205,7 @@
                             </h2>
                         </div>
                         <div class="flex justify-between items-center mb-3">
-                            <span class="text-slate-600 font-medium text-sm">Subtotal:</span>
+                            <span class="text-slate-600 font-bold text-sm">Subtotal:</span>
                             <span id="summaryGrandTotal" class="text-base font-bold text-slate-800 tracking-tight">Rp 0</span>
                         </div>
                         
@@ -828,14 +828,55 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             }
         }
 
-        function handleQtyChange(id, el) {
-            const item = items.find(i => i.id === id);
-            if(item) {
-                item.qty = parseNumber(el.value);
-                document.getElementById(`row-total-${id}`).innerText = formatRupiah(item.qty * item.price);
-                calculateTotal();
-            }
-        }
+        function handleQtyInput(id, el) {
+			const item = items.find(i => i.id === id);
+			if(item) {
+				// Jika input diawali '=' (mode rumus), tunda perhitungan sementara
+				if (el.value.trim().startsWith('=')) return; 
+				
+				// Jika input berupa angka biasa, langsung hitung secara realtime
+				item.qty = parseNumber(el.value);
+				document.getElementById(`row-total-${id}`).innerText = formatRupiah(item.qty * item.price);
+				calculateTotal();
+			}
+		}
+
+		function calculateExpression(id, el) {
+			let val = el.value.trim();
+			if (val.startsWith('=')) {
+				try {
+					// Ambil teks setelah '=' dan amankan: hanya sisakan angka dan operator hitung
+					let expr = val.substring(1).replace(/[^0-9+\-*/().]/g, '');
+					// Evaluasi string menjadi hasil matematika (pembulatan angka utuh)
+					let result = Math.round(new Function('return ' + (expr || '0'))());
+					el.value = result; 
+				} catch (e) {
+					el.value = ''; // Kosongkan angka jika format yang diketik berantakan
+				}
+			}
+			
+			// Simpan hasil akhir ke state dan perbarui total tagihan
+			const item = items.find(i => i.id === id);
+			if(item) {
+				item.qty = parseNumber(el.value);
+				el.value = item.qty === 0 ? '' : item.qty; // Rapikan tampilan angka '0'
+				document.getElementById(`row-total-${id}`).innerText = formatRupiah(item.qty * item.price);
+				calculateTotal();
+			}
+		}
+
+		function handleQtyKeydown(event, id, el) {
+			if (event.key === 'Enter') {
+				event.preventDefault(); // Cegah pergeseran halaman default
+				calculateExpression(id, el);
+				el.blur(); // Pindahkan fokus kursor agar sistem mencatat data
+			}
+		}
+
+		function handleQtyBlur(id, el) {
+			// Evaluasi data saat kursor berpindah (diklik ke kolom/tempat lain)
+			calculateExpression(id, el);
+		}
 
         function handlePriceChange(id, el) {
             const item = items.find(i => i.id === id);
@@ -860,7 +901,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             tbody.innerHTML = items.map(item => `
                 <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                     <td class="p-1.5 align-top pt-2.5">
-                        <input type="number" min="0" oninput="handleQtyChange(${item.id}, this)" value="${item.qty || ''}" class="w-full bg-white border border-slate-200 rounded-md px-1.5 py-1.5 text-center text-sm font-bold text-slate-700 focus:outline-none focus:border-orange-400" placeholder="0">
+                        <input type="text" oninput="handleQtyInput(${item.id}, this)" onkeydown="handleQtyKeydown(event, ${item.id}, this)" onblur="handleQtyBlur(${item.id}, this)" value="${item.qty || ''}" class="w-full bg-white border border-slate-200 rounded-md px-1.5 py-1.5 text-center text-sm font-bold text-slate-700 focus:outline-none focus:border-orange-400" placeholder="0">
                     </td>
                     <td class="p-1.5 align-top pt-2.5">
                         <div class="flex items-center gap-1.5">
@@ -978,17 +1019,22 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 				let total = i.qty * i.price;
 				grandTotal += total;
 				totalQty += Number(i.qty) || 0;
-				let noteHtml = i.note ? `<br><span style="font-size: 11px; color: #f97316; font-weight: 500;">*${i.note}</span>` : '';
-				
+				let noteHtml = i.note ? `<br><span style="font-size: 13px; color: #f97316; font-weight: 500;">*${i.note}</span>` : '';
 				let isOngkir = String(i.name).toLowerCase().includes('ongkir');
-				let uomHtml = isOngkir ? '' : `<span style="font-size:12px; color:#64748b; font-weight: 600;">${i.uom}</span>`;
+				// Layout rapi agar angka rata kanan dan kata "Ball" rata kiri pada satu garis lurus
+				let qtyUomLayout = isOngkir 
+					? `<span style="display: inline-block; width: 85px; text-align: center;">${i.qty}</span>`
+					: `<div style="display: flex; align-items: center; justify-content: center;">
+						 <span style="display: inline-block; width: 42px; text-align: right; padding-right: 4px;">${i.qty}</span>
+						 <span style="display: inline-block; width: 40px; text-align: left; color: #64748b; font-size: 14px; font-weight: 600;">${i.uom}</span>
+					   </div>`;
 
 				return `
 					<tr style="border-bottom: 1px solid #e2e8f0;">
-						<td style="padding: 10px 0; text-align: center; font-size: 13px; font-weight: bold;">${i.qty} ${uomHtml}</td>
-						<td style="padding: 10px 0; font-size: 13px; font-weight: 600;">${i.name}${noteHtml}</td>
-						<td style="padding: 10px 0; text-align: right; font-size: 13px;">${formatRupiah(i.price)}</td>
-						<td style="padding: 10px 0; text-align: right; font-size: 13px; font-weight: bold;">${formatRupiah(total)}</td>
+						<td style="padding: 10px 0; text-align: center; font-size: 15px; font-weight: bold;">${i.qty} ${uomHtml}</td>
+						<td style="padding: 10px 0; font-size: 15px; font-weight: 600;">${i.name}${noteHtml}</td>
+						<td style="padding: 10px 0; text-align: right; font-size: 15px;">${formatRupiah(i.price)}</td>
+						<td style="padding: 10px 0; text-align: right; font-size: 16px; font-weight: 600;">${formatRupiah(total)}</td>
 					</tr>
 				`;
 			}).join('');
@@ -1017,39 +1063,39 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 			paper.dataset.cust = cust;
 
 			paper.innerHTML = `
-				<div style="max-width: 100%; font-family: 'Inter', sans-serif; color: #1e293b; background: #ffffff; padding: 10px;">
+				<div style="max-width: 100%; font-family: 'Inter', sans-serif; color: #1e293b; background: #ffffff; padding: 20px;">
 					<div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
 						<div>
-							<h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ea580c; letter-spacing: -0.5px;">SBR PUTRA FOOD</h1>
-							<p style="margin: 4px 0 0 0; font-size: 11px; color: #64748b;">Bandung, Jawa Barat</p>
+							<h1 style="margin: 0; font-size: 21px; font-weight: 800; color: #ea580c; letter-spacing: -0.5px;">SBR PUTRA FOOD</h1>
+							<p style="margin: 6px 0 0 0; font-size: 14px; color: #64748b;">Bandung Barat, Jawa Barat</p>
 						</div>
 						<div style="text-align: right;">
-							<h2 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; text-transform: uppercase;">${currentInvoiceNumber}</h2>
-							<p style="margin: 4px 0 0 0; font-size: 12px; font-weight: bold; color: #64748b;">Tgl: ${formatDateID(dateStr)}</p>
+							<h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #0f172a; text-transform: uppercase;">${currentInvoiceNumber}</h2>
+							<p style="margin: 6px 0 0 0; font-size: 17px; font-weight: bold; color: #ea580c;">Tgl: ${formatDateID(dateStr)}</p>
 						</div>
 					</div>
 					
 					<div style="margin-bottom: 25px;">
-						<p style="margin: 0 0 4px 0; font-size: 11px; color: #64748b;">Kepada Yth:</p>
-						<h3 style="margin: 0; font-size: 16px; font-weight: 800; text-transform: uppercase;">${cust}</h3>
+						<p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">Kepada Yth:</p>
+						<h3 style="margin: 0; font-size: 15px; font-weight: 600; text-transform: uppercase;">${cust}</h3>
 					</div>
 
 					<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
 						<thead>
 							<tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1;">
-								<th style="padding: 10px 0; text-align: center; font-size: 11px; color: #64748b; text-transform: uppercase; width: 80px;">Qty</th>
-								<th style="padding: 10px 0; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase;">Nama Barang</th>
-								<th style="padding: 10px 0; text-align: right; font-size: 11px; color: #64748b; text-transform: uppercase; width: 100px;">Harga</th>
-								<th style="padding: 10px 0; text-align: right; font-size: 11px; color: #64748b; text-transform: uppercase; width: 120px;">Jumlah</th>
+								<th style="padding: 12px 0; text-align: center; font-size: 14px; color: #64748b; text-transform: uppercase; width: 80px;">Qty</th>
+								<th style="padding: 12px 0; text-align: left; font-size: 14px; color: #64748b; text-transform: uppercase;">Nama Barang</th>
+								<th style="padding: 12px 0; text-align: right; font-size: 14px; color: #64748b; text-transform: uppercase; width: 120px;">Harga</th>
+								<th style="padding: 12px 0; text-align: right; font-size: 14px; color: #64748b; text-transform: uppercase; width: 140px;">Jumlah</th>
 							</tr>
 						</thead>
 						<tbody>
-							${rowsHTML || '<tr><td colspan="4" style="text-align:center; padding: 20px; color:#94a3b8; font-size: 12px;">Belum ada barang yang diinput.</td></tr>'}
+							${rowsHTML || '<tr><td colspan="4" style="text-align:center; padding: 20px; color:#94a3b8; font-size: 14px;">Belum ada barang yang diinput.</td></tr>'}
 						</tbody>
 						${rowsHTML ? `
 						<tfoot>
 							<tr style="border-top: 2px solid #cbd5e1;">
-								<td style="padding: 8px 0; text-align: center; font-size: 14px; font-weight: bold; font-style: italic; color: #0f172a;">${totalQty}</td>
+								<td style="padding: 12px 0; text-align: center; font-size: 16px; font-weight: bold; font-style: italic; color: #0f172a;">${totalQty}</td>
 								<td colspan="3"></td>
 							</tr>
 						</tfoot>` : ''}
@@ -1059,23 +1105,23 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 						<div style="padding-bottom: 10px;">
 							${lunasStampHtml}
 						</div>
-						<div style="width: 280px;">
-							<div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px;">
+						<div style="width: 320px;">
+							<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 17px font-weight: 800;">
 								<span style="color: #64748b;">Subtotal</span>
 								<span style="font-weight: bold;">Rp ${formatRupiah(grandTotal)}</span>
 							</div>
 							
-							<div style="padding: 4px 0; border-bottom: 1px solid #f1f5f9;">
-								${paymentsHTML || '<div style="font-size: 12px; color: #94a3b8; text-align: right;">Belum ada pembayaran</div>'}
+							<div style="padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
+								${paymentsHTML || '<div style="font-size: 14px; color: #94a3b8; text-align: right;">Belum ada pembayaran</div>'}
 							</div>
 
-							<div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 2px solid #e2e8f0; font-size: 13px;">
+							<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 2px solid #e2e8f0; font-size: 16px;">
 								<span style="color: #64748b; font-weight: bold;">Total Dibayar</span>
 								<span style="font-weight: bold; color: #10b981;">- Rp ${formatRupiah(paidTotal)}</span>
 							</div>
-							<div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 16px;">
+							<div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 20px;">
 								<span style="font-weight: bold; color: #0f172a;">Sisa Piutang</span>
-								<span style="font-weight: 900; color: #ef4444;">Rp ${formatRupiah(remaining)}</span>
+								<span style="font-weight: 800; color: #ef4444;">Rp ${formatRupiah(remaining)}</span>
 							</div>
 						</div>
 					</div>
@@ -1090,34 +1136,51 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
         async function previewFromHistory(invoiceNum) {
 			try {
-				const { data: invData } = await db.from('invoices_jambi').select('*').eq('invoice_number', invoiceNum).single();
-				const { data: itemsData } = await db.from('invoice_items_jambi').select('*').eq('invoice_number', invoiceNum);
-				const { data: payData } = await db.from('invoice_payments_jambi').select('*').eq('invoice_number', invoiceNum);
+				const { data: invData, error: invErr } = await db.from('invoices_jambi').select('*').eq('invoice_number', invoiceNum).single();
+				if (invErr) throw invErr;
+
+				const { data: itemsData, error: itemErr } = await db.from('invoice_items_jambi').select('*').eq('invoice_number', invoiceNum);
+				if (itemErr) throw itemErr;
+
+				const { data: payData, error: payErr } = await db.from('invoice_payments_jambi').select('*').eq('invoice_number', invoiceNum);
+				if (payErr) throw payErr;
 
 				const paper = document.getElementById('invoicePaper');
 				
 				let grandTotal = 0;
 				let totalQty = 0;
-				let rowsHTML = itemsData.map((i) => {
+				
+				// Gunakan (itemsData || []) agar aman jika data kosong
+				let rowsHTML = (itemsData || []).map((i) => {
 					let total = i.qty * i.price;
 					grandTotal += total;
 					totalQty += Number(i.qty) || 0;
-					let noteHtml = i.item_note ? `<br><span style="font-size: 11px; color: #f97316; font-weight: 500;">*${i.item_note}</span>` : '';
-                    let isOngkir = String(i.item_name).toLowerCase().includes('ongkir');
-                    let uomHtml = isOngkir ? '' : `<span style="font-size:12px; color:#64748b; font-weight: 600;">${i.item_uom || ''}</span>`;
+					
+					let noteHtml = i.item_note ? `<br><span style="font-size: 13px; color: #f97316; font-weight: 500;">*${i.item_note}</span>` : '';
+					let isOngkir = String(i.item_name).toLowerCase().includes('ongkir');
+					
+					let qtyUomLayout = isOngkir 
+						? `<span style="display: inline-block; width: 85px; text-align: center;">${i.qty}</span>`
+						: `<div style="display: flex; align-items: center; justify-content: center;">
+							 <span style="display: inline-block; width: 42px; text-align: right; padding-right: 4px;">${i.qty}</span>
+							 <span style="display: inline-block; width: 40px; text-align: left; color: #64748b; font-size: 14px; font-weight: 600;">${i.item_uom || ''}</span>
+						   </div>`;
+
 					return `
 						<tr style="border-bottom: 1px solid #e2e8f0;">
-							<td style="padding: 10px 0; text-align: center; font-size: 13px; font-weight: bold;">${i.qty} ${uomHtml}</td>
-							<td style="padding: 10px 0; font-size: 13px; font-weight: 600;">${i.item_name}${noteHtml}</td>
-							<td style="padding: 10px 0; text-align: right; font-size: 13px;">${formatRupiah(i.price)}</td>
-							<td style="padding: 10px 0; text-align: right; font-size: 13px; font-weight: bold;">${formatRupiah(total)}</td>
+							<td style="padding: 10px 0; text-align: center; font-size: 15px; font-weight: bold;">${qtyUomLayout}</td>
+							<td style="padding: 10px 0; font-size: 15px; font-weight: 600;">${i.item_name}${noteHtml}</td>
+							<td style="padding: 10px 0; text-align: right; font-size: 15px;">${formatRupiah(i.price)}</td>
+							<td style="padding: 10px 0; text-align: right; font-size: 16px; font-weight: 600;">${formatRupiah(total)}</td>
 						</tr>
 					`;
 				}).join('');
 				
 				let paymentsHTML = '';
 				let paidTotal = 0;
-				payData.forEach((p) => {
+				
+				// Gunakan (payData || []) agar aman jika belum ada pembayaran
+				(payData || []).forEach((p) => {
 					paidTotal += p.amount;
 					paymentsHTML += `
 						<div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; color: #64748b;">
@@ -1139,30 +1202,30 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 				paper.dataset.cust = invData.customer_name;
 
 				paper.innerHTML = `
-					<div style="max-width: 100%; font-family: 'Inter', sans-serif; color: #1e293b; background: #ffffff; padding: 10px;">
+					<div style="max-width: 100%; font-family: 'Inter', sans-serif; color: #1e293b; background: #ffffff; padding: 20px;">
 						<div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
 							<div>
-								<h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ea580c; letter-spacing: -0.5px;">SBR PUTRA FOOD</h1>
-								<p style="margin: 4px 0 0 0; font-size: 11px; color: #64748b;">Bandung, Jawa Barat</p>
+								<h1 style="margin: 0; font-size: 21px; font-weight: 800; color: #ea580c; letter-spacing: -0.5px;">SBR PUTRA FOOD</h1>
+								<p style="margin: 6px 0 0 0; font-size: 14px; color: #64748b;">Bandung Barat, Jawa Barat</p>
 							</div>
 							<div style="text-align: right;">
-								<h2 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; text-transform: uppercase;">${invoiceNum}</h2>
-								<p style="margin: 4px 0 0 0; font-size: 12px; font-weight: bold; color: #64748b;">Tgl: ${formatDateID(invData.invoice_date)}</p>
+								<h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #0f172a; text-transform: uppercase;">${invoiceNum}</h2>
+								<p style="margin: 6px 0 0 0; font-size: 17px; font-weight: bold; color: #ea580c;">Tgl: ${formatDateID(invData.invoice_date)}</p>
 							</div>
 						</div>
 						
 						<div style="margin-bottom: 25px;">
-							<p style="margin: 0 0 4px 0; font-size: 11px; color: #64748b;">Kepada Yth:</p>
-							<h3 style="margin: 0; font-size: 16px; font-weight: 800; text-transform: uppercase;">${invData.customer_name}</h3>
+							<p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">Kepada Yth:</p>
+							<h3 style="margin: 0; font-size: 15px; font-weight: 600; text-transform: uppercase;">${invData.customer_name}</h3>
 						</div>
 
 						<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
 							<thead>
 								<tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1;">
-									<th style="padding: 10px 0; text-align: center; font-size: 11px; color: #64748b; text-transform: uppercase; width: 80px;">Qty</th>
-									<th style="padding: 10px 0; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase;">Nama Barang</th>
-									<th style="padding: 10px 0; text-align: right; font-size: 11px; color: #64748b; text-transform: uppercase; width: 100px;">Harga</th>
-									<th style="padding: 10px 0; text-align: right; font-size: 11px; color: #64748b; text-transform: uppercase; width: 120px;">Jumlah</th>
+									<th style="padding: 12px 0; text-align: center; font-size: 14px; color: #64748b; text-transform: uppercase; width: 80px;">Qty</th>
+									<th style="padding: 12px 0; text-align: left; font-size: 14px; color: #64748b; text-transform: uppercase;">Nama Barang</th>
+									<th style="padding: 12px 0; text-align: right; font-size: 14px; color: #64748b; text-transform: uppercase; width: 120px;">Harga</th>
+									<th style="padding: 12px 0; text-align: right; font-size: 14px; color: #64748b; text-transform: uppercase; width: 140px;">Jumlah</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -1170,7 +1233,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 							</tbody>
 							<tfoot>
 								<tr style="border-top: 2px solid #cbd5e1;">
-									<td style="padding: 8px 0; text-align: center; font-size: 14px; font-weight: bold; font-style: italic; color: #0f172a;">${totalQty}</td>
+									<td style="padding: 12px 0; text-align: center; font-size: 16px; font-weight: bold; font-style: italic; color: #0f172a;">${totalQty}</td>
 									<td colspan="3"></td>
 								</tr>
 							</tfoot>
@@ -1180,23 +1243,23 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 							<div style="padding-bottom: 10px;">
 								${lunasStampHtml}
 							</div>
-							<div style="width: 280px;">
-								<div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px;">
+							<div style="width: 320px;">
+								<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 17px; font-weight: 800;">
 									<span style="color: #64748b;">Subtotal</span>
 									<span style="font-weight: bold;">Rp ${formatRupiah(grandTotal)}</span>
 								</div>
 								
-								<div style="padding: 4px 0; border-bottom: 1px solid #f1f5f9;">
-									${paymentsHTML || '<div style="font-size: 12px; color: #94a3b8; text-align: right;">Belum ada pembayaran</div>'}
+								<div style="padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
+									${paymentsHTML || '<div style="font-size: 14px; color: #94a3b8; text-align: right;">Belum ada pembayaran</div>'}
 								</div>
 
-								<div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 2px solid #e2e8f0; font-size: 13px;">
+								<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 2px solid #e2e8f0; font-size: 16px;">
 									<span style="color: #64748b; font-weight: bold;">Total Dibayar</span>
 									<span style="font-weight: bold; color: #10b981;">- Rp ${formatRupiah(paidTotal)}</span>
 								</div>
-								<div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 16px;">
+								<div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 20px;">
 									<span style="font-weight: bold; color: #0f172a;">Sisa Piutang</span>
-									<span style="font-weight: 900; color: #ef4444;">Rp ${formatRupiah(remaining)}</span>
+									<span style="font-weight: 800; color: #ef4444;">Rp ${formatRupiah(remaining)}</span>
 								</div>
 							</div>
 						</div>
@@ -1209,10 +1272,10 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 				modal.classList.remove('modal-leave');
 				modal.classList.add('modal-enter');
 			} catch (error) {
-				alert("Gagal memuat pratinjau dari database.");
+				console.error("Error Detail:", error); // Membantu melacak error di Console F12 jika masih ada kendala
+				alert("Gagal memuat pratinjau dari database: " + error.message);
 			}
 		}
-
         function closePreview() {
             const modal = document.getElementById('modalPreview');
             modal.classList.remove('modal-enter');
@@ -1557,15 +1620,25 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 				const isLunas = inv.remaining_amount <= 0;
 				return `
 				<tr class="border-b border-slate-100 hover:bg-slate-50/50">
-					<td class="p-3 font-bold text-slate-700">${inv.invoice_number || '-'}</td>
-					<td class="p-3 font-medium text-slate-500 text-xs">${formatDateID(inv.invoice_date)}</td>
-					<td class="p-3 font-bold text-slate-700 uppercase">${inv.customer_name}</td>
+					<td class="p-3">
+						<button onclick="previewFromHistory('${inv.invoice_number}')" class="font-bold text-orange-500 hover:text-orange-600 hover:underline transition-colors text-left flex items-center gap-1.5" title="Klik untuk Pratinjau Nota">
+							<i class="fas fa-file-invoice text-xs"></i> ${inv.invoice_number || '-'}
+						</button>
+					</td>
+					<td class="p-3 font-bold text-slate-700" style="font-size: 13.5px;">${formatDateID(inv.invoice_date)}</td>
+					<td class="p-3 font-normal text-slate-700 uppercase">${inv.customer_name}</td>
 					<td class="p-3 text-right font-bold text-slate-700">Rp ${formatRupiah(inv.grand_total)}</td>
 					<td class="p-3 text-right font-bold ${isLunas ? 'text-emerald-500' : 'text-red-500'}">Rp ${formatRupiah(inv.remaining_amount)}</td>
 					<td class="p-3 text-center">
-						<span class="px-2 py-1 rounded-full text-[10px] font-bold ${isLunas ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
-							${isLunas ? 'LUNAS' : 'HUTANG'}
-						</span>
+						${isLunas ? `
+							<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+								LUNAS
+							</span>
+						` : `
+							<button onclick="openQuickPayModal('${inv.invoice_number}')" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 hover:bg-red-200 hover:scale-105 transition-all shadow-sm cursor-pointer inline-flex items-center gap-1" title="Klik untuk Bayar Cepat">
+								<i class="fas fa-hand-holding-usd text-[9px]"></i> HUTANG
+							</button>
+						`}
 					</td>
 					<td class="p-3 text-center">
 						<div class="flex justify-center gap-1.5">
@@ -1731,15 +1804,22 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 			let rowsHTML = itemsData.map((i) => {
 				let total = i.qty * i.price; grandTotal += total;
 				totalQty += Number(i.qty) || 0; 
-				let noteHtml = i.item_note ? `<br><span style="font-size: 11px; color: #f97316; font-weight: 500;">*${i.item_note}</span>` : '';
-                let isOngkir = String(i.item_name).toLowerCase().includes('ongkir');
-                let uomHtml = isOngkir ? '' : `<span style="font-size:12px; color:#64748b; font-weight: 600;">${i.item_uom || ''}</span>`;
+				
+				let noteHtml = i.item_note ? `<br><span style="font-size: 13px; color: #f97316; font-weight: 500;">*${i.item_note}</span>` : '';
+				let isOngkir = String(i.item_name).toLowerCase().includes('ongkir');
+				let qtyUomLayout = isOngkir 
+				? `<span style="display: inline-block; width: 85px; text-align: center;">${i.qty}</span>`
+				: `<div style="display: flex; align-items: center; justify-content: center;">
+					 <span style="display: inline-block; width: 42px; text-align: right; padding-right: 4px;">${i.qty}</span>
+					 <span style="display: inline-block; width: 40px; text-align: left; color: #64748b; font-size: 14px; font-weight: 600;">${i.item_uom || ''}</span>
+				   </div>`;
+
 				return `
 					<tr style="border-bottom: 1px solid #e2e8f0;">
-						<td style="padding: 12px 0; text-align: center; font-size: 13px; font-weight: bold;">${i.qty} <span style="font-size:12px; color:#64748b; font-weight: 600;">${i.item_uom || ''}</span></td>
-						<td style="padding: 12px 0; font-size: 13px; font-weight: 600;">${i.item_name}${noteHtml}</td>
-						<td style="padding: 12px 0; text-align: right; font-size: 13px;">${formatRupiah(i.price)}</td>
-						<td style="padding: 12px 0; text-align: right; font-size: 13px; font-weight: bold;">${formatRupiah(total)}</td>
+						<td style="padding: 10px 0; text-align: center; font-size: 15px; font-weight: bold;">${i.qty} ${uomHtml}</td>
+						<td style="padding: 10px 0; font-size: 15px; font-weight: 600;">${i.item_name}${noteHtml}</td>
+						<td style="padding: 10px 0; text-align: right; font-size: 15px;">${formatRupiah(i.price)}</td>
+						<td style="padding: 10px 0; text-align: right; font-size: 16px; font-weight: 600;">${formatRupiah(total)}</td>
 					</tr>
 				`;
 			}).join('');
@@ -1754,35 +1834,60 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
 			return `
 				<div style="width: 100%; font-family: 'Inter', sans-serif; color: #1e293b; background: #ffffff; padding: 50px; box-sizing: border-box;">
-					<div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 25px;">
-						<div><h1 style="margin: 0; font-size: 28px; font-weight: 900; color: #ea580c; letter-spacing: -0.5px;">SBR PUTRA FOOD</h1><p style="margin: 6px 0 0 0; font-size: 12px; color: #64748b;">Bandung, Jawa Barat</p></div>
-						<div style="text-align: right;"><h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a; text-transform: uppercase;">${invData.invoice_number}</h2><p style="margin: 6px 0 0 0; font-size: 13px; font-weight: bold; color: #64748b;">Tgl: ${formatDateID(invData.invoice_date)}</p></div>
+					<div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
+						<div>
+							<h1 style="margin: 0; font-size: 21px; font-weight: 800; color: #ea580c; letter-spacing: -0.5px;">SBR PUTRA FOOD</h1>
+							<p style="margin: 6px 0 0 0; font-size: 14px; color: #64748b;">Bandung Barat, Jawa Barat</p>
+						</div>
+						<div style="text-align: right;">
+							<h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #0f172a; text-transform: uppercase;">${invData.invoice_number}</h2>
+							<p style="margin: 6px 0 0 0; font-size: 17px; font-weight: bold; color: #ea580c;">Tgl: ${formatDateID(invData.invoice_date)}</p>
+						</div>
 					</div>
-					<div style="margin-bottom: 30px;"><p style="margin: 0 0 6px 0; font-size: 12px; color: #64748b;">Kepada Yth:</p><h3 style="margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase;">${invData.customer_name}</h3></div>
-					<table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+					
+					<div style="margin-bottom: 25px;">
+						<p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">Kepada Yth:</p>
+						<h3 style="margin: 0; font-size: 15px; font-weight: 600; text-transform: uppercase;">${invData.customer_name}</h3>
+					</div>
+
+					<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
 						<thead>
 							<tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1;">
-								<th style="padding: 12px 0; text-align: center; font-size: 12px; color: #64748b; text-transform: uppercase; width: 80px;">Qty</th>
-								<th style="padding: 12px 0; text-align: left; font-size: 12px; color: #64748b; text-transform: uppercase;">Nama Barang</th>
-								<th style="padding: 12px 0; text-align: right; font-size: 12px; color: #64748b; text-transform: uppercase; width: 120px;">Harga</th>
-								<th style="padding: 12px 0; text-align: right; font-size: 12px; color: #64748b; text-transform: uppercase; width: 140px;">Jumlah</th>
+								<th style="padding: 12px 0; text-align: center; font-size: 14px; color: #64748b; text-transform: uppercase; width: 80px;">Qty</th>
+								<th style="padding: 12px 0; text-align: left; font-size: 14px; color: #64748b; text-transform: uppercase;">Nama Barang</th>
+								<th style="padding: 12px 0; text-align: right; font-size: 14px; color: #64748b; text-transform: uppercase; width: 120px;">Harga</th>
+								<th style="padding: 12px 0; text-align: right; font-size: 14px; color: #64748b; text-transform: uppercase; width: 140px;">Jumlah</th>
 							</tr>
 						</thead>
 						<tbody>${rowsHTML}</tbody>
 						<tfoot>
 							<tr style="border-top: 2px solid #cbd5e1;">
-								<td style="padding: 10px 0; text-align: center; font-size: 15px; font-weight: bold; font-style: italic; color: #0f172a;">${totalQty}</td>
+								<td style="padding: 12px 0; text-align: center; font-size: 16px; font-weight: bold; font-style: italic; color: #0f172a;">${totalQty}</td>
 								<td colspan="3"></td>
 							</tr>
 						</tfoot>
 					</table>
-					<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px;">
+
+					<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
 						<div></div>
-						<div style="width: 300px;">
-							<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px;"><span style="color: #64748b;">Subtotal</span><span style="font-weight: bold;">Rp ${formatRupiah(grandTotal)}</span></div>
-							<div style="padding: 6px 0; border-bottom: 1px solid #f1f5f9;">${paymentsHTML || '<div style="font-size: 12px; color: #94a3b8; text-align: right;">Belum ada pembayaran</div>'}</div>
-							<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 2px solid #e2e8f0; font-size: 14px;"><span style="color: #64748b; font-weight: bold;">Total Dibayar</span><span style="font-weight: bold; color: #10b981;">- Rp ${formatRupiah(paidTotal)}</span></div>
-							<div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 18px;"><span style="font-weight: bold; color: #0f172a;">Sisa Piutang</span><span style="font-weight: 900; color: #ef4444;">Rp ${formatRupiah(remaining)}</span></div>
+						<div style="width: 320px;">
+							<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 17px; font-weight: 800;">
+								<span style="color: #64748b;">Subtotal</span>
+								<span style="font-weight: bold;">Rp ${formatRupiah(grandTotal)}</span>
+							</div>
+							
+							<div style="padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
+								${paymentsHTML || '<div style="font-size: 14px; color: #94a3b8; text-align: right;">Belum ada pembayaran</div>'}
+							</div>
+
+							<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 2px solid #e2e8f0; font-size: 16px;">
+								<span style="color: #64748b; font-weight: bold;">Total Dibayar</span>
+								<span style="font-weight: bold; color: #10b981;">- Rp ${formatRupiah(paidTotal)}</span>
+							</div>
+							<div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 20px;">
+								<span style="font-weight: bold; color: #0f172a;">Sisa Piutang</span>
+								<span style="font-weight: 800; color: #ef4444;">Rp ${formatRupiah(remaining)}</span>
+							</div>
 						</div>
 					</div>
 					${shippingHtml}
