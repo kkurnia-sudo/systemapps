@@ -213,6 +213,15 @@
         </div>
         
         <div class="form-row">
+			
+			<!-- Dropdown Baru untuk Pos -->
+			<div class="form-group small">
+				<label for="pos">Pos Simpanan</label>
+				<select id="pos" required>
+					<option value="Tabungan">Tabungan</option>
+					<option value="Brankas">Brankas</option>
+				</select>
+			</div>		
             <div class="form-group small">
                 <label for="metode">Metode</label>
                 <select id="metode" required>
@@ -228,7 +237,7 @@
             </div>
             <div class="form-group">
                 <label for="description">Keterangan</label>
-                <input type="text" id="description" placeholder="Cth: Penjualan / Beli Bahan" required>
+                <input type="text" id="description" placeholder="Cth: Belanja/Nabung" required>
             </div>
         </div>
 
@@ -249,22 +258,22 @@
     <div class="summary">
         <div>Total Masuk: <span class="masuk" id="totalMasuk">Rp 0</span></div>
         <div>Total Keluar: <span class="keluar" id="totalKeluar">Rp 0</span></div>
-        <div>Sisa Saldo: <span id="saldoAkhir">Rp 0</span></div>
+        <div>Sisa Saldo Akhir: <span id="saldoAkhir">Rp 0</span></div>
         
         <div style="text-align: center; margin-top: 15px;">
             <button type="button" id="toggleDetailsBtn" style="background: transparent; color: #3498db; width: auto; padding: 0; font-size: 13px; text-decoration: underline; border: none; box-shadow: none; display: inline-block;">Tampilkan Rincian Saldo</button>
         </div>
         
         <div id="summaryDetails" style="display: none; margin-top: 10px; border-top: 1px dashed var(--border-color); padding-top: 10px; font-size: 14px;">
-            <div style="font-weight: bold; color: var(--text-heading); border-bottom: none; padding-bottom: 0;">Rincian Cash</div>
-            <div>Masuk Cash: <span class="masuk" id="masukCash">Rp 0</span></div>
-            <div>Keluar Cash: <span class="keluar" id="keluarCash">Rp 0</span></div>
-            <div>Sisa Cash: <span id="sisaCash">Rp 0</span></div>
+            <div style="font-weight: bold; color: var(--text-heading); border-bottom: none; padding-bottom: 0;">1. Saldo Tabungan</div>
+            <div>Masuk: <span class="masuk" id="masukTabungan">Rp 0</span></div>
+            <div>Keluar: <span class="keluar" id="keluarTabungan">Rp 0</span></div>
+            <div>Sisa Tabungan: <span id="sisaTabungan" style="font-weight: bold;">Rp 0</span></div>
             
-            <div style="font-weight: bold; color: var(--text-heading); border-bottom: none; padding-bottom: 0; margin-top: 10px;">Rincian Transfer</div>
-            <div>Masuk Transfer: <span class="masuk" id="masukTransfer">Rp 0</span></div>
-            <div>Keluar Transfer: <span class="keluar" id="keluarTransfer">Rp 0</span></div>
-            <div>Sisa Transfer: <span id="sisaTransfer">Rp 0</span></div>
+            <div style="font-weight: bold; color: var(--text-heading); border-bottom: none; padding-bottom: 0; margin-top: 10px;">2. Saldo Brankas</div>
+            <div>Masuk: <span class="masuk" id="masukBrankas">Rp 0</span></div>
+            <div>Keluar: <span class="keluar" id="keluarBrankas">Rp 0</span></div>
+            <div>Sisa Brankas: <span id="sisaBrankas" style="font-weight: bold;">Rp 0</span></div>
         </div>
     </div>
 
@@ -561,13 +570,9 @@
         const tableBody = document.getElementById('tableBody');
         tableBody.innerHTML = '';
         
-        let totalMasuk = 0;
-        let totalKeluar = 0;
-        
-        let masukCash = 0;
-        let keluarCash = 0;
-        let masukTransfer = 0;
-        let keluarTransfer = 0;
+        let totalMasuk = 0, totalKeluar = 0;
+        let masukTabungan = 0, keluarTabungan = 0;
+        let masukBrankas = 0, keluarBrankas = 0;
 
         const displayData = [...data].reverse();
 
@@ -575,50 +580,61 @@
             const tr = document.createElement('tr');
             const amt = parseFloat(tx.amount);
             
-            let badgeClass = 'badge-metode';
-            if(tx.metode === 'Cash') badgeClass += ' badge-split-cash';
-            if(tx.metode === 'Transfer') badgeClass += ' badge-split-tf';
+            // Logika memecah data "Tabungan-Transfer" atau "Brankas-Cash"
+            let rawMetode = tx.metode || "Brankas-Cash";
+            let posSimpanan = "Brankas";
+            let metodeAsli = rawMetode;
 
-            const metodeStr = tx.metode ? tx.metode : 'Cash';
-            const metodeHtml = `<br><span class="${badgeClass}">${metodeStr}</span>`;
+            if (rawMetode.includes("-")) {
+                const splitData = rawMetode.split("-");
+                posSimpanan = splitData[0];
+                metodeAsli = splitData[1];
+            } else {
+                metodeAsli = rawMetode; // Menjaga data lama agar tidak error
+            }
+
+            let badgeClass = 'badge-metode';
+            if(metodeAsli === 'Cash') badgeClass += ' badge-split-cash';
+            if(metodeAsli === 'Transfer') badgeClass += ' badge-split-tf';
+
+            // Menampilkan label lengkap di tabel riwayat
+            const metodeHtml = `<br><span class="${badgeClass}">${posSimpanan} - ${metodeAsli}</span>`;
             const deskripsiLengkap = `${tx.description} ${metodeHtml}`;
             
-            const isCash = (metodeStr === 'Cash');
-            const isTransfer = (metodeStr === 'Transfer');
-
             const aksiHtml = `
                 <td style="text-align:center;">
-                    <button class="btn-action" data-id="${tx.id}" data-desc="${tx.description}" data-amt="${amt}" data-met="${metodeStr}">⚙️</button>
+                    <button class="btn-action" data-id="${tx.id}" data-desc="${tx.description}" data-amt="${amt}" data-met="${rawMetode}">⚙️</button>
                 </td>
             `;
             
             if (tx.type === 'masuk') {
                 totalMasuk += amt;
-                if(isCash) masukCash += amt;
-                if(isTransfer) masukTransfer += amt;
+                if(posSimpanan === 'Tabungan') masukTabungan += amt;
+                if(posSimpanan === 'Brankas') masukBrankas += amt;
                 
                 tr.innerHTML = `<td>${formatDate(tx.created_at)}</td><td>${deskripsiLengkap}</td><td class="masuk">${formatRupiah(amt)}</td><td>-</td>${aksiHtml}`;
             } else {
                 totalKeluar += amt;
-                if(isCash) keluarCash += amt;
-                if(isTransfer) keluarTransfer += amt;
+                if(posSimpanan === 'Tabungan') keluarTabungan += amt;
+                if(posSimpanan === 'Brankas') keluarBrankas += amt;
 
                 tr.innerHTML = `<td>${formatDate(tx.created_at)}</td><td>${deskripsiLengkap}</td><td>-</td><td class="keluar">${formatRupiah(amt)}</td>${aksiHtml}`;
             }
             tableBody.appendChild(tr);
         });
 
+        // Update teks HTML dengan perhitungan baru
         document.getElementById('totalMasuk').innerText = formatRupiah(totalMasuk);
         document.getElementById('totalKeluar').innerText = formatRupiah(totalKeluar);
         document.getElementById('saldoAkhir').innerText = formatRupiah(totalMasuk - totalKeluar);
 
-        document.getElementById('masukCash').innerText = formatRupiah(masukCash);
-        document.getElementById('keluarCash').innerText = formatRupiah(keluarCash);
-        document.getElementById('sisaCash').innerText = formatRupiah(masukCash - keluarCash);
+        document.getElementById('masukTabungan').innerText = formatRupiah(masukTabungan);
+        document.getElementById('keluarTabungan').innerText = formatRupiah(keluarTabungan);
+        document.getElementById('sisaTabungan').innerText = formatRupiah(masukTabungan - keluarTabungan);
         
-        document.getElementById('masukTransfer').innerText = formatRupiah(masukTransfer);
-        document.getElementById('keluarTransfer').innerText = formatRupiah(keluarTransfer);
-        document.getElementById('sisaTransfer').innerText = formatRupiah(masukTransfer - keluarTransfer);
+        document.getElementById('masukBrankas').innerText = formatRupiah(masukBrankas);
+        document.getElementById('keluarBrankas').innerText = formatRupiah(keluarBrankas);
+        document.getElementById('sisaBrankas').innerText = formatRupiah(masukBrankas - keluarBrankas);
 
         buildVirtualReceipt(data, totalMasuk, totalKeluar);
     }
@@ -803,7 +819,24 @@
         const now = new Date();
         const created_at_lengkap = `${tanggalInput} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
         
+		
+		const posValue = document.getElementById('pos').value;
+		const metodeValue = document.getElementById('metode').value;
+
+		// Gabungkan teksnya, contoh hasil: "Tabungan-Transfer"
+		const metodeGabungan = posValue + "-" + metodeValue;
+		
         let insertPayload = [];
+		
+		// Masukkan metodeGabungan ke properti 'metode' yang dikirim ke Supabase
+		insertPayload.push({ 
+			created_at: created_at_lengkap, 
+			type: type, 
+			amount: rawAmount, 
+			description: description, 
+			metode: metodeGabungan 
+		});
+		
         if (metode === 'Split') {
             if (rawCash && parseInt(rawCash) > 0) insertPayload.push({ created_at: created_at_lengkap, type, amount: rawCash, description, metode: 'Cash' });
             if (rawTransfer && parseInt(rawTransfer) > 0) insertPayload.push({ created_at: created_at_lengkap, type, amount: rawTransfer, description, metode: 'Transfer' });
