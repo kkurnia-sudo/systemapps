@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Pengiriman SBR</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { 
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            500: '#ec4899', // Pink untuk aromanis
+                            600: '#db2777',
+                        },
+                        alt: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9', // Biru untuk barang lainnya
+                            600: '#0284c7',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        .flex-table-container { max-height: 500px; overflow-y: auto; }
+        
+        /* Animasi Tab */
+        .tab-active { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen">
+
+    <header class="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-alt-500 flex items-center justify-center text-white shadow-lg">
+                    <i class="fa-solid fa-truck-fast"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold leading-tight">Rekap Pengiriman</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">SBR Putra Food</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div id="connectionStatus" class="relative cursor-pointer flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition" onclick="fetchData()">
+                    <i id="connectionIcon" class="fa-solid fa-cloud-arrow-down text-slate-500 dark:text-slate-300"></i>
+                </div>
+                <button id="themeToggle" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition flex items-center justify-center">
+                    <i id="themeIcon" class="fa-solid fa-moon text-slate-500 dark:text-slate-300"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        
+        <div class="flex justify-center mb-2">
+            <div class="bg-slate-200/70 dark:bg-slate-800 p-1.5 rounded-2xl inline-flex relative shadow-inner w-full sm:w-auto">
+                <button onclick="setTab('aromanis')" id="tabAromanis" class="flex-1 sm:w-48 py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-cloud"></i> Aromanis
+                </button>
+                <button onclick="setTab('lainnya')" id="tabLainnya" class="flex-1 sm:w-48 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-box-open"></i> Barang Lainnya
+                </button>
+            </div>
+        </div>
+
+        <section class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 text-slate-500 uppercase">Jenis Transaksi</label>
+                    <select id="filterJenis" class="w-full text-sm bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="all">Semua Jenis</option>
+                        <option value="reguler">Regular</option>
+                        <option value="dp">Khusus (DP)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 text-slate-500 uppercase">Tanggal Mulai</label>
+                    <input type="date" id="filterStartDate" class="w-full text-sm bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 text-slate-500 uppercase">Tanggal Akhir</label>
+                    <input type="date" id="filterEndDate" class="w-full text-sm bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1.5 text-slate-500 uppercase">Pilih Agen</label>
+                    <select id="filterAgen" class="w-full text-sm bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="all">Semua Agen</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="fetchData()" class="w-full bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white text-sm font-bold rounded-xl p-2.5 transition shadow flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass"></i> Filter Data
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SUMMARY CARDS -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center relative overflow-hidden">
+                <div class="absolute -right-2 -bottom-4 opacity-10 dark:opacity-5 text-6xl text-emerald-500 pointer-events-none"><i class="fa-solid fa-money-bill-wave"></i></div>
+                <div class="relative z-10">
+                    <p class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Nilai Pengiriman</p>
+                    <p class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 truncate" id="summaryTotal">Rp 0</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center relative overflow-hidden">
+                <div class="absolute -right-2 -bottom-4 opacity-10 dark:opacity-5 text-6xl text-brand-500 pointer-events-none"><i class="fa-solid fa-cubes"></i></div>
+                <div class="relative z-10">
+                    <p class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Total Qty (Pcs)</p>
+                    <p class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 truncate" id="summaryQty">0</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center relative overflow-hidden">
+                <div class="absolute -right-2 -bottom-4 opacity-10 dark:opacity-5 text-6xl text-blue-500 pointer-events-none"><i class="fa-solid fa-file-invoice"></i></div>
+                <div class="relative z-10">
+                    <p class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Jumlah Nota</p>
+                    <p class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 truncate" id="summaryNota">0</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center relative overflow-hidden">
+                <div class="absolute -right-2 -bottom-4 opacity-10 dark:opacity-5 text-6xl text-red-500 pointer-events-none"><i class="fa-solid fa-boxes-packing"></i></div>
+                <div class="relative z-10">
+                    <p class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Nilai Retur</p>
+                    <div class="flex items-baseline gap-1.5">
+                        <p class="text-xl sm:text-2xl font-black text-red-500 truncate" id="summaryRetur">Rp 0</p>
+                        <!-- Tambahan Persentase -->
+                        <span id="summaryReturPercent" class="text-sm font-bold text-red-400 hidden">(0%)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="printArea">
+            
+            <div class="space-y-6">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center"><i class="fa-solid fa-list-check"></i></span>
+                            Barang Terkirim
+                        </h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs text-slate-500 uppercase border-b border-slate-200 dark:border-slate-700">
+                                    <th class="py-3 pr-2 font-bold">Item</th>
+                                    <th class="py-3 px-2 font-bold text-right">Qty</th>
+                                    <th class="py-3 pl-2 font-bold text-right">Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableKirimBody" class="text-sm divide-y divide-slate-100 dark:divide-slate-700/50"></tbody>
+                            <tfoot id="tableKirimFoot"></tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center"><i class="fa-solid fa-arrow-rotate-left"></i></span>
+                            Barang Retur
+                        </h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs text-slate-500 uppercase border-b border-slate-200 dark:border-slate-700">
+                                    <th class="py-3 pr-2 font-bold">Item</th>
+                                    <th class="py-3 px-2 font-bold text-right">Qty</th>
+                                    <th class="py-3 pl-2 font-bold text-right">Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableReturBody" class="text-sm divide-y divide-slate-100 dark:divide-slate-700/50"></tbody>
+                            <tfoot id="tableReturFoot"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col h-[calc(100vh-250px)] lg:h-auto min-h-[500px]">
+                <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 rounded-t-2xl">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center"><i class="fa-solid fa-receipt"></i></span>
+                        Rincian Nota (<span id="activeTabName">Aromanis</span>)
+                    </h3>
+                    <div class="flex gap-2">
+                        <button onclick="exportToExcel()" class="w-8 h-8 rounded bg-emerald-100 text-emerald-600 hover:bg-emerald-200 flex items-center justify-center transition" title="Export Excel">
+                            <i class="fa-solid fa-file-excel"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-table-container p-4 flex flex-col gap-3 flex-1 bg-slate-50/30 dark:bg-transparent" id="transactionContainer">
+                    </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="strukModal" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-[#f8fafc] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-slate-200">
+            <div class="flex justify-between items-center bg-slate-800 text-white px-5 py-4">
+                <h3 class="font-bold tracking-wider text-sm uppercase"><i class="fa-solid fa-print mr-2"></i> Preview Rincian</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition bg-slate-700 w-7 h-7 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto max-h-[75vh] flex flex-col" id="modalStrukContent">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Konfigurasi Asli
+        const SUPABASE_URL = 'https://yxcxvkairftqzmptkorr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // State Management
+        let rawDataGlobal = []; // Menyimpan semua data detail dari database
+        let currentTab = 'aromanis'; // Default Tab
+        
+        let filteredKirim = [];
+        let filteredRetur = [];
+        let groupedInvoices = {}; 
+
+        // Theme Toggle
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            themeIcon.classList.replace('fa-moon', 'fa-sun');
+        }
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+            }
+        });
+
+        const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+        const formatTitik = (angka) => new Intl.NumberFormat('id-ID').format(angka || 0);
+        const formatTanggal = (dateString) => {
+            if (!dateString) return '';
+            const d = new Date(dateString);
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
+        };
+		
+		// --- TAMBAHKAN FUNGSI INI ---
+        const formatTanggalBulan = (dateString) => {
+            if (!dateString) return '';
+            const d = new Date(dateString);
+            const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sept', 'Okt', 'Nov', 'Des'];
+            return `${String(d.getDate()).padStart(2, '0')} ${bulan[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`;
+        };
+		
+
+        // Ganti Tab Logic
+        function setTab(tabName) {
+            currentTab = tabName;
+            
+            const btnAro = document.getElementById('tabAromanis');
+            const btnLain = document.getElementById('tabLainnya');
+            const tabLabel = document.getElementById('activeTabName');
+
+            if(tabName === 'aromanis') {
+                btnAro.className = "flex-1 sm:w-48 py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm flex justify-center items-center gap-2";
+                btnLain.className = "flex-1 sm:w-48 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex justify-center items-center gap-2";
+                tabLabel.innerText = "Aromanis";
+            } else {
+                btnLain.className = "flex-1 sm:w-48 py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 bg-white dark:bg-slate-700 text-alt-600 dark:text-alt-400 shadow-sm flex justify-center items-center gap-2";
+                btnAro.className = "flex-1 sm:w-48 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex justify-center items-center gap-2";
+                tabLabel.innerText = "Barang Lainnya";
+            }
+
+            // Reproses data berdasarkan tab terpilih
+            if(rawDataGlobal.length > 0) {
+                processAndRenderData();
+            }
+        }
+
+        async function fetchAgentList() {
+            try {
+                const [resReguler, resDP] = await Promise.all([
+                    supabaseClient.from('transaksi').select('nama_agen'),
+                    supabaseClient.from('transaksi_dp').select('nama_agen')
+                ]);
+                let allAgents = [];
+                if (resReguler.data) allAgents = allAgents.concat(resReguler.data.map(i => i.nama_agen));
+                if (resDP.data) allAgents = allAgents.concat(resDP.data.map(i => i.nama_agen));
+
+                const uniqueAgen = [...new Set(allAgents)].filter(a => a && a.trim() !== '').sort();
+                const agenSelect = document.getElementById('filterAgen');
+                uniqueAgen.forEach(agen => { agenSelect.innerHTML += `<option value="${agen}">${agen}</option>`; });
+            } catch (err) { console.error("Gagal load agen:", err); }
+        }
+
+        async function fetchData() {
+            const icon = document.getElementById('connectionIcon');
+            icon.className = "fa-solid fa-spinner fa-spin text-brand-500";
+            
+            const jenisFilter = document.getElementById('filterJenis').value;
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+            const agen = document.getElementById('filterAgen').value;
+
+            try {
+                let qHeaderReguler = supabaseClient.from('transaksi').select('*');
+                let qHeaderDP = supabaseClient.from('transaksi_dp').select('*');
+
+                if (startDate) { qHeaderReguler = qHeaderReguler.gte('tanggal', startDate); qHeaderDP = qHeaderDP.gte('tanggal', startDate); }
+                if (endDate) { qHeaderReguler = qHeaderReguler.lte('tanggal', endDate); qHeaderDP = qHeaderDP.lte('tanggal', endDate); }
+                if (agen !== 'all') { qHeaderReguler = qHeaderReguler.eq('nama_agen', agen); qHeaderDP = qHeaderDP.eq('nama_agen', agen); }
+
+                const promises = [];
+                if (jenisFilter === 'all' || jenisFilter === 'reguler') promises.push(qHeaderReguler); else promises.push(Promise.resolve({ data: null }));
+                if (jenisFilter === 'all' || jenisFilter === 'dp') promises.push(qHeaderDP); else promises.push(Promise.resolve({ data: null }));
+
+                const [resHeadReguler, resHeadDP] = await Promise.all(promises);
+                
+                const headerDict = {};
+                const listNotaReguler = [];
+                const listNotaDP = [];
+
+                if (resHeadReguler.data) resHeadReguler.data.forEach(h => { h.jenis_trx = 'Regular'; headerDict[`Reguler_${h.no_nota}`] = h; listNotaReguler.push(h.no_nota); });
+                if (resHeadDP.data) resHeadDP.data.forEach(h => { h.jenis_trx = 'Khusus'; headerDict[`DP_${h.no_nota}`] = h; listNotaDP.push(h.no_nota); });
+
+                if (listNotaReguler.length === 0 && listNotaDP.length === 0) {
+                    rawDataGlobal = [];
+                    processAndRenderData();
+                    icon.className = "fa-solid fa-cloud-arrow-down text-slate-500 dark:text-slate-300";
+                    return;
+                }
+
+                let combinedDetails = [];
+                if (listNotaReguler.length > 0) {
+                    const { data: dReguler } = await supabaseClient.from('transaksi_detail').select('*').in('no_nota', listNotaReguler);
+                    if(dReguler) combinedDetails = combinedDetails.concat(dReguler.map(d => ({ ...d, source_table: 'Reguler' })));
+                }
+                if (listNotaDP.length > 0) {
+                    const { data: dDP } = await supabaseClient.from('transaksi_detaildp').select('*').in('no_nota', listNotaDP);
+                    if(dDP) combinedDetails = combinedDetails.concat(dDP.map(d => ({ ...d, source_table: 'DP' })));
+                }
+
+                rawDataGlobal = combinedDetails.map(d => ({
+                    ...d, 
+                    transaksi: headerDict[`${d.source_table}_${d.no_nota}`] || {}
+                }));
+
+                processAndRenderData();
+                icon.className = "fa-solid fa-check text-emerald-500";
+                setTimeout(() => { icon.className = "fa-solid fa-cloud-arrow-down text-slate-500 dark:text-slate-300"; }, 2000);
+
+            } catch (err) {
+                console.error("Gagal Loading Data:", err);
+                icon.className = "fa-solid fa-triangle-exclamation text-red-500";
+            }
+        }
+
+        function processAndRenderData() {
+            groupedInvoices = {};
+            let tempKirim = [];
+            let tempRetur = [];
+
+            rawDataGlobal.forEach(item => {
+                if (!item.transaksi.tanggal) return;
+                
+                const isAromanis = item.nama_barang && item.nama_barang.toLowerCase().includes('aromanis');
+                
+                // FILTERING INTI: Abaikan item yang tidak sesuai dengan Tab Aktif
+                if (currentTab === 'aromanis' && !isAromanis) return;
+                if (currentTab === 'lainnya' && isAromanis) return;
+
+                const isRetur = (item.tipe && item.tipe.toLowerCase().includes('retur')) || item.qty < 0 || item.subtotal < 0;
+
+                const invoiceKey = `${item.source_table}_${item.no_nota}`;
+                if(!groupedInvoices[invoiceKey]) {
+                    const tr = item.transaksi;
+					
+					// --- TAMBAHAN LOGIKA DUA DRIVER ---
+                    const d1 = tr.driver_1 && tr.driver_1 !== 'null' ? tr.driver_1 : '';
+                    const d2 = tr.driver_2 && tr.driver_2 !== 'null' ? tr.driver_2 : '';
+                    let gabungDriver = '-';
+                    if (d1 && d2) gabungDriver = `${d1}/${d2}`;
+                    else if (d1) gabungDriver = d1;
+                    else if (d2) gabungDriver = d2;
+					
+                    groupedInvoices[invoiceKey] = {
+                        invoiceKey: invoiceKey,
+                        no_nota: item.no_nota, 
+                        tanggal: tr.tanggal, 
+                        agen: tr.nama_agen,
+                        jenis_trx: tr.jenis_trx,
+                        driver: tr.driver_1 || '-',
+                        mobil: tr.mobil || tr.nama_mobil || tr.plat_nomor || '-',
+                        items_kirim: [], items_retur: [],
+                        total_kirim: 0, total_retur: 0
+                    };
+                }
+
+                if(isRetur) {
+                    tempRetur.push(item);
+                    groupedInvoices[invoiceKey].items_retur.push(item);
+                    groupedInvoices[invoiceKey].total_retur += Math.abs(Number(item.subtotal));
+                } else {
+                    tempKirim.push(item);
+                    groupedInvoices[invoiceKey].items_kirim.push(item);
+                    groupedInvoices[invoiceKey].total_kirim += Number(item.subtotal);
+                }
+            });
+
+            // Hitung Summary
+            const totalNominal = tempKirim.reduce((sum, i) => sum + Number(i.subtotal), 0);
+            const totalQty = tempKirim.reduce((sum, i) => sum + Number(i.qty), 0);
+            const totalReturNominal = tempRetur.reduce((sum, i) => sum + Math.abs(Number(i.subtotal)), 0);
+            
+            document.getElementById('summaryTotal').innerText = formatRupiah(totalNominal);
+            document.getElementById('summaryQty').innerText = formatTitik(totalQty);
+            document.getElementById('summaryNota').innerText = Object.keys(groupedInvoices).length;
+            document.getElementById('summaryRetur').innerText = formatRupiah(totalReturNominal);
+			
+			
+			// Tampilkan Persentase Retur
+            const returPercentEl = document.getElementById('summaryReturPercent');
+            if (totalNominal > 0) {
+                const percent = (totalReturNominal / totalNominal) * 100;
+                returPercentEl.innerText = `(${percent.toFixed(1)}%)`;
+                returPercentEl.classList.remove('hidden');
+            } else if (totalReturNominal > 0) {
+                returPercentEl.innerText = `(100%)`;
+                returPercentEl.classList.remove('hidden');
+            } else {
+                returPercentEl.classList.add('hidden');
+            }
+			
+            // Grouping data tabel
+            filteredKirim = Object.values(tempKirim.reduce((acc, d) => {
+                const nama = d.nama_barang || '-';
+                if(!acc[nama]) acc[nama] = { nama, qty: 0, satuan: d.satuan, nominal: 0 };
+                acc[nama].qty += Number(d.qty); acc[nama].nominal += Number(d.subtotal);
+                return acc;
+            }, {})).sort((a,b) => b.qty - a.qty);
+
+            filteredRetur = Object.values(tempRetur.reduce((acc, d) => {
+                const nama = d.nama_barang || '-';
+                if(!acc[nama]) acc[nama] = { nama, qty: 0, satuan: d.satuan, nominal: 0 };
+                acc[nama].qty += Math.abs(Number(d.qty)); acc[nama].nominal += Math.abs(Number(d.subtotal));
+                return acc;
+            }, {})).sort((a,b) => b.qty - a.qty);
+
+            renderTables();
+            renderInvoices();
+        }
+
+        function renderTables() {
+            const tbKirim = document.getElementById('tableKirimBody');
+            tbKirim.innerHTML = filteredKirim.map(item => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                    <td class="py-2.5 pr-2 font-semibold text-slate-800 dark:text-slate-200">${item.nama}</td>
+                    <td class="py-2.5 px-2 text-right font-medium">${formatTitik(item.qty)} <span class="text-[10px] text-slate-500">${item.satuan}</span></td>
+                    <td class="py-2.5 pl-2 text-right text-slate-800 dark:text-slate-100 font-bold">${formatRupiah(item.nominal)}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="3" class="p-4 text-center text-sm text-slate-500">Tidak ada pengiriman.</td></tr>`;
+
+            document.getElementById('tableKirimFoot').innerHTML = filteredKirim.length > 0 ? `
+                <tr class="border-t-2 border-slate-200 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800/50 font-bold">
+                    <td class="py-3 pr-2 text-slate-600 dark:text-slate-300">TOTAL</td>
+                    <td class="py-3 px-2 text-right text-slate-800 dark:text-white">${formatTitik(filteredKirim.reduce((s,i)=>s+i.qty,0))}</td>
+                    <td class="py-3 pl-2 text-right text-brand-600 dark:text-brand-400">${formatRupiah(filteredKirim.reduce((s,i)=>s+i.nominal,0))}</td>
+                </tr>
+            ` : '';
+
+            const tbRetur = document.getElementById('tableReturBody');
+            tbRetur.innerHTML = filteredRetur.map(item => `
+                <tr class="hover:bg-red-50/30 dark:hover:bg-red-900/10 transition">
+                    <td class="py-2.5 pr-2 font-semibold text-slate-800 dark:text-slate-200">${item.nama}</td>
+                    <td class="py-2.5 px-2 text-right font-medium text-red-500">${formatTitik(item.qty)} <span class="text-[10px] text-slate-500">${item.satuan}</span></td>
+                    <td class="py-2.5 pl-2 text-right text-red-600 font-bold">${formatRupiah(item.nominal)}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="3" class="p-4 text-center text-sm text-slate-500">Tidak ada retur.</td></tr>`;
+
+            document.getElementById('tableReturFoot').innerHTML = filteredRetur.length > 0 ? `
+                <tr class="border-t-2 border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-900/10 font-bold">
+                    <td class="py-3 pr-2 text-red-800 dark:text-red-300">TOTAL RETUR</td>
+                    <td class="py-3 px-2 text-right text-red-600 dark:text-red-400">${formatTitik(filteredRetur.reduce((s,i)=>s+i.qty,0))}</td>
+                    <td class="py-3 pl-2 text-right text-red-600 dark:text-red-400">${formatRupiah(filteredRetur.reduce((s,i)=>s+i.nominal,0))}</td>
+                </tr>
+            ` : '';
+        }
+
+        function renderInvoices() {
+            const container = document.getElementById('transactionContainer');
+            const arrInvoices = Object.values(groupedInvoices).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+            
+            container.innerHTML = arrInvoices.map(inv => {
+                const totalFinal = inv.total_kirim - inv.total_retur;
+                const txColor = currentTab === 'aromanis' ? 'text-brand-600 dark:text-brand-400' : 'text-alt-600 dark:text-alt-400';
+                const bgIcon = currentTab === 'aromanis' ? 'bg-brand-100 text-brand-600' : 'bg-alt-100 text-alt-600';
+                
+                return `
+                <div onclick="openModal('${inv.invoiceKey}')" class="cursor-pointer group flex items-center justify-between p-3.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-${currentTab==='aromanis'?'brand':'alt'}-400 dark:hover:border-${currentTab==='aromanis'?'brand':'alt'}-500 hover:shadow-md transition-all">
+                    <div class="flex gap-3.5 items-center">
+                        <div class="w-10 h-10 rounded-full ${bgIcon} dark:bg-opacity-20 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-file-lines"></i>
+                        </div>
+                        <div>
+                            <div class="flex gap-2 items-center mb-1">
+                                <span class="font-bold text-sm ${txColor}">${inv.no_nota}</span>
+                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">${inv.jenis_trx}</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-700 dark:text-slate-300 w-32 sm:w-48 truncate">${inv.agen}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] font-semibold text-slate-400 mb-1"><i class="fa-regular fa-calendar mr-1"></i>${formatTanggal(inv.tanggal)}</div>
+                        <div class="font-bold text-[15px] text-slate-800 dark:text-white">${formatRupiah(totalFinal)}</div>
+                    </div>
+                </div>
+                `;
+            }).join('') || '<div class="flex flex-col items-center justify-center py-10 text-slate-400"><i class="fa-solid fa-box-open text-4xl mb-3"></i><p class="text-sm">Belum ada nota di kategori ini.</p></div>';
+        }
+
+        function openModal(invoiceKey) {
+            const inv = groupedInvoices[invoiceKey];
+            if(!inv) return;
+
+            // Desain List Barang Terkirim (Lebih compact)
+            let itemsHtml = inv.items_kirim.map(i => `
+                <div class="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
+                    <div>
+                        <div class="font-bold text-slate-800 text-[13px]">${i.nama_barang}</div>
+                        <div class="text-[11px] text-slate-500">${i.qty} ${i.satuan} x ${formatTitik(i.harga_satuan)}</div>
+                    </div>
+                    <div class="font-bold text-slate-800 text-[13px]">${formatTitik(i.subtotal)}</div>
+                </div>
+            `).join('');
+
+            // Desain List Retur (Polos, tanpa background, compact)
+            let returHtml = '';
+            if(inv.items_retur.length > 0) {
+                returHtml = `
+                    <div class="mt-4">
+                        <div class="text-[10px] uppercase font-bold text-red-500 mb-1 border-b border-red-200 pb-1 tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrow-rotate-left"></i> Rincian Retur
+                        </div>
+                        ${inv.items_retur.map(i => `
+                            <div class="flex justify-between items-center py-1.5 border-b border-red-50 last:border-0 text-red-600">
+                                <div>
+                                    <div class="font-bold text-[13px]">${i.nama_barang}</div>
+                                    <div class="text-[11px] opacity-80">${Math.abs(i.qty)} ${i.satuan} x ${formatTitik(i.harga_satuan)}</div>
+                                </div>
+                                <div class="font-bold text-[13px]">-${formatTitik(Math.abs(i.subtotal))}</div>
+                            </div>
+                        `).join('')}
+                        <div class="flex justify-between font-bold text-red-600 mt-1.5 pt-1">
+                            <span class="text-[13px]">Total Retur</span>
+                            <span class="text-[13px]">-Rp ${formatTitik(inv.total_retur)}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const totalFinal = inv.total_kirim - inv.total_retur;
+            const judulStruk = currentTab === 'aromanis' ? "Nota Aromanis" : "Nota Barang Lainnya";
+            const bgHeader = currentTab === 'aromanis' ? "bg-brand-50 text-brand-600 border-brand-200" : "bg-alt-50 text-alt-600 border-alt-200";
+
+            document.getElementById('modalStrukContent').innerHTML = `
+                <div id="strukPrintArea" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    
+                    <!-- Header Info -->
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-lg font-black text-slate-800 leading-tight mb-0.5">${judulStruk}</h2>
+                            <p class="text-[11px] font-bold text-slate-500">SBR PUTRA FOOD</p>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <div class="px-2 py-0.5 rounded-lg border ${bgHeader} text-[11px] font-extrabold mb-1">
+                                ${inv.no_nota}
+                            </div>
+                            <!-- Tambahkan pr-2 di sini agar sejajar dengan teks di dalam badge -->
+                            <div class="text-[11px] font-bold text-slate-500 pr-2">
+                                ${formatTanggalBulan(inv.tanggal)}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Info Agen & Driver Grid -->
+                    <div class="bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <p class="text-[9px] uppercase font-bold text-slate-400 mb-0.5 tracking-wider">Agen</p>
+                                <p class="text-[12px] font-bold text-slate-800 leading-snug">${inv.agen}</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] uppercase font-bold text-slate-400 mb-0.5 tracking-wider">Driver & Armada</p>
+                                <p class="text-[11px] font-bold text-slate-700 whitespace-nowrap mb-0.5"><i class="fa-solid fa-user-astronaut text-slate-400 mr-1 w-3 text-center"></i> ${inv.driver}</p>
+                                <p class="text-[11px] font-bold text-slate-700 whitespace-nowrap"><i class="fa-solid fa-truck text-slate-400 mr-1 w-3 text-center"></i> ${inv.mobil}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Daftar Barang -->
+                    <div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400 mb-1 border-b border-slate-200 pb-1 tracking-wider">Detail Pengiriman</div>
+                        ${itemsHtml}
+                    </div>
+                    
+                    <div class="flex justify-between font-bold text-slate-700 mt-2 px-1">
+                        <span class="text-[13px]">Subtotal Kirim</span>
+                        <span class="text-[13px]">Rp ${formatTitik(inv.total_kirim)}</span>
+                    </div>
+
+                    ${returHtml}
+
+                    <!-- Total Tagihan -->
+                    <div class="mt-4 bg-slate-800 text-white rounded-xl p-3 flex justify-between items-center shadow-md">
+                        <span class="font-bold uppercase tracking-wider text-[11px] text-slate-300">Total Akhir</span>
+                        <span class="text-lg font-black">Rp ${formatTitik(totalFinal)}</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex gap-3">
+                    <button onclick="downloadStrukPNG('${inv.invoiceKey}')" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2.5 rounded-xl text-sm font-bold transition flex justify-center items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-download"></i> Simpan Gambar
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('strukModal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('strukModal').classList.add('hidden'); }
+
+        function downloadStrukPNG(invoiceKey) {
+            const inv = groupedInvoices[invoiceKey];
+            const el = document.getElementById('strukPrintArea');
+            html2canvas(el, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Rincian_${currentTab}_${inv.no_nota}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        function exportToExcel() {
+            if(filteredKirim.length === 0 && filteredRetur.length === 0) { Swal.fire('Kosong', 'Tidak ada data untuk diexport.', 'info'); return; }
+            const wb = XLSX.utils.book_new();
+            const formatData = (data) => data.map(i => ({ "Nama Barang": i.nama, "Qty": i.qty, "Satuan": i.satuan, "Total Nominal (Rp)": i.nominal }));
+            
+            const wsKirim = XLSX.utils.json_to_sheet(formatData(filteredKirim));
+            const wsRetur = XLSX.utils.json_to_sheet(formatData(filteredRetur));
+            
+            const wscols = [{wch: 35}, {wch: 10}, {wch: 10}, {wch: 20}];
+            wsKirim['!cols'] = wscols; wsRetur['!cols'] = wscols;
+            
+            XLSX.utils.book_append_sheet(wb, wsKirim, `Kirim ${currentTab}`);
+            XLSX.utils.book_append_sheet(wb, wsRetur, `Retur ${currentTab}`);
+            
+            XLSX.writeFile(wb, `Rekap_Pengiriman_${currentTab}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        window.onload = async () => { 
+            const today = new Date();
+            const startStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-01`;
+            const endStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            
+            document.getElementById('filterStartDate').value = startStr;
+            document.getElementById('filterEndDate').value = endStr;
+
+            await fetchAgentList(); 
+            fetchData(); 
+        };
+    </script>
+</body>
+</html>
