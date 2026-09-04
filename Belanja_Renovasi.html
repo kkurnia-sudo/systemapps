@@ -326,8 +326,9 @@
             </tbody>
         </table>
     </div>
+	<button type="button" id="btnLoadMore" style="display: none; background-color: #34495e; margin-top: 10px;">⬇️ Muat Lebih Banyak Data</button>
     
-    <div class="export-row">
+	<div class="export-row">
         <button type="button" id="btnShowPrintPreview" class="btn-print" style="margin-top: 15px;">🖨️ Cetak / Simpan Laporan</button>
     </div>
 </div>
@@ -560,93 +561,141 @@
         fetchTransactions(); 
     });
 
-    async function fetchTransactions() {
-		// 1. Buat dasar query (belum dieksekusi)
-		let query = supabase
-			.from(TABLE_NAME)
-			.select('*')
-			.order('created_at', { ascending: true });
+    // 1. Definisikan variabel pagination
+    let currentPage = 0;
+    const PAGE_SIZE = 20; // Menampilkan 20 baris per klik
 
-		// 2. Jika filter aktif, tambahkan syarat (kondisi) ke dalam query
-		if (filterStartDate && filterEndDate) {
-			// Konversi batas waktu awal dan akhir hari ke format ISO
-			const startLimit = new Date(`${filterStartDate}T00:00:00.000Z`).toISOString();
-			const endLimit = new Date(`${filterEndDate}T23:59:59.999Z`).toISOString();
-			
-			// Gunakan fungsi Supabase .gte (>=) dan .lte (<=)
-			query = query.gte('created_at', startLimit).lte('created_at', endLimit);
-		}
+    // 2. Fungsi baru untuk memanggil RPC Ringkasan Saldo
+    async function fetchSummary() {
+        let params = {};
+        if (filterStartDate && filterEndDate) {
+            params.p_start_date = new Date(`${filterStartDate}T00:00:00.000Z`).toISOString();
+            params.p_end_date = new Date(`${filterEndDate}T23:59:59.999Z`).toISOString();
+        }
 
-		// 3. Eksekusi query ke server Supabase
-		let { data, error } = await query;
-		
-		if (error) {
-			console.error('Error fetching data:', error);
-			return;
-		}
-		
-		// 4. Kirim data yang sudah tersaring oleh server ke tabel
-		renderTable(data);
-	}
+        const { data, error } = await supabase.rpc('get_renovasi_summary', params);
+        if (error) return console.error('Error fetching summary:', error);
 
-    function renderTable(data) {
-        const tableBody = document.getElementById('tableBody');
-        tableBody.innerHTML = '';
+        const summary = data; 
         
-        let totalMasuk = 0;
-        let totalKeluar = 0;
-        let masukCash = 0, keluarCash = 0;
-        let masukTransfer = 0, keluarTransfer = 0;
+        // Update DOM Ringkasan (Bagian Atas)
+        document.getElementById('totalMasuk').innerText = formatRupiah(summary.total_masuk);
+        document.getElementById('totalKeluar').innerText = formatRupiah(summary.total_keluar);
+        document.getElementById('saldoAkhir').innerText = formatRupiah(summary.total_masuk - summary.total_keluar);
 
-        const displayData = [...data].reverse();
+        document.getElementById('masukCash').innerText = formatRupiah(summary.masuk_cash);
+        document.getElementById('masukTransfer').innerText = formatRupiah(summary.masuk_transfer);
+        document.getElementById('keluarCash').innerText = formatRupiah(summary.keluar_cash);
+        document.getElementById('keluarTransfer').innerText = formatRupiah(summary.keluar_transfer);
+        document.getElementById('sisaCash').innerText = formatRupiah(summary.masuk_cash - summary.keluar_cash);
+        document.getElementById('sisaTransfer').innerText = formatRupiah(summary.masuk_transfer - summary.keluar_transfer);
 
-        displayData.forEach(tx => {
+        // Update Variabel Global untuk Cetak Struk (Receipt)
+        globalTotalMasuk = summary.total_masuk; globalTotalKeluar = summary.total_keluar;
+        globalMasukCash = summary.masuk_cash; globalMasukTransfer = summary.masuk_transfer;
+        globalKeluarCash = summary.keluar_cash; globalKeluarTransfer = summary.keluar_transfer;
+        
+        // Update DOM Ringkasan di Virtual Receipt
+        document.getElementById('rcTotalMasuk').innerText = formatRupiah(summary.total_masuk);
+        document.getElementById('rcMasukCash').innerText = formatRupiah(summary.masuk_cash);
+        document.getElementById('rcMasukTransfer').innerText = formatRupiah(summary.masuk_transfer);
+        document.getElementById('rcTotalKeluar').innerText = formatRupiah(summary.total_keluar);
+        document.getElementById('rcKeluarCash').innerText = formatRupiah(summary.keluar_cash);
+        document.getElementById('rcKeluarTransfer').innerText = formatRupiah(summary.keluar_transfer);
+        document.getElementById('rcSaldoAkhir').innerText = formatRupiah(summary.total_masuk - summary.total_keluar);
+        document.getElementById('rcSisaCash').innerText = formatRupiah(summary.masuk_cash - summary.keluar_cash);
+        document.getElementById('rcSisaTransfer').innerText = formatRupiah(summary.masuk_transfer - summary.keluar_transfer);
+    }
+
+    // 3. Update fungsi fetchTransactions dengan range/limit
+    async function fetchTransactions(isLoadMore = false) {
+        if (!isLoadMore) {
+            currentPage = 0;
+            document.getElementById('tableBody').innerHTML = ''; // Kosongkan tabel
+            fetchSummary(); // Panggil kalkulasi saldo di server
+            globalReceiptData = []; // Reset data struk
+        }
+
+        let from = currentPage * PAGE_SIZE;
+        let to = from + PAGE_SIZE - 1;
+
+        let query = supabase
+            .from(TABLE_NAME)
+            .select('*')
+            .order('created_at', { ascending: false }) // TARIK DATA TERBARU DULUAN
+            .range(from, to); 
+
+        if (filterStartDate && filterEndDate) {
+            const startLimit = new Date(`${filterStartDate}T00:00:00.000Z`).toISOString();
+            const endLimit = new Date(`${filterEndDate}T23:59:59.999Z`).toISOString();
+            query = query.gte('created_at', startLimit).lte('created_at', endLimit);
+        }
+
+        let { data, error } = await query;
+        if (error) return console.error('Error fetching data:', error);
+
+        renderTablePaginated(data);
+        globalReceiptData = globalReceiptData.concat(data); // Simpan untuk struk sementara
+
+        const btnLoadMore = document.getElementById('btnLoadMore');
+        if (data.length === PAGE_SIZE) {
+            btnLoadMore.style.display = 'block';
+            currentPage++;
+        } else {
+            btnLoadMore.style.display = 'none';
+        }
+    }
+
+    // 4. Update render table agar HANYA merender baris HTML (karena kalkulasi sudah dipindah)
+    function renderTablePaginated(data) {
+        const tableBody = document.getElementById('tableBody');
+        const rcBody = document.getElementById('receiptTableBody');
+        
+        // Update header struk periode
+        const rcPeriod = document.getElementById('receiptPeriod');
+        if (filterStartDate && filterEndDate && rcPeriod) {
+            rcPeriod.innerText = `Periode: ${formatDate(filterStartDate)} s/d ${formatDate(filterEndDate)}`;
+        } else if (rcPeriod) {
+            rcPeriod.innerText = `Semua Periode Laporan`;
+        }
+
+        data.forEach(tx => {
+            // Render Tabel UI Utama
             const tr = document.createElement('tr');
             const amt = parseFloat(tx.amount);
-            
             let badgeClass = 'badge-metode';
             if(tx.metode === 'Cash') badgeClass += ' badge-split-cash';
             if(tx.metode === 'Transfer') badgeClass += ' badge-split-tf';
 
             const metodeStr = tx.metode ? tx.metode : 'Cash';
-            const metodeHtml = `<br><span class="${badgeClass}">${metodeStr}</span>`;
-            const deskripsiLengkap = `${tx.description} ${metodeHtml}`;
+            const deskripsiLengkap = `${tx.description} <br><span class="${badgeClass}">${metodeStr}</span>`;
             
-            const aksiHtml = `
-                <td style="text-align:center;">
-                    <button class="btn-action" data-id="${tx.id}" data-desc="${tx.description}" data-amt="${amt}" data-met="${metodeStr}">⚙️</button>
-                </td>
-            `;
+            const aksiHtml = `<td style="text-align:center;"><button class="btn-action" data-id="${tx.id}" data-desc="${tx.description}" data-amt="${amt}" data-met="${metodeStr}">⚙️</button></td>`;
             
             if (tx.type === 'masuk') {
-                totalMasuk += amt;
-                if (metodeStr === 'Cash') masukCash += amt;
-                if (metodeStr === 'Transfer') masukTransfer += amt;
-                
                 tr.innerHTML = `<td>${formatDate(tx.created_at)}</td><td>${deskripsiLengkap}</td><td class="masuk">${formatRupiah(amt)}</td><td>-</td>${aksiHtml}`;
             } else {
-                totalKeluar += amt;
-                if (metodeStr === 'Cash') keluarCash += amt;
-                if (metodeStr === 'Transfer') keluarTransfer += amt;
-
                 tr.innerHTML = `<td>${formatDate(tx.created_at)}</td><td>${deskripsiLengkap}</td><td>-</td><td class="keluar">${formatRupiah(amt)}</td>${aksiHtml}`;
             }
             tableBody.appendChild(tr);
+
+            // Render ke Virtual Receipt (Struk)
+            if(rcBody) {
+                const trReceipt = document.createElement('tr');
+                const prefix = tx.type === 'masuk' ? '(+) ' : '(-) ';
+                const formatAngka = formatRupiah(amt).replace('Rp', '').trim();
+                trReceipt.innerHTML = `
+                    <td class="col-tgl">${formatDate(tx.created_at)}</td>
+                    <td class="col-ket">${tx.description}<br><small style="color:#555">[${metodeStr}]</small></td>
+                    <td class="col-jml">${prefix}${formatAngka}</td>
+                `;
+                rcBody.appendChild(trReceipt);
+            }
         });
-
-        document.getElementById('totalMasuk').innerText = formatRupiah(totalMasuk);
-        document.getElementById('totalKeluar').innerText = formatRupiah(totalKeluar);
-        document.getElementById('saldoAkhir').innerText = formatRupiah(totalMasuk - totalKeluar);
-
-        document.getElementById('masukCash').innerText = formatRupiah(masukCash);
-        document.getElementById('masukTransfer').innerText = formatRupiah(masukTransfer);
-        document.getElementById('keluarCash').innerText = formatRupiah(keluarCash);
-        document.getElementById('keluarTransfer').innerText = formatRupiah(keluarTransfer);
-        document.getElementById('sisaCash').innerText = formatRupiah(masukCash - keluarCash);
-        document.getElementById('sisaTransfer').innerText = formatRupiah(masukTransfer - keluarTransfer);
-
-        buildVirtualReceipt(data, totalMasuk, totalKeluar, masukCash, keluarCash, masukTransfer, keluarTransfer);
     }
+
+    // 5. Daftarkan event listener untuk tombol Load More
+    document.getElementById('btnLoadMore').addEventListener('click', () => fetchTransactions(true));
 
     function buildVirtualReceipt(data, tMasuk, tKeluar, mCash, kCash, mTransfer, kTransfer) {
         globalReceiptData = data;
