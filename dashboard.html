@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard - SBR Putra</title>
+    
+    <!-- TAG PWA WAJIB -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <!-- Menggunakan Phosphor Icons untuk tampilan modern -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -188,8 +194,8 @@
             aspect-ratio: auto; 
 			flex-direction: row;
 			justify-content: flex-start;
-			padding: 12px 10px; /* Padding diperkecil agar teks muat di layar HP */
-			font-size: 12px; /* Ukuran font diperkecil sedikit */
+			padding: 12px 10px;
+			font-size: 12px;
 			text-align: left;
         }
 
@@ -221,7 +227,7 @@
         .logout-btn:hover { background: var(--btn-danger-hover); transform: translateY(-2px); }
         .logout-btn:active { transform: scale(0.98); box-shadow: none; }
 
-        /* --- STYLING MODAL PIN --- */
+        /* --- STYLING MODAL PIN & INSTALL --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -352,11 +358,11 @@
 
         <div class="header">
             <h2>SBR Putra</h2>
-            <p>Kkurnia System 2026 V.1.2</p>
+            <p>Kkurnia System 2026 V.7.4</p>
         </div>
 
         <div id="menuGrid" class="menu-grid">
-            <a href="kasbon-tukang.html" class="menu-box">
+            <a href="kasbon-tukang.html" class="menu-box butuh-pin">
                 <i class="ph-duotone ph-money icon"></i>
                 Kasbon Tukang
             </a>
@@ -373,7 +379,7 @@
                 ANALISA SBR
             </a>            
             <a href="Rekap-kirim.html" class="menu-box">
-                <i class="ph-duotone ph-van icon style="color: #335BEB;"></i>
+                <i class="ph-duotone ph-van icon" style="color: #335BEB;"></i>
                 <span style="font-weight: 500; font-style: normal; color: #335BEB;">Rekap Kirim</span>
             </a>
             <a href="REKAPORDERRND.html" class="menu-box">
@@ -412,7 +418,11 @@
                 <i class="ph-duotone ph-clipboard-text icon"></i>
                 Lap. Simping
             </a>
-            <a href="empit.html" class="menu-box  butuh-pin">
+			<a href="APPSAPLASTIK.html" class="menu-box">
+                <i class="ph-duotone ph-list-numbers icon" style="color: #9809C8;"></i>
+                <span style="font-weight: 500; font-style: normal; color: #9809C8;">ORDER PLASTIK SURYA ABADI</span>
+            </a>
+            <a href="empit.html" class="menu-box">
                 <i class="ph-duotone ph-notebook icon"></i>
                 Catatan Empit
             </a>  
@@ -424,7 +434,7 @@
     </div>
 
     <!-- STRUKTUR HTML MODAL PIN -->
-    //<div id="pinModal" class="modal-overlay">
+    <div id="pinModal" class="modal-overlay">
         <div class="modal-box">
             <h3>Masukkan PIN</h3>
             <input type="password" id="pinInput" inputmode="numeric" maxlength="4" placeholder="••••">
@@ -432,6 +442,18 @@
             <div class="modal-buttons">
                 <button id="btnCancel" class="btn-cancel">Batal</button>
                 <button id="btnSubmit" class="btn-submit">Buka</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STRUKTUR HTML MODAL INSTALL APLIKASI -->
+    <div id="installModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="margin-bottom: 10px;">Install Aplikasi</h3>
+            <p style="color: var(--text-sub); font-size: 14px; margin-bottom: 20px; line-height: 1.5;">Install Dashboard SBR Putra di Home Screen HP Anda untuk akses yang lebih cepat.</p>
+            <div class="modal-buttons">
+                <button id="btnTolakInstall" class="btn-cancel">Nanti Saja</button>
+                <button id="btnTerimaInstall" class="btn-submit">Install</button>
             </div>
         </div>
     </div>
@@ -447,21 +469,16 @@
         const btnTheme = document.getElementById('btnTheme');
         let isDarkMode = false;
         
-        // Cek apakah sebelumnya pengguna sudah pernah mengatur tema
         const savedTheme = localStorage.getItem('sbrTheme');
-
         if (savedTheme) {
-            // Jika ada data tersimpan, gunakan itu
             isDarkMode = savedTheme === 'dark';
         } else {
-            // Jika belum ada data tersimpan, gunakan aturan jam / OS
             const jamSekarang = new Date().getHours();
             const mulaiMalam = 18;
             const mulaiPagi = 6;
             isDarkMode = (jamSekarang >= mulaiMalam || jamSekarang < mulaiPagi) || window.matchMedia('(prefers-color-scheme: dark)').matches;
         }
 
-        // Fungsi untuk menerapkan tema
         function applyTheme(dark) {
             if (dark) {
                 document.body.classList.remove('light-theme');
@@ -474,17 +491,13 @@
             }
         }
 
-        // Terapkan tema saat halaman pertama kali dimuat
         applyTheme(isDarkMode);
 
-        // Event saat tombol tema di-klik
         btnTheme.addEventListener('click', () => {
             isDarkMode = !isDarkMode;
             applyTheme(isDarkMode);
-            // Simpan pilihan ke localStorage
             localStorage.setItem('sbrTheme', isDarkMode ? 'dark' : 'light');
         });
-
 
         // ==========================================
         // SCRIPT KONTROL TAMPILAN DENGAN LOCALSTORAGE
@@ -492,11 +505,9 @@
         const btnView = document.getElementById('btnView');
         const menuGridContainer = document.getElementById('menuGrid');
         
-        // Cek data tampilan yang tersimpan (Grid/List)
         const savedView = localStorage.getItem('sbrView');
-        let isListView = savedView === 'list'; // Jika disave sbg 'list', nilainya true
+        let isListView = savedView === 'list'; 
 
-        // Fungsi untuk menerapkan tampilan
         function applyView(list) {
             if (list) {
                 menuGridContainer.classList.add('list-view');
@@ -507,17 +518,13 @@
             }
         }
 
-        // Terapkan tampilan saat halaman pertama dimuat
         applyView(isListView);
 
-        // Event saat tombol tampilan di-klik
         btnView.addEventListener('click', () => {
             isListView = !isListView;
             applyView(isListView);
-            // Simpan pilihan ke localStorage
             localStorage.setItem('sbrView', isListView ? 'list' : 'grid');
         });
-
 
         // ==========================================
         // SCRIPT MODAL PIN
@@ -534,7 +541,7 @@
 
         daftarMenu.forEach(function(menu) {
             menu.addEventListener('click', function(event) {
-                if (this.classList.contains('butuh-pin')) {
+                if (this.classList.contains('')) {
                     event.preventDefault(); 
                     linkTujuan = this.getAttribute('href'); 
                     
@@ -571,6 +578,65 @@
                 validasiPin();
             }
         });
+
+        // ==========================================
+        // SCRIPT MODAL INSTALL PWA
+        // ==========================================
+        let deferredPrompt;
+        const installModal = document.getElementById('installModal');
+        const btnTerimaInstall = document.getElementById('btnTerimaInstall');
+        const btnTolakInstall = document.getElementById('btnTolakInstall');
+
+        // Cek localStorage, apakah user sudah pernah berinteraksi dengan pop-up install
+        const hasPrompted = localStorage.getItem('sbrAppPrompted');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Mencegah mini-infobar default browser muncul otomatis di bawah
+            e.preventDefault();
+            // Simpan event sehingga bisa dipicu nanti jika user klik tombol
+            deferredPrompt = e;
+            
+            // Tampilkan modal buatan kita jika belum pernah disembunyikan user
+            if (!hasPrompted) {
+                setTimeout(() => {
+                    installModal.classList.add('show');
+                }, 1500); // Munculkan pop-up setelah 1.5 detik
+            }
+        });
+
+        btnTolakInstall.addEventListener('click', () => {
+            installModal.classList.remove('show');
+            // Simpan di cache agar pop-up tidak mengganggu dan muncul terus-terusan
+            localStorage.setItem('sbrAppPrompted', 'true');
+        });
+
+        btnTerimaInstall.addEventListener('click', async () => {
+            installModal.classList.remove('show');
+            localStorage.setItem('sbrAppPrompted', 'true');
+            
+            if (deferredPrompt) {
+                // Picu prompt instalasi bawaan sistem/browser
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+            }
+        });
+
+        // Event listener saat berhasil terinstall
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            installModal.classList.remove('show');
+            console.log('Aplikasi SBR Putra berhasil di-install');
+        });
+
+        // Daftarkan Service Worker (Syarat WAJIB agar PWA bisa di-install)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => {
+                    console.log('ServiceWorker gagal didaftarkan: ', err);
+                });
+            });
+        }
     </script>
 </body>
 </html>
