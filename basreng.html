@@ -915,7 +915,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 							<!-- Rincian cicilan terbayar akan di-generate oleh JavaScript di sini -->
 						</div>
                         <div class="flex justify-between items-center pt-2 border-t border-gray-200/60 dark:border-slate-600">
-                            <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Sisa Saldo</span>
+                            <span class="text-sm font-black text-rose-600 uppercase tracking-wider">Sisa Pembayaran</span>
                             <span class="text-lg font-extrabold text-rose-600 font-poppins-custom" id="previewNotaSisa">Rp 0</span>
                         </div>
                     </div>
@@ -1062,9 +1062,22 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
     <div id="modalRiwayatInvoice" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 flex justify-between items-center border-b bg-blue-50"><h3 class="text-lg font-bold text-blue-800 flex items-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Riwayat Cetak Invoice</h3><button onclick="toggleModal('modalRiwayatInvoice')" class="text-2xl hover:text-blue-900">&times;</button></div>
-            <div class="p-6 overflow-y-auto flex-1 bg-white">
+            <div class="p-6 overflow-y-auto flex-1 bg-white space-y-4">
                 <div class="border rounded-xl overflow-hidden">
                     <table class="w-full text-sm text-left"><thead class="bg-gray-100 text-xs uppercase text-gray-500"><tr><th class="px-4 py-3">Tgl Cetak</th><th class="px-4 py-3">Metode Bayar</th><th class="px-4 py-3 text-right">Total Bersih</th><th class="px-4 py-3 text-center">Aksi</th></tr></thead><tbody id="listRiwayatInvoice" class="divide-y text-gray-700"></tbody></table>
+                </div>
+                
+                <!-- TOMBOL PAGINASI RIWAYAT INVOICE -->
+                <div class="flex justify-between items-center px-2">
+                    <button id="btnPrevRiwayat" onclick="gantiHalamanRiwayat(-1)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                        &#8592; Sebelumnya
+                    </button>
+                    <span class="text-xs font-bold text-gray-500">
+                        Halaman <span id="lblHalamanRiwayat" class="text-blue-600 font-extrabold text-sm">1</span>
+                    </span>
+                    <button id="btnNextRiwayat" onclick="gantiHalamanRiwayat(1)" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Selanjutnya &#8594;
+                    </button>
                 </div>
             </div>
         </div>
@@ -1211,7 +1224,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 							
 							<div id="rtInvPotonganDetail" class="text-xs text-rose-500 dark:text-rose-400 italic flex flex-col items-end pb-1 space-y-1 mt-1 font-medium"></div>
 							
-							<div class="flex justify-between font-black text-emerald-700 dark:text-emerald-400 text-sm pt-1 border-t border-dashed border-gray-300 dark:border-slate-600 mt-1"><span>TOTAL BERSIH DITERIMA:</span><span class="font-poppins-custom" id="rtInvBersih">Rp 0</span></div>
+							<div class="flex justify-between font-black text-emerald-700 dark:text-emerald-400 text-lg pt-2 border-t border-dashed border-gray-300 dark:border-slate-600 mt-1 items-center"><span>TOTAL BERSIH DITERIMA:</span><span class="font-poppins-custom text-lg" id="rtInvBersih">Rp 0</span></div>
 						</div>
 					</div>
 
@@ -1228,7 +1241,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 							</thead>
 							<tbody id="rtJambiBody"></tbody>
 							<tfoot>
-								<tr class="bg-indigo-50 dark:bg-indigo-900/30 font-bold"><td colspan="2" class="border border-gray-300 dark:border-slate-700 p-2 text-right">Total Nota Jambi:</td><td class="border border-gray-300 dark:border-slate-700 p-2 text-right text-indigo-700 dark:text-indigo-400 font-poppins-custom text-sm" id="rtJambiTotal">Rp 0</td></tr>
+								<tr class="bg-indigo-50 dark:bg-indigo-900/30 font-bold"><td colspan="2" class="border border-gray-300 dark:border-slate-700 p-2 text-right">Total Piutang Nota Jambi:</td><td class="border border-gray-300 dark:border-slate-700 p-2 text-right text-indigo-700 dark:text-indigo-400 font-poppins-custom text-sm" id="rtJambiTotal">Rp 0</td></tr>
 							</tfoot>
 						</table>
 					</div>
@@ -1246,7 +1259,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 							</thead>
 							<tbody id="rtJakartaBody"></tbody>
 							<tfoot>
-								<tr class="bg-indigo-50 dark:bg-indigo-900/30 font-bold"><td colspan="2" class="border border-gray-300 dark:border-slate-700 p-2 text-right">Total Nota Jakarta:</td><td class="border border-gray-300 dark:border-slate-700 p-2 text-right text-indigo-700 dark:text-indigo-400 font-poppins-custom text-sm" id="rtJakartaTotal">Rp 0</td></tr>
+								<tr class="bg-indigo-50 dark:bg-indigo-900/30 font-bold"><td colspan="2" class="border border-gray-300 dark:border-slate-700 p-2 text-right">Total Piutang Nota Jakarta:</td><td class="border border-gray-300 dark:border-slate-700 p-2 text-right text-indigo-700 dark:text-indigo-400 font-poppins-custom text-sm" id="rtJakartaTotal">Rp 0</td></tr>
 							</tfoot>
 						</table>
 					</div>
@@ -1272,7 +1285,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 					<!-- RINGKASAN AKHIR -->
 					<div class="border-t-2 border-gray-900 dark:border-gray-100 pt-4 flex justify-end">
 						<div class="w-full max-w-sm space-y-1">
-							<div class="flex justify-between text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">
+							<div class="flex justify-between text-sm font-bold text-indigo-700 dark:text-indigo-400 mb-1">
 								<span>TOTAL Sisa PIUTANG Berjalan:</span>
 								<span id="rtGrandPiutang">Rp 0</span>
 							</div>
@@ -1284,7 +1297,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 							<div id="rtGrandPotonganDetail" class="text-[10px] text-rose-500 dark:text-rose-400 italic text-right border-b border-gray-400 dark:border-slate-600 pb-2 flex flex-col items-end">
 							</div>
 
-							<div class="flex justify-between text-base font-black text-emerald-700 dark:text-emerald-400 pt-1 font-poppins-custom uppercase">
+							<div class="flex justify-between text-base font-black text-black bg-yellow-300 px-2 py-1 rounded mt-1 font-poppins-custom uppercase items-center">
 								<span>Estimasi Sisa Bersih:</span>
 								<span id="rtGrandBersih">Rp 0</span>
 							</div>
@@ -1574,7 +1587,10 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                     document.getElementById('fVar').innerHTML = '<option value="">Semua</option>' + globalMasterVarian.map(v => `<option value="${v.nama}">${v.nama}</option>`).join('');
                     muatDataArsip();
                 }
-                if(id==='modalRiwayatInvoice') muatRiwayatInvoice();
+                if(id==='modalRiwayatInvoice') {
+					currentPageRiwayat = 1; // Reset ke halaman 1
+					muatRiwayatInvoice();
+				}
                 if(id==='modalRekapKustom') initModalRekapKustom();
             } else { m.classList.add('hidden'); m.classList.remove('flex'); renderDropdowns(); }
         }
@@ -2351,7 +2367,15 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 				if (existing) terpakai = existing.terpakai || 0;
 			}
 			
-			document.getElementById('previewNotaSisa').innerText = formatRupiah(t - terpakai);
+			const sisaSaldoPreview = t - terpakai;
+			const elSisaPreview = document.getElementById('previewNotaSisa');
+			if (sisaSaldoPreview <= 0) {
+				elSisaPreview.innerText = "LUNAS";
+				elSisaPreview.className = "text-2xl font-black text-emerald-600 font-poppins-custom tracking-widest";
+			} else {
+				elSisaPreview.innerText = formatRupiah(sisaSaldoPreview);
+				elSisaPreview.className = "text-lg font-extrabold text-rose-600 font-poppins-custom";
+			}
 			document.getElementById('previewNotaItemsBody').innerHTML = f.map(item => `<tr><td class="py-2.5"><div class="font-bold text-gray-900 dark:text-gray-100">${item.nama || ''}</div><div class="text-sm font-poppins-custom italic text-gray-500 mt-0.5">${item.qty || 0} ${item.unit || ''} x ${formatRupiah(item.harga || 0)}</div></td><td class="py-2.5 text-right font-bold font-poppins-custom align-top">${formatRupiah(item.jml || ((item.qty || 0) * (item.harga || 0)))}</td></tr>`).join('');
 			
 			// Tampilan standar untuk Nota yang belum disimpan / baru dibuat
@@ -2444,7 +2468,17 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 			
 			document.getElementById('previewNotaTgl').innerText = `Tgl: ${formatTgl(r.tanggal)}`;
 			document.getElementById('previewNotaTotal').innerText = formatRupiah(r.total_nominal);
-			document.getElementById('previewNotaSisa').innerText = formatRupiah(r.total_nominal - (r.terpakai || 0));
+			const sisaSaldo = r.total_nominal - (r.terpakai || 0);
+			const elSisa = document.getElementById('previewNotaSisa');
+			if (sisaSaldo <= 0) {
+				elSisa.innerText = "LUNAS";
+				// text-2xl memperbesar font sekitar 33%, emerald-600 untuk hijau, font-black untuk bold ekstra
+				elSisa.className = "text-2xl font-black text-emerald-600 font-poppins-custom tracking-widest";
+			} else {
+				elSisa.innerText = formatRupiah(sisaSaldo);
+				// Kembalikan ke warna merah (rose) dan ukuran asli jika masih ada sisa
+				elSisa.className = "text-lg font-extrabold text-rose-600 font-poppins-custom";
+			}
 			
 			document.getElementById('previewNotaItemsBody').innerHTML = (r.rincian || []).map(item => `<tr><td class="py-2.5"><div class="font-bold text-gray-900 dark:text-gray-100">${item.nama || ''}</div><div class="text-sm font-poppins-custom italic text-gray-500 mt-0.5">${item.qty || 0} ${item.unit || ''} x ${formatRupiah(item.harga || 0)}</div></td><td class="py-2.5 text-right font-bold font-poppins-custom align-top">${formatRupiah(item.jml || ((item.qty || 0) * (item.harga || 0)))}</td></tr>`).join('');
 			
@@ -2658,10 +2692,48 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
             alert("Invoice Berhasil Disimpan!"); document.getElementById('modalInvoice').classList.add('hidden'); loadWidgets();
         }
 
+        // Variabel Paginasi Riwayat Invoice
+        let currentPageRiwayat = 1;
+        const itemsPerPageRiwayat = 10; // Menampilkan 10 data per halaman
+
+        function gantiHalamanRiwayat(arah) {
+            currentPageRiwayat += arah;
+            muatRiwayatInvoice();
+        }
+
         async function muatRiwayatInvoice() {
-            const { data } = await supabaseClient.from('riwayat_invoice').select('*').order('tanggal_cetak', {ascending: false});
+            const from = (currentPageRiwayat - 1) * itemsPerPageRiwayat;
+            const to = from + itemsPerPageRiwayat - 1;
+
+            const { data, count, error } = await supabaseClient
+                .from('riwayat_invoice')
+                .select('*', { count: 'exact' })
+                .order('tanggal_cetak', { ascending: false })
+                .range(from, to);
+
+            if (error) {
+                alert("Gagal memuat riwayat invoice: " + error.message);
+                return;
+            }
+
             globalRiwayat = data || [];
-            document.getElementById('listRiwayatInvoice').innerHTML = globalRiwayat.map(r => `<tr><td class="px-4 py-3 font-bold text-gray-700">${formatTgl(r.tanggal_cetak)}</td><td class="px-4 py-3 text-[10px]">${r.metode_bayar}</td><td class="px-4 py-3 text-right font-poppins-custom text-emerald-600 font-bold">${formatRupiah(r.total_bersih)}</td><td class="px-4 py-3 text-center flex items-center justify-center gap-2"><button onclick="lihatRiwayat('${r.id}')" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100 transition">Lihat</button><button onclick="hapusRiwayat('${r.id}')" class="bg-rose-50 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-100 transition">Hapus</button></td></tr>`).join('');
+            
+            document.getElementById('listRiwayatInvoice').innerHTML = globalRiwayat.map(r => `
+                <tr>
+                    <td class="px-4 py-3 font-bold text-gray-700">${formatTgl(r.tanggal_cetak)}</td>
+                    <td class="px-4 py-3 text-[10px]">${r.metode_bayar}</td>
+                    <td class="px-4 py-3 text-right font-poppins-custom text-emerald-600 font-bold">${formatRupiah(r.total_bersih)}</td>
+                    <td class="px-4 py-3 text-center flex items-center justify-center gap-2">
+                        <button onclick="lihatRiwayat('${r.id}')" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100 transition">Lihat</button>
+                        <button onclick="hapusRiwayat('${r.id}')" class="bg-rose-50 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-100 transition">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Update Status Tombol & Label Paginasi
+            document.getElementById('lblHalamanRiwayat').innerText = currentPageRiwayat;
+            document.getElementById('btnPrevRiwayat').disabled = currentPageRiwayat === 1;
+            document.getElementById('btnNextRiwayat').disabled = (to >= (count || 0) - 1) || data.length < itemsPerPageRiwayat;
         }
 
         function hapusRiwayat(id) {
@@ -2733,7 +2805,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
             const { data, error } = await supabaseClient.from('riwayat_invoice')
                 .select('id, tanggal_cetak, metode_bayar, total_bersih')
                 .order('tanggal_cetak', { ascending: false })
-                .limit(10);
+                .limit(7);
             
             tutupModalStatus();
             
