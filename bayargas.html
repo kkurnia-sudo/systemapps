@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Pembayaran Gas Modern</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-light: #e2e8f0;
+            
+            --color-primary: #10b981;
+            --color-primary-hover: #059669;
+            --color-secondary: #3b82f6;
+            --color-secondary-hover: #2563eb;
+            --color-date: #ffedd5;
+            --color-date-text: #c2410c;
+            --color-head: #dcfce7;
+            --color-highlight: #fef08a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            padding: 2rem; 
+            margin: 0; 
+        }
+
+        #printArea { display: none; }
+
+        .layout-wrapper {
+            display: flex;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            align-items: flex-start;
+        }
+
+        .main-panel, .side-panel {
+            background: var(--bg-card); 
+            padding: 2rem; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+            border: 1px solid var(--border-light);
+        }
+
+        .main-panel { flex: 1; }
+        .side-panel { width: 380px; }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed var(--border-light);
+        }
+
+        .title-area h1 { margin: 0 0 0.5rem 0; font-size: 1.5rem; color: #0f172a; }
+        .title-area input {
+            font-size: 1rem;
+            font-style: italic;
+            border: none;
+            border-bottom: 1px solid var(--border-light);
+            padding: 0.25rem 0;
+            width: 200px;
+            color: var(--text-muted);
+            background: transparent;
+        }
+        .title-area input:focus { outline: none; border-bottom-color: var(--color-primary); color: var(--text-main); }
+
+        .date-wrapper {
+            position: relative;
+            background-color: var(--color-date);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            border: 1px solid #fdba74;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .date-wrapper:hover { filter: brightness(0.95); }
+        .date-display { font-weight: 600; font-size: 0.95rem; color: var(--color-date-text); pointer-events: none; }
+        .date-icon { color: var(--color-date-text); font-size: 1.1rem; pointer-events: none; }
+        .date-wrapper input[type="date"] {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+        th, td { padding: 1rem; text-align: center; border-bottom: 1px solid var(--border-light); }
+        th { background-color: var(--color-head); font-weight: 600; font-size: 0.95rem; border-bottom: 2px solid #bbf7d0; }
+        td.text-right { text-align: right; }
+        
+        .font-bold { font-weight: 700; }
+        
+        .form-input {
+            width: 100%;
+            border: 1px solid var(--border-light);
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .form-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+        .w-qty { width: 80px; }
+        .w-price { width: 130px; text-align: right; }
+
+        .row-total { background-color: var(--color-highlight); border-bottom: none; }
+        .row-total td { font-size: 1.1rem; border-bottom: none; }
+
+        .footer-section { display: flex; justify-content: flex-end; margin-bottom: 1.5rem; }
+        .sisa-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            width: 260px;
+            overflow: hidden;
+        }
+        .sisa-box-title {
+            background-color: var(--color-highlight);
+            padding: 0.6rem;
+            font-weight: 600;
+            text-align: center;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #fde047;
+        }
+        .sisa-content { padding: 1rem; }
+        .sisa-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .sisa-row:last-child { margin-bottom: 0; }
+        .sisa-row span { font-size: 0.95rem; font-weight: 500; }
+        .sisa-row input { width: 70px; text-align: right; }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+        .btn-export, .btn-print {
+            flex: 1;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-export { background-color: var(--color-primary); }
+        .btn-export:hover { background-color: var(--color-primary-hover); transform: translateY(-1px); }
+        
+        .btn-print { background-color: var(--color-secondary); }
+        .btn-print:hover { background-color: var(--color-secondary-hover); transform: translateY(-1px); }
+
+        .kotret-title { font-size: 1.1rem; margin: 0 0 0.25rem 0; font-weight: 700; }
+        .kotret-subtitle { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 1.5rem 0; }
+        
+        .kotret-group { margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid var(--border-light); padding: 1rem; border-radius: 10px; }
+        .kotret-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; }
+        .kotret-sum { color: var(--color-primary); font-weight: 700; background: #dcfce7; padding: 0.2rem 0.6rem; border-radius: 6px; }
+        
+        .grid-10 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+        .kotret-input {
+            width: 100%; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 6px;
+            text-align: center; font-size: 0.9rem; outline: none; transition: border 0.2s;
+        }
+        .kotret-input:focus { border-color: var(--color-primary); }
+
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        @media (max-width: 1024px) {
+            .layout-wrapper { flex-direction: column; }
+            .side-panel { width: 100%; }
+            .grid-10 { grid-template-columns: repeat(10, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .grid-10 { grid-template-columns: repeat(5, 1fr); }
+            .header-section { flex-direction: column; gap: 1rem; }
+            .btn-group { flex-direction: column; }
+        }
+
+        @media print {
+            body { background: white; padding: 0; margin: 0; font-family: Arial, sans-serif; }
+            .layout-wrapper { display: none !important; }
+            
+            #printArea { 
+                display: block !important; 
+                width: 100%;
+                max-width: 12cm; 
+                margin: 0;
+            }
+
+            .print-header {
+                text-align: center;
+                border-bottom: 2px dashed #000;
+                padding-bottom: 10px;
+                margin-bottom: 10px;
+            }
+            .print-header h2 { margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase; color: #0f172a; }
+            .print-header p { margin: 2px 0; font-size: 12px; }
+
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 15px;
+                font-size: 12px;
+            }
+            .print-table th, .print-table td {
+                border: 1px solid #000;
+                padding: 6px;
+            }
+            .print-table th { background-color: #f0f0f0; text-align: center !important; font-weight: bold;}
+            
+            .print-table th:nth-child(1), .print-table td:nth-child(1) { width: 15%; }
+            .print-table th:nth-child(2), .print-table td:nth-child(2) { width: 25%; }
+            .print-table th:nth-child(3), .print-table td:nth-child(3) { width: 25%; }
+            .print-table th:nth-child(4), .print-table td:nth-child(4) { width: 35%; }
+
+            .t-center { text-align: center !important; }
+            .t-right { text-align: right !important; }
+            .f-bold { font-weight: bold; }
+            .text-blue { color: #0f4a8a; }
+
+            .print-sisa-table {
+                width: 55%;
+                margin-left: auto;
+                border-collapse: collapse;
+                font-size: 12px;
+            }
+            .print-sisa-table th, .print-sisa-table td {
+                border: 1px solid #000;
+                padding: 6px;
+            }
+            .print-sisa-table th { background-color: #f0f0f0; font-weight: bold; }
+            
+            .sisa-col-jenis { width: 60%; font-weight: bold; text-align: center; color: #000000; }
+            .sisa-col-nilai { width: 40%; text-align: center; color: #000000; }
+
+            @page {
+				margin-top: 10mm;
+				margin-right: 5mm;
+				margin-bottom: 5mm;
+				margin-left: 10mm;
+        }
+    </style>
+</head>
+<body>
+
+<div id="printArea"></div>
+
+<div class="layout-wrapper">
+    <div class="main-panel">
+        <div class="header-section">
+            <div class="title-area">
+                <h1>Pembayaran Gas</h1>
+                <input type="text" id="namaPelanggan" value="Mas Puji" placeholder="Nama Pelanggan">
+            </div>
+            <div class="date-wrapper">
+                <span class="date-display" id="dateDisplay">Memuat tanggal...</span>
+                <span class="date-icon">📅</span>
+                <input type="date" id="tanggalBerlaku">
+            </div>
+        </div>
+
+        <table id="gasTable">
+            <thead>
+                <tr>
+                    <th width="15%">Qty</th>
+                    <th width="20%">Jenis Gas</th>
+                    <th width="30%">Harga</th>
+                    <th width="35%" class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="number" class="form-input w-qty" id="qty12" min="0" oninput="calculateMain()"></td>
+                    <td class="font-bold">12KG</td>
+                    <td class="text-right"><input type="number" class="form-input w-price" id="harga12" value="220000" oninput="calculateMain()"></td>
+                    <td class="text-right font-bold" id="total12">-</td>
+                </tr>
+                <tr>
+                    <td><input type="number" class="form-input w-qty" id="qty5" min="0" oninput="calculateMain()"></td>
+                    <td class="font-bold">5KG</td>
+                    <td class="text-right"><input type="number" class="form-input w-price" id="harga5" value="103000" oninput="calculateMain()"></td>
+                    <td class="text-right font-bold" id="total5">-</td>
+                </tr>
+                <tr>
+                    <td></td><td></td><td></td><td class="text-right">-</td>
+                </tr>
+                <tr class="row-total">
+                    <td class="font-bold" style="background:#fef08a;">Total Tabung</td>
+                    <td class="font-bold" id="totalTabungLabel" style="background:#fef08a;">0</td>
+                    <td class="font-bold" style="background:#fef08a;">Total</td>
+                    <td class="text-right font-bold" id="grandTotalLabel" style="background:#fef08a;">-</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="footer-section">
+            <div class="sisa-box">
+                <div class="sisa-box-title">sisa ke bon depan</div>
+                <div class="sisa-content">
+                    <div class="sisa-row">
+                        <span>12kg</span>
+                        <input type="number" class="form-input" id="sisa12" min="0" placeholder="..." oninput="syncQty('12')">
+                    </div>
+                    <div class="sisa-row">
+                        <span>5kg</span>
+                        <input type="number" class="form-input" id="sisa5" min="0" placeholder="..." oninput="syncQty('5')">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-export" onclick="exportToExcel()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Simpan Excel
+            </button>
+            <button class="btn-print" onclick="printReceipt()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print Struk
+            </button>
+        </div>
+    </div>
+
+    <div class="side-panel">
+        <h3 class="kotret-title">Kalkulator Mini</h3>
+        <p class="kotret-subtitle">Area kotret otomatis (4 baris x 5 kolom)</p>
+
+        <div class="kotret-group">
+            <div class="kotret-header">
+                <span>12KG</span>
+                <span class="kotret-sum" id="sum12Label">Total: 0</span>
+            </div>
+            <div class="grid-10" id="grid12"></div>
+        </div>
+
+        <div class="kotret-group">
+            <div class="kotret-header">
+                <span>5KG</span>
+                <span class="kotret-sum" id="sum5Label">Total: 0</span>
+            </div>
+            <div class="grid-10" id="grid5"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dateInput = document.getElementById('tanggalBerlaku');
+    const dateDisplay = document.getElementById('dateDisplay');
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+    function updateDateDisplay() {
+        const parts = dateInput.value.split('-');
+        if(parts.length === 3) {
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: '2-digit' };
+            dateDisplay.innerText = d.toLocaleDateString('id-ID', options);
+        }
+    }
+    
+    dateInput.addEventListener('change', updateDateDisplay);
+    updateDateDisplay();
+
+    function formatRibuan(angka) {
+        if (!angka || angka === 0) return '-';
+        return new Intl.NumberFormat('id-ID').format(angka);
+    }
+
+    function calculateMain() {
+        const qty12 = parseInt(document.getElementById('qty12').value) || 0;
+        const harga12 = parseInt(document.getElementById('harga12').value) || 0;
+        const qty5 = parseInt(document.getElementById('qty5').value) || 0;
+        const harga5 = parseInt(document.getElementById('harga5').value) || 0;
+
+        const total12 = qty12 * harga12;
+        const total5 = qty5 * harga5;
+
+        document.getElementById('total12').innerText = qty12 > 0 ? formatRibuan(total12) : '-';
+        document.getElementById('total5').innerText = qty5 > 0 ? formatRibuan(total5) : '-';
+
+        const totalTabung = qty12 + qty5;
+        const grandTotal = total12 + total5;
+
+        document.getElementById('totalTabungLabel').innerText = totalTabung > 0 ? totalTabung : '';
+        document.getElementById('grandTotalLabel').innerText = grandTotal > 0 ? formatRibuan(grandTotal) : '-';
+    }
+
+    function syncQty(tipe) {
+        let totalKotret = 0;
+        let isKotretanUsed = false;
+        
+        document.querySelectorAll('.k-' + tipe).forEach(el => {
+            if(el.value !== "") isKotretanUsed = true;
+            totalKotret += parseInt(el.value) || 0;
+        });
+
+        document.getElementById('sum' + tipe + 'Label').innerText = 'Total: ' + totalKotret;
+
+        let sisaInput = document.getElementById('sisa' + tipe);
+        let sisa = parseInt(sisaInput.value) || 0;
+        let isSisaUsed = sisaInput.value !== "";
+
+        if (isKotretanUsed || isSisaUsed) {
+            let resultQty = totalKotret - sisa;
+            if (resultQty < 0) resultQty = 0;
+            document.getElementById('qty' + tipe).value = resultQty;
+            calculateMain();
+        }
+    }
+
+    function initKotretan() {
+        const createInputs = (containerId, tipe) => {
+            const container = document.getElementById(containerId);
+            for(let i=0; i<20; i++){
+                let inp = document.createElement('input');
+                inp.type = 'number';
+                inp.className = `kotret-input k-${tipe}`;
+                inp.min = 0;
+                inp.addEventListener('input', () => syncQty(tipe));
+                container.appendChild(inp);
+            }
+        };
+        createInputs('grid12', '12');
+        createInputs('grid5', '5');
+    }
+
+    // Export Excel Native XML (Tanpa bergantung library eksternal/CDN)
+    function exportToExcel() {
+        const nama = document.getElementById('namaPelanggan').value || 'Tanpa Nama';
+        const dateText = dateDisplay.innerText;
+
+        const qty12 = document.getElementById('qty12').value || "";
+        const harga12 = document.getElementById('harga12').value || "";
+        const total12Text = document.getElementById('total12').innerText;
+        const total12 = total12Text === '-' ? 0 : parseInt(total12Text.replace(/\./g, ''));
+
+        const qty5 = document.getElementById('qty5').value || "";
+        const harga5 = document.getElementById('harga5').value || "";
+        const total5Text = document.getElementById('total5').innerText;
+        const total5 = total5Text === '-' ? 0 : parseInt(total5Text.replace(/\./g, ''));
+
+        const totalTabung = document.getElementById('totalTabungLabel').innerText || "";
+        const grandTotalText = document.getElementById('grandTotalLabel').innerText;
+        const grandTotal = grandTotalText === '-' ? 0 : parseInt(grandTotalText.replace(/\./g, ''));
+
+        const sisa12 = document.getElementById('sisa12').value || "";
+        const sisa5 = document.getElementById('sisa5').value || "";
+
+        let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+        <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+                  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+         <Worksheet ss:Name="Rekap_Gas">
+          <Table>
+           <Row><Cell><Data ss:Type="String">Pembayaran Gas</Data></Cell><Cell/><Cell/><Cell><Data ss:Type="String">${dateText}</Data></Cell></Row>
+           <Row><Cell><Data ss:Type="String">${nama}</Data></Cell></Row>
+           <Row></Row>
+           <Row>
+            <Cell><Data ss:Type="String">Qty</Data></Cell>
+            <Cell><Data ss:Type="String">Jenis Gas</Data></Cell>
+            <Cell><Data ss:Type="String">Harga</Data></Cell>
+            <Cell><Data ss:Type="String">Total</Data></Cell>
+           </Row>
+           <Row>
+            <Cell><Data ss:Type="Number">${qty12 !== "" ? qty12 : 0}</Data></Cell>
+            <Cell><Data ss:Type="String">12KG</Data></Cell>
+            <Cell><Data ss:Type="Number">${harga12 !== "" ? harga12 : 0}</Data></Cell>
+            <Cell><Data ss:Type="Number">${total12}</Data></Cell>
+           </Row>
+           <Row>
+            <Cell><Data ss:Type="Number">${qty5 !== "" ? qty5 : 0}</Data></Cell>
+            <Cell><Data ss:Type="String">5KG</Data></Cell>
+            <Cell><Data ss:Type="Number">${harga5 !== "" ? harga5 : 0}</Data></Cell>
+            <Cell><Data ss:Type="Number">${total5}</Data></Cell>
+           </Row>
+           <Row><Cell/><Cell/><Cell/><Cell><Data ss:Type="String">-</Data></Cell></Row>
+           <Row>
+            <Cell><Data ss:Type="String">Total Tabung</Data></Cell>
+            <Cell><Data ss:Type="Number">${totalTabung !== "" ? totalTabung : 0}</Data></Cell>
+            <Cell><Data ss:Type="String">Total</Data></Cell>
+            <Cell><Data ss:Type="Number">${grandTotal}</Data></Cell>
+           </Row>
+           <Row></Row>
+           <Row><Cell/><Cell/><Cell><Data ss:Type="String">sisa ke bon depan</Data></Cell></Row>
+           <Row><Cell/><Cell/><Cell><Data ss:Type="String">12kg</Data></Cell><Cell><Data ss:Type="Number">${sisa12 !== "" ? sisa12 : 0}</Data></Cell></Row>
+           <Row><Cell/><Cell/><Cell><Data ss:Type="String">5kg</Data></Cell><Cell><Data ss:Type="Number">${sisa5 !== "" ? sisa5 : 0}</Data></Cell></Row>
+          </Table>
+         </Worksheet>
+        </Workbook>`;
+
+        const blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Pembayaran_Gas_${nama.replace(/\s+/g, '_')}.xls`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function printReceipt() {
+        const nama = document.getElementById('namaPelanggan').value || 'Tanpa Nama';
+        const dateText = document.getElementById('dateDisplay').innerText;
+        
+        const qty12 = document.getElementById('qty12').value || "0";
+        const harga12 = document.getElementById('harga12').value || "0";
+        const total12 = document.getElementById('total12').innerText;
+        
+        const qty5 = document.getElementById('qty5').value || "0";
+        const harga5 = document.getElementById('harga5').value || "0";
+        const total5 = document.getElementById('total5').innerText;
+
+        const totalTabung = document.getElementById('totalTabungLabel').innerText || "0";
+        const grandTotal = document.getElementById('grandTotalLabel').innerText;
+
+        const sisa12 = document.getElementById('sisa12').value || "0";
+        const sisa5 = document.getElementById('sisa5').value || "0";
+
+        const printHtml = `
+            <div class="print-header">
+                <h2>Pembayaran Gas</h2>
+                <p><b>Kepada:</b> ${nama}</p>
+                <p>${dateText}</p>
+            </div>
+            
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th>Qty</th>
+                        <th>Jenis</th>
+                        <th>Harga</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="t-center">${qty12}</td>
+                        <td class="t-center f-bold">12KG</td>
+                        <td class="t-right">${formatRibuan(harga12)}</td>
+                        <td class="t-right f-bold">${total12}</td>
+                    </tr>
+                    <tr>
+                        <td class="t-center">${qty5}</td>
+                        <td class="t-center f-bold">5KG</td>
+                        <td class="t-right">${formatRibuan(harga5)}</td>
+                        <td class="t-right f-bold">${total5}</td>
+                    </tr>
+                    <tr>
+                        <th colspan="3" class="t-right">Total Tabung</th>
+                        <th class="t-center">${totalTabung}</th>
+                    </tr>
+                    <tr>
+                        <th colspan="3" class="t-right">GRAND TOTAL</th>
+                        <th class="t-right">${grandTotal}</th>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table class="print-sisa-table">
+                <thead>
+                    <tr>
+                        <th colspan="2" class="t-center">Sisa ke Bon Depan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="sisa-col-jenis">12KG</td>
+                        <td class="sisa-col-nilai">${sisa12}</td>
+                    </tr>
+                    <tr>
+                        <td class="sisa-col-jenis">5KG</td>
+                        <td class="sisa-col-nilai">${sisa5}</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+
+        document.getElementById('printArea').innerHTML = printHtml;
+        window.print();
+    }
+
+    calculateMain();
+    initKotretan();
+</script>
+
+</body>
+</html>
