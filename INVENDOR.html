@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBR Putra - Invoice & Payment</title>
     <script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		// Mengaktifkan mode kelas dark pada Tailwind
+		tailwind.config = {
+			darkMode: 'class',
+		}
+	</script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -21,30 +27,39 @@
 		}
     </style>
 </head>
-<body class="text-gray-800">
+<body class="text-gray-800 bg-slate-50 dark:bg-gray-950 dark:text-gray-100 transition-colors">
 
     <div class="max-w-6xl mx-auto p-6">
         <!-- Header -->
         <header class="flex justify-between items-center mb-8">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">SBR Putra Food</h1>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-emerald-500">SBR Putra Food</h1>
                 <p class="text-sm text-gray-500">Manajemen Invoice & Pembayaran</p>
             </div>
             <div class="flex items-center gap-2.5">
+				<!-- Tombol Toggle Dark/Light Mode -->
+				<button onclick="toggleDarkMode()" class="w-10 h-10 bg-gray-500/30 hover:bg-gray-500 dark:bg-gray-800 dark:hover:bg-gray-400 text-black dark:text-yellow-500 rounded-full transition-all shadow-sm flex items-center justify-center" title="Ubah Mode Tampilan">
+					<svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+						<!-- Ikon default (Bulan) -->
+						<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+					</svg>
+				</button>
                 <!-- Tombol Manajemen Data (Emas Bulat) -->
-                <button onclick="openDataModal()" class="w-10 h-10 bg-yellow-500 hover:bg-yellow-700 text-white rounded-full transition-all shadow-sm flex items-center justify-center" title="Manajemen Data">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21-3.582 4-8 4s-8-1.79-8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                <button onclick="openDataModal()" class="w-10 h-10 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full transition-all shadow-sm flex items-center justify-center" title="Manajemen Data">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+					  <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+					</svg>
                 </button>
 
                 <!-- Tombol Bayar Multi-Invoice (Border Bulat Hijau Interaktif) -->
-                <button onclick="toggleModal('bulkPaymentModal')" class="w-10 h-10 rounded-full bg-emerald-500 text-white hover:bg-emerald-700 hover:text-white transition-all shadow-sm flex items-center justify-center group" title="Bayar Multi-Invoice">
+                <button onclick="toggleModal('bulkPaymentModal')" class="w-10 h-10 rounded-full bg-emerald-500 text-white hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center group" title="Bayar Multi-Invoice">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                 </button>
 
                 <!-- Tombol Tambah Invoice (Bulat Hitam Minimalis) -->
-                <button onclick="openInvoiceModal()" class="w-10 h-10 rounded-full bg-black/70 hover:bg-black text-white hover:text-emerald-500 transition-all shadow-sm flex items-center justify-center" title="Tambah Invoice Baru">
+                <button onclick="openInvoiceModal()" class="w-10 h-10 rounded-full bg-black/75 hover:bg-emerald-500 text-white dark:bg-white dark:text-black dark:hover:bg-emerald-500 transition-all shadow-sm flex items-center justify-center" title="Tambah Invoice Baru">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -59,17 +74,17 @@
             <div class="w-full lg:w-1/3 xl:w-1/4 flex flex-col gap-4">
                 
                 <!-- Kartu Utama: Total Keseluruhan -->
-                <div class="bg-gray-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
+                <div class="bg-emerald-600 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
                     <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-5 blur-2xl"></div>
-                    <p class="text-[11px] text-gray-400 uppercase tracking-wider font-semibold mb-1">Total Piutang / Hutang</p>
+                    <p class="text-[14px] text-gray-800/80 uppercase tracking-wider font-bold mb-1">Total Piutang</p>
                     <h2 class="text-3xl font-bold tracking-tight mb-2" id="totalUnpaid">Rp 0</h2>
-                    <div class="flex items-center gap-2 mt-4 text-[11px] font-medium text-emerald-400 bg-gray-800/80 w-fit px-3 py-1.5 rounded-full border border-gray-700">
+                    <div class="flex items-center gap-2 mt-4 text-[11px] font-Normal font text-emerald-400 bg-gray-800/80 w-fit px-3 py-1.5 rounded-full border border-gray-700">
                         <span id="totalInvoicesBadge">0 Nota Belum Lunas</span>
                     </div>
                 </div>
 
                 <!-- Kartu Rincian per Kategori -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 flex flex-col gap-1">
+                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-2 flex flex-col gap-1">
                     
                     <!-- Bahan Baku -->
                     <div class="flex items-center justify-between p-3 rounded-xl hover:bg-orange-50 transition-colors group">
@@ -79,7 +94,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] font-bold tracking-wide text-gray-400 uppercase">Bahan Baku</p>
-                                <p class="text-sm font-bold text-gray-900" id="widgetBahanBaku">Rp 0</p>
+                                <p class="text-sm font-bold text-gray-900 dark:text-white" id="widgetBahanBaku">Rp 0</p>
                             </div>
                         </div>
                     </div>
@@ -92,7 +107,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] font-bold tracking-wide text-gray-400 uppercase">Plastik</p>
-                                <p class="text-sm font-bold text-gray-900" id="widgetPlastik">Rp 0</p>
+                                <p class="text-sm font-bold text-gray-900 dark:text-white" id="widgetPlastik">Rp 0</p>
                             </div>
                         </div>
                     </div>
@@ -105,7 +120,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] font-bold tracking-wide text-gray-400 uppercase">Dus</p>
-                                <p class="text-sm font-bold text-gray-900" id="widgetDus">Rp 0</p>
+                                <p class="text-sm font-bold text-gray-900 dark:text-white" id="widgetDus">Rp 0</p>
                             </div>
                         </div>
                     </div>
@@ -118,7 +133,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] font-bold tracking-wide text-gray-400 uppercase">Lainnya</p>
-                                <p class="text-sm font-bold text-gray-900" id="widgetLainnya">Rp 0</p>
+                                <p class="text-sm font-bold text-gray-900 dark:text-white" id="widgetLainnya">Rp 0</p>
                             </div>
                         </div>
                     </div>
@@ -128,19 +143,19 @@
 
             <!-- AREA KANAN (Tabel Invoice) -->
             <div class="w-full lg:w-2/3 xl:w-3/4">
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden h-full flex flex-col">
-                    <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                        <h2 class="font-bold text-gray-800">Daftar Tagihan Berjalan</h2>
+                <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden h-full flex flex-col">
+                    <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
+                        <h2 class="font-bold text-gray-800 dark:text-white">Daftar Tagihan Berjalan</h2>
                     </div>
                     
                     <div class="overflow-x-auto flex-1">
                         <table class="w-full text-left border-collapse">
                             <thead>
-								<tr class="bg-white border-b border-gray-100 text-[11px] uppercase tracking-wider text-gray-400">
+								<tr class="bg-white dark:bg-emerald-500 dark:text-white border-b border-gray-300 text-[11px] uppercase tracking-wider text-gray-400">
 									<th class="p-4 font-semibold w-[25%]">No. Invoice & Tgl</th>
 									<th class="p-4 font-semibold w-[20%]">Supplier & Kategori</th>
 									<th class="p-4 font-semibold w-[20%]">Total Tagihan</th>
-									<th class="p-4 font-semibold w-[13%]">Status</th>
+									<th class="p-4 font-semibold w-[20%]">Status</th>
 									<th class="p-4 font-semibold text-right w-[5%] pr-6">Aksi</th>
 								</tr>
 							</thead>
@@ -156,28 +171,32 @@
 
     <!-- Modal Tambah Invoice -->
     <div id="invoiceModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-6 transform transition-all">
+        <div class="bg-white dark:bg-gray-900 dark:text-gray-100 w-full max-w-md rounded-2xl shadow-xl border border-transparent dark:border-gray-800 p-6 transform transition-all">
             <div class="flex justify-between items-center mb-5">
                 <h3 class="text-lg font-bold">Catat Invoice Baru</h3>
                 <button type="button" onclick="toggleModal('invoiceModal')" class="text-gray-400 hover:text-gray-600">&times;</button>
             </div>
+			<div class="flex items-center mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+				<input type="checkbox" id="isSuratJalan" onchange="toggleSuratJalan()" class="w-4 h-4 text-black border-gray-300 rounded dark:bg-gray-800 focus:ring-black">
+				<label for="isSuratJalan" class="ml-2 text-sm font-medium text-gray-700">Hanya Surat Jalan (Invoice Menyusul)</label>
+			</div>
             <form id="formInvoice" onsubmit="saveInvoice(event)">
                 <div class="space-y-4">				
 					<!-- Baris Side-to-Side: Nomor Invoice & Tanggal -->
 						<div class="grid grid-cols-2 gap-4">
 							<div>
-								<label class="block text-xs font-medium text-gray-500 mb-1">Nomor Invoice</label>
+								<label id="labelNomor" class="block text-xs font-medium text-gray-500 mb-1">Nomor Invoice</label>
 								<input type="text" id="invNumber" required class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black">
 							</div>
 							<div>
-								<label class="block text-xs font-medium text-gray-500 mb-1">Tanggal</label>
+								<label class="block text-xs font-medium text-gray-500 dark:text-black-500 mb-1">Tanggal</label>
 								<input type="date" id="invDate" required class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black">
 							</div>
 						</div>
 					<div>
 						<label class="block text-xs font-medium text-gray-500 mb-1">Nama Supplier</label>
 						<!-- Diubah menjadi select dropdown agar stabil dan tidak hilang-hilang -->
-						<select id="invSupplier" onchange="autoSelectCategory()" required class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black bg-white">
+						<select id="invSupplier" onchange="autoSelectCategory()" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white">
 							<option value="">-- Pilih Supplier --</option>
 							<option value="Kop Bumi">Kop Bumi</option>
 							<option value="Surya Abadi">Surya Abadi</option>
@@ -187,12 +206,16 @@
 					</div>
 					<div>
 						<label class="block text-xs font-medium text-gray-500 mb-1">Kategori</label>
-						<select id="invCategory" class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black bg-white">
+						<select id="invCategory" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white">
 							<option value="Bahan Baku">Bahan Baku</option>
 							<option value="Plastik">Plastik</option>
 							<option value="Dus">Dus</option>
 							<option value="Lainnya">Lainnya</option>
 						</select>
+						<div>
+							<label class="block text-xs font-medium text-gray-500 mb-1">Keterangan (Opsional)</label>
+							<input type="text" id="invKeterangan" class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black" placeholder="Contoh Plastik Opp 16 Karung @20kg">
+						</div>
 					</div>
 					<div>
 						<label class="block text-xs font-medium text-gray-500 mb-1">Total Nominal (Rp)</label>
@@ -223,7 +246,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">Nominal Bayar (Rp)</label>
-                    <input type="number" id="payAmount" onkeyup="formatRupiahInput(this)" required class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black">
+                    <input type="text" id="payAmount" onkeyup="formatRupiahInput(this)" required class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black" placeholder="Contoh: 1.500.000">
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" onclick="toggleModal('paymentModal')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">Batal</button>
@@ -460,7 +483,7 @@
 
 					<div>
 						<label class="block text-xs font-medium text-gray-500 mb-1">Nama Supplier</label>
-						<select id="editInvSupplier" onchange="autoSelectEditCategory()" required class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black bg-white">
+						<select id="editInvSupplier" onchange="autoSelectEditCategory()" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white">
 							<option value="">-- Pilih Supplier --</option>
 							<option value="Kop Bumi">Kop Bumi</option>
 							<option value="Surya Abadi">Surya Abadi</option>
@@ -471,12 +494,16 @@
 
 					<div>
 						<label class="block text-xs font-medium text-gray-500 mb-1">Kategori</label>
-						<select id="editInvCategory" class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black bg-white">
+						<select id="editInvCategory" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white">
 							<option value="Bahan Baku">Bahan Baku</option>
 							<option value="Plastik">Plastik</option>
 							<option value="Dus">Dus</option>
 							<option value="Lainnya">Lainnya</option>
 						</select>
+						<div>
+							<label class="block text-xs font-medium text-gray-500 mb-1">Keterangan (Opsional)</label>
+							<input type="text" id="invKeterangan" class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black" placeholder="Contoh Plastik Opp 16 Karung @20kg">
+						</div>
 					</div>
 
 					<div>
@@ -485,9 +512,16 @@
 					</div>
 				</div>
 
-				<div class="mt-6 flex justify-end gap-3">
-					<button type="button" onclick="toggleModal('editInvoiceModal')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">Batal</button>
-					<button type="submit" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-lg hover:bg-gray-800">Simpan Koreksi</button>
+				<div class="mt-6 flex justify-between items-center">
+					<!-- Tombol Hapus Invoice (Warna Merah) -->
+					<button type="button" onclick="deleteInvoice()" class="px-4 py-2 text-sm font-medium bg-red-100 text-red-500 hover:bg-red-600/50 dark:hover:bg-red-950/50 rounded-lg transition-all">
+						Hapus Invoice
+					</button>
+					
+					<div class="flex gap-3">
+						<button type="button" onclick="toggleModal('editInvoiceModal')" class="px-4 py-2 text-sm font-medium text-black bg-gray-300/35 hover:bg-gray-300 dark:text-gray-300 dark:hover:bg-gray-800 rounded-lg">Batal</button>
+						<button type="submit" class="px-4 py-2 text-sm font-medium bg-black/80 text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-500 dark:hover:bg-gray-200">Simpan Koreksi</button>
+					</div>
 				</div>
 			</form>
 		</div>
@@ -500,6 +534,42 @@
     const supabaseUrl = 'https://uocvuddqhviorebinpva.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvY3Z1ZGRxaHZpb3JlYmlucHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2OTQ0NDAsImV4cCI6MjEwMTI3MDQ0MH0.mWGTOTfHG4Q62S3P4LQi-5bGviMPWgMzo2p2AECquL8';
     
+	// Fungsi untuk mengubah mode gelap/terang
+	function toggleDarkMode() {
+		const html = document.documentElement;
+		const isDark = html.classList.toggle('dark');
+		
+		// Simpan pilihan terakhir ke localStorage
+		localStorage.setItem('theme', isDark ? 'dark' : 'light');
+		updateThemeIcon(isDark);
+	}
+
+	// Fungsi untuk mengganti ikon tombol (Matahari / Bulan)
+	function updateThemeIcon(isDark) {
+		const icon = document.getElementById('themeIcon');
+		if (!icon) return;
+		
+		if (isDark) {
+			// Ikon Matahari (untuk kembali ke mode terang)
+			icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />';
+		} else {
+			// Ikon Bulan (untuk beralih ke mode gelap)
+			icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />';
+		}
+	}
+
+	// Inisialisasi otomatis saat halaman pertama kali dimuat berdasarkan localStorage
+	(function() {
+		const savedTheme = localStorage.getItem('theme');
+		if (savedTheme === 'dark') {
+			document.documentElement.classList.add('dark');
+			updateThemeIcon(true);
+		} else {
+			document.documentElement.classList.remove('dark');
+			updateThemeIcon(false);
+		}
+	})();
+
     // PERBAIKAN 1: Opsi auth dimasukkan ke dalam parameter createClient
     const db = createClient(supabaseUrl, supabaseKey, {
         auth: {
@@ -593,7 +663,8 @@
 			category: document.getElementById('invCategory').value,
 			total: parseRupiah(document.getElementById('invTotal').value), // Angka murni
 			paid: 0,
-			history: [] 
+			history: [], 
+			keterangan: document.getElementById('invKeterangan').value,
 		};
 		
 		const { error } = await db
@@ -672,7 +743,7 @@ function loadCategoryInvoices(categoryName) {
 		if (e) e.preventDefault();
 
 		const checkedBoxes = document.querySelectorAll('.bulk-inv-checkbox:checked');
-		let totalPaymentAmount = parseFloat(document.getElementById('bulkPayAmount').value);
+		let totalPaymentAmount = parseRupiah(document.getElementById('bulkPayAmount').value);
 		const payMethod = document.getElementById('bulkPayMethod').value;
 
 		if (checkedBoxes.length === 0) {
@@ -834,42 +905,46 @@ function loadCategoryInvoices(categoryName) {
 	
 
     // 4. Fungsi Pembayaran (Update)
-    async function processPayment(e) {
-        e.preventDefault();
-        const btnSubmit = document.querySelector('#formPayment button[type="submit"]');
-        btnSubmit.innerText = "Memproses...";
-        btnSubmit.disabled = true;
+	async function processPayment(e) {
+		e.preventDefault();
+		const btnSubmit = document.querySelector('#formPayment button[type="submit"]');
+		btnSubmit.innerText = "Memproses...";
+		btnSubmit.disabled = true;
 
-        const id = document.getElementById('payInvId').value;
-        parseRupiah(document.getElementById('payAmount').value)
-        
-        const inv = invoices.find(i => i.id === id);
-        if(inv) {
-            const newPaid = inv.paid + amount;
-            const newHistory = [...inv.history, {
-                date: new Date().toLocaleDateString('id-ID'),
-                amount: amount
-            }];
+		const id = document.getElementById('payInvId').value;
+		
+		// PERBAIKAN: Tambahkan "const amount =" untuk menangkap nilai input
+		const amount = parseRupiah(document.getElementById('payAmount').value);
+		
+		// PERBAIKAN: Gunakan == agar ID terbaca dengan benar
+		const inv = invoices.find(i => i.id == id);
+		
+		if(inv) {
+			const newPaid = inv.paid + amount;
+			const newHistory = [...inv.history, {
+				date: new Date().toLocaleDateString('id-ID'),
+				amount: amount
+			}];
 
-            const { error } = await db
-                .from('invoices')
-                .update({ 
-                    paid: newPaid,
-                    history: newHistory
-                })
-                .eq('id', id);
+			const { error } = await db
+				.from('invoices')
+				.update({ 
+					paid: newPaid,
+					history: newHistory
+				})
+				.eq('id', id);
 
-            if (error) {
-                alert('Gagal memproses pembayaran!');
-                console.error(error);
-            } else {
-                toggleModal('paymentModal');
-                fetchInvoices(); 
-            }
-        }
-        btnSubmit.innerText = "Bayar";
-        btnSubmit.disabled = false;
-    }
+			if (error) {
+				alert('Gagal memproses pembayaran!');
+				console.error(error);
+			} else {
+				toggleModal('paymentModal');
+				fetchInvoices(); 
+			}
+		}
+		btnSubmit.innerText = "Bayar";
+		btnSubmit.disabled = false;
+	}
     
     // Fungsi untuk memunculkan dan menghitung widget secara realtime
 	function calculateBulkTotal() {
@@ -996,16 +1071,22 @@ function loadCategoryInvoices(categoryName) {
     };
 
     // Fungsi Pembantu untuk Membuka Modal Pembayaran Single
-    function openPayment(id) {
-        const inv = invoices.find(i => i.id === id);
-        const sisa = inv.total - inv.paid;
-        
-        document.getElementById('payInvId').value = id;
-        document.getElementById('payRemaining').innerText = formatRp(sisa);
-        document.getElementById('payAmount').max = sisa; 
-		parseRupiah(document.getElementById('payAmount').value)        
-        toggleModal('paymentModal');
-    }
+	function openPayment(id) {
+		// PERBAIKAN: Gunakan == agar angka dan teks tetap cocok
+		const inv = invoices.find(i => i.id == id); 
+		
+		if (!inv) return; // Mencegah error jika data tidak ditemukan
+		
+		const sisa = inv.total - inv.paid;
+		
+		document.getElementById('payInvId').value = inv.id;
+		document.getElementById('payRemaining').innerText = formatRp(sisa);
+		
+		// PERBAIKAN: Kosongkan form input setiap kali pop-up dibuka
+		document.getElementById('payAmount').value = ''; 
+		
+		toggleModal('paymentModal');
+	}
 	
 	
 	// Data bawaan (default) sesuai permintaan Anda
@@ -1053,10 +1134,10 @@ function loadCategoryInvoices(categoryName) {
 
         invoices.forEach(inv => {
             const sisa = inv.total - inv.paid;
-
-            if (sisa > 0) {
-                totalUnpaid += sisa;
-                totalUnpaidCount++; 
+			// Tambahkan kondisi "|| inv.total === 0" 
+			if (sisa > 0 || inv.total === 0) {
+				totalUnpaid += sisa;
+				totalUnpaidCount++;
                 
                 // Distribusikan nilai hutang sesuai kategori
                 if (inv.category === 'Bahan Baku') hutangBahanBaku += sisa;
@@ -1065,21 +1146,24 @@ function loadCategoryInvoices(categoryName) {
                 else hutangLainnya += sisa; // Semua di luar 3 itu masuk ke Lainnya
 
                 let statusBadge = '';
-                if(inv.paid > 0) {
-                    statusBadge = '<span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-md text-[11px] font-semibold border border-amber-200/60">Sebagian</span>';
-                } else {
-                    statusBadge = '<span class="px-2.5 py-1 bg-rose-50 text-rose-600 rounded-md text-[11px] font-semibold border border-rose-200/60">Belum Bayar</span>';
-                }
+				if (inv.total === 0) {
+					statusBadge = '<span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md text-[11px] font-semibold border border-gray-300">Menunggu Invoice</span>';
+				} else if(inv.paid > 0) {
+					statusBadge = '<span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-md text-[11px] font-semibold border border-amber-200/60">Sebagian</span>';
+				} else {
+					statusBadge = '<span class="px-2.5 py-1 bg-rose-50 text-rose-600 rounded-md text-[11px] font-semibold border border-rose-200/60">Belum Bayar</span>';
+				}
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50/50 transition-colors group";
                 tr.innerHTML = `
                     <td class="p-4 border-b border-gray-50">
-                        <div class="font-bold text-gray-900">${inv.number}</div>
-                        <div class="text-xs text-gray-400 mt-1">${inv.date}</div>
+                        <div class="font-bold text-gray-900 dark:text-gray-100">${inv.number}</div>
+                        <div class="text-xs text-gray-400 dark:text-gray-100 mt-1">${inv.date}</div>
                     </td>
                     <td class="p-4 border-b border-gray-50">
-                        <div class="font-medium text-gray-800">${inv.supplier}</div>
+                        <div class="font-medium text-gray-800 dark:text-gray-100">${inv.supplier}</div>
+						<div class="text-xs text-gray-500 dark:text-gray-100 italic mt-0.5">${inv.keterangan ? inv.keterangan : ''}</div>
                         <!-- Perubahan 1: Kategori menjadi Badge Berwarna -->
                         <div class="mt-1.5">
                             <span class="inline-block px-2 py-0.5 rounded font-semibold text-[10px] tracking-wide ${getCategoryBadgeStyle(inv.category)}">
@@ -1089,14 +1173,23 @@ function loadCategoryInvoices(categoryName) {
                     </td>
                     <td class="p-4 border-b border-gray-50 font-bold text-gray-900">${formatRp(inv.total)}</td>
                     <td class="p-4 border-b border-gray-50">${statusBadge}</td>
-                    <td class="p-4 border-b border-gray-50 text-right">
-                        <!-- Perubahan 2: Tombol Koreksi menjadi Icon Pensil -->
-                        <button onclick="openEditInvoice('${inv.id}')" title="Koreksi Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all focus:outline-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                        </button>
-                    </td>
+                    <td class="p-4 border-b border-gray-50">
+						<div class="flex items-center justify-end gap-1">
+							<!-- Tambahan: Tombol Bayar (Ikon Mata Uang) -->
+							<button onclick="openPayment('${inv.id}')" title="Bayar Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all focus:outline-none">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+								</svg>
+							</button>
+							
+							<!-- Tombol Koreksi (Icon Pensil) -->
+							<button onclick="openEditInvoice('${inv.id}')" title="Koreksi Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all focus:outline-none">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+								</svg>
+							</button>
+						</div>
+					</td>
                 `;
                 tbody.appendChild(tr);
             }
@@ -1374,6 +1467,36 @@ function loadCategoryInvoices(categoryName) {
 			categorySelect.value = "Lainnya";
 		}
 	}
+	
+	function toggleSuratJalan() {
+		const isSJ = document.getElementById('isSuratJalan').checked;
+		const invTotal = document.getElementById('invTotal');
+		const labelNo = document.getElementById('labelNomor'); 
+
+		if (isSJ) {
+			// Ubah Label
+			if (labelNo) labelNo.innerText = "Nomor Surat Jalan";
+			
+			// Kunci & Set 0
+			invTotal.value = "0";
+			invTotal.readOnly = true;
+			invTotal.classList.add('bg-gray-100'); // Efek abu-abu
+			
+			// Matikan fungsi 'wajib diisi' agar browser tidak protes
+			invTotal.removeAttribute('required');
+		} else {
+			// Kembalikan ke Normal
+			if (labelNo) labelNo.innerText = "Nomor Invoice";
+			
+			invTotal.value = "";
+			invTotal.readOnly = false;
+			invTotal.classList.remove('bg-gray-100');
+			
+			// Nyalakan kembali fungsi 'wajib diisi'
+			invTotal.setAttribute('required', 'true');
+		}
+	}
+	
 
 	// Menyimpan hasil koreksi ke database Supabase
 	async function saveEditedInvoice(e) {
@@ -1391,7 +1514,8 @@ function loadCategoryInvoices(categoryName) {
 			date: formattedDate,
 			supplier: document.getElementById('editInvSupplier').value,
 			category: document.getElementById('editInvCategory').value,
-			total: parseRupiah(document.getElementById('editInvTotal').value)
+			total: parseRupiah(document.getElementById('editInvTotal').value),
+			keterangan: document.getElementById('invKeterangan').value,
 		};
 
 		const { error } = await db
@@ -1409,7 +1533,34 @@ function loadCategoryInvoices(categoryName) {
 
 		btnSubmit.innerText = "Simpan Koreksi";
 		btnSubmit.disabled = false;
-	}	
+	}
+	
+	// Fungsi untuk menghapus invoice atau surat jalan berdasarkan ID
+	async function deleteInvoice() {
+		const id = document.getElementById('editInvId').value;
+		if (!id) return;
+
+		// Konfirmasi keamanan sebelum menghapus data
+		if (!confirm("Apakah Anda yakin ingin menghapus invoice/surat jalan ini secara permanen?")) {
+			return;
+		}
+
+		// Eksekusi hapus data dari database Supabase
+		const { error } = await db
+			.from('invoices')
+			.delete()
+			.eq('id', id);
+
+		if (error) {
+			alert('Gagal menghapus invoice!');
+			console.error(error);
+		} else {
+			// Tutup modal koreksi dan perbarui data tabel di layar
+			toggleModal('editInvoiceModal');
+			fetchInvoices();
+		}
+	}
+	
 	
     // Panggil saat pertama kali dimuat
     fetchInvoices();
