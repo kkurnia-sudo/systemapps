@@ -258,12 +258,15 @@
         .icon-blue i { color: #3b82f6; } .icon-blue { background-color: #eff6ff; }
         .icon-orange i { color: #f59e0b; } .icon-orange { background-color: #fef3c7; }
         .icon-gray i { color: #6b7280; } .icon-gray { background-color: #f3f4f6; }
+		.icon-red i { color: #E66E5A; }
+		.icon-red { background-color: #F54D27; }
 
         /* Support Dark Mode untuk Warna Ikon */
         [data-theme="dark"] .icon-green { background-color: rgba(16, 185, 129, 0.2); }
         [data-theme="dark"] .icon-blue { background-color: rgba(59, 130, 246, 0.2); }
         [data-theme="dark"] .icon-orange { background-color: rgba(245, 158, 11, 0.2); }
         [data-theme="dark"] .icon-gray { background-color: rgba(107, 114, 128, 0.2); }
+		[data-theme="dark"] .icon-red { background-color: rgba(239, 68, 68, 0.2); }
 		
 
         /* ---------------- RESPONSIVE / MOBILE ---------------- */
@@ -271,19 +274,80 @@
             .sidebar { transform: translateX(-100%); } /* Sembunyikan sidebar ke kiri */
             .sidebar.active { transform: translateX(0); box-shadow: var(--shadow-md); }
             
-            .main-content { margin-left: 0; width: 100%; }
-            .open-sidebar { display: block; } /* Munculkan tombol hamburger */
-            .close-sidebar { display: block; } /* Munculkan tombol silang di sidebar */
-            .content-area { padding: 1rem; }
-            
-            /* Overlay Hitam saat sidebar terbuka di HP */
-            .sidebar-overlay {
-                display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-                background: rgba(0,0,0,0.5); z-index: 40;
-            }
-            .sidebar-overlay.active { display: block; }
-        }
-    </style>
+            /* Penyesuaian agar tampilan atas lebih ringkas */
+			.top-header { padding: 0.75rem 1rem; }
+			.page-title h1 { font-size: 0.95rem; }
+			.page-title p { display: none; } /* Sembunyikan subtitle di HP agar lebih lega */
+			
+			/* Pengecilan gap dan padding pada area konten utama */
+			.content-area { padding: 0.75rem; }
+			.dashboard-grid { gap: 0.5rem; }
+			
+			/* Optimalisasi Card Menu */
+			.card { padding: 0.6rem 0.75rem; gap: 0.6rem; border-radius: 8px; }
+			.icon-wrapper { width: 32px; height: 32px; font-size: 0.85rem; }
+			.card-text h3 { font-size: 0.75rem; }
+			.card-text p { font-size: 0.6rem; }
+		}
+		/* ---------------- MODAL PIN KUSTOM ---------------- */
+		.modal-overlay {
+			position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+			background: rgba(0, 0, 0, 0.5); /* Efek gelap di belakang */
+			backdrop-filter: blur(3px); /* Efek blur modern */
+			z-index: 100;
+			display: flex; justify-content: center; align-items: center;
+			opacity: 0; visibility: hidden;
+			transition: all 0.3s ease;
+		}
+		.modal-overlay.active {
+			opacity: 1; visibility: visible;
+		}
+		.modal-box {
+			background-color: var(--card-bg);
+			border: 1px solid var(--border-color);
+			border-radius: 12px;
+			padding: 1.5rem;
+			width: 90%; max-width: 320px;
+			box-shadow: var(--shadow-md);
+			transform: translateY(-20px);
+			transition: all 0.3s ease;
+		}
+		.modal-overlay.active .modal-box {
+			transform: translateY(0);
+		}
+		.modal-title { 
+			font-size: 1.1rem; font-weight: 600; color: var(--text-color); margin-bottom: 0.5rem; 
+		}
+		.modal-desc { 
+			font-size: 0.8rem; color: var(--subtitle-color); margin-bottom: 1rem; line-height: 1.4;
+		}
+		.modal-input {
+			width: 100%; padding: 0.75rem;
+			background-color: var(--bg-color);
+			border: 1px solid var(--border-color);
+			color: var(--text-color);
+			border-radius: 8px; font-size: 1.25rem;
+			text-align: center; letter-spacing: 0.5rem; /* Memberi jarak antar angka */
+			margin-bottom: 0.5rem; outline: none;
+			transition: border-color 0.2s;
+		}
+		.modal-input:focus { border-color: var(--accent-color); }
+		.modal-error {
+			color: #ef4444; font-size: 0.75rem; margin-bottom: 1rem;
+			display: none; /* Disembunyikan secara default */
+			text-align: center; font-weight: 500;
+		}
+		.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+		.btn-cancel, .btn-submit {
+			padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+			cursor: pointer; border: none; transition: var(--transition);
+		}
+		.btn-cancel { background-color: transparent; color: var(--subtitle-color); }
+		.btn-cancel:hover { background-color: var(--hover-bg); color: var(--text-color); }
+		.btn-submit { background-color: var(--accent-color); color: #fff; }
+		.btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+		
+	</style>
 </head>
 <body>
 
@@ -348,10 +412,11 @@
                     <i class="fa-solid fa-money-check-dollar"></i> Payroll
                     <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.5rem; width:auto;"></i></span>
                 </a>
-				<a href="https://kkurnia-sudo.github.io/systemapps/dashboard.html" class="menu-item" target="_blank">
-                    <i class="fa-solid fa-triangle-exclamation"></i> kkurnia Rand
-                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.5rem; width:auto;"></i></span>
-                </a>
+				<a href="#" class="menu-item" id="menuKkurnia">
+					<i class="fa-solid fa-triangle-exclamation"></i> kkurnia Rand
+					<!-- Mengganti ikon external link menjadi ikon lock/gembok di sebelah kanan -->
+					<span class="external-badge"><i class="fa-solid fa-lock" style="font-size:0.6rem; width:auto;"></i></span>
+				</a>
             </nav>
         </aside>
 
@@ -467,7 +532,7 @@
                     <div class="section-title">Data Master & Sistem</div>
 
                     <a href="harga_agensbr.html" class="card">
-                        <div class="icon-wrapper icon-gray">
+                        <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-comments-dollar"></i>
                         </div>
                         <div class="card-text">
@@ -476,7 +541,7 @@
                         </div>
                     </a>
                     <a href="agensbr.html" class="card">
-                        <div class="icon-wrapper icon-gray">
+                        <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-users"></i>
                         </div>
                         <div class="card-text">
@@ -485,7 +550,7 @@
                         </div>
                     </a>
                     <a href="testanalisa.html" class="card">
-                        <div class="icon-wrapper icon-gray">
+                        <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-chart-pie"></i>
                         </div>
                         <div class="card-text">
@@ -494,7 +559,7 @@
                         </div>
                     </a>
                     <a href="bekapsbrv2.html" class="card">
-                        <div class="icon-wrapper icon-gray">
+                        <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-file-shield"></i>
                         </div>
                         <div class="card-text">
@@ -507,55 +572,126 @@
             </div>
         </main>
     </div>
-
+	
+	
+	<!-- Modal PIN Custom -->
+	<div id="pinModal" class="modal-overlay">
+		<div class="modal-box">
+			<h3 class="modal-title">Keamanan Sistem</h3>
+			<p class="modal-desc">Masukkan PIN otoritas untuk mengakses modul kkurnia Rand.</p>
+			
+			<input type="password" id="pinInput" class="modal-input" placeholder="••••••" maxlength="6" autocomplete="off">
+			
+			<p id="pinError" class="modal-error">PIN yang Anda masukkan salah!</p>
+			
+			<div class="modal-actions">
+				<button id="btnCancelPin" class="btn-cancel">Batal</button>
+				<button id="btnSubmitPin" class="btn-submit">Verifikasi</button>
+			</div>
+		</div>
+	</div>
+	
     <!-- Script Interaktif -->
     <script>
-        // --- Logic Dark Mode ---
-        const toggleBtn = document.getElementById('themeToggle');
-        const toggleIcon = toggleBtn.querySelector('i');
-        const htmlElement = document.documentElement;
+		// --- 1. Logic Dark Mode ---
+		const toggleBtn = document.getElementById('themeToggle');
+		const toggleIcon = toggleBtn.querySelector('i');
+		const htmlElement = document.documentElement;
 
-        const savedTheme = localStorage.getItem('sbr-theme');
-        if (savedTheme) { htmlElement.setAttribute('data-theme', savedTheme); updateIcon(savedTheme); }
+		const savedTheme = localStorage.getItem('sbr-theme');
+		if (savedTheme) { htmlElement.setAttribute('data-theme', savedTheme); updateIcon(savedTheme); }
 
-        toggleBtn.addEventListener('click', () => {
-            const currentTheme = htmlElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            htmlElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('sbr-theme', newTheme);
-            updateIcon(newTheme);
-        });
+		toggleBtn.addEventListener('click', () => {
+			const currentTheme = htmlElement.getAttribute('data-theme');
+			const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+			htmlElement.setAttribute('data-theme', newTheme);
+			localStorage.setItem('sbr-theme', newTheme);
+			updateIcon(newTheme);
+		});
 
-        function updateIcon(theme) {
-            toggleIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        }
+		function updateIcon(theme) {
+			toggleIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+		}
 
-        // --- Logic Sidebar (Gabungan Mobile & Show/Hide Desktop) ---
-        const sidebar = document.getElementById('sidebar');
-        const openBtn = document.getElementById('openSidebar');
-        const closeBtn = document.getElementById('closeSidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const mainContent = document.querySelector('.main-content');
+		// --- 2. Logic Sidebar (Desktop & Mobile) ---
+		const sidebar = document.getElementById('sidebar');
+		const closeBtn = document.getElementById('closeSidebar');
+		const overlay = document.getElementById('sidebarOverlay');
+		const sidebarToggle = document.getElementById('sidebarToggle');
+		const mainContent = document.querySelector('.main-content');
 
-        // Fungsi untuk mode mobile (geser dari kiri)
-        function toggleMobileSidebar() {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
+		// Tombol utama untuk toggle (Responsive Desktop/Mobile)
+		if (sidebarToggle) {
+			sidebarToggle.addEventListener('click', () => {
+				if (window.innerWidth <= 768) {
+					// Logika Mobile (Geser dari kiri)
+					sidebar.classList.toggle('active');
+					if (overlay) overlay.classList.toggle('active');
+				} else {
+					// Logika Desktop (Kecilkan/Sembunyikan)
+					sidebar.classList.toggle('hidden');
+					if (mainContent) mainContent.classList.toggle('expanded');
+				}
+			});
+		}
 
-        if (openBtn) openBtn.addEventListener('click', toggleMobileSidebar);
-        if (closeBtn) closeBtn.addEventListener('click', toggleMobileSidebar);
-        if (overlay) overlay.addEventListener('click', toggleMobileSidebar);
+		// Fungsi tutup sidebar khusus di HP (via tombol X atau klik area luar)
+		function closeMobileSidebar() {
+			sidebar.classList.remove('active');
+			if (overlay) overlay.classList.remove('active');
+		}
+		if (closeBtn) closeBtn.addEventListener('click', closeMobileSidebar);
+		if (overlay) overlay.addEventListener('click', closeMobileSidebar);
 
-        // Fungsi tombol utama untuk Show / Hide Sidebar secara penuh
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('hidden');
-                mainContent.classList.toggle('expanded');
-            });
-        }
-	
-	</script>
+
+		// --- 3. Logic Modal PIN Akses kkurnia Rand ---
+		const menuKkurnia = document.getElementById('menuKkurnia');
+		const pinModal = document.getElementById('pinModal');
+		const pinInput = document.getElementById('pinInput');
+		const pinError = document.getElementById('pinError');
+		const btnCancelPin = document.getElementById('btnCancelPin');
+		const btnSubmitPin = document.getElementById('btnSubmitPin');
+
+		// Tampilkan modal
+		if (menuKkurnia) {
+			menuKkurnia.addEventListener('click', function(e) {
+				e.preventDefault(); 
+				pinModal.classList.add('active');
+				pinInput.value = ''; // Reset input
+				pinError.style.display = 'none'; // Sembunyikan error
+				setTimeout(() => pinInput.focus(), 300); // Fokus otomatis
+			});
+		}
+
+		// Tutup modal
+		function closePinModal() {
+			pinModal.classList.remove('active');
+		}
+
+		// Verifikasi PIN
+		function verifyPin() {
+			if (pinInput.value === "942715") {
+				closePinModal();
+				window.open("https://kkurnia-sudo.github.io/systemapps/dashboard.html", "_blank");
+			} else {
+				pinError.style.display = 'block';
+				pinInput.value = '';
+				pinInput.focus();
+			}
+		}
+
+		// Trigger tombol Batal dan Verifikasi
+		if (btnCancelPin) btnCancelPin.addEventListener('click', closePinModal);
+		if (btnSubmitPin) btnSubmitPin.addEventListener('click', verifyPin);
+
+		// Trigger tombol "Enter" di keyboard
+		if (pinInput) {
+			pinInput.addEventListener('keypress', function(e) {
+				if (e.key === 'Enter') {
+					verifyPin();
+				}
+			});
+		}
+	</script>	
 </body>
 </html>
