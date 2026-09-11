@@ -405,15 +405,24 @@
                 </thead>
                 <tbody id="prevItemsBody" style="font-size: 13px;"></tbody>
             </table>
-            <div class="summary-table-container" style="width: 100%; max-width: 300px; margin-left: auto;">
-                <table style="width: 100%; font-size: 13px;">
-                    <tr><td style="padding: 4px; color: #555;">Subtotal</td><td style="padding: 4px; text-align: right; font-weight: 600; font-style: italic;" id="prevSubtotal">-</td></tr>
-                    <tbody id="prevDepositBody"></tbody>
-                    <!-- ID DITAMBAHKAN PADA LABEL SISA PEMBAYARAN DI PREVIEW INI -->
-                    <tr><td style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;" id="prevBalanceLabel">SISA PEMBAYARAN</td><td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; color: #10b981!important; font-style: italic;" id="prevBalance">-</td></tr>
-                </table>
-            </div>
-            <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #777;"><p>Terima Kasih Atas Kepercayaannya<br>Mulus Rahayu, Berkah Salamet<br>**SBR SYSTEMS**</p></div>
+            <div class="summary-table-container" style="width: 100%; max-width: 380px; margin-left: auto;">
+				<table style="width: 100%; font-size: 13px; table-layout: fixed;">
+					<colgroup>
+						<col style="width: 50%;">
+						<col style="width: 50%;">
+					</colgroup>
+					<tr>
+						<td style="padding: 4px; color: #555;">Subtotal</td>
+						<td style="padding: 4px; text-align: right; font-weight: 600; font-style: italic; white-space: nowrap;" id="prevSubtotal">-</td>
+					</tr>
+					<tbody id="prevDepositBody"></tbody>
+					<tr>
+						<td style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;" id="prevBalanceLabel">SISA PEMBAYARAN</td>
+						<td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; color: #10b981!important; font-style: italic; white-space: nowrap;" id="prevBalance">-</td>
+					</tr>
+				</table>
+			</div>
+            <div style="margin-top: 40px; text-align: center; font-size: 9px; color: #777;"><p>Terima Kasih Atas Kepercayaannya<br>Mulus Rahayu, Berkah Salamet<br>**SBR SYSTEMS**</p></div>
         </div>
         <div style="margin-top: 24px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
             <div style="display: flex; gap: 10px;">
@@ -501,7 +510,7 @@
 			</div>
 		</div>
 
-		<p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Menampilkan maksimal 50 data per pemuatan demi performa optimal. Klik <b>No Invoice</b> untuk aksi.</p>
+		<p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Menampilkan maksimal 10 data per pemuatan demi performa optimal. Klik <b>No Invoice</b> untuk aksi.</p>
 		
 		<!-- Tabel Wrapper -->
 		<div class="table-wrapper" id="historyTableContainer" style="margin: 0; border: none; max-height: 350px; overflow-y: auto;">
@@ -513,7 +522,7 @@
 
 		<!-- Tombol Muat Lebih Banyak & Fitur Pembersihan Data Lama -->
 		<div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-			<button class="btn btn-outline" id="btnLoadMore" onclick="loadMoreHistory()" style="font-size: 12px; display: none;">↓ Muat 50 Data Lagi</button>
+			<button class="btn btn-outline" id="btnLoadMore" onclick="loadMoreHistory()" style="font-size: 12px; display: none;">↓ Muat 10 Data Lagi</button>
 			<button class="btn btn-outline" onclick="openPurgeModal()" style="font-size: 12px; color: var(--danger); border-color: var(--danger);" title="Hapus invoice lama untuk meringankan database">🗑️ Bersihkan Data Lama (>6 Bulan)</button>
 			<button class="btn btn-outline" onclick="toggleModal('historyModal')" style="margin-left: auto;">Kembali</button>
 		</div>
@@ -918,7 +927,7 @@
     async function openHistoryModal() {
         toggleModal('historyModal');
         document.getElementById('filterGlobal').value = '';
-		currentHistoryLimit = 50; 
+		currentHistoryLimit = 10; //limit sementara 10 history
 		populateMonthDropdown();
         await fetchHistoryDataSilent();
     }
@@ -1185,7 +1194,11 @@
 
                 itemsData.forEach(item => {
                     if (item.unit === 'DEPOSIT' || item.product_id === 'DEPOSIT') {
-                        depositHtml += `<tr><td style="padding: 4px; color: #555;">${item.product_name}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(item.price)}</td></tr>`;
+						depositHtml += `<tr>
+							<td style="padding: 4px; color: #555;">${item.product_name}</td>
+							<td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic; white-space: nowrap;">- ${formatMoney(item.price)}</td>
+						</tr>`;
+					
                     } else {
                         const destText = item.destination && item.destination !== "MANUAL" ? ` <br><span style="font-size: 11px; color: #777;">Tujuan: ${item.destination}</span>` : '';
                         const dateText = showDateOnItems ? `<span style="font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #333; margin-right: 6px; display: inline-block; font-weight: 500;">${formatCustomDate(item.tanggal)}</span>` : '';
@@ -1853,7 +1866,10 @@
         });
 
         let totalDeposit = 0; let depositHtml = '';
-        depositList.forEach(dep => { totalDeposit += dep.nom; depositHtml += `<tr><td style="padding: 4px; color: #555;">${dep.ket}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(dep.nom)}</td></tr>`; });
+        depositList.forEach(dep => { totalDeposit += dep.nom; depositHtml += `<tr>
+			<td style="padding: 4px; color: #555;">${dep.ket}</td>
+			<td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic; white-space: nowrap;">- ${formatMoney(dep.nom)}</td>
+		</tr>`; });
         const balanceDue = subtotal - totalDeposit;
 
         document.getElementById('prevInvNo').innerText = invoiceNo; document.getElementById('prevCustName').innerText = customer.name;
@@ -2156,7 +2172,118 @@
 			closePopup();
 			showWarningPopup("Gagal Menyimpan", err.message);
 		}
-	}		
+	}
+
+	// Fungsi untuk memuat lebih banyak riwayat invoice
+	function loadMoreHistory() {
+		currentHistoryLimit += 10; // Menambah batas muat sebanyak 10 data lagi per klik
+		fetchHistoryDataSilent(); // Memuat ulang data dengan batas baru
+	}
+	
+	// Fungsi untuk Backup / Ekspor Riwayat Invoice secara Rinci (Per Barang) ke CSV/Excel
+	async function exportHistoryToCSV() {
+		if (!allHistoryData || allHistoryData.length === 0) {
+			showWarningPopup("Data Kosong", "Tidak ada data riwayat yang tersedia untuk diekspor.");
+			return;
+		}
+
+		showLoadingPopup("Mengambil Rincian Barang & Menyiapkan CSV...");
+
+		try {
+			const invoiceNos = allHistoryData.map(inv => inv.invoice_no);
+			
+			// Tarik semua item detail barang dari database Supabase berdasarkan nomor invoice yang tampil
+			let allItems = [];
+			if (isSupabaseConnected && invoiceNos.length > 0) {
+				const { data, error } = await supabaseClient
+					.from('invoice_items')
+					.select('*')
+					.in('invoice_no', invoiceNos);
+				if (!error && data) {
+					allItems = data;
+				}
+			}
+
+			// Buat mapping data invoice utama
+			const invMap = {};
+			allHistoryData.forEach(inv => {
+				invMap[inv.invoice_no] = inv;
+			});
+
+			let csvRows = [];
+			
+			// Header Kolom Rinci (Menggunakan titik koma ';' agar otomatis terpisah di Excel Indonesia)
+			csvRows.push([
+				"No Invoice", 
+				"Tanggal Nota", 
+				"Pelanggan / Agen", 
+				"Nama Barang / Keterangan", 
+				"Qty", 
+				"Satuan", 
+				"Tujuan", 
+				"Harga Satuan", 
+				"Total Harga Item", 
+				"Subtotal Nota", 
+				"Total Deposit Nota", 
+				"Sisa Tagihan Nota"
+			].join(";"));
+
+			if (allItems.length > 0) {
+				allItems.forEach(item => {
+					const parentInv = invMap[item.invoice_no] || {};
+					const invNo = `"${(item.invoice_no || '').replace(/"/g, '""')}"`;
+					const tgl = `"${formatCustomDate(item.tanggal || parentInv.created_at)}"`;
+					const cust = `"${(parentInv.customer_name || '').replace(/"/g, '""')}"`;
+					const prodName = `"${(item.product_name || '').replace(/"/g, '""')}" ${(item.keterangan ? ' - ' + item.keterangan : '')}`;
+					const qty = item.qty || 0;
+					const unit = `"${(item.unit || '').replace(/"/g, '""')}"`;
+					const tujuan = `"${(item.destination || '').replace(/"/g, '""')}"`;
+					const price = item.price || 0;
+					const totalItem = item.total || 0;
+					const subtotalNota = parentInv.subtotal || 0;
+					const depositNota = parentInv.deposit || 0;
+					const balanceNota = parentInv.balance_due || 0;
+
+					csvRows.push([
+						invNo, tgl, cust, prodName, qty, unit, tujuan, price, totalItem, subtotalNota, depositNota, balanceNota
+					].join(";"));
+				});
+			} else {
+				// Fallback jika offline / item kosong
+				allHistoryData.forEach(inv => {
+					const invNo = `"${(inv.invoice_no || '').replace(/"/g, '""')}"`;
+					const date = `"${formatCustomDate(inv.created_at)}"`;
+					const cust = `"${(inv.customer_name || '').replace(/"/g, '""')}"`;
+					csvRows.push([
+						invNo, date, cust, "Ringkasan Nota", 1, "-", "-", inv.subtotal, inv.subtotal, inv.subtotal, inv.deposit, inv.balance_due
+					].join(";"));
+				});
+			}
+
+			// Tambahkan BOM (\uFEFF) di awal agar Excel membaca teks UTF-8 dengan sempurna tanpa berantakan
+			const csvContent = "\uFEFF" + csvRows.join("\n");
+
+			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.setAttribute("href", url);
+			
+			const todayStr = new Date().toISOString().split('T')[0];
+			link.setAttribute("download", `Rincian_Riwayat_Invoice_SBR_${todayStr}.csv`);
+			
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+
+			closePopup();
+			showSuccessPopup("Berhasil Ekspor Rinci!", "File CSV rincian barang berhasil diunduh dan tersusun rapi di kolom Excel.");
+
+		} catch (err) {
+			closePopup();
+			showWarningPopup("Gagal Ekspor", err.message);
+		}
+	}
+	
 </script>
 
 <!-- Modal Bersihkan Data Lama -->
