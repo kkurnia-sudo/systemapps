@@ -278,7 +278,10 @@
 <div class="container" id="invoiceContainer">
     <!-- TOMBOL ATAS DENGAN TOMBOL TEMA MINIMALIS & INTERAKTIF -->
     <div class="top-actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 16px; align-items: center;">
-        <button class="btn btn-top-history" onclick="openHistoryModal()" title="Riwayat Invoice">
+        <button class="btn btn-top-data" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);" onclick="openQuickPayModal()" title="Bayar Cepat / Quick Pay">
+			<svg class="humbleicons hi-currency-dollar" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.5 10-.035-.139A2.457 2.457 0 0 0 12.082 8h-.522a1.841 1.841 0 0 0-.684 3.55l2.248.9A1.841 1.841 0 0 1 12.44 16h-.521a2.457 2.457 0 0 1-2.384-1.861L9.5 14M12 6v2m0 8v2"/></svg> Quick Pay
+		</button>
+		<button class="btn btn-top-history" onclick="openHistoryModal()" title="Riwayat Invoice">
             <svg class="humbleicons hi-history" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7.5v5l4 1M4.252 5v4H8M5.07 8a8 8 0 1 1-.818 6"/></svg>
         </button>
         <button class="btn btn-top-print" onclick="window.print()" title="Cetak / Print PDF">
@@ -372,7 +375,7 @@
 </div>
 
 <!-- Modal Pratinjau Invoice -->
-<div class="modal" id="previewModal" style="z-index: 1300;">
+<div class="modal" id="previewModal" style="z-index: 1600;">
     <div class="modal-content" style="max-width: 650px; background: #f8fafc;">
         <div class="modal-header">
             <h3 style="font-size: 16px; font-weight: 600; color: #000;">Pratinjau Rincian Pembayaran</h3>
@@ -515,21 +518,6 @@
 			<button class="btn btn-outline" onclick="toggleModal('historyModal')" style="margin-left: auto;">Kembali</button>
 		</div>
 	</div>
-</div>
-
-<!-- Modal Aksi Riwayat Invoice -->
-<div class="modal" id="invoiceActionModal" style="z-index: 1400;">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <div class="modal-header" style="justify-content: center; border-bottom: none; margin-bottom: 10px;">
-            <h3 style="font-size: 18px; font-weight: 600;">Opsi Invoice <span id="actionInvoiceNo" style="color: var(--primary);"></span></h3>
-        </div>
-        <p style="margin-bottom: 24px; font-size: 13px; color: var(--text-muted);">Pilih aksi yang ingin dilakukan pada invoice ini.</p>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            <button class="btn btn-primary" onclick="executeInvoiceAction('edit')" style="width: 100%; justify-content: center;">✏️ Edit Invoice</button>
-            <button class="btn btn-secondary" onclick="executeInvoiceAction('preview')" style="width: 100%; justify-content: center;">👀 Pratinjau Invoice</button>
-            <button class="btn btn-outline" onclick="toggleModal('invoiceActionModal')" style="width: 100%; justify-content: center;">Kembali</button>
-        </div>
-    </div>
 </div>
 
 <!-- Modal Deposit -->
@@ -1046,7 +1034,7 @@
             const balanceColor = isLunas ? 'var(--primary)' : 'inherit';
             
             return `<tr>
-                <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="openInvoiceActionModal('${inv.invoice_no}')">${inv.invoice_no}</span></td>
+                <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="previewInvoiceFromHistory('${inv.invoice_no}')">${inv.invoice_no}</span></td>
                 <td class="text-center">${formatCustomDate(inv.created_at)}</td>
                 <td>${inv.customer_name}</td>
                 <td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
@@ -2022,6 +2010,153 @@
             showWarningPopup("Gagal Menyimpan", error.message); 
         }
     }
+	
+	// ==========================================
+	// FITUR QUICK PAY
+	// ==========================================
+	let qpSelectedInvoice = null;
+
+	function openQuickPayModal() {
+		// Reset Form
+		document.getElementById('qpInvoiceInfo').style.display = 'none';
+		document.getElementById('qpFormArea').style.display = 'none';
+		document.getElementById('qpNoDataMsg').style.display = 'none';
+		document.getElementById('btnProsesQP').disabled = true;
+		document.getElementById('qpKet').value = '';
+		document.getElementById('qpNominal').value = '';
+		qpSelectedInvoice = null;
+		
+		// Render Dropdown Agen
+		let options = '<option value="">-- Pilih Agen --</option>';
+		[...customers].sort((a,b)=>a.name.localeCompare(b.name)).forEach(c => { 
+			options += `<option value="${c.name}">${c.name}</option>`; 
+		});
+		document.getElementById('qpCustomer').innerHTML = options;
+		
+		toggleModal('quickPayModal');
+	}
+
+	async function onQPCustomerChange() {
+		const custName = document.getElementById('qpCustomer').value;
+		if (!custName) {
+			document.getElementById('qpInvoiceInfo').style.display = 'none';
+			document.getElementById('qpFormArea').style.display = 'none';
+			document.getElementById('qpNoDataMsg').style.display = 'none';
+			return;
+		}
+		
+		showLoadingPopup("Mencari tagihan terbaru...");
+		try {
+			// Cari invoice terbaru dari agen ini
+			const { data, error } = await supabaseClient
+				.from('invoices')
+				.select('*')
+				.eq('customer_name', custName)
+				.order('created_at', { ascending: false })
+				.limit(1);
+				
+			closePopup();
+			
+			if (data && data.length > 0) {
+				const inv = data[0];
+				qpSelectedInvoice = inv;
+				
+				// Cek apakah invoice terakhir sudah lunas
+				if (parseFloat(inv.balance_due) <= 0) {
+					document.getElementById('qpInvoiceInfo').style.display = 'none';
+					document.getElementById('qpFormArea').style.display = 'none';
+					document.getElementById('qpNoDataMsg').style.display = 'block';
+					document.getElementById('qpNoDataMsg').innerText = `Invoice terbaru (${inv.invoice_no}) sudah LUNAS.`;
+					document.getElementById('btnProsesQP').disabled = true;
+				} else {
+					document.getElementById('qpInvoiceInfo').style.display = 'block';
+					document.getElementById('qpFormArea').style.display = 'block';
+					document.getElementById('qpNoDataMsg').style.display = 'none';
+					
+					document.getElementById('qpInvoiceNo').innerText = inv.invoice_no;
+					document.getElementById('qpTotalTagihan').innerText = formatMoney(inv.subtotal);
+					document.getElementById('qpSisaTagihan').innerText = formatMoney(inv.balance_due);
+					
+					// Auto-fill nominal dengan sisa tagihan
+					document.getElementById('qpNominal').value = new Intl.NumberFormat('id-ID').format(inv.balance_due);
+					document.getElementById('btnProsesQP').disabled = false;
+				}
+			} else {
+				document.getElementById('qpInvoiceInfo').style.display = 'none';
+				document.getElementById('qpFormArea').style.display = 'none';
+				document.getElementById('qpNoDataMsg').style.display = 'block';
+				document.getElementById('qpNoDataMsg').innerText = "Belum ada riwayat invoice untuk agen ini.";
+				document.getElementById('btnProsesQP').disabled = true;
+			}
+		} catch (err) {
+			closePopup();
+			showWarningPopup("Error", err.message);
+		}
+	}
+
+	async function processQuickPay() {
+		if (!qpSelectedInvoice) return;
+		
+		const nominal = getCleanNumber('qpNominal');
+		const ket = document.getElementById('qpKet').value.trim() || 'Pembayaran/Cicilan';
+		
+		if (nominal <= 0) {
+			return showWarningPopup("Peringatan", "Nominal bayar tidak boleh kosong atau 0!");
+		}
+		
+		showLoadingPopup("Menyimpan Pembayaran...");
+		
+		const invoiceNo = qpSelectedInvoice.invoice_no;
+		const currentDeposit = parseFloat(qpSelectedInvoice.deposit) || 0;
+		const currentSubtotal = parseFloat(qpSelectedInvoice.subtotal) || 0;
+		
+		const newDepositTotal = currentDeposit + nominal;
+		const newBalanceDue = currentSubtotal - newDepositTotal;
+		const today = new Date().toISOString().split('T')[0];
+
+		try {
+			if(isSupabaseConnected) {
+				// 1. Update total pembayaran di tabel Invoices
+				await supabaseClient.from('invoices')
+					.update({ 
+						deposit: newDepositTotal, 
+						balance_due: newBalanceDue 
+					})
+					.eq('invoice_no', invoiceNo);
+					
+				// 2. Tambahkan rincian deposit ke tabel invoice_items
+				await supabaseClient.from('invoice_items')
+					.insert([{ 
+						invoice_no: invoiceNo, 
+						tanggal: today, 
+						product_id: 'DEPOSIT', 
+						product_name: ket, 
+						qty: 1, 
+						unit: 'DEPOSIT', 
+						destination: '', 
+						price: nominal, 
+						total: nominal, 
+						keterangan: '' 
+					}]);
+					
+				// 3. Update saldo piutang di state UI
+				customerBalances[qpSelectedInvoice.customer_name] = newBalanceDue;
+			}
+			
+			toggleModal('quickPayModal');
+			
+			// Render ulang manajemen data dan history agar selalu sinkron
+			renderDataManagement();
+			await fetchHistoryDataSilent();
+			
+			// 4. Langsung otomatis buka mode Pratinjau untuk dicetak/dikirim ke agen!
+			previewInvoiceFromHistory(invoiceNo);
+			
+		} catch (err) {
+			closePopup();
+			showWarningPopup("Gagal Menyimpan", err.message);
+		}
+	}		
 </script>
 
 <!-- Modal Bersihkan Data Lama -->
@@ -2038,6 +2173,61 @@
         </div>
     </div>
 </div>
+<!-- Modal Quick Pay -->
+<div class="modal" id="quickPayModal" style="z-index: 1300;">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3 style="font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                <span style="background: rgba(16, 185, 129, 0.15); padding: 6px; border-radius: 8px; color: var(--primary);">⚡</span> Quick Pay
+            </h3>
+            <button class="close-modal" onclick="toggleModal('quickPayModal')">&times;</button>
+        </div>
+        
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Bayar cepat untuk invoice terakhir yang belum lunas tanpa perlu membuka mode edit.</p>
+        
+        <div class="form-group">
+            <label>Pilih Nama Agen / Pelanggan</label>
+            <select id="qpCustomer" onchange="onQPCustomerChange()">
+                <option value="">-- Pilih Agen --</option>
+            </select>
+        </div>
+        
+        <!-- Info Invoice Terakhir -->
+        <div id="qpInvoiceInfo" style="display: none; background: var(--bg-body); padding: 16px; border-radius: 12px; margin: 16px 0; border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">
+                <span style="font-size: 13px; color: var(--text-muted);">No. Invoice</span>
+			<strong id="qpInvoiceNo" style="color: var(--primary); cursor: pointer; text-decoration: underline;" onclick="previewInvoiceFromHistory(qpSelectedInvoice.invoice_no)" title="Klik untuk melihat rincian nota"></strong>            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="font-size: 13px;">Total Pesanan</span>
+                <span id="qpTotalTagihan" style="font-size: 13px; font-style: italic;"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color);">
+                <span style="font-size: 14px; font-weight: 600;">Sisa Tagihan</span>
+                <span id="qpSisaTagihan" style="font-size: 16px; font-weight: 700; color: var(--danger);"></span>
+            </div>
+        </div>
+        
+        <!-- Form Input Pembayaran -->
+        <div id="qpFormArea" style="display: none;">
+            <div class="form-group">
+                <label>Nominal Pembayaran (Rp)</label>
+                <input type="text" id="qpNominal" oninput="formatRibuanInput(this)" style="font-size: 16px; font-weight: 600; color: var(--primary);">
+            </div>
+            <div class="form-group">
+                <label>Keterangan (Opsional)</label>
+                <input type="text" id="qpKet" placeholder="Cth: Transfer BCA, Cash, dsb...">
+            </div>
+        </div>
 
+        <div id="qpNoDataMsg" style="display: none; padding: 16px; background: rgba(245, 158, 11, 0.1); color: #b45309; border-radius: 8px; text-align: center; font-size: 13px; font-weight: 500; margin-top: 16px;">
+            Agen ini tidak memiliki tagihan (Sudah Lunas).
+        </div>
+
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-outline" onclick="toggleModal('quickPayModal')">Batal</button>
+            <button class="btn btn-primary" id="btnProsesQP" onclick="processQuickPay()" disabled>💾 Simpan & Pratinjau</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
