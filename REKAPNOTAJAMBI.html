@@ -1330,11 +1330,24 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             const custNameRaw = element.dataset.cust || 'Nota';
             const custName = custNameRaw.replace(/[^a-zA-Z0-9]/g, '_');
             
-            html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+            // --- PERBAIKAN: Membuat clone elemen agar tidak terpotong efek scroll ---
+            const clone = element.cloneNode(true);
+            clone.style.position = 'absolute';
+            clone.style.left = '-9999px'; // Sembunyikan elemen dari layar agar tidak mengganggu
+            clone.style.top = '0';
+            clone.style.width = '800px';  // Kunci lebar agar tampilan rapi
+            clone.style.height = 'auto';  // Biarkan tinggi menyesuaikan seluruh isi nota
+            clone.style.overflow = 'visible'; // Hilangkan efek scroll (tampilkan semua isi)
+            document.body.appendChild(clone);
+            
+            html2canvas(clone, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `${invNum}_${custName}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
+                
+                // Hapus elemen clone setelah gambar selesai diproses
+                document.body.removeChild(clone);
             });
         }
 
