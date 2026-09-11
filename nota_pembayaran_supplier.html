@@ -292,8 +292,16 @@
         <div class="customer-info-grid">
             <div class="form-group"><label>Nomor Rekap</label><input type="text" id="invoiceNumber" readonly style="font-weight: 600; letter-spacing: 0.5px; color: var(--primary);"></div>
             <div class="form-group"><label>Tanggal Kirim</label><input type="date" id="deliveryDate"></div>
-            <div class="form-group"><label>Nama Supplier</label><select id="custName" onchange="autoFillCustomer()"><option value="">-- Pilih Supplier --</option></select></div>
-        </div>
+            <div class="form-group">
+			<label>Nama Supplier</label>
+			<select id="custName" onchange="autoFillCustomer()">
+				<option value="">-- Pilih Supplier --</option>
+			</select>
+			<!-- Tombol Bayar Cepat (Hidden by default) -->
+			<button id="btnQuickPay" class="btn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; font-size: 13px; font-weight: 600;" onclick="openQuickPayModal()">
+				⚡ Bayar Cepat Tagihan
+			</button>
+		</div>
     </div>
 
     <div class="card" style="margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none;">
@@ -407,6 +415,31 @@
     </div>
 </div>
 
+
+<div class="modal" id="quickPayModal" style="z-index: 1250;">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 style="font-size: 16px; font-weight: 600;">⚡ Bayar Cepat Tagihan</h3>
+            <button class="close-modal" onclick="toggleModal('quickPayModal')">&times;</button>
+        </div>
+        <div class="alert" style="display: block; background-color: #eff6ff; color: #1e3a8a; border-color: #bfdbfe; margin-bottom: 16px;">
+            Sisa Hutang Saat Ini: <b id="qpCurrentDebt">Rp 0</b>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label>Keterangan Pembayaran</label>
+            <input type="text" id="qpKet" value="Pembayaran Tagihan">
+        </div>
+        <div class="form-group">
+            <label>Nominal Bayar (Rp)</label>
+            <input type="text" id="qpNom" placeholder="0" oninput="formatRibuanInput(this)">
+        </div>
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-outline" onclick="toggleModal('quickPayModal')">Batal</button>
+            <button class="btn btn-primary" onclick="prosesQuickPay()">Proses & Cetak Nota</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal" id="historyModal">
     <div class="modal-content" style="max-width: 850px;">
         <div class="modal-header">
@@ -421,7 +454,7 @@
             </div>
         </div>
 
-        <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Klik pada <b>Nomor Rekap</b> untuk melihat opsi pratinjau atau mengedit kembali.</p>
+        <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">Klik pada <b>Nomor Rekap</b> untuk melihat pratinjau.</p>
         
         <div class="table-wrapper" style="margin: 0; border: none; max-height: 380px; overflow-y: auto;">
             <table style="width: 100%;">
@@ -430,22 +463,17 @@
             </table>
         </div>
         
+        <!-- Kontrol Pagination Baru -->
+        <div id="paginationControls" style="display: none; justify-content: space-between; align-items: center; margin-top: 16px; font-size: 13px;">
+            <div id="pageInfo" style="font-weight: 500; color: var(--text-muted);">Halaman 1 dari 1</div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-outline" id="btnPrevPage" onclick="changePage(-1)" style="padding: 6px 12px;">Sebelumnya</button>
+                <button class="btn btn-outline" id="btnNextPage" onclick="changePage(1)" style="padding: 6px 12px;">Selanjutnya</button>
+            </div>
+        </div>
+        
         <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
             <button class="btn btn-outline" onclick="toggleModal('historyModal')">Kembali</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal" id="invoiceActionModal" style="z-index: 1400;">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <div class="modal-header" style="justify-content: center; border-bottom: none; margin-bottom: 10px;">
-            <h3 style="font-size: 18px; font-weight: 600;">Opsi Rekap <span id="actionInvoiceNo" style="color: var(--primary);"></span></h3>
-        </div>
-        <p style="margin-bottom: 24px; font-size: 13px; color: var(--text-muted);">Pilih aksi yang ingin dilakukan pada rekap ini.</p>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            <button class="btn btn-primary" onclick="executeInvoiceAction('edit')" style="width: 100%; justify-content: center;">✏️ Edit Rekap</button>
-            <button class="btn btn-secondary" onclick="executeInvoiceAction('preview')" style="width: 100%; justify-content: center;">👀 Pratinjau Rekap</button>
-            <button class="btn btn-outline" onclick="toggleModal('invoiceActionModal')" style="width: 100%; justify-content: center;">Kembali</button>
         </div>
     </div>
 </div>
@@ -530,6 +558,9 @@
     let products = [];
     let customerBalances = {};
     let allHistoryData = [];
+	let currentPage = 1;
+	const itemsPerPage = 10; // Silakan ubah jika ingin menampilkan lebih dari 10 data per halaman
+	let filteredHistoryData = [];
 
     let currentCustomerId = null; 
     let activeTabType = 'customer'; 
@@ -540,6 +571,8 @@
     let depositList = [];
     let editingDepositIndex = -1;
     let currentPiutang = 0; // Menyimpan histori tagihan (positif = hutang, negatif = deposit)
+	// Tambahkan ini di jajaran variabel global (misal di bawah let currentPiutang = 0;)
+	let currentLastInvoiceNo = null;
 
     let isEditingMode = false;
     let originalEditingInvoiceNo = null;
@@ -679,18 +712,23 @@
         }
     }
 
-    async function fetchPreviousBalance(customerName) {
-        if(!isSupabaseConnected) return 0;
-        try {
-            const { data, error } = await supabaseClient.from('supplier_recaps').select('balance_due').eq('customer_name', customerName).order('created_at', { ascending: false }).limit(1);
-            if (!error && data && data.length > 0) {
-                const latestBal = parseFloat(data[0].balance_due) || 0;
-                customerBalances[customerName] = latestBal;
-                return latestBal;
-            }
-        } catch (err) {} 
-        return customerBalances[customerName] !== undefined ? customerBalances[customerName] : 0;
-    }
+    // Ganti fungsi fetchPreviousBalance yang lama dengan ini:
+	async function fetchPreviousBalance(customerName) {
+		if(!isSupabaseConnected) return 0;
+		try {
+			// PERUBAHAN: Tambahkan 'invoice_no' pada query select
+			const { data, error } = await supabaseClient.from('supplier_recaps').select('balance_due, invoice_no').eq('customer_name', customerName).order('created_at', { ascending: false }).limit(1);
+			if (!error && data && data.length > 0) {
+				const latestBal = parseFloat(data[0].balance_due) || 0;
+				customerBalances[customerName] = latestBal;
+				currentLastInvoiceNo = data[0].invoice_no; // Simpan nomor nota terakhir ke memori
+				return latestBal;
+			}
+		} catch (err) {} 
+		
+		currentLastInvoiceNo = null;
+		return customerBalances[customerName] !== undefined ? customerBalances[customerName] : 0;
+	}
 
     function formatMoney(amount) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount); }
     function formatRibuanInput(input) { let v = input.value.replace(/\D/g, ''); input.value = v !== '' ? new Intl.NumberFormat('id-ID').format(v) : ''; }
@@ -698,17 +736,18 @@
     function toggleModal(id) { document.getElementById(id).classList.toggle('active'); }
     
     function tutupPratinjauKeEdit() {
-        document.getElementById('previewModal').classList.remove('active');
-        
-        const historyModal = document.getElementById('historyModal');
-        if(historyModal) historyModal.classList.remove('active');
-        
-        const actionModal = document.getElementById('invoiceActionModal');
-        if(actionModal) actionModal.classList.remove('active');
-        
-        // Scroll kembali ke atas dengan mulus
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+		const invoiceNo = document.getElementById('prevInvNo').innerText; // Mengambil ID dari layar pratinjau
+		
+		document.getElementById('previewModal').classList.remove('active');
+		const historyModal = document.getElementById('historyModal');
+		if(historyModal) historyModal.classList.remove('active');
+		
+		// Langsung muat data rekap tersebut ke mode Edit
+		loadInvoiceForEdit(invoiceNo); 
+		
+		// Scroll kembali ke atas dengan mulus
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	}
     
     async function openHistoryModal() {
         toggleModal('historyModal');
@@ -717,46 +756,80 @@
     }
 
     async function fetchHistoryDataSilent() {
-        const tbody = document.getElementById('historyTableBody');
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">⏳ Mengambil data...</td></tr>';
-        if(!isSupabaseConnected) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Mode simulasi.</td></tr>'; return; }
-        try {
-            const { data, error } = await supabaseClient.from('supplier_recaps').select('*').order('created_at', { ascending: false });
-            if (error) throw error;
-            allHistoryData = data || [];
-            renderHistoryTable(allHistoryData);
-        } catch (err) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Gagal memuat.</td></tr>`; }
-    }
+		const tbody = document.getElementById('historyTableBody');
+		tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">⏳ Mengambil data...</td></tr>';
+		if(!isSupabaseConnected) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Mode simulasi.</td></tr>'; return; }
+		try {
+			const { data, error } = await supabaseClient.from('supplier_recaps').select('*').order('created_at', { ascending: false });
+			if (error) throw error;
+			allHistoryData = data || [];
+			filteredHistoryData = [...allHistoryData];
+			currentPage = 1; // Reset ke halaman 1 saat memuat ulang
+			renderHistoryTable();
+		} catch (err) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Gagal memuat.</td></tr>`; }
+	}
 
-    function renderHistoryTable(data) {
-        const tbody = document.getElementById('historyTableBody');
-        if (!data || data.length === 0) { 
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Belum ada riwayat.</td></tr>'; 
-            return; 
-        }
-        tbody.innerHTML = data.map(inv => `<tr>
-            <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="openInvoiceActionModal('${inv.invoice_no}')">${inv.invoice_no}</span></td>
-            <td class="text-center">${formatCustomDate(inv.created_at)}</td>
-            <td>${inv.customer_name}</td>
-            <td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
-            <td class="text-right" style="color:var(--danger); font-style: italic;">${formatMoney(inv.deposit)}</td>
-            <td class="text-right" style="font-weight:600; font-style: italic;">${formatMoney(inv.balance_due)}</td>
-            <td class="text-center"><button class="btn-icon-danger" onclick="deleteInvoice('${inv.invoice_no}')">🗑️</button></td>
-        </tr>`).join('');
-    }
+    function renderHistoryTable() {
+		const tbody = document.getElementById('historyTableBody');
+		const paginationControls = document.getElementById('paginationControls');
+		
+		if (!filteredHistoryData || filteredHistoryData.length === 0) { 
+			tbody.innerHTML = '<tr><td colspan="7" class="text-center">Belum ada riwayat.</td></tr>'; 
+			paginationControls.style.display = 'none';
+			return; 
+		}
+
+		paginationControls.style.display = 'flex';
+		
+		// Perhitungan Pagination
+		const totalPages = Math.ceil(filteredHistoryData.length / itemsPerPage);
+		if(currentPage < 1) currentPage = 1;
+		if(currentPage > totalPages) currentPage = totalPages;
+		
+		const startIndex = (currentPage - 1) * itemsPerPage;
+		const pageData = filteredHistoryData.slice(startIndex, startIndex + itemsPerPage);
+
+		// Render Data (Perhatikan bagian onclick sekarang langsung diarahkan ke previewInvoiceFromHistory)
+		tbody.innerHTML = pageData.map(inv => `<tr>
+			<td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="previewInvoiceFromHistory('${inv.invoice_no}')">${inv.invoice_no}</span></td>
+			<td class="text-center">${formatCustomDate(inv.created_at)}</td>
+			<td>${inv.customer_name}</td>
+			<td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
+			<td class="text-right" style="color:var(--danger); font-style: italic;">${formatMoney(inv.deposit)}</td>
+			<td class="text-right" style="font-weight:600; font-style: italic;">${formatMoney(inv.balance_due)}</td>
+			<td class="text-center"><button class="btn-icon-danger" onclick="deleteInvoice('${inv.invoice_no}')">🗑️</button></td>
+		</tr>`).join('');
+
+		// Update info halaman dan status tombol
+		document.getElementById('pageInfo').innerText = `Halaman ${currentPage} dari ${totalPages}`;
+		
+		const btnPrev = document.getElementById('btnPrevPage');
+		const btnNext = document.getElementById('btnNextPage');
+		
+		btnPrev.disabled = currentPage === 1;
+		btnNext.disabled = currentPage === totalPages;
+		btnPrev.style.opacity = currentPage === 1 ? '0.5' : '1';
+		btnNext.style.opacity = currentPage === totalPages ? '0.5' : '1';
+	}
+
+	function changePage(direction) {
+		currentPage += direction;
+		renderHistoryTable();
+	}
 
     function filterHistoryTable() {
-        const keyword = document.getElementById('filterGlobal').value.toLowerCase().trim();
-        const filtered = allHistoryData.filter(inv => {
-            const invNoMatch = (inv.invoice_no || '').toLowerCase().includes(keyword);
-            const dateFormatted = formatCustomDate(inv.created_at).toLowerCase();
-            const rawDate = (inv.created_at || '').toLowerCase();
-            const dateMatch = dateFormatted.includes(keyword) || rawDate.includes(keyword);
-            const nameMatch = (inv.customer_name || '').toLowerCase().includes(keyword);
-            return invNoMatch || dateMatch || nameMatch;
-        });
-        renderHistoryTable(filtered);
-    }
+		const keyword = document.getElementById('filterGlobal').value.toLowerCase().trim();
+		filteredHistoryData = allHistoryData.filter(inv => {
+			const invNoMatch = (inv.invoice_no || '').toLowerCase().includes(keyword);
+			const dateFormatted = formatCustomDate(inv.created_at).toLowerCase();
+			const rawDate = (inv.created_at || '').toLowerCase();
+			const dateMatch = dateFormatted.includes(keyword) || rawDate.includes(keyword);
+			const nameMatch = (inv.customer_name || '').toLowerCase().includes(keyword);
+			return invNoMatch || dateMatch || nameMatch;
+		});
+		currentPage = 1; // Reset halaman ke 1 saat melakukan pencarian
+		renderHistoryTable();
+	}
 
     function openInvoiceActionModal(invoiceNo) {
         selectedActionInvoice = invoiceNo;
@@ -1195,6 +1268,20 @@
                 addRow(); 
             }
             calculate();
+			// --- KODE BARU UNTUK QUICK PAY ---
+			const btnQuickPay = document.getElementById('btnQuickPay');
+			if (btnQuickPay) {
+				// Munculkan tombol jika ada hutang (currentPiutang > 0)
+				if (currentPiutang > 0) {
+					btnQuickPay.style.display = 'flex';
+				} else {
+					btnQuickPay.style.display = 'none';
+				}
+			}
+		} else {
+			// Jika sedang mode edit nota lama, sembunyikan tombol quick pay
+			const btnQuickPay = document.getElementById('btnQuickPay');
+			if(btnQuickPay) btnQuickPay.style.display = 'none';
         }
     }
 
@@ -1489,6 +1576,96 @@
             showWarningPopup("Gagal Menyimpan", error.message); 
         }
     }
+	
+	function openQuickPayModal() {
+		if(!currentCustomerId) return;
+		
+		const qpDebtEl = document.getElementById('qpCurrentDebt');
+		
+		// PERUBAHAN: Buat nominal jadi link/bisa diklik jika ada nomor nota sebelumnya
+		if (currentLastInvoiceNo) {
+			qpDebtEl.innerHTML = `<span style="text-decoration: underline; cursor: pointer; color: #2563eb;" title="Klik untuk lihat pratinjau nota terakhir" onclick="previewInvoiceFromHistory('${currentLastInvoiceNo}')">${formatMoney(currentPiutang)} <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></span>`;
+		} else {
+			qpDebtEl.innerText = formatMoney(currentPiutang);
+		}
+		
+		document.getElementById('qpKet').value = 'Pembayaran Tagihan';
+		document.getElementById('qpNom').value = '';
+		toggleModal('quickPayModal');
+	}
+
+async function prosesQuickPay() {
+    const nominal = getCleanNumber('qpNom');
+    const ket = document.getElementById('qpKet').value || 'Pembayaran Tagihan';
+    
+    if (nominal <= 0) {
+        return showWarningPopup("Peringatan", "Nominal pembayaran tidak boleh kosong.");
+    }
+
+    const customer = customers.find(c => c.id === currentCustomerId);
+    const deliveryDateVal = document.getElementById('deliveryDate').value; // Mengambil tanggal hari ini dari form utama
+    
+    // Generate Nomor Faktur Khusus Pembayaran
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    const newInvoiceNo = 'PYM.SBR' + randomNum;
+    
+    const balanceDueDB = currentPiutang - nominal;
+
+    const itemsPayload = [{
+        invoice_no: newInvoiceNo, 
+        tanggal: deliveryDateVal, 
+        product_id: 'DEPOSIT', 
+        product_name: ket, 
+        qty: 1, 
+        unit: 'DEPOSIT', 
+        destination: '-', 
+        price: nominal, 
+        total: nominal
+    }];
+
+    showLoadingPopup("Memproses Pembayaran Cepat...");
+    
+    if (!isSupabaseConnected) {
+        setTimeout(() => {
+            showSuccessPopup("Berhasil!", `Nota ${newInvoiceNo} telah diterbitkan.`);
+            toggleModal('quickPayModal');
+            buatInvoiceBaru(); // reset main form
+        }, 600);
+        return;
+    }
+
+    try {
+        // Simpan rekap baru (hanya nominal deposit/bayar) ke Supabase
+        await supabaseClient.from('supplier_recaps').insert([{ 
+            invoice_no: newInvoiceNo, 
+            customer_name: customer.name, 
+            customer_phone: customer.phone || "-", 
+            customer_address: customer.address || "-", 
+            subtotal: 0, 
+            deposit: nominal, 
+            balance_due: balanceDueDB 
+        }]);
+        
+        await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
+        
+        showSuccessPopup("Berhasil!", `Nota ${newInvoiceNo} telah diterbitkan.`);
+        toggleModal('quickPayModal');
+        buatInvoiceBaru(); // Reset layar belakang biar bersih
+        
+        // Refresh data riwayat belakang layar
+        await fetchHistoryDataSilent();
+        
+        // Langsung tembak pratinjau nota yang baru saja dibuat
+        setTimeout(() => {
+            previewInvoiceFromHistory(newInvoiceNo);
+        }, 800);
+
+    } catch (error) {
+        closePopup();
+        showWarningPopup("Gagal Memproses", error.message);
+    }
+}
+	
 </script>
 
 </body>
