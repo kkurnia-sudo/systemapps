@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rekap Nota - SBR Putra Food (Cabang Jambi)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -43,7 +44,14 @@
 		body.dark-mode .bg-orange-50 { background-color: #431407 !important; color: #fdba74 !important; border-color: #9a3412 !important; }
 		body.dark-mode .bg-blue-50 { background-color: #1e3a8a !important; color: #bfdbfe !important; border-color: #1d4ed8 !important; }
 		body.dark-mode .modal-enter > div { background-color: #1e293b; border: 1px solid #334155; }
-	
+		
+		body.dark-mode #section-analytics h2, 
+		body.dark-mode #section-analytics p { color: #f8fafc; }
+		
+		body.dark-mode .apexcharts-tooltip { background: #1e293b; border-color: #334155; color: #f8fafc; }
+		body.dark-mode .apexcharts-tooltip-title { background: #0f172a; border-bottom: 1px solid #334155; }
+		body.dark-mode .apexcharts-legend-text { color: #cbd5e1 !important; }
+		
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
         
@@ -113,6 +121,10 @@
 			</button>
 			<button onclick="switchTab('history')" id="tab-history" class="py-2.5 px-1 md:px-6 rounded-xl text-[11px] md:text-sm transition-all duration-200 tab-inactive flex items-center justify-center gap-1.5 md:gap-2 leading-tight">
 				<i class="fas fa-database"></i> Riwayat Database
+			</button>
+			<!-- Tab: ANALISA DATA -->
+			<button onclick="switchTab('analytics')" id="tab-analytics" class="py-2.5 px-1 md:px-6 rounded-xl text-[11px] md:text-sm transition-all duration-200 tab-inactive flex items-center justify-center gap-1.5 md:gap-2 leading-tight">
+				<i class="fas fa-chart-pie"></i> Analisa Data
 			</button>
 			<!-- Tab: PENGATURAN -->
 			<button onclick="switchTab('settings')" id="tab-settings" class="py-2.5 px-1 md:px-6 rounded-xl text-[11px] md:text-sm transition-all duration-200 tab-inactive flex items-center justify-center gap-1.5 md:gap-2 leading-tight">
@@ -325,6 +337,102 @@
 						<tbody id="historyBody" class="text-sm"></tbody>
 					</table>
 				</div>
+			</div>
+		</div>
+		
+		
+		<!-- Section: Analisa Data (Dashboard) -->
+		<div id="section-analytics" class="hide animate-fade-in">
+			
+			<!-- Header & Action Buttons -->
+			<div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+				<div>
+					<h2 class="font-bold text-2xl text-slate-800">Dashboard Analisa</h2>
+					<p class="text-sm text-slate-500">Ringkasan performa data transaksi Jambi</p>
+				</div>
+				
+				<div class="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto">
+					<!-- FILTER PERIODE -->
+					<div class="relative w-full sm:w-48">
+						<select id="analyticsFilter" onchange="loadAnalyticsData()" class="w-full bg-white border border-slate-200 text-slate-700 font-bold py-2.5 pl-4 pr-8 rounded-xl shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 cursor-pointer text-sm transition-all">
+							<option value="this_month" selected>Bulan Ini</option>
+							<option value="last_month">Bulan Lalu</option>
+							<option value="this_year">Tahun Ini</option>
+							<option value="all_time">Semua Waktu</option>
+						</select>
+						<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+							<i class="fas fa-calendar-alt"></i>
+						</div>
+					</div>
+					
+					<!-- GROUP TOMBOL AKSI -->
+					<div class="flex items-center gap-2.5 w-full sm:w-auto">
+						<button onclick="loadAnalyticsData()" class="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-600 hover:text-orange-500 hover:bg-orange-50 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+							<i class="fas fa-sync-alt" id="syncAnalyticsIcon"></i> Segarkan
+						</button>
+						<button id="btnExportDashboard" onclick="downloadDashboardPNG()" class="flex-1 sm:flex-none bg-indigo-50 border border-indigo-200 text-indigo-600 hover:text-white hover:bg-indigo-600 px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+							<i class="fas fa-camera"></i> Simpan PNG
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- AREA TARGET EXPORT PNG -->
+			<div id="dashboardExportArea" class="w-full transition-all relative overflow-hidden">
+				
+				<!-- Grid Cards -->
+				<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+					<!-- Card 1 -->
+					<div class="bg-gradient-to-br from-red-500 to-red-600 rounded-3xl p-5 text-white shadow-lg shadow-red-500/30 relative overflow-hidden flex flex-col justify-between min-h-[120px]">
+						<div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-file-invoice"></i></div>
+						<span class="text-red-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Lembar Nota Belum Lunas</span>
+						<div class="flex items-end gap-1.5 mt-2 relative z-10">
+							<span id="analyticsUnpaidCount" class="text-3xl font-bold tracking-tight">0</span>
+							<span class="text-xs font-medium text-red-100 mb-1.5">Nota</span>
+						</div>
+					</div>
+
+					<!-- Card 2 -->
+					<div class="bg-gradient-to-br from-orange-400 to-orange-500 rounded-3xl p-5 text-white shadow-lg shadow-orange-500/30 relative overflow-hidden flex flex-col justify-between min-h-[120px]">
+						<div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-hand-holding-usd"></i></div>
+						<span class="text-orange-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Total Piutang Berjalan</span>
+						<div class="mt-2 text-xl lg:text-2xl font-bold tracking-tight relative z-10 break-words" id="analyticsUnpaidSum">Rp 0</div>
+					</div>
+
+					<!-- Card 3 -->
+					<div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-5 text-white shadow-lg shadow-emerald-500/30 relative overflow-hidden flex flex-col justify-between min-h-[120px]">
+						<div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-wallet"></i></div>
+						<span class="text-emerald-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Total Omset (Kotor)</span>
+						<div class="mt-2 text-xl lg:text-2xl font-bold tracking-tight relative z-10 break-words" id="analyticsTotalOmset">Rp 0</div>
+					</div>
+
+					<!-- Card 4 -->
+					<div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-5 text-white shadow-lg shadow-blue-500/30 relative overflow-hidden flex flex-col justify-between min-h-[120px]">
+						<div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-box-open"></i></div>
+						<span class="text-blue-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Total Barang Keluar</span>
+						<div class="flex items-end gap-1.5 mt-2 relative z-10">
+							<span id="analyticsTotalItems" class="text-3xl font-bold tracking-tight">0</span>
+							<span class="text-xs font-medium text-blue-100 mb-1.5">Item</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- Container Grafik (Charts) -->
+				<div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+					<!-- Grafik Area Tren Penjualan -->
+					<div class="xl:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
+						<h3 class="font-bold text-slate-800 mb-1">Tren Omset Penjualan</h3>
+						<p class="text-[11px] text-slate-500 mb-4">Pergerakan total penjualan berdasarkan periode yang dipilih</p>
+						<div id="chartTrend" class="w-full h-[280px] flex-1"></div>
+					</div>
+					<!-- Grafik Donut Produk Terlaris -->
+					<div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
+						<h3 class="font-bold text-slate-800 mb-1">Top 5 Produk</h3>
+						<p class="text-[11px] text-slate-500 mb-4">Barang paling banyak keluar (berdasarkan Qty)</p>
+						<div id="chartTopItems" class="w-full h-[280px] flex items-center justify-center flex-1"></div>
+					</div>
+				</div>
+
 			</div>
 		</div>
 
@@ -1719,15 +1827,16 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 			const btnIcon = document.querySelector('#darkModeBtn i');
 			
 			if (document.body.classList.contains('dark-mode')) {
-				btnIcon.classList.remove('fa-moon');
-				btnIcon.classList.add('fa-sun');
-				// Simpan status gelap ke local storage
+				btnIcon.classList.replace('fa-moon', 'fa-sun');
 				localStorage.setItem('theme_jambi', 'dark');
 			} else {
-				btnIcon.classList.remove('fa-sun');
-				btnIcon.classList.add('fa-moon');
-				// Simpan status terang ke local storage
+				btnIcon.classList.replace('fa-sun', 'fa-moon');
 				localStorage.setItem('theme_jambi', 'light');
+			}
+
+			// Refresh chart untuk mengganti warna tema jika tab analytics sedang aktif
+			if (document.getElementById('tab-analytics').classList.contains('tab-active')) {
+				loadAnalyticsData();
 			}
 		}
 		
@@ -2077,7 +2186,280 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 			fetchMasterItems(); // Kembalikan ke tampilan semula jika error
 		}
 	}	
+	
+	
+	// Memasukkan 'analytics' ke dalam daftar tab yang valid di forceSwitchTab
+	const originalForceSwitchTab = forceSwitchTab;
+	forceSwitchTab = function(tab) {
+		['form', 'master', 'history', 'settings', 'analytics'].forEach(t => {
+			const section = document.getElementById(`section-${t}`);
+			const tabBtn = document.getElementById(`tab-${t}`);
+			if(section) section.classList.add('hide');
+			if(tabBtn) tabBtn.classList.replace('tab-active', 'tab-inactive');
+		});
 		
+		const activeSection = document.getElementById(`section-${tab}`);
+		const activeTab = document.getElementById(`tab-${tab}`);
+		if(activeSection) activeSection.classList.remove('hide');
+		if(activeTab) activeTab.classList.replace('tab-inactive', 'tab-active');
+
+		if (tab === 'history') fetchInvoicesFromDB();
+		if (tab === 'master') fetchMasterItems();
+		if (tab === 'analytics') loadAnalyticsData(); // Muat data saat tab diklik
+	};
+
+	let chartTrendInstance = null;
+	let chartTopItemsInstance = null;
+
+	async function loadAnalyticsData() {
+		const syncIcon = document.getElementById('syncAnalyticsIcon');
+		if(syncIcon) syncIcon.classList.add('fa-spin');
+		
+		const filterVal = document.getElementById('analyticsFilter').value;
+		const now = new Date();
+		let startDate, endDate;
+
+		// Logika perhitungan tanggal filter
+		if (filterVal === 'this_month') {
+			startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+			endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+		} else if (filterVal === 'last_month') {
+			startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+			endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+		} else if (filterVal === 'this_year') {
+			startDate = new Date(now.getFullYear(), 0, 1);
+			endDate = new Date(now.getFullYear(), 11, 31);
+		}
+
+		try {
+			// 1. Ambil Data Invoice Berdasarkan Filter Waktu
+			let invoiceQuery = db.from('invoices_jambi').select('invoice_number, invoice_date, grand_total, remaining_amount');
+			
+			if (filterVal !== 'all_time') {
+				const startStr = startDate.toISOString().split('T')[0];
+				const endStr = endDate.toISOString().split('T')[0];
+				invoiceQuery = invoiceQuery.gte('invoice_date', startStr).lte('invoice_date', endStr);
+			}
+			
+			const { data: invoices, error: invError } = await invoiceQuery;
+			if (invError) throw invError;
+
+			let totalOmset = 0;
+			let totalPiutang = 0;
+			let countNotaGantung = 0;
+			let omsetPerDay = {};
+			let validInvoiceNumbers = [];
+
+			if (invoices && invoices.length > 0) {
+				invoices.forEach(inv => {
+					validInvoiceNumbers.push(inv.invoice_number);
+					const grand = Number(inv.grand_total) || 0;
+					const remain = Number(inv.remaining_amount) || 0;
+					const dateStr = inv.invoice_date;
+					
+					totalOmset += grand;
+					if (remain > 0) {
+						totalPiutang += remain;
+						countNotaGantung += 1;
+					}
+
+					// Akumulasi data untuk grafik tren
+					if (!omsetPerDay[dateStr]) omsetPerDay[dateStr] = 0;
+					omsetPerDay[dateStr] += grand;
+				});
+			}
+
+			// 2. Ambil data Items yang berkaitan dengan invoice tersebut (Abaikan Ongkir)
+			let itemsData = [];
+			if (validInvoiceNumbers.length > 0) {
+				// Karena di supabase penggunaan .in() lebih dari batas memori panjang URL bisa menyebabkan error,
+				// Jika datanya sangat besar, lebih aman ambil semua item periode tersebut lalu mapping lokal.
+				const { data: items, error: itemError } = await db.from('invoice_items_jambi')
+					.select('qty, item_name, invoice_number')
+					.not('item_name', 'ilike', '%ongkir%')
+					.in('invoice_number', validInvoiceNumbers);
+				
+				if(!itemError && items) itemsData = items;
+			}
+
+			let totalBarangKeluar = 0;
+			let itemCounts = {};
+
+			itemsData.forEach(item => {
+				const q = Number(item.qty) || 0;
+				totalBarangKeluar += q;
+				
+				const name = item.item_name;
+				if(!itemCounts[name]) itemCounts[name] = 0;
+				itemCounts[name] += q;
+			});
+
+			// 3. Update DOM Cards
+			document.getElementById('analyticsUnpaidCount').innerText = countNotaGantung;
+			document.getElementById('analyticsUnpaidSum').innerText = `Rp ${formatRupiah(totalPiutang)}`;
+			document.getElementById('analyticsTotalOmset').innerText = `Rp ${formatRupiah(totalOmset)}`;
+			document.getElementById('analyticsTotalItems').innerText = formatRupiah(totalBarangKeluar);
+
+			// 4. Render Grafik
+			renderTrendChart(omsetPerDay);
+			renderTopItemsChart(itemCounts);
+
+		} catch (err) {
+			console.error("Gagal memuat data analytics:", err);
+		} finally {
+			if(syncIcon) syncIcon.classList.remove('fa-spin');
+		}
+	}
+	
+	// --- Fungsi Export Dashboard ke PNG ---
+	async function downloadDashboardPNG() {
+		const btn = document.getElementById('btnExportDashboard');
+		const originalHtml = btn.innerHTML;
+		btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+		btn.disabled = true;
+
+		const targetEl = document.getElementById('dashboardExportArea');
+		const isDarkMode = document.body.classList.contains('dark-mode');
+		
+		// 1. Simpan style orisinal layar pengguna
+		const originalWidth = targetEl.style.width;
+		const originalPadding = targetEl.style.padding;
+		const originalBg = targetEl.style.backgroundColor;
+
+		// 2. Paksa ukuran menjadi format Desktop Lebar (Mencegah Rasio 3:4)
+		targetEl.style.width = '1200px'; 
+		targetEl.style.padding = '24px'; 
+		targetEl.style.backgroundColor = isDarkMode ? '#0f172a' : '#f1f5f9';
+
+		// 3. Tambahkan Judul & Kop Laporan dinamis yang hanya muncul di foto
+		const filterText = document.getElementById('analyticsFilter').options[document.getElementById('analyticsFilter').selectedIndex].text;
+		const titleDiv = document.createElement('div');
+		titleDiv.id = 'tempExportTitle';
+		titleDiv.innerHTML = `
+			<div style="margin-bottom: 24px; border-bottom: 2px solid ${isDarkMode ? '#334155' : '#e2e8f0'}; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-end;">
+				<div>
+					<h2 style="font-size: 28px; font-weight: 800; color: ${isDarkMode ? '#f8fafc' : '#ea580c'}; margin:0;">Laporan Analisa - SBR Putra Food</h2>
+					<p style="font-size: 15px; color: ${isDarkMode ? '#94a3b8' : '#64748b'}; margin: 4px 0 0 0; font-weight: 500;">Cabang Jambi</p>
+				</div>
+				<div style="text-align: right;">
+					<p style="font-size: 16px; font-weight: bold; color: ${isDarkMode ? '#f8fafc' : '#0f172a'}; margin:0;">Periode: ${filterText}</p>
+					<p style="font-size: 12px; color: ${isDarkMode ? '#64748b' : '#94a3b8'}; margin: 4px 0 0 0;">Dicetak: ${formatDateID(new Date().toISOString().split('T')[0])}</p>
+				</div>
+			</div>
+		`;
+		targetEl.insertBefore(titleDiv, targetEl.firstChild);
+
+		// 4. Paksa Chart merender ulang menyesuaikan ukuran desktop 1200px (mencegah chart jadi mini)
+		window.dispatchEvent(new Event('resize'));
+		
+		// Tunggu 500ms agar animasi pelebaran chart selesai dirender
+		await new Promise(r => setTimeout(r, 500));
+
+		try {
+			// 5. Eksekusi Screenshot menggunakan library bawaan
+			const canvas = await html2canvas(targetEl, {
+				scale: 2, // Kualitas Resolusi Tinggi
+				useCORS: true,
+				backgroundColor: isDarkMode ? '#0f172a' : '#f1f5f9'
+			});
+
+			// 6. Unduh File
+			const link = document.createElement('a');
+			const dateStr = new Date().toISOString().split('T')[0];
+			link.download = `Dashboard_Jambi_${filterText.replace(/\s/g, '_')}_${dateStr}.png`;
+			link.href = canvas.toDataURL('image/png');
+			link.click();
+		} catch (error) {
+			console.error("Gagal export PNG:", error);
+			alert("Terjadi kesalahan saat menyimpan gambar dashboard.");
+		} finally {
+			// 7. Kembalikan semua tampilan ke ukuran semula setelah foto selesai
+			targetEl.style.width = originalWidth;
+			targetEl.style.padding = originalPadding;
+			targetEl.style.backgroundColor = originalBg;
+			
+			const tempTitle = document.getElementById('tempExportTitle');
+			if (tempTitle) tempTitle.remove();
+
+			// Kembalikan chart ke resolusi normal sesuai device pengguna
+			window.dispatchEvent(new Event('resize'));
+
+			btn.innerHTML = originalHtml;
+			btn.disabled = false;
+		}
+	}
+	
+
+	// Fungsi Render Grafik Garis / Area (Trend)
+	function renderTrendChart(dataObj) {
+		const isDarkMode = document.body.classList.contains('dark-mode');
+		const textColor = isDarkMode ? '#94a3b8' : '#64748b';
+
+		const sortedDates = Object.keys(dataObj).sort();
+		const seriesData = sortedDates.map(date => dataObj[date]);
+		const labels = sortedDates.map(date => formatDateID(date));
+
+		const options = {
+			chart: { type: 'area', height: '100%', toolbar: { show: false }, background: 'transparent', fontFamily: 'Inter, sans-serif' },
+			series: [{ name: 'Omset Harian', data: seriesData }],
+			xaxis: { 
+				categories: labels, 
+				labels: { style: { colors: textColor } },
+				axisBorder: { show: false },
+				axisTicks: { show: false }
+			},
+			yaxis: { 
+				labels: { style: { colors: textColor }, formatter: (value) => 'Rp ' + formatRupiah(value) } 
+			},
+			grid: { borderColor: isDarkMode ? '#334155' : '#f1f5f9', strokeDashArray: 4 },
+			dataLabels: { enabled: false },
+			stroke: { curve: 'smooth', width: 3, colors: ['#f97316'] },
+			fill: { 
+				type: 'gradient', 
+				gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.0, stops: [0, 90, 100], colorStops: [ { offset: 0, color: '#f97316', opacity: 0.4 }, { offset: 100, color: '#f97316', opacity: 0.05 }] } 
+			},
+			theme: { mode: isDarkMode ? 'dark' : 'light' }
+		};
+
+		if(chartTrendInstance) chartTrendInstance.destroy();
+		chartTrendInstance = new ApexCharts(document.querySelector("#chartTrend"), options);
+		chartTrendInstance.render();
+	}
+
+	// Fungsi Render Grafik Donut (Top Item)
+	function renderTopItemsChart(itemCounts) {
+		const isDarkMode = document.body.classList.contains('dark-mode');
+		const strokeColor = isDarkMode ? '#1e293b' : '#ffffff';
+
+		// Ambil Top 5
+		const sortedItems = Object.entries(itemCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+		const seriesData = sortedItems.length ? sortedItems.map(i => i[1]) : [1];
+		const labels = sortedItems.length ? sortedItems.map(i => i[0]) : ['Tidak Ada Data'];
+
+		const options = {
+			chart: { type: 'donut', height: '100%', background: 'transparent', fontFamily: 'Inter, sans-serif' },
+			series: seriesData,
+			labels: labels,
+			dataLabels: { enabled: false },
+			plotOptions: { 
+				pie: { 
+					donut: { size: '65%' },
+					expandOnClick: false
+				} 
+			},
+			stroke: { show: true, colors: [strokeColor], width: 2 },
+			theme: { mode: isDarkMode ? 'dark' : 'light', palette: 'palette2' },
+			legend: { position: 'bottom', fontSize: '12px' },
+			tooltip: {
+				y: { formatter: function(val) { return formatRupiah(val) + " Item" } }
+			}
+		};
+
+		if(chartTopItemsInstance) chartTopItemsInstance.destroy();
+		chartTopItemsInstance = new ApexCharts(document.querySelector("#chartTopItems"), options);
+		chartTopItemsInstance.render();
+	}
+	
     </script>
 
 	<!-- MODAL PIN OTORISASI -->
