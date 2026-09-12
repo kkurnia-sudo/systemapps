@@ -1911,56 +1911,90 @@
     }
 
     function exportToPDF() {
-        if (typeof html2pdf === 'undefined') {
-            showWarningPopup("Sistem Belum Siap", "Sistem PDF belum termuat sempurna. Pastikan koneksi internet Anda aktif dan muat ulang halaman.");
-            return;
-        }
-        
-        showLoadingPopup("Menyiapkan Berkas PDF...");
+		if (typeof html2pdf === 'undefined') {
+			showWarningPopup("Sistem Belum Siap", "Sistem PDF belum termuat sempurna. Pastikan koneksi internet Anda aktif dan muat ulang halaman.");
+			return;
+		}
+		
+		showLoadingPopup("Menyiapkan Berkas PDF...");
 
-        setTimeout(() => {
-            const element = document.getElementById('previewContent'); 
-            const invoiceNo = document.getElementById('invoiceNumber').value;
-            const originalBorder = element.style.border;
-            element.style.border = 'none';
+		setTimeout(() => {
+			const element = document.getElementById('previewContent'); 
+			const invoiceNo = document.getElementById('invoiceNumber').value;
+			
+			// 1. Simpan ukuran dan batas asli
+			const originalBorder = element.style.border;
+			const originalWidth = element.style.width;
+			const originalMaxWidth = element.style.maxWidth;
+			
+			// 2. Paksa elemen menjadi seukuran layar Desktop & buang garis pinggir
+			element.style.border = 'none';
+			element.style.width = '800px';
+			element.style.maxWidth = '800px';
 
-            const opt = {
-                margin:       [10, 10, 10, 10],
-                filename:     `Invoice_${invoiceNo}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            
-            html2pdf().set(opt).from(element).save().then(() => {
-                element.style.border = originalBorder;
-                showSuccessPopup("PDF Berhasil Disimpan!", `File Invoice_${invoiceNo}.pdf berhasil diunduh.`);
-            }).catch(err => {
-                closePopup();
-                showWarningPopup("Gagal Ekspor", "Terjadi kesalahan saat memproses PDF: " + err.message);
-            });
-        }, 500);
-    }
+			// Tambahkan windowWidth: 1024 pada pengaturan html2canvas
+			const opt = {
+				margin:       [10, 10, 10, 10],
+				filename:     `Invoice_${invoiceNo}.pdf`,
+				image:        { type: 'jpeg', quality: 0.98 },
+				html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0, windowWidth: 1024 },
+				jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+			};
+			
+			html2pdf().set(opt).from(element).save().then(() => {
+				// 3. Kembalikan ukuran asli
+				element.style.border = originalBorder;
+				element.style.width = originalWidth;
+				element.style.maxWidth = originalMaxWidth;
+				
+				showSuccessPopup("PDF Berhasil Disimpan!", `File Invoice_${invoiceNo}.pdf berhasil diunduh.`);
+			}).catch(err => {
+				element.style.border = originalBorder;
+				element.style.width = originalWidth;
+				element.style.maxWidth = originalMaxWidth;
+				
+				closePopup();
+				showWarningPopup("Gagal Ekspor", "Terjadi kesalahan saat memproses PDF: " + err.message);
+			});
+		}, 500);
+	}
 
     function exportToJPG() {
-        showLoadingPopup("Menyiapkan Berkas Gambar JPG...");
+		showLoadingPopup("Menyiapkan Berkas Gambar JPG...");
 
-        setTimeout(() => {
-            const element = document.getElementById('previewContent'); 
-            const invoiceNo = document.getElementById('invoiceNumber').value;
-            
-            html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
-                const link = document.createElement('a'); 
-                link.download = `Invoice_${invoiceNo}.jpg`; 
-                link.href = canvas.toDataURL('image/jpeg', 0.9); 
-                link.click();
-                showSuccessPopup("JPG Berhasil Disimpan!", `File Invoice_${invoiceNo}.jpg berhasil diunduh.`);
-            }).catch(err => {
-                closePopup();
-                showWarningPopup("Gagal Ekspor", "Terjadi kesalahan saat memproses JPG: " + err.message);
-            });
-        }, 500);
-    }
+		setTimeout(() => {
+			const element = document.getElementById('previewContent'); 
+			const invoiceNo = document.getElementById('invoiceNumber').value;
+			
+			// 1. Simpan ukuran asli agar tidak merusak tampilan di HP
+			const originalWidth = element.style.width;
+			const originalMaxWidth = element.style.maxWidth;
+			
+			// 2. Paksa elemen menjadi seukuran layar Desktop
+			element.style.width = '800px';
+			element.style.maxWidth = '800px';
+			
+			// Tambahkan windowWidth: 1024 untuk melewati aturan CSS Mobile
+			html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 1024 }).then(canvas => {
+				// 3. Kembalikan ukuran asli segera setelah selesai merekam
+				element.style.width = originalWidth;
+				element.style.maxWidth = originalMaxWidth;
+				
+				const link = document.createElement('a'); 
+				link.download = `Invoice_${invoiceNo}.jpg`; 
+				link.href = canvas.toDataURL('image/jpeg', 0.9); 
+				link.click();
+				showSuccessPopup("JPG Berhasil Disimpan!", `File Invoice_${invoiceNo}.jpg berhasil diunduh.`);
+			}).catch(err => {
+				// Kembalikan ukuran asli jika terjadi error
+				element.style.width = originalWidth;
+				element.style.maxWidth = originalMaxWidth;
+				
+				closePopup();
+				showWarningPopup("Gagal Ekspor", "Terjadi kesalahan saat memproses JPG: " + err.message);
+			});
+		}, 500);
+	}
 
     async function simpanInvoice() {
         if(!currentCustomerId) return showWarningPopup("Pilih Agen!", "Pilih Agen terlebih dahulu sebelum menyimpan invoice!");
