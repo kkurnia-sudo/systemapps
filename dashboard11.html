@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Viewport dioptimalkan untuk mobile browser Android -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBR System - Dashboard Utama</title>
     
     <!-- Font Inter -->
@@ -11,236 +12,358 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* Variabel Warna */
+        /* Variabel Warna & Properti Global */
         :root {
-            --bg-color: #f3f4f6;
-            --text-color: #1f2937;
+            --bg-color: #f8fafc;
+            --text-color: #0f172a;
             --card-bg: #ffffff;
             --sidebar-bg: #ffffff;
-            --border-color: #e5e7eb;
-            --hover-bg: #f3f4f6;
+            --border-color: #e2e8f0;
+            --hover-bg: #f1f5f9;
             --accent-color: #2563eb;
             --accent-light: #eff6ff;
-            --subtitle-color: #6b7280;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --subtitle-color: #64748b;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --transition: all 0.25s ease;
+            --header-blur-bg: rgba(255, 255, 255, 0.85);
         }
 
         [data-theme="dark"] {
-            --bg-color: #111827;
-            --text-color: #f9fafb;
-            --card-bg: #1f2937;
-            --sidebar-bg: #1f2937;
-            --border-color: #374151;
-            --hover-bg: #374151;
-            --accent-color: #60a5fa;
-            --accent-light: rgba(59, 130, 246, 0.1);
-            --subtitle-color: #9ca3af;
+            --bg-color: #0b0f19;
+            --text-color: #f8fafc;
+            --card-bg: #131b2e;
+            --sidebar-bg: #131b2e;
+            --border-color: #1e293b;
+            --hover-bg: #1e293b;
+            --accent-color: #3b82f6;
+            --accent-light: rgba(59, 130, 246, 0.15);
+            --subtitle-color: #94a3b8;
+            --header-blur-bg: rgba(19, 27, 46, 0.85);
         }
 
-        /* Reset Dasar */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); transition: var(--transition); overflow-x: hidden; }
+        /* Reset Dasar & Pengoptimalan Mobile */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent; /* Hilangkan kotak biru bawaan Android saat tombol ditekan */
+        }
 
-        /* Layout Utama Flexbox */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* Layout Utama */
         .app-layout {
             display: flex;
             min-height: 100vh;
+            position: relative;
         }
 
-        /* Sidebar dengan transisi geser */
+        /* Overlay Gelap untuk Sidebar di Mobile */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            z-index: 45;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Sidebar Navigation */
         .sidebar {
-            width: 260px;
+            width: 270px;
             background-color: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             position: fixed;
-            top: 0; bottom: 0; left: 0;
+            top: 0;
+            bottom: 0;
+            left: 0;
             z-index: 50;
-            transition: transform 0.3s ease; /* Transisi buka-tutup */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .sidebar-header {
-            padding: 1.5rem;
+            padding: 1.25rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
-        .sidebar-header h2 { font-size: 1.2rem; font-weight: 700; color: var(--accent-color); }
-        
-        .close-sidebar {
-            display: none;
-            background: none; border: none; font-size: 1.2rem;
-            color: var(--text-color); cursor: pointer;
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            letter-spacing: -0.5px;
         }
 
-        /* Area Menu Sidebar (Bisa di-scroll jika menu banyak) */
+        .close-sidebar {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--subtitle-color);
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-sidebar:active {
+            background-color: var(--hover-bg);
+            color: var(--text-color);
+        }
+
         .sidebar-menu {
             flex: 1;
             overflow-y: auto;
-            padding: 1rem;
+            padding: 1rem 0.75rem;
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
         }
 
-        /* Scrollbar kustom untuk sidebar */
-        .sidebar-menu::-webkit-scrollbar { width: 5px; }
-        .sidebar-menu::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 5px; }
+        .sidebar-menu::-webkit-scrollbar { width: 4px; }
+        .sidebar-menu::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 
         .menu-section {
-            font-size: 0.7rem; font-weight: 700; color: var(--subtitle-color);
-            text-transform: uppercase; letter-spacing: 1px;
-            margin-top: 1.25rem; margin-bottom: 0.5rem; padding-left: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--subtitle-color);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.75rem;
         }
 
         .menu-item {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.75rem 1rem; border-radius: 8px;
-            color: var(--text-color); text-decoration: none; font-size: 0.85rem; font-weight: 500;
-            transition: var(--transition);
-        }
-
-        .menu-item i { width: 20px; text-align: center; font-size: 1rem; color: var(--subtitle-color); }
-        .menu-item:hover { background-color: var(--hover-bg); color: var(--accent-color); }
-        .menu-item:hover i { color: var(--accent-color); }
-        
-        .menu-item.active { background-color: var(--accent-light); color: var(--accent-color); font-weight: 600; }
-        .menu-item.active i { color: var(--accent-color); }
-
-        .external-badge {
-            margin-left: auto; font-size: 0.6rem;
-            background: var(--border-color); padding: 0.2rem 0.4rem; border-radius: 4px;
-        }
-
-        /* Konten utama menyesuaikan lebar */
-        .main-content {
-            flex: 1;
-            margin-left: 260px; /* Lebar default saat sidebar buka */
             display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            transition: margin-left 0.3s ease; /* Animasi geser halus */
-        }
-		
-		/* Kelas saat sidebar disembunyikan */
-        .sidebar.hidden {
-            transform: translateX(-100%);
-        }
-        .main-content.expanded {
-            margin-left: 0;
-        }
-		
-		/* Tombol Toggle Sidebar */
-        .sidebar-toggle-btn {
-            background: none; 
-            border: none; 
-            font-size: 1.25rem; 
-            color: var(--text-color); 
-            cursor: pointer;
-            width: 36px; height: 36px;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0.85rem;
+            border-radius: 10px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
             transition: var(--transition);
         }
-        .sidebar-toggle-btn:hover {
+
+        .menu-item i {
+            width: 22px;
+            text-align: center;
+            font-size: 1rem;
+            color: var(--subtitle-color);
+        }
+
+        .menu-item:hover {
             background-color: var(--hover-bg);
             color: var(--accent-color);
         }
-		
 
-        /* Header Atas di dalam Konten Utama */
+        .menu-item:hover i {
+            color: var(--accent-color);
+        }
+
+        .menu-item.active {
+            background-color: var(--accent-light);
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .menu-item.active i {
+            color: var(--accent-color);
+        }
+
+        .external-badge {
+            margin-left: auto;
+            font-size: 0.65rem;
+            background: var(--hover-bg);
+            border: 1px solid var(--border-color);
+            padding: 0.2rem 0.4rem;
+            border-radius: 6px;
+            color: var(--subtitle-color);
+        }
+
+        /* Konten Utama */
+        .main-content {
+            flex: 1;
+            margin-left: 270px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+            width: calc(100% - 270px);
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        /* Top Header dengan Efek Blur Modern */
         .top-header {
-            background-color: var(--card-bg);
+            background-color: var(--header-blur-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-color);
-            padding: 1rem 2rem;
+            padding: 0.85rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky; top: 0; z-index: 40;
+            position: sticky;
+            top: 0;
+            z-index: 40;
         }
 
-        .header-left { display: flex; align-items: center; gap: 1rem; }
-        
-        .open-sidebar {
-            display: none; background: none; border: none;
-            font-size: 1.25rem; color: var(--text-color); cursor: pointer;
-        }
-
-        .page-title h1 { font-size: 1.3rem; font-weight: 700; }
-        .page-title p { font-size: 0.8rem; color: var(--subtitle-color); }
-
-        .theme-toggle {
-            background: var(--bg-color); border: 1px solid var(--border-color);
-            color: var(--text-color); width: 36px; height: 36px;
-            border-radius: 50%; cursor: pointer; display: flex;
-            justify-content: center; align-items: center; transition: var(--transition);
-        }
-
-        /* Area Konten (Tempat menaruh grid menu jika di halaman Home) */
-        .content-area {
-            padding: 2rem;
-            flex: 1;
-        }
-		
-		/* ---------------- GRID & COMPACT CARD (Dari layout sebelumnya) ---------------- */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0.75rem;
-            align-content: start;
-        }
-
-        @media (min-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 1rem;
-            }
-        }
-		
-        .section-title {
-            grid-column: 1 / -1;
-			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; /* TANPA IMPORT */
-            font-size: 0.85rem; 
-            font-weight: 750;
-            color: var(--subtitle-color); 
-            margin-top: 1rem; 
-            margin-bottom: 0;
-            padding-bottom: 0.25rem;
-            border-bottom: 1px solid var(--border-color);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px; 
-            padding: 0.75rem 1rem; 
+        .header-left {
             display: flex;
-            flex-direction: row;
             align-items: center;
-            gap: 0.85rem; 
-            text-decoration: none;
+            gap: 0.75rem;
+        }
+
+        .sidebar-toggle-btn {
+            background: none;
+            border: none;
+            font-size: 1.15rem;
             color: var(--text-color);
-            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: var(--transition);
         }
 
+        .sidebar-toggle-btn:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .page-title h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .page-title p {
+            font-size: 0.75rem;
+            color: var(--subtitle-color);
+        }
+
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.92);
+        }
+
+        /* Area Konten */
+        .content-area {
+            padding: 1.5rem;
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+
+        .section-title {
+            grid-column: 1 / -1;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--subtitle-color);
+            margin-top: 1.25rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title:first-child {
+            margin-top: 0.25rem;
+        }
+
+        /* Card Menu */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.9rem;
+            text-decoration: none;
+            color: var(--text-color);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
         .card:hover {
-            transform: translateY(-2px); 
+            transform: translateY(-2px);
             box-shadow: var(--shadow-md);
             border-color: var(--accent-color);
         }
 
+        /* Efek sentuh khas Android */
+        .card:active {
+            transform: scale(0.98);
+            background-color: var(--hover-bg);
+        }
+
         .icon-wrapper {
-            width: 36px; 
-            height: 36px;
-            border-radius: 8px; 
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -248,119 +371,265 @@
             transition: var(--transition);
         }
 
-        .card i { font-size: 0.95rem; }
+        .icon-wrapper i {
+            font-size: 1.1rem;
+        }
 
-        .card-text { display: flex; flex-direction: column; }
-        .card-text h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.1rem; }
-        .card-text p { font-size: 0.65rem; color: var(--subtitle-color); line-height: 1.25; }
+        .card-text {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-        /* Warna Ikon Khusus */
-        .icon-green i { color: #10b981; } .icon-green { background-color: #d1fae5; }
-        .icon-blue i { color: #3b82f6; } .icon-blue { background-color: #eff6ff; }
-        .icon-orange i { color: #f59e0b; } .icon-orange { background-color: #FFE694; }
-        .icon-gray i { color: #6b7280; } .icon-gray { background-color: #f3f4f6; }
-		.icon-red i { color: #E5E4E2; }
-		.icon-red { background-color: #AA4A44; }
+        .card-text h3 {
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-        /* Support Dark Mode untuk Warna Ikon */
-        [data-theme="dark"] .icon-green { background-color: rgba(16, 185, 129, 0.2); }
-        [data-theme="dark"] .icon-blue { background-color: rgba(59, 130, 246, 0.2); }
-        [data-theme="dark"] .icon-orange { background-color: rgba(245, 158, 11, 0.2); }
-        [data-theme="dark"] .icon-gray { background-color: rgba(107, 114, 128, 0.2); }
-		[data-theme="dark"] .icon-red { background-color: rgba(239, 68, 68, 0.2); }
-		
+        .card-text p {
+            font-size: 0.72rem;
+            color: var(--subtitle-color);
+            line-height: 1.35;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-        /* ---------------- RESPONSIVE / MOBILE ---------------- */
+        /* Warna Tag Ikon */
+        .icon-green { background-color: #ecfdf5; color: #10b981; }
+        .icon-green i { color: #10b981; }
+
+        .icon-blue { background-color: #eff6ff; color: #3b82f6; }
+        .icon-blue i { color: #3b82f6; }
+
+        .icon-orange { background-color: #fffbeb; color: #f59e0b; }
+        .icon-orange i { color: #f59e0b; }
+
+        .icon-red { background-color: #fef2f2; color: #ef4444; }
+        .icon-red i { color: #ef4444; }
+
+        /* Dark Mode Colors */
+        [data-theme="dark"] .icon-green { background-color: rgba(16, 185, 129, 0.15); }
+        [data-theme="dark"] .icon-blue { background-color: rgba(59, 130, 246, 0.15); }
+        [data-theme="dark"] .icon-orange { background-color: rgba(245, 158, 11, 0.15); }
+        [data-theme="dark"] .icon-red { background-color: rgba(239, 68, 68, 0.15); }
+
+        /* ==============================================================
+           PENGATURAN KHUSUS MOBILE DEVICE (SMARTPHONE ANDROID)
+           ============================================================== */
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); } /* Sembunyikan sidebar ke kiri */
-            .sidebar.active { transform: translateX(0); box-shadow: var(--shadow-md); }
-            
-            /* Penyesuaian agar tampilan atas lebih ringkas */
-			.top-header { padding: 0.75rem 1rem; }
-			.page-title h1 { font-size: 0.95rem; }
-			.page-title p { display: none; } /* Sembunyikan subtitle di HP agar lebih lega */
-			
-			/* Pengecilan gap dan padding pada area konten utama */
-			.content-area { padding: 0.75rem; }
-			.dashboard-grid { gap: 0.5rem; }
-			
-			/* Optimalisasi Card Menu */
-			.card { padding: 0.6rem 0.75rem; gap: 0.6rem; border-radius: 8px; }
-			.icon-wrapper { width: 32px; height: 32px; font-size: 0.85rem; }
-			.card-text h3 { font-size: 0.75rem; }
-			.card-text p { font-size: 0.6rem; }
-		}
-		/* ---------------- MODAL PIN KUSTOM ---------------- */
-		.modal-overlay {
-			position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-			background: rgba(0, 0, 0, 0.5); /* Efek gelap di belakang */
-			backdrop-filter: blur(3px); /* Efek blur modern */
-			z-index: 100;
-			display: flex; justify-content: center; align-items: center;
-			opacity: 0; visibility: hidden;
-			transition: all 0.3s ease;
-		}
-		.modal-overlay.active {
-			opacity: 1; visibility: visible;
-		}
-		.modal-box {
-			background-color: var(--card-bg);
-			border: 1px solid var(--border-color);
-			border-radius: 12px;
-			padding: 1.5rem;
-			width: 90%; max-width: 320px;
-			box-shadow: var(--shadow-md);
-			transform: translateY(-20px);
-			transition: all 0.3s ease;
-		}
-		.modal-overlay.active .modal-box {
-			transform: translateY(0);
-		}
-		.modal-title { 
-			font-size: 1.1rem; font-weight: 600; color: var(--text-color); margin-bottom: 0.5rem; 
-		}
-		.modal-desc { 
-			font-size: 0.8rem; color: var(--subtitle-color); margin-bottom: 1rem; line-height: 1.4;
-		}
-		.modal-input {
-			width: 100%; padding: 0.75rem;
-			background-color: var(--bg-color);
-			border: 1px solid var(--border-color);
-			color: var(--text-color);
-			border-radius: 8px; font-size: 1.25rem;
-			text-align: center; letter-spacing: 0.5rem; /* Memberi jarak antar angka */
-			margin-bottom: 0.5rem; outline: none;
-			transition: border-color 0.2s;
-		}
-		.modal-input:focus { border-color: var(--accent-color); }
-		.modal-error {
-			color: #ef4444; font-size: 0.75rem; margin-bottom: 1rem;
-			display: none; /* Disembunyikan secara default */
-			text-align: center; font-weight: 500;
-		}
-		.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
-		.btn-cancel, .btn-submit {
-			padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
-			cursor: pointer; border: none; transition: var(--transition);
-		}
-		.btn-cancel { background-color: transparent; color: var(--subtitle-color); }
-		.btn-cancel:hover { background-color: var(--hover-bg); color: var(--text-color); }
-		.btn-submit { background-color: var(--accent-color); color: #fff; }
-		.btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
-		
-	</style>
+            /* Sidebar tersembunyi secara default ke kiri */
+            .sidebar {
+                transform: translateX(-100%);
+                box-shadow: none;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+                box-shadow: 10px 0 25px rgba(0, 0, 0, 0.2);
+            }
+
+            /* Tombol silang tutup sidebar diaktifkan untuk mobile */
+            .close-sidebar {
+                display: flex;
+            }
+
+            /* Konten utama mengambil 100% layar mobile tanpa margin kiri */
+            .main-content {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+
+            /* Header lebih ringkas */
+            .top-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .page-title h1 {
+                font-size: 1.05rem;
+            }
+
+            .page-title p {
+                display: none; /* Disembunyikan agar header bersih di layar kecil */
+            }
+
+            /* Area konten dengan padding yang pas di tepi layar HP */
+            .content-area {
+                padding: 1rem 0.85rem;
+            }
+
+            /* Grid kartu di mobile: 1 kolom lega dan mudah ditekan */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 0.65rem;
+            }
+
+            /* Card disesuaikan agar proporsional dan nyaman di jari */
+            .card {
+                padding: 0.85rem 0.95rem;
+                border-radius: 12px;
+                gap: 0.85rem;
+            }
+
+            .icon-wrapper {
+                width: 40px;
+                height: 40px;
+            }
+
+            .icon-wrapper i {
+                font-size: 1.05rem;
+            }
+
+            .card-text h3 {
+                font-size: 0.88rem;
+            }
+
+            /* Teks penjelasan tidak terpotong agar mudah dibaca di layar vertikal HP */
+            .card-text p {
+                font-size: 0.72rem;
+                white-space: normal;
+            }
+
+            .section-title {
+                font-size: 0.75rem;
+                margin-top: 1rem;
+                padding-bottom: 0.35rem;
+            }
+        }
+
+        /* ---------------- MODAL PIN OTORISASI ---------------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.95) translateY(10px);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-overlay.active .modal-box {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-title { 
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.35rem; 
+        }
+
+        .modal-desc { 
+            font-size: 0.8rem;
+            color: var(--subtitle-color);
+            margin-bottom: 1.25rem;
+            line-height: 1.4;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg-color);
+            border: 1.5px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 10px;
+            font-size: 1.35rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            margin-bottom: 0.5rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .modal-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .modal-error {
+            color: #ef4444;
+            font-size: 0.75rem;
+            margin-bottom: 1rem;
+            display: none;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 0.5rem;
+        }
+
+        .btn-cancel, .btn-submit {
+            padding: 0.65rem 1.1rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+        }
+
+        .btn-cancel {
+            background-color: transparent;
+            color: var(--subtitle-color);
+        }
+
+        .btn-cancel:active {
+            background-color: var(--hover-bg);
+        }
+
+        .btn-submit {
+            background-color: var(--accent-color);
+            color: #ffffff;
+        }
+
+        .btn-submit:active {
+            opacity: 0.85;
+            transform: scale(0.97);
+        }
+    </style>
 </head>
 <body>
 
     <div class="app-layout">
-        <!-- Overlay untuk HP -->
+        <!-- Backdrop Gelap di Belakang Sidebar Mobile -->
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- SIDEBAR -->
+        <!-- SIDEBAR DRAWER -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h2>SBR System</h2>
-                <button class="close-sidebar" id="closeSidebar"><i class="fa-solid fa-times"></i></button>
+                <button class="close-sidebar" id="closeSidebar" aria-label="Tutup Menu">
+                    <i class="fa-solid fa-times"></i>
+                </button>
             </div>
             
             <nav class="sidebar-menu">
@@ -368,93 +637,57 @@
                     <i class="fa-solid fa-house"></i> Dashboard Utama
                 </a>
 
-                <!--<div class="menu-section">Transaksi Agen</div>
-                <a href="BONKIKIV2.html" class="menu-item">
-                    <i class="fa-solid fa-file-invoice"></i> Catat Nota
-                </a>
-                <a href="REKAPNOTAJAMBI.html" class="menu-item">
-                    <i class="fa-solid fa-folder-open"></i> Nota Jambi
-                </a>
-                <a href="bayar_bonkiki.html" class="menu-item">
-                    <i class="fa-solid fa-file-invoice-dollar"></i> Bayar Bon
-                </a>
-
-                <div class="menu-section">Operasional</div>
-                <a href="rekapnotaharian.html" class="menu-item">
-                    <i class="fa-solid fa-receipt"></i> Rekap Pengiriman
-                </a>
-                <a href="LAPDRIVERv3.html" class="menu-item">
-                    <i class="fa-solid fa-truck"></i> Setoran Driver
-                </a>
-
-                <div class="menu-section">Pabrik & Pengeluaran</div>
-                <a href="INVENDOR.html" class="menu-item">
-                    <i class="fa-solid fa-boxes-packing"></i> Bahan Baku
-                </a>
-                <a href="bayargas.html" class="menu-item">
-                    <i class="fa-solid fa-fire-flame-simple"></i> Bayar Gas
-                </a>
-
-                <div class="menu-section">Data Master</div>
-                <a href="agensbr.html" class="menu-item">
-                    <i class="fa-solid fa-users"></i> Daftar Agen
-                </a>
-                <a href="harga_agensbr.html" class="menu-item">
-                    <i class="fa-solid fa-comments-dollar"></i> Harga Agen
-                </a>
-
-                <!-- LINK KE REPOSITORI GITHUB TERPISAH (Metode Target Blank) -->
                 <div class="menu-section">Modul Eksternal</div>
                 <a href="https://sbrputrafood-sys.github.io/payress/" class="menu-item" target="_blank">
                     <i class="fa-solid fa-receipt"></i> SBR Reseller
-                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.5rem; width:auto;"></i></span>
+                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.55rem;"></i></span>
                 </a>
-				<a href="GAJIAN.html" class="card">
+                <a href="GAJIAN.html" class="menu-item">
                     <i class="fa-solid fa-money-check-dollar"></i> Payroll
-                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.5rem; width:auto;"></i></span>
+                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.55rem;"></i></span>
                 </a>
-				<a href="distribusisbr.html" class="card">
-                    <i class="fa-solid fa-money-check-dollar"></i> DASHBOARD DISTRIBUSI & PACKING
-                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.5rem; width:auto;"></i></span>
+                <a href="distribusisbr.html" class="menu-item">
+                    <i class="fa-solid fa-truck-ramp-box"></i> Distribusi & Packing
+                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.55rem;"></i></span>
                 </a>
-				<a href="distribusisbr_mobile.html" class="card">
-                    <i class="fa-solid fa-money-check-dollar"></i> App Distribusi Karyawan
-                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.5rem; width:auto;"></i></span>
+                <a href="distribusisbr_mobile.html" class="menu-item">
+                    <i class="fa-solid fa-mobile-screen"></i> App Distribusi Karyawan
+                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.55rem;"></i></span>
                 </a>
-				<a href="#" class="menu-item" id="menuKkurnia">
-					<i class="fa-solid fa-triangle-exclamation"></i> kkurnia Rand
-					<!-- Mengganti ikon external link menjadi ikon lock/gembok di sebelah kanan -->
-					<span class="external-badge"><i class="fa-solid fa-lock" style="font-size:0.6rem; width:auto;"></i></span>
-				</a>
+                <a href="#" class="menu-item" id="menuKkurnia">
+                    <i class="fa-solid fa-triangle-exclamation"></i> kkurnia Rand
+                    <span class="external-badge"><i class="fa-solid fa-lock" style="font-size:0.6rem;"></i></span>
+                </a>
             </nav>
         </aside>
 
-        <!-- MAIN CONTENT (Area Kanan) -->
+        <!-- KONTEN UTAMA -->
         <main class="main-content">
-            <!-- Header Atas -->
+            <!-- Top App Bar Sticky -->
             <header class="top-header">
                 <div class="header-left">
-				<!-- Tombol tunggal untuk Show/Hide Sidebar -->
-                    <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
+                    <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Buka Menu Navigasi">
                         <i class="fa-solid fa-bars"></i>
                     </button>
-                    <div class="page-title" style="margin-left: 0.5rem;">
+                    <div class="page-title">
                         <h1>SBR Dashboard</h1>
                         <p>Sistem Manajemen SBR Putra Food</p>
                     </div>
                 </div>
                 
-                <button class="theme-toggle" id="themeToggle" aria-label="Ubah Tema">
+                <button class="theme-toggle" id="themeToggle" aria-label="Ganti Mode Gelap/Terang">
                     <i class="fa-solid fa-moon"></i>
                 </button>
             </header>
 
-            <!-- Area Konten Dinamis -->
+            <!-- Grid Konten Menu -->
             <div class="content-area">
                 <div class="dashboard-grid">
                     
-                    <!-- KELOMPOK 1: TRANSAKSI & PIUTANG AGEN -->
-                    <div class="section-title">Transaksi & Piutang Agen</div>
+                    <!-- KELOMPOK 1 -->
+                    <div class="section-title">
+                        <i class="fa-solid fa-receipt"></i> Transaksi & Piutang Agen
+                    </div>
                     
                     <a href="BONKIKIV2.html" class="card">
                         <div class="icon-wrapper icon-green">
@@ -465,6 +698,7 @@
                             <p>Buat Nota Regular Agen JABOTABEK dan JAWA</p>
                         </div>
                     </a>
+
                     <a href="REKAPNOTAJAMBI.html" class="card">
                         <div class="icon-wrapper icon-green">
                             <i class="fa-solid fa-folder-open"></i>
@@ -474,6 +708,7 @@
                             <p>Rekap Pembayaran Nota Jambi</p>
                         </div>
                     </a>
+
                     <a href="bayar_bonkiki.html" class="card">
                         <div class="icon-wrapper icon-green">
                             <i class="fa-solid fa-file-invoice-dollar"></i>
@@ -483,6 +718,7 @@
                             <p>Catat dana masuk cicilan piutang agen JABOTABEK</p>
                         </div>
                     </a>
+
                     <a href="bayar_bon2.html" class="card">
                         <div class="icon-wrapper icon-green">
                             <i class="fa-solid fa-circle-dollar-to-slot"></i>
@@ -493,8 +729,10 @@
                         </div>
                     </a>
 
-                    <!-- KELOMPOK 2: OPERASIONAL & LOGISTIK -->
-                    <div class="section-title">Operasional & Logistik</div>
+                    <!-- KELOMPOK 2 -->
+                    <div class="section-title">
+                        <i class="fa-solid fa-truck"></i> Operasional & Logistik
+                    </div>
 
                     <a href="rekapnotaharian.html" class="card">
                         <div class="icon-wrapper icon-blue">
@@ -505,28 +743,32 @@
                             <p>Rekap dan rincian pengiriman harian</p>
                         </div>
                     </a>
+
                     <a href="LAPDRIVERv3.html" class="card">
                         <div class="icon-wrapper icon-blue">
-                            <i class="fa-solid fa-truck"></i>
+                            <i class="fa-solid fa-truck-fast"></i>
                         </div>
                         <div class="card-text">
                             <h3>LAPORAN SETORAN DRIVER</h3>
-                            <p>Cek rincian uang setor dan pengeluaran dari driver</p>
+                            <p>Cek rincian uang setor dan pengeluaran driver</p>
                         </div>
                     </a>
 
-                    <!-- KELOMPOK 3: PENGELUARAN PABRIK -->
-                    <div class="section-title">Pengeluaran Pabrik</div>
+                    <!-- KELOMPOK 3 -->
+                    <div class="section-title">
+                        <i class="fa-solid fa-industry"></i> Pembayaran / Lainnya
+                    </div>
 
                     <a href="INVENDOR.html" class="card">
                         <div class="icon-wrapper icon-orange">
                             <i class="fa-solid fa-boxes-packing"></i>
                         </div>
                         <div class="card-text">
-                            <h3>Bahan Baku, Plastik, Dus</h3>
-                            <p>Rekap pembayaran supp bahan baku (Trial)</p>
+                            <h3>Invoice Supplier</h3>
+                            <p>Rekap Surat Jalan / Invoice Supplier SBR</p>
                         </div>
                     </a>
+
                     <a href="bayargas.html" class="card">
                         <div class="icon-wrapper icon-orange">
                             <i class="fa-solid fa-fire-flame-simple"></i>
@@ -537,8 +779,10 @@
                         </div>
                     </a>
 
-                    <!-- KELOMPOK 4: DATA MASTER & SISTEM -->
-                    <div class="section-title">Data Master & Sistem</div>
+                    <!-- KELOMPOK 4 -->
+                    <div class="section-title">
+                        <i class="fa-solid fa-database"></i> Data Master & Sistem
+                    </div>
 
                     <a href="harga_agensbr.html" class="card">
                         <div class="icon-wrapper icon-red">
@@ -546,27 +790,40 @@
                         </div>
                         <div class="card-text">
                             <h3>DETAIL HARGA AGEN</h3>
-                            <p>Rincian harga barang per agen nya</p>
+                            <p>Rincian harga barang per agen</p>
                         </div>
                     </a>
+
                     <a href="agensbr.html" class="card">
                         <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-users"></i>
                         </div>
                         <div class="card-text">
                             <h3>DAFTAR AGEN SBR</h3>
-                            <p>Rincian seluruh Agen Sbr</p>
+                            <p>Rincian seluruh Agen SBR</p>
                         </div>
                     </a>
+
+                    <a href="barang.html" class="card">
+                        <div class="icon-wrapper icon-red">
+                            <i class="fa-solid fa-tags"></i>
+                        </div>
+                        <div class="card-text">
+                            <h3>MASTER BARANG AGEN</h3>
+                            <p>Rincian data barang agen SBR</p>
+                        </div>
+                    </a>
+
                     <a href="testanalisa.html" class="card">
                         <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-chart-pie"></i>
                         </div>
                         <div class="card-text">
                             <h3>ANALISA DATA</h3>
-                            <p>Rincian analisa penjualan</p>
+                            <p>Rincian statistik dan performa penjualan</p>
                         </div>
                     </a>
+
                     <a href="bekapsbrv2.html" class="card">
                         <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-file-shield"></i>
@@ -581,126 +838,133 @@
             </div>
         </main>
     </div>
-	
-	
-	<!-- Modal PIN Custom -->
-	<div id="pinModal" class="modal-overlay">
-		<div class="modal-box">
-			<h3 class="modal-title">Keamanan Sistem</h3>
-			<p class="modal-desc">Masukkan PIN otoritas untuk mengakses modul kkurnia Rand.</p>
-			
-			<input type="password" id="pinInput" class="modal-input" placeholder="••••••" maxlength="6" autocomplete="off">
-			
-			<p id="pinError" class="modal-error">PIN yang Anda masukkan salah!</p>
-			
-			<div class="modal-actions">
-				<button id="btnCancelPin" class="btn-cancel">Batal</button>
-				<button id="btnSubmitPin" class="btn-submit">Verifikasi</button>
-			</div>
-		</div>
-	</div>
-	
-    <!-- Script Interaktif -->
+
+    <!-- Modal PIN Verifikasi -->
+    <div id="pinModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 class="modal-title">Keamanan Sistem</h3>
+            <p class="modal-desc">Masukkan 6 digit PIN otoritas untuk mengakses kkurnia Rand.</p>
+            
+            <!-- Tambahan inputmode="numeric" untuk memicu keypad angka di Android -->
+            <input 
+                type="password" 
+                id="pinInput" 
+                class="modal-input" 
+                placeholder="••••••" 
+                maxlength="6" 
+                inputmode="numeric" 
+                pattern="[0-9]*" 
+                autocomplete="off">
+            
+            <p id="pinError" class="modal-error">PIN yang Anda masukkan salah!</p>
+            
+            <div class="modal-actions">
+                <button id="btnCancelPin" class="btn-cancel">Batal</button>
+                <button id="btnSubmitPin" class="btn-submit">Verifikasi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Interaktif -->
     <script>
-		// --- 1. Logic Dark Mode ---
-		const toggleBtn = document.getElementById('themeToggle');
-		const toggleIcon = toggleBtn.querySelector('i');
-		const htmlElement = document.documentElement;
+        // --- 1. Mode Gelap & Terang ---
+        const toggleBtn = document.getElementById('themeToggle');
+        const toggleIcon = toggleBtn.querySelector('i');
+        const htmlElement = document.documentElement;
 
-		const savedTheme = localStorage.getItem('sbr-theme');
-		if (savedTheme) { htmlElement.setAttribute('data-theme', savedTheme); updateIcon(savedTheme); }
+        const savedTheme = localStorage.getItem('sbr-theme');
+        if (savedTheme) { 
+            htmlElement.setAttribute('data-theme', savedTheme); 
+            updateIcon(savedTheme); 
+        }
 
-		toggleBtn.addEventListener('click', () => {
-			const currentTheme = htmlElement.getAttribute('data-theme');
-			const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-			htmlElement.setAttribute('data-theme', newTheme);
-			localStorage.setItem('sbr-theme', newTheme);
-			updateIcon(newTheme);
-		});
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('sbr-theme', newTheme);
+            updateIcon(newTheme);
+        });
 
-		function updateIcon(theme) {
-			toggleIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-		}
+        function updateIcon(theme) {
+            toggleIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        }
 
-		// --- 2. Logic Sidebar (Desktop & Mobile) ---
-		const sidebar = document.getElementById('sidebar');
-		const closeBtn = document.getElementById('closeSidebar');
-		const overlay = document.getElementById('sidebarOverlay');
-		const sidebarToggle = document.getElementById('sidebarToggle');
-		const mainContent = document.querySelector('.main-content');
+        // --- 2. Logika Sidebar (Mobile Drawer & Desktop Toggle) ---
+        const sidebar = document.getElementById('sidebar');
+        const closeBtn = document.getElementById('closeSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const mainContent = document.querySelector('.main-content');
 
-		// Tombol utama untuk toggle (Responsive Desktop/Mobile)
-		if (sidebarToggle) {
-			sidebarToggle.addEventListener('click', () => {
-				if (window.innerWidth <= 768) {
-					// Logika Mobile (Geser dari kiri)
-					sidebar.classList.toggle('active');
-					if (overlay) overlay.classList.toggle('active');
-				} else {
-					// Logika Desktop (Kecilkan/Sembunyikan)
-					sidebar.classList.toggle('hidden');
-					if (mainContent) mainContent.classList.toggle('expanded');
-				}
-			});
-		}
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    // Tampilan Mobile: Buka sebagai drawer samping
+                    sidebar.classList.add('active');
+                    overlay.classList.add('active');
+                    document.body.style.overflow = 'hidden'; // Kunci scroll layar saat menu terbuka
+                } else {
+                    // Tampilan Desktop: Sembunyikan sidebar ke kiri
+                    sidebar.classList.toggle('hidden');
+                    mainContent.classList.toggle('expanded');
+                }
+            });
+        }
 
-		// Fungsi tutup sidebar khusus di HP (via tombol X atau klik area luar)
-		function closeMobileSidebar() {
-			sidebar.classList.remove('active');
-			if (overlay) overlay.classList.remove('active');
-		}
-		if (closeBtn) closeBtn.addEventListener('click', closeMobileSidebar);
-		if (overlay) overlay.addEventListener('click', closeMobileSidebar);
+        function closeMobileSidebar() {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = ''; // Kembalikan scroll layar
+        }
 
+        if (closeBtn) closeBtn.addEventListener('click', closeMobileSidebar);
+        if (overlay) overlay.addEventListener('click', closeMobileSidebar);
 
-		// --- 3. Logic Modal PIN Akses kkurnia Rand ---
-		const menuKkurnia = document.getElementById('menuKkurnia');
-		const pinModal = document.getElementById('pinModal');
-		const pinInput = document.getElementById('pinInput');
-		const pinError = document.getElementById('pinError');
-		const btnCancelPin = document.getElementById('btnCancelPin');
-		const btnSubmitPin = document.getElementById('btnSubmitPin');
+        // --- 3. Logika Modal PIN ---
+        const menuKkurnia = document.getElementById('menuKkurnia');
+        const pinModal = document.getElementById('pinModal');
+        const pinInput = document.getElementById('pinInput');
+        const pinError = document.getElementById('pinError');
+        const btnCancelPin = document.getElementById('btnCancelPin');
+        const btnSubmitPin = document.getElementById('btnSubmitPin');
 
-		// Tampilkan modal
-		if (menuKkurnia) {
-			menuKkurnia.addEventListener('click', function(e) {
-				e.preventDefault(); 
-				pinModal.classList.add('active');
-				pinInput.value = ''; // Reset input
-				pinError.style.display = 'none'; // Sembunyikan error
-				setTimeout(() => pinInput.focus(), 300); // Fokus otomatis
-			});
-		}
+        if (menuKkurnia) {
+            menuKkurnia.addEventListener('click', function(e) {
+                e.preventDefault();
+                closeMobileSidebar(); // Tutup sidebar dulu jika dibuka dari menu HP
+                pinModal.classList.add('active');
+                pinInput.value = '';
+                pinError.style.display = 'none';
+                setTimeout(() => pinInput.focus(), 300);
+            });
+        }
 
-		// Tutup modal
-		function closePinModal() {
-			pinModal.classList.remove('active');
-		}
+        function closePinModal() {
+            pinModal.classList.remove('active');
+        }
 
-		// Verifikasi PIN
-		function verifyPin() {
-			if (pinInput.value === "942715") {
-				closePinModal();
-				window.open("https://kkurnia-sudo.github.io/systemapps/dashboard.html", "_blank");
-			} else {
-				pinError.style.display = 'block';
-				pinInput.value = '';
-				pinInput.focus();
-			}
-		}
+        function verifyPin() {
+            if (pinInput.value === "942715") {
+                closePinModal();
+                window.open("https://kkurnia-sudo.github.io/systemapps/dashboard.html", "_blank");
+            } else {
+                pinError.style.display = 'block';
+                pinInput.value = '';
+                pinInput.focus();
+            }
+        }
 
-		// Trigger tombol Batal dan Verifikasi
-		if (btnCancelPin) btnCancelPin.addEventListener('click', closePinModal);
-		if (btnSubmitPin) btnSubmitPin.addEventListener('click', verifyPin);
+        if (btnCancelPin) btnCancelPin.addEventListener('click', closePinModal);
+        if (btnSubmitPin) btnSubmitPin.addEventListener('click', verifyPin);
 
-		// Trigger tombol "Enter" di keyboard
-		if (pinInput) {
-			pinInput.addEventListener('keypress', function(e) {
-				if (e.key === 'Enter') {
-					verifyPin();
-				}
-			});
-		}
-	</script>	
+        if (pinInput) {
+            pinInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    verifyPin();
+                }
+            });
+        }
+    </script>
 </body>
 </html>
