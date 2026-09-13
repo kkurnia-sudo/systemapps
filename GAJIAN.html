@@ -91,9 +91,9 @@
     <!-- SIDEBAR -->
     <aside class="w-64 bg-gray-900 text-white flex flex-col z-20 rounded-r-3xl my-2 ml-2 shadow-2xl transition-colors duration-300 shrink-0">
         <div class="h-20 flex items-center px-6 mt-2">
-            <img src="https://raw.githubusercontent.com/kkurnia-sudo/pyrl/58ee051ecbc8700fb9bf4dfd7954a843ff783f66/sbr_logo.png" alt="SBR Logo" class="w-9 h-9 object-contain mr-3 filter drop-shadow-md">
-            <h1 class="text-xl font-bold text-blue-400 leading-tight">SBR Systems<br><span class="text-[10px] font-medium text-gray-400 uppercase tracking-widest">payroll</span></h1>
-        </div>
+			<img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/7e0c9040e42b1f8f0c88e4563f72247f419d97c4/sbr_logo.png" alt="SBR Logo" class="w-9 h-9 object-contain mr-3 filter drop-shadow-md">
+			<h1 class="text-xl font-bold text-blue-400 leading-tight">SBR Systems<br><span class="text-[10px] font-medium text-gray-400 uppercase tracking-widest">payroll</span></h1>
+		</div>
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto mt-4" id="sidebar-menu">
             <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Operasional</p>
             <button onclick="bukaMenu('menu-dashboard')" class="nav-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-2xl bg-blue-600 text-white shadow-lg transition-all">
@@ -1042,7 +1042,11 @@
         function toggleTheme() { document.documentElement.classList.toggle('dark'); }
 
         function formatRibuanStr(angka) { return new Intl.NumberFormat('id-ID').format(angka); }
-        function unformatRibuan(str) { return parseInt(str.toString().replace(/[^0-9\-]/g, '')) || 0; }
+        function unformatRibuan(str) { 
+			if (!str) return 0;
+			const cleaned = str.toString().replace(/[^0-9\-]/g, '');
+			return parseInt(cleaned, 10) || 0; 
+		}
         function formatRibuan(input) { let val = input.value.replace(/[^0-9]/g, ''); input.value = val === '' ? '' : new Intl.NumberFormat('id-ID').format(parseInt(val)); }
         function formatTanggal(dateStr) { if(!dateStr) return '-'; const [y, m, d] = dateStr.split('-'); return `${d}-${m}-${y}`; }
         function getTglHariIni() { return new Date().toISOString().split('T')[0]; }
@@ -1222,12 +1226,19 @@
             } catch (e) { console.error(e); }
         }
 
-        function initRealtimeSubscription() {
-            _supabase.channel('public-db-changes')
-                .on('postgres_changes', { event: '*', schema: 'public' }, payload => {
-                    fetchAllDataSilent();
-                }).subscribe();
-        }
+        let realtimeDebounceTimer = null;
+
+		function initRealtimeSubscription() {
+			_supabase.channel('public-db-changes')
+				.on('postgres_changes', { event: '*', schema: 'public' }, () => {
+					// Batalkan pemanggilan sebelumnya jika ada data baru masuk dalam interval 600ms
+					clearTimeout(realtimeDebounceTimer);
+					realtimeDebounceTimer = setTimeout(() => {
+						fetchAllDataSilent();
+					}, 600);
+				})
+				.subscribe();
+		}
 
         function refreshUI() {
             renderSelectDivisi();
@@ -1333,22 +1344,28 @@
         }
 
         function initApp() {
-            document.getElementById('cg-mulai').value = ""; document.getElementById('cg-akhir').value = "";
-            document.getElementById('tgl-harian').value = getTglHariIni();
-            
-            let semingguLalu = new Date(); semingguLalu.setDate(semingguLalu.getDate() - 6);
-            let tglMulaiStr = semingguLalu.toISOString().split('T')[0];
-            let tglAkhirStr = getTglHariIni();
+			document.getElementById('cg-mulai').value = ""; 
+			document.getElementById('cg-akhir').value = "";
+			document.getElementById('tgl-harian').value = getTglHariIni();
+			
+			let semingguLalu = new Date(); 
+			semingguLalu.setDate(semingguLalu.getDate() - 6);
+			let tglMulaiStr = semingguLalu.toISOString().split('T')[0];
+			let tglAkhirStr = getTglHariIni();
 
-            document.getElementById('rp-mulai').value = tglMulaiStr; 
-            document.getElementById('rp-akhir').value = tglAkhirStr;
-            document.getElementById('top-mulai').value = tglMulaiStr;
-            document.getElementById('top-akhir').value = tglAkhirStr;
-            
-            initFlatpickr();
-            fetchAllData();
-            initRealtimeSubscription();
-        }
+			document.getElementById('rp-mulai').value = tglMulaiStr; 
+			document.getElementById('rp-akhir').value = tglAkhirStr;
+			document.getElementById('top-mulai').value = tglMulaiStr;
+			document.getElementById('top-akhir').value = tglAkhirStr;
+			
+			// Inisialisasi tanggal untuk grafik Dashboard agar tidak kosong
+			document.getElementById('chart-mulai').value = tglMulaiStr;
+			document.getElementById('chart-akhir').value = tglAkhirStr;
+			
+			initFlatpickr();
+			fetchAllData();
+			initRealtimeSubscription();
+		}
 
         function resetArsipPreview() {
             document.getElementById('judul-detail-arsip').innerText = "Pratinjau Struk";
@@ -1358,26 +1375,48 @@
         }
 
         function bukaMenu(menuId) {
-            document.querySelectorAll('.menu-view').forEach(el => el.classList.add('hidden'));
-            document.getElementById(menuId).classList.remove('hidden');
-            
-            document.querySelectorAll('.nav-btn').forEach(btn => { 
-                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg'); 
-                btn.classList.add('text-gray-300'); 
-            });
-            const btnAktif = event.currentTarget;
-            btnAktif.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
-            btnAktif.classList.remove('text-gray-300');
+			// 1. Sembunyikan semua tampilan menu
+			document.querySelectorAll('.menu-view').forEach(el => el.classList.add('hidden'));
+			
+			// 2. Tampilkan menu target
+			const targetMenu = document.getElementById(menuId);
+			if (targetMenu) targetMenu.classList.remove('hidden');
 
-            const titles = {'menu-dashboard': 'Dashboard', 'menu-input-harian': 'Input Produksi Harian', 'menu-rekap-produksi': 'Rekap Produksi Terpadu', 'menu-rekap-gaji': 'Kalkulasi & Cetak Gaji', 'menu-tabungan': 'Buku Saldo Perusahaan & Karyawan', 'menu-arsip': 'Arsip & Riwayat Penggajian', 'menu-pengaturan': 'Pengaturan Sistem'};
-            document.getElementById('judul-halaman').innerText = titles[menuId];
-            
-            if(menuId === 'menu-tabungan') renderTabBukuSaldo();
-            if(menuId === 'menu-dashboard') renderDashboard();
-            if(menuId === 'menu-rekap-produksi') renderRekapProduksiHorizontal();
-            if(menuId === 'menu-pengaturan') renderTableKaryawan();
-            if(menuId === 'menu-arsip') { arsipAktifTerpilih = null; resetArsipPreview(); renderArsipPembayaran(); }
-        }
+			// 3. Update styling tombol navigasi sidebar secara aman
+			document.querySelectorAll('#sidebar-menu .nav-btn').forEach(btn => {
+				const isTarget = btn.getAttribute('onclick')?.includes(`'${menuId}'`);
+				if (isTarget) {
+					btn.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
+					btn.classList.remove('text-gray-300');
+				} else {
+					btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg');
+					btn.classList.add('text-gray-300');
+				}
+			});
+
+			// 4. Update judul header
+			const titles = {
+				'menu-dashboard': 'Dashboard',
+				'menu-input-harian': 'Input Produksi Harian',
+				'menu-rekap-produksi': 'Rekap Produksi Terpadu',
+				'menu-rekap-gaji': 'Kalkulasi & Cetak Gaji',
+				'menu-tabungan': 'Buku Saldo Perusahaan & Karyawan',
+				'menu-arsip': 'Arsip & Riwayat Penggajian',
+				'menu-pengaturan': 'Pengaturan Sistem'
+			};
+			document.getElementById('judul-halaman').innerText = titles[menuId] || 'Dashboard';
+
+			// 5. Render ulang komponen relevan
+			if (menuId === 'menu-tabungan') renderTabBukuSaldo();
+			if (menuId === 'menu-dashboard') renderDashboard();
+			if (menuId === 'menu-rekap-produksi') renderRekapProduksiHorizontal();
+			if (menuId === 'menu-pengaturan') renderTableKaryawan();
+			if (menuId === 'menu-arsip') { 
+				arsipAktifTerpilih = null; 
+				resetArsipPreview(); 
+				renderArsipPembayaran(); 
+			}
+	}
 
         function tutupModal(id) { document.getElementById(id).classList.replace('flex','hidden'); }
 
@@ -1638,32 +1677,73 @@
         }
 
         async function simpanDataHarian() { 
-            const btnSimpan = document.getElementById('btn-simpan-harian'); const originalText = btnSimpan.innerText;
-            const tgl = document.getElementById('tgl-harian').value; if(!tgl) return alert('Pilih tanggal produksi terlebih dahulu!');
-            
-            let batchData = [];
-            document.querySelectorAll('.inp-reg').forEach(inp => {
-                const id = parseInt(inp.id.split('-')[1]);
-                let r = parseInt(inp.value)||0; let l = parseInt(document.getElementById(`hl-${id}`)?.value)||0; let l2 = parseInt(document.getElementById(`hl2-${id}`)?.value)||0; let l3 = parseInt(document.getElementById(`hl3-${id}`)?.value)||0;
-                if(r > 0 || l > 0 || l2 > 0 || l3 > 0) batchData.push({ id_kar: id, tgl: tgl, reg: r, lem: l, lem2: l2, lem3: l3 }); 
-            });
-            
-            if(batchData.length === 0) return alert('Isi minimal 1 data karyawan.');
-            btnSimpan.disabled = true; btnSimpan.innerText = 'Menyimpan...'; btnSimpan.classList.add('opacity-50', 'cursor-not-allowed');
+		const btnSimpan = document.getElementById('btn-simpan-harian'); 
+		const originalText = btnSimpan.innerText;
+		const tgl = document.getElementById('tgl-harian').value; 
+		
+		// 1. Validasi: Pastikan tanggal sudah dipilih
+		if(!tgl) return alert('Pilih tanggal produksi terlebih dahulu!');
+		
+		// 2. Kumpulkan data dari semua input karyawan yang nilainya lebih dari 0
+		let batchData = [];
+		document.querySelectorAll('.inp-reg').forEach(inp => {
+			const id = parseInt(inp.id.split('-')[1], 10);
+			let r = parseInt(inp.value, 10) || 0; 
+			let l = parseInt(document.getElementById(`hl-${id}`)?.value, 10) || 0; 
+			let l2 = parseInt(document.getElementById(`hl2-${id}`)?.value, 10) || 0; 
+			let l3 = parseInt(document.getElementById(`hl3-${id}`)?.value, 10) || 0;
+			
+			if(r > 0 || l > 0 || l2 > 0 || l3 > 0) {
+				batchData.push({ 
+					id_kar: id, 
+					tgl: tgl, 
+					reg: r, 
+					lem: l, 
+					lem_2: l2, 
+					lem_3: l3 
+				}); 
+			}
+		});
+		
+		// 3. Validasi: Pastikan ada minimal satu baris yang diisi
+		if(batchData.length === 0) return alert('Isi minimal 1 data produksi karyawan.');
+		
+		// 4. Ubah status tombol agar tidak bisa diklik dua kali saat proses kirim
+		btnSimpan.disabled = true; 
+		btnSimpan.innerText = 'Menyimpan...'; 
+		btnSimpan.classList.add('opacity-50', 'cursor-not-allowed');
 
-            try {
-                for(let item of batchData) {
-                    let existing = dbProduksi.find(p => p.id_kar === item.id_kar && p.tgl === item.tgl);
-                    if(existing) {
-                        await _supabase.from('produksi').update({ reg: item.reg, lem: item.lem, lem_2: item.lem2, lem_3: item.lem3 }).eq('id_prod', existing.id_prod);
-                    } else {
-                        let idProdBaru = Date.now();
-                        await _supabase.from('produksi').insert([{ id_prod: idProdBaru, id_kar: item.id_kar, tgl: item.tgl, reg: item.reg, lem: item.lem, lem_2: item.lem2, lem_3: item.lem3 }]);
-                    }
-                }
-                alert(`Berhasil menyimpan data produksi!`); document.getElementById('tgl-harian')._flatpickr.clear(); fetchAllData(); 
-            } catch (err) { console.error(err); alert("Terjadi kesalahan saat menyimpan data."); } finally { btnSimpan.disabled = false; btnSimpan.innerText = originalText; btnSimpan.classList.remove('opacity-50', 'cursor-not-allowed'); }
-        }
+		try {
+			// 5. EKSEKUSI UPSERT KE SUPABASE:
+			// onConflict: 'id_kar, tgl' memberitahu database:
+			// "Jika kombinasi id_kar dan tgl sudah ada, perbarui nilainya. Jika belum ada, buat baris baru."
+			const { error } = await _supabase
+				.from('produksi')
+				.upsert(batchData, { onConflict: 'id_kar, tgl' });
+
+			if (error) throw error;
+
+			alert('Berhasil menyimpan data produksi!'); 
+
+			// Kosongkan form tanggal & reset tabel input
+			if (document.getElementById('tgl-harian')._flatpickr) {
+				document.getElementById('tgl-harian')._flatpickr.clear(); 
+			}
+			renderTabelHarian(); // Membersihkan input form setelah disimpan
+
+			fetchAllData();
+
+		} catch (err) { 
+			console.error("Gagal simpan harian:", err); 
+			alert("Terjadi kesalahan saat menyimpan data ke database: " + err.message); 
+		} finally { 
+			// 6. Kembalikan tombol ke keadaan semula
+			btnSimpan.disabled = false; 
+			btnSimpan.innerText = originalText; 
+			btnSimpan.classList.remove('opacity-50', 'cursor-not-allowed'); 
+		}
+	}
+	
 
         function formatTanggalPendek(dateStr) { if(!dateStr) return '-'; const [y, m, d] = dateStr.split('-'); return `${d}/${m}`; }
         function getDatesBetween(startDate, endDate) { const dates = []; let currentDate = new Date(startDate); const stopDate = new Date(endDate); while (currentDate <= stopDate) { dates.push(new Date(currentDate).toISOString().split('T')[0]); currentDate.setDate(currentDate.getDate() + 1); } return dates; }
@@ -1723,25 +1803,59 @@
         }
 
         async function simpanEditProduksi() {
-            let id_kar = parseInt(document.getElementById('ep-id-kar').value); let tgl = document.getElementById('ep-tgl').value; let nReg = parseInt(document.getElementById('ep-reg').value) || 0; let nLem = parseInt(document.getElementById('ep-lem').value) || 0; let nLem2 = parseInt(document.getElementById('ep-lem2').value) || 0; let nLem3 = parseInt(document.getElementById('ep-lem3').value) || 0;
-            let existingIndex = dbProduksi.findIndex(p => p.id_kar === id_kar && p.tgl === tgl);
-            if(existingIndex !== -1) {
-                let existingProd = dbProduksi[existingIndex];
-                if(nReg === 0 && nLem === 0 && nLem2 === 0 && nLem3 === 0) {
-                    dbProduksi.splice(existingIndex, 1); await _supabase.from('produksi').delete().eq('id_prod', existingProd.id_prod);
-                } else {
-                    dbProduksi[existingIndex].reg = nReg; dbProduksi[existingIndex].lem = nLem; dbProduksi[existingIndex].lem2 = nLem2; dbProduksi[existingIndex].lem3 = nLem3;
-                    await _supabase.from('produksi').update({ reg: nReg, lem: nLem, lem_2: nLem2, lem_3: nLem3 }).eq('id_prod', existingProd.id_prod);
-                }
-            } else {
-                if(nReg > 0 || nLem > 0 || nLem2 > 0 || nLem3 > 0) {
-                    let idProdBaru = Date.now();
-                    let { data, error } = await _supabase.from('produksi').insert([{ id_prod: idProdBaru, id_kar, tgl, reg: nReg, lem: nLem, lem_2: nLem2, lem_3: nLem3 }]).select();
-                    if(data && data.length > 0) dbProduksi.push({ id_prod: data[0].id_prod, id_kar, tgl, reg: nReg, lem: nLem, lem2: nLem2, lem3: nLem3 });
-                }
-            }
-            renderRekapProduksiHorizontal(); if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); tutupModal('modal-edit-produksi');
-        }
+			let id_kar = parseInt(document.getElementById('ep-id-kar').value, 10); 
+			let tgl = document.getElementById('ep-tgl').value; 
+			let nReg = parseInt(document.getElementById('ep-reg').value, 10) || 0; 
+			let nLem = parseInt(document.getElementById('ep-lem').value, 10) || 0; 
+			let nLem2 = parseInt(document.getElementById('ep-lem2').value, 10) || 0; 
+			let nLem3 = parseInt(document.getElementById('ep-lem3').value, 10) || 0;
+
+			let existingIndex = dbProduksi.findIndex(p => p.id_kar === id_kar && p.tgl === tgl);
+
+			try {
+				// Jika seluruh input diisi 0, hapus baris dari database
+				if(nReg === 0 && nLem === 0 && nLem2 === 0 && nLem3 === 0) {
+					if(existingIndex !== -1) {
+						let existingProd = dbProduksi[existingIndex];
+						const { error } = await _supabase.from('produksi').delete().eq('id_prod', existingProd.id_prod);
+						if(error) throw error;
+						dbProduksi.splice(existingIndex, 1);
+					}
+				} else {
+					// Gunakan upsert dengan onConflict id_kar, tgl
+					const { data, error } = await _supabase.from('produksi').upsert([{
+						id_kar: id_kar,
+						tgl: tgl,
+						reg: nReg,
+						lem: nLem,
+						lem_2: nLem2,
+						lem_3: nLem3
+					}], { onConflict: 'id_kar, tgl' }).select();
+
+					if (error) throw error;
+
+					if (data && data.length > 0) {
+						let updatedItem = { 
+							id_prod: data[0].id_prod, 
+							id_kar, tgl, reg: nReg, lem: nLem, lem2: nLem2, lem3: nLem3 
+						};
+						if(existingIndex !== -1) {
+							dbProduksi[existingIndex] = updatedItem;
+						} else {
+							dbProduksi.push(updatedItem);
+						}
+					}
+				}
+
+				renderRekapProduksiHorizontal(); 
+				if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); 
+				tutupModal('modal-edit-produksi');
+
+			} catch (err) {
+				console.error("Gagal edit produksi:", err);
+				alert("Gagal menyimpan perubahan: " + err.message);
+			}
+		}
 
         function bukaModalExportRekap() {
             const div = document.getElementById('rp-divisi').value; if(!div) return alert("Pilih divisi terlebih dahulu untuk melakukan ekspor.");
@@ -2182,6 +2296,41 @@
             else { tbody.innerHTML = riwayat.map(r => { let d = new Date(r.tgl); let tglStr = `${("0"+d.getDate()).slice(-2)}/${("0"+(d.getMonth()+1)).slice(-2)}/${d.getFullYear()} ${("0"+d.getHours()).slice(-2)}:${("0"+d.getMinutes()).slice(-2)}`; let rMasuk = r.jenis === 'masuk' ? formatRibuanStr(r.nominal) : '-'; let rKeluar = r.jenis === 'keluar' ? formatRibuanStr(r.nominal) : '-'; return `<tr><td class="pl-4 border-b border-gray-100 dark:border-gray-700 py-3 text-sm">${tglStr}</td><td class="border-b border-gray-100 dark:border-gray-700 py-3 font-medium">${r.keterangan || '-'}</td><td class="text-right border-b border-gray-100 dark:border-gray-700 py-3 font-bold text-green-600 dark:text-green-400">${rMasuk}</td><td class="text-right border-b border-gray-100 dark:border-gray-700 py-3 font-bold text-red-500 dark:text-red-400">${rKeluar}</td></tr>`; }).join(''); }
             document.getElementById('modal-rincian-tabungan').classList.replace('hidden', 'flex');
         }
+		
+		// FUNGSI UNTUK MELIHAT MUTASI / HISTORI KASBON KARYAWAN
+		function bukaModalRincianKasbon(idKar) {
+			const k = dbKaryawan.find(x => x.id === idKar); 
+			if(!k) return;
+
+			document.getElementById('rk-nama-karyawan').innerText = `Nama: ${k.nama}`; 
+			document.getElementById('rk-saldo-akhir').innerText = `Rp ${formatRibuanStr(k.saldo_kasbon)}`;
+
+			// Ambil histori kasbon karyawan tersebut, urutkan dari yang paling baru
+			const riwayat = dbRiwayatKasbon
+				.filter(r => r.id_kar === idKar)
+				.sort((a, b) => new Date(b.tgl) - new Date(a.tgl));
+
+			const tbody = document.getElementById('tbody-rincian-kasbon');
+			if(riwayat.length === 0) { 
+				tbody.innerHTML = `<tr><td colspan="4" class="py-10 text-center text-gray-400">Belum ada riwayat transaksi kasbon.</td></tr>`; 
+			} else { 
+				tbody.innerHTML = riwayat.map(r => { 
+					let d = new Date(r.tgl); 
+					let tglStr = `${("0"+d.getDate()).slice(-2)}/${("0"+(d.getMonth()+1)).slice(-2)}/${d.getFullYear()} ${("0"+d.getHours()).slice(-2)}:${("0"+d.getMinutes()).slice(-2)}`; 
+					let rPinjam = r.jenis === 'pinjam' ? formatRibuanStr(r.nominal) : '-'; 
+					let rBayar = r.jenis === 'bayar' ? formatRibuanStr(r.nominal) : '-'; 
+					
+					return `<tr>
+						<td class="pl-4 border-b border-gray-100 dark:border-gray-700 py-3 text-sm">${tglStr}</td>
+						<td class="border-b border-gray-100 dark:border-gray-700 py-3 font-medium">${r.keterangan || '-'}</td>
+						<td class="text-right border-b border-gray-100 dark:border-gray-700 py-3 font-bold text-red-500 dark:text-red-400">${rPinjam}</td>
+						<td class="text-right border-b border-gray-100 dark:border-gray-700 py-3 font-bold text-green-600 dark:text-green-400">${rBayar}</td>
+					</tr>`; 
+				}).join(''); 
+			}
+			
+			document.getElementById('modal-rincian-kasbon').classList.replace('hidden', 'flex');
+		}
 
         function renderLedgerPerusahaan() {
             // 1. Ambil nilai filter bulan (format outputnya YYYY-MM)
@@ -2444,10 +2593,21 @@
         }
 
         async function hapusDivisi(id) {
-            if(!confirm('Yakin ingin menghapus divisi ini? Pastikan tidak ada karyawan yang terikat pada divisi ini.')) return;
-            try { await _supabase.from('divisi').delete().eq('id', id); dbDivisi = dbDivisi.filter(x => x.id != id); renderTableDivisi(); renderSelectDivisi(); if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); } 
-            catch (e) { console.error(e); alert('Gagal menghapus divisi.'); }
-        }
+			if(!confirm('Yakin ingin menghapus divisi ini? Pastikan tidak ada karyawan yang terikat pada divisi ini.')) return;
+			try { 
+				const { error } = await _supabase.from('divisi').delete().eq('id', id); 
+				if (error) throw error;
+
+				dbDivisi = dbDivisi.filter(x => x.id != id); 
+				renderTableDivisi(); 
+				renderSelectDivisi(); 
+				if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); 
+				alert('Divisi berhasil dihapus.');
+			} catch (e) { 
+				console.error("Gagal hapus divisi:", e); 
+				alert('Gagal menghapus divisi: ' + (e.message || 'Masih ada karyawan yang terdaftar di divisi ini.')); 
+			}
+		}
 
         function renderTableKaryawan() {
             const fNama = document.getElementById('filter-nama').value.toLowerCase(); const fDiv = document.getElementById('filter-divisi').value;
@@ -2499,10 +2659,20 @@
         }
 
         async function hapusKaryawan(id) {
-            if(!confirm('Yakin ingin menghapus karyawan ini secara permanen? Seluruh data produksi yang terkait mungkin akan ikut terhapus atau error.')) return;
-            try { await _supabase.from('karyawan').delete().eq('id', id); dbKaryawan = dbKaryawan.filter(x => x.id != id); renderTableKaryawan(); if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); } 
-            catch (e) { console.error(e); alert('Gagal menghapus karyawan.'); }
-        }
+			if(!confirm('Yakin ingin menghapus karyawan ini secara permanen? Seluruh data produksi yang terkait mungkin akan ikut terhapus atau error.')) return;
+			try { 
+				const { error } = await _supabase.from('karyawan').delete().eq('id', id); 
+				if (error) throw error;
+
+				dbKaryawan = dbKaryawan.filter(x => x.id != id); 
+				renderTableKaryawan(); 
+				if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); 
+				alert('Karyawan berhasil dihapus.');
+			} catch (e) { 
+				console.error("Gagal hapus karyawan:", e); 
+				alert('Gagal menghapus karyawan: ' + (e.message || 'Pastikan tidak ada data produksi atau kasbon yang masih terikat.')); 
+			}
+		}
 
         // Jalankan Inisialisasi Saat Halaman Selesai Dimuat
         window.onload = initApp;
