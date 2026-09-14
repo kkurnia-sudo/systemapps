@@ -36,7 +36,7 @@
                 <i class="fa-solid fa-truck-ramp-box"></i>
             </div>
             <h1 class="text-xl font-extrabold text-slate-900 leading-tight">SBR Putra Food</h1>
-            <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-6">Aplikasi Logistik & Kurir</p>
+            <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-6">Aplikasi Distribusi Aromanis</p>
 
             <form id="formLogin" class="space-y-4 text-left">
                 <div>
@@ -121,8 +121,9 @@
                         </button>
 
                         <div class="pt-2">
-                            <button type="submit" id="btnSimpanKirim" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-2xl shadow-md transition text-sm flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-check"></i> SIMPAN PENGIRIMAN
+                            <!-- TOMBOL SIMPAN & KIRIM LAPORAN WA -->
+                            <button type="submit" id="btnSimpanKirim" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl shadow-md transition text-sm flex items-center justify-center gap-2">
+                                <i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA
                             </button>
                         </div>
                     </form>
@@ -188,7 +189,6 @@
                     </button>
                 </div>
 
-                <!-- Wadah Kartu Karyawan -->
                 <div id="containerListKaryawanAdmin" class="space-y-2.5"></div>
             </div>
 
@@ -205,10 +205,10 @@
             <button onclick="navMobile('riwayatSaya')" id="btnNavRiwayatSaya" class="flex flex-col items-center gap-1 text-slate-400 font-semibold text-[10px]">
                 <i class="fa-solid fa-clock-rotate-left text-lg"></i> Tugas Saya
             </button>
-            <!-- Tombol Navigasi Admin (Tampil Hanya Jika role = 'admin') -->
-            <button onclick="navMobile('karyawan')" id="btnNavKaryawan" class="hidden flex flex-col items-center gap-1 text-slate-400 font-semibold text-[10px]">
-                <i class="fa-solid fa-users-gear text-lg"></i> Karyawan
-            </button>
+            <!-- Tombol Navigasi Admin (HANYA MUNCUL JIKA role === 'admin') -->
+			<button onclick="navMobile('karyawan')" id="btnNavKaryawan" class="hidden flex-col items-center gap-1 text-slate-400 font-semibold text-[10px]">
+				<i class="fa-solid fa-users-gear text-lg"></i> Karyawan
+			</button>
         </nav>
     </div>
 
@@ -374,7 +374,7 @@
         let semuaKaryawanAdmin = [];
         let deferredPrompt = null;
 
-        // 1. DAFTARKAN MANIFEST PWA SECARA DINAMIS
+        // 1. MANIFEST PWA STANDALONE
         function inisialisasiPWA() {
             const manifestData = {
                 name: "SBR Kurir Distribusi",
@@ -384,23 +384,13 @@
                 background_color: "#f8fafc",
                 theme_color: "#4f46e5",
                 icons: [
-                    {
-                        src: "https://cdn-icons-png.flaticon.com/512/2830/2830305.png",
-                        sizes: "192x192",
-                        type: "image/png"
-                    },
-                    {
-                        src: "https://cdn-icons-png.flaticon.com/512/2830/2830305.png",
-                        sizes: "512x512",
-                        type: "image/png"
-                    }
+                    { src: "https://cdn-icons-png.flaticon.com/512/2830/2830305.png", sizes: "192x192", type: "image/png" },
+                    { src: "https://cdn-icons-png.flaticon.com/512/2830/2830305.png", sizes: "512x512", type: "image/png" }
                 ]
             };
-
             const stringManifest = JSON.stringify(manifestData);
             const blob = new Blob([stringManifest], { type: 'application/json' });
             const manifestURL = URL.createObjectURL(blob);
-
             const manifestLink = document.createElement('link');
             manifestLink.rel = 'manifest';
             manifestLink.href = manifestURL;
@@ -423,7 +413,7 @@
                 }
                 deferredPrompt = null;
             } else {
-                showNotice("Untuk memasang ke layar utama:\n1. Ketuk titik tiga (⋮) di pojok kanan atas Chrome\n2. Pilih 'Tambahkan ke Layar Utama' atau 'Pasang Aplikasi'", "Pasang Aplikasi");
+                showNotice("Untuk memasang ke layar HP:\n1. Ketuk titik tiga (⋮) di pojok kanan atas Chrome\n2. Pilih 'Tambahkan ke Layar Utama' atau 'Pasang Aplikasi'", "Pasang Aplikasi");
             }
         }
 
@@ -500,6 +490,7 @@
         const showError = (msg, title = "Terjadi Kesalahan") => showDialog({ title, message: msg, type: "error", showCancel: false });
         const showConfirm = (msg, title = "Konfirmasi") => showDialog({ title, message: msg, type: "question", showCancel: true, confirmText: "Ya", cancelText: "Batal" });
 
+        // FORMAT TANGGAL LENGKAP BAHASA INDONESIA
         function formatTglIndo(tglStr) {
             if (!tglStr) return "-";
             const parts = tglStr.split('-');
@@ -518,6 +509,27 @@
             return `${hari}, ${dd}/${mm}/${yy}`;
         }
 
+        // FORMAT TANGGAL KHUSUS WA: "Senin 14/Sept/26"
+        function formatTglLaporanWA(tglStr) {
+            if (!tglStr) return "-";
+            const parts = tglStr.split('-');
+            if (parts.length !== 3) return tglStr;
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+            const d = new Date(year, month, day);
+
+            const namaHariLengkap = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const namaBulanSingkat = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sept', 'Okt', 'Nov', 'Des'];
+
+            const hari = namaHariLengkap[d.getDay()];
+            const dd = String(day).padStart(2, '0');
+            const bln = namaBulanSingkat[month];
+            const yy = String(year).slice(-2);
+
+            return `${hari} ${dd}/${bln}/${yy}`;
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             inisialisasiPWA();
             const savedKurir = localStorage.getItem('sbr_kurir_session');
@@ -532,7 +544,7 @@
             if (inputTgl) inputTgl.valueAsDate = new Date();
         });
 
-        // 3. LOAD KARYAWAN (MENAMPUNG ROLE DAN PIN)
+        // 3. LOAD KARYAWAN
         async function loadDropdownKaryawan() {
             const { data, error } = await supabaseClient
                 .from('karyawan')
@@ -547,7 +559,6 @@
             if (data) {
                 semuaKaryawanAdmin = data;
 
-                // Pengguna Login: Hanya yang memiliki role distribusi atau admin
                 const selectLogin = document.getElementById('loginKaryawanId');
                 if (selectLogin) {
                     selectLogin.innerHTML = '<option value="">Pilih Nama Anda...</option>';
@@ -559,7 +570,6 @@
                     });
                 }
 
-                // Penerima Kiriman: Hanya pekerja packing
                 daftarPackingGlobal = data.filter(k => {
                     const role = (k.role || '').toLowerCase().trim();
                     return role === 'packing' || role === 'karyawan';
@@ -620,7 +630,9 @@
             }
         }
 
-        // 4. SIMPAN PENGIRIMAN
+        // ==============================================================
+        // 4. SIMPAN PENGIRIMAN & KIRIM LAPORAN WA OTOMATIS (SASARAN 2)
+        // ==============================================================
         document.getElementById('formKirimKurir').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSimpanKirim');
@@ -632,9 +644,12 @@
 
             const rows = document.querySelectorAll('.baris-kiriman-kurir');
             const payloads = [];
+            const listLaporanItem = [];
 
             rows.forEach(row => {
-                const kid = row.querySelector('.input-kurir-karyawan').value;
+                const selectKaryawan = row.querySelector('.input-kurir-karyawan');
+                const kid = selectKaryawan.value;
+                const namaKaryawan = selectKaryawan.options[selectKaryawan.selectedIndex]?.text || '';
                 const bal = parseInt(row.querySelector('.input-kurir-bal').value) || 0;
                 const jenis = row.querySelector('.input-kurir-jenis').value;
 
@@ -651,37 +666,73 @@
                         is_lembur: false,
                         dikirim_oleh: userKurirAktif.id
                     });
+
+                    // Simpan data untuk kebutuhan format WhatsApp
+                    listLaporanItem.push({
+                        nama: namaKaryawan,
+                        bal: bal,
+                        jenis: jenis
+                    });
                 }
             });
 
             if (payloads.length === 0) {
                 await showNotice("Harap isi minimal 1 baris nama karyawan packing dan jumlah bal!", "Form Kosong");
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-check mr-1.5"></i> SIMPAN PENGIRIMAN';
+                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
                 return;
             }
 
+            // Simpan data transaksi ke database Supabase
             const { error } = await supabaseClient.from('distribusi_packing').insert(payloads);
 
             if (error) {
                 await showError("Gagal menyimpan kiriman: " + error.message);
-            } else {
-                await showSuccess(`Berhasil mencatat ${payloads.length} kiriman atas nama kurir: ${userKurirAktif.nama}`);
-                inisialisasiFormMultiBarisKurir();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+                return;
             }
 
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-check mr-1.5"></i> SIMPAN PENGIRIMAN';
-        });
+            // ==========================================
+			// RANGKAI FORMAT TEKS LAPORAN WHATSAPP + FOOTER
+			// ==========================================
+			const tglWA = formatTglLaporanWA(tanggal);
+			let pesanWA = `Distribusi ${tglWA}\n_*${sesi}*_\n\n`;
 
-        // 5. LOGIN & LOGOUT DENGAN ROLE
+			listLaporanItem.forEach((item, index) => {
+				pesanWA += `*${item.nama} ${item.bal} ${item.jenis}*\n`;
+				pesanWA += `_Simping_\n`;
+				pesanWA += `Pink = \n`;
+				pesanWA += `Hijau = \n`;
+				pesanWA += `Ungu = `;
+
+				if (index < listLaporanItem.length - 1) {
+					pesanWA += `\n\n`;
+				}
+			});
+
+			// Tambahkan Footer di bagian akhir pesan
+			pesanWA += `\n\n_Via © Sbr Systems_`;
+
+			await showSuccess(`Data pengiriman berhasil disimpan!\n\nAplikasi akan mengalihkan Anda ke WhatsApp untuk membagikan laporan.`);
+			
+			// Buka tautan WhatsApp
+			const linkWA = `https://api.whatsapp.com/send?text=${encodeURIComponent(pesanWA)}`;
+			window.open(linkWA, '_blank');
+
+			inisialisasiFormMultiBarisKurir();
+			btn.disabled = false;
+			btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+		});
+
+        // 5. LOGIN & LOGOUT
         document.getElementById('formLogin').addEventListener('submit', async (e) => {
             e.preventDefault();
             const select = document.getElementById('loginKaryawanId');
             const selectedOpt = select.options[select.selectedIndex];
             const pinInput = document.getElementById('loginPin').value;
             const validPin = selectedOpt.getAttribute('data-pin');
-            const role = selectedOpt.getAttribute('data-role');
+            const role = (selectedOpt.getAttribute('data-role') || '').toLowerCase().trim();
 
             if (pinInput !== validPin) {
                 await showError("PIN salah! Silakan periksa kembali PIN Anda.");
@@ -698,24 +749,34 @@
             bukaAplikasi();
         });
 
+        // ==============================================================
+        // 6. KONTROL TAMPILAN SESI & HAK AKSES ROLE (SASARAN 1)
+        // ==============================================================
         function bukaAplikasi() {
             document.getElementById('screenLogin').classList.add('hidden');
             document.getElementById('screenApp').classList.remove('hidden');
             document.getElementById('labelKurirNama').innerText = userKurirAktif.nama;
 
             const btnNavKaryawan = document.getElementById('btnNavKaryawan');
+            const tabKaryawan = document.getElementById('tabKaryawan');
             const labelRoleBadge = document.getElementById('labelRoleBadge');
             const avatarIcon = document.getElementById('avatarRoleIcon');
 
-            // Kontrol Menu Navigasi Admin
+            // Kontrol Menu Navigasi Berdasarkan Role
             if (userKurirAktif.role === 'admin') {
                 btnNavKaryawan.classList.remove('hidden');
+                btnNavKaryawan.classList.add('flex'); // Munculkan dengan gaya flex
+                
                 labelRoleBadge.innerText = "Administrator";
                 labelRoleBadge.className = "text-[10px] font-bold text-purple-600 uppercase tracking-wider leading-none";
                 avatarIcon.className = "w-9 h-9 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center font-black text-sm shadow-inner";
                 avatarIcon.innerHTML = '<i class="fa-solid fa-user-shield"></i>';
             } else {
+                // Sembunyikan tombol navigasi untuk kurir biasa
                 btnNavKaryawan.classList.add('hidden');
+                btnNavKaryawan.classList.remove('flex');
+                if (tabKaryawan) tabKaryawan.classList.add('hidden');
+
                 labelRoleBadge.innerText = "Petugas Distribusi";
                 labelRoleBadge.className = "text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none";
                 avatarIcon.className = "w-9 h-9 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center font-black text-sm shadow-inner";
@@ -737,8 +798,13 @@
             }
         }
 
-        // 6. NAVIGASI MOBILE (MENDUKUNG TAB KARYAWAN)
+        // NAVIGASI MOBILE DENGAN PENGAWASAN HAK AKSES ADMIN
         function navMobile(tab) {
+            // Jika bukan admin tapi mencoba membuka tab karyawan, tolak dan kembalikan ke tab kirim
+            if (tab === 'karyawan' && userKurirAktif?.role !== 'admin') {
+                tab = 'kirim';
+            }
+
             ['kirim', 'tarik', 'riwayatSaya', 'karyawan'].forEach(t => {
                 const view = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
                 const btn = document.getElementById(`btnNav${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -759,11 +825,13 @@
 
             if (tab === 'tarik') loadAntreanTarik();
             if (tab === 'riwayatSaya') loadRiwayatTugasSaya();
-            if (tab === 'karyawan') loadManajemenKaryawan();
+            if (tab === 'karyawan' && userKurirAktif?.role === 'admin') loadManajemenKaryawan();
         }
 
-        // 7. MODUL MANAJEMEN KARYAWAN (KHUSUS ADMIN)
+        // 7. MANAJEMEN KARYAWAN (ADMIN ONLY)
         async function loadManajemenKaryawan() {
+            if (userKurirAktif?.role !== 'admin') return;
+
             const container = document.getElementById('containerListKaryawanAdmin');
             if (!container) return;
 
@@ -834,7 +902,6 @@
             });
         }
 
-        // BUKA FORM TAMBAH KARYAWAN
         function bukaModalFormKaryawan() {
             document.getElementById('karyawanEditId').value = '';
             document.getElementById('inputNamaKaryawan').value = '';
@@ -849,15 +916,12 @@
             modal.firstElementChild.classList.remove('scale-95');
         }
 
-        // BUKA FORM EDIT KARYAWAN
         function bukaModalEditKaryawan(data) {
             document.getElementById('karyawanEditId').value = data.id;
             document.getElementById('inputNamaKaryawan').value = data.nama;
             
             const role = (data.role || 'packing').toLowerCase().trim();
             document.getElementById('inputRoleKaryawan').value = (role === 'admin' || role === 'distribusi') ? role : 'packing';
-            
-            // Sembunyikan field PIN pada saat edit profil (gunakan tombol reset PIN tersendiri)
             document.getElementById('fieldPinKaryawan').classList.add('hidden');
 
             document.getElementById('titleModalKaryawan').innerHTML = `<i class="fa-solid fa-user-pen text-purple-600 mr-2"></i> Edit Data Karyawan`;
@@ -873,7 +937,6 @@
             modal.firstElementChild.classList.add('scale-95');
         }
 
-        // SIMPAN TAMBAH / EDIT KARYAWAN
         document.getElementById('formKaryawanAdmin').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSimpanKaryawan');
@@ -922,7 +985,6 @@
             btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Data';
         });
 
-        // BUKA FORM RESET PIN
         function bukaModalResetPin(id, nama) {
             document.getElementById('resetKaryawanId').value = id;
             document.getElementById('labelResetNama').innerText = nama;
@@ -940,7 +1002,6 @@
             modal.firstElementChild.classList.add('scale-95');
         }
 
-        // SIMPAN PIN BARU
         document.getElementById('formResetPin').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSimpanPinBaru');
@@ -973,7 +1034,6 @@
             btn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan PIN';
         });
 
-        // HAPUS KARYAWAN
         async function hapusKaryawan(id, nama) {
             if (id === userKurirAktif.id) {
                 await showNotice("Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif!", "Peringatan");
