@@ -1,16 +1,24 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+	<!-- Pustaka Datepicker Flatpickr (Bahasa Indonesia) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBR Kurir & Distribusi</title>
     
-    <!-- PWA & Standalone Meta Tags untuk Android Chrome -->
+    <!-- PWA & Standalone Meta Tags untuk Android Chrome & iOS -->
     <meta name="theme-color" content="#4f46e5">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="application-name" content="SBR Kurir">
+    <meta name="application-name" content="SBR Distribusi">
+    
+    <!-- Ikon Layar Utama & Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/23d977fa5dbdb0df5a7e6d2fb2fb132cc9caacae/icon-192.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/23d977fa5dbdb0df5a7e6d2fb2fb132cc9caacae/icon-192.png">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,6 +31,66 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .smooth-transition { transition: all 0.2s ease-in-out; }
+		
+		/* ============================================================== */
+        /* PENGATURAN WARNA MODE GELAP (DARK MODE)                        */
+        /* ============================================================== */
+        html.dark body {
+            background-color: #0f172a !important; /* Latar belakang utama gelap */
+            color: #f1f5f9 !important;
+        }
+
+        /* Kartu, Header, Navbar, dan Kontainer Putih */
+        html.dark header,
+        html.dark nav,
+        html.dark .bg-white {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        /* Elemen Berlatar Abu-abu Lembut */
+        html.dark .bg-slate-50,
+        html.dark .bg-slate-100 {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+
+        /* Kolom Input & Dropdown */
+        html.dark input,
+        html.dark select {
+            background-color: #0f172a !important;
+            border-color: #475569 !important;
+            color: #f8fafc !important;
+        }
+
+        /* Penyesuaian Teks agar Terang dan Nyaman Dibaca */
+        html.dark .text-slate-900,
+        html.dark .text-slate-800,
+        html.dark .text-slate-700 {
+            color: #f8fafc !important;
+        }
+        html.dark .text-slate-600,
+        html.dark .text-slate-500,
+        html.dark .text-slate-400 {
+            color: #94a3b8 !important;
+        }
+
+        /* Garis Pembatas (Border) */
+        html.dark .border-slate-100,
+        html.dark .border-slate-200 {
+            border-color: #334155 !important;
+        }
+
+        /* Bayangan (Shadow) Lebih Soft di Mode Gelap */
+        html.dark .shadow-sm,
+        html.dark .shadow-md,
+        html.dark .shadow-xl,
+        html.dark .shadow-2xl {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4) !important;
+        }
+		
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen pb-24 select-none">
@@ -77,9 +145,18 @@
                     <div class="text-sm font-black text-slate-900 leading-tight mt-0.5" id="labelKurirNama">-</div>
                 </div>
             </div>
-            <button onclick="prosesLogout()" class="w-8 h-8 rounded-xl bg-slate-100 text-slate-500 hover:text-red-600 flex items-center justify-center text-xs transition active:scale-90" title="Keluar">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-            </button>
+            <!-- SISI KANAN: TOMBOL TEMA GELAP & LOGOUT -->
+            <div class="flex items-center gap-1.5">
+                <!-- Tombol Saklar Mode Gelap/Terang -->
+                <button type="button" onclick="toggleTemaGelap()" class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs transition active:scale-90 border border-slate-200/60" title="Ubah Mode Gelap / Terang">
+                    <i class="fa-solid fa-moon icon-tema-toggle text-slate-600"></i>
+                </button>
+
+                <!-- Tombol Logout -->
+                <button onclick="prosesLogout()" class="w-8 h-8 rounded-xl bg-slate-100 text-slate-500 hover:text-red-600 flex items-center justify-center text-xs transition active:scale-90" title="Keluar">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </button>
+            </div>
         </header>
 
         <main class="max-w-md mx-auto p-4">
@@ -96,10 +173,12 @@
                         <div class="grid grid-cols-2 gap-3 pb-3 border-b border-slate-100">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tanggal</label>
-                                <input type="date" id="kirimTanggal" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                                <!-- Input teks terhubung Flatpickr -->
+                                <input type="text" id="kirimTanggal" required placeholder="Pilih Tanggal..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sesi</label>
+                                <!-- Label diubah menjadi Waktu -->
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Waktu</label>
                                 <select id="kirimSesi" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                                     <option value="Pagi">Pagi</option>
                                     <option value="Sore">Sore</option>
@@ -294,49 +373,128 @@
         </div>
     </div>
 
-    <!-- MODAL PENARIKAN (SETOR HASIL PRODUKSI) -->
+    <!-- MODAL PENARIKAN (SETOR MULTI-PETUGAS KURIR) -->
     <div id="modalSetorKurir" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-4 transform translate-y-full sm:translate-y-0 transition-all duration-300" id="contentSetorKurir">
-            <div class="flex justify-between items-center border-b pb-3">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-3.5 transform translate-y-full sm:translate-y-0 transition-all duration-300" id="contentSetorKurir">
+            <div class="flex justify-between items-center border-b pb-2.5">
                 <h3 class="font-black text-slate-900 text-sm flex items-center">
-                    <i class="fa-solid fa-box-open text-emerald-600 mr-2"></i> Konfirmasi Tarik Barang
+                    <i class="fa-solid fa-boxes-packing text-emerald-600 mr-2"></i> Konfirmasi Tarik Barang
                 </h3>
                 <button onclick="tutupModalTarikKurir()" class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-400">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <div class="bg-slate-50 p-3.5 rounded-2xl text-xs flex justify-between items-center border border-slate-100">
-                <div>
-                    <div class="text-[10px] font-bold text-slate-400 uppercase">Karyawan Packing</div>
-                    <div class="text-slate-800 font-black text-sm uppercase" id="setorPackingNama">-</div>
+            <!-- Ringkasan Info Pekerja & Bal -->
+            <div class="bg-indigo-50/60 p-3 rounded-2xl border border-indigo-100/70">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase" id="setorInfoWaktu">-</div>
+                        <div class="text-indigo-950 font-black text-sm uppercase" id="setorPackingNama">-</div>
+                    </div>
+                    <span class="px-2 py-0.5 bg-white text-indigo-700 rounded-md text-[10px] font-extrabold border border-indigo-100 shadow-sm" id="setorInfoProduk">-</span>
                 </div>
-                <div class="text-right">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase">Target Tarik</div>
-                    <div class="text-blue-600 font-black text-base leading-none"><span id="setorTarget">0</span> Bal</div>
-                </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-3 items-center">
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1 text-center">Jumlah Tarik</label>
-                    <input type="number" id="inputTarikBal" min="0" placeholder="0" oninput="hitungStatusTarikKurir()" required class="w-full py-2.5 bg-emerald-50/50 border-2 border-emerald-200 focus:border-emerald-500 rounded-2xl text-center text-2xl font-black text-emerald-700 outline-none transition shadow-inner">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1 text-center">Status Hasil</label>
-                    <div id="boxStatusKurir" class="h-[46px] rounded-2xl border border-slate-200 bg-slate-50 flex flex-col items-center justify-center text-center p-1">
-                        <span id="labelStatusKurir" class="text-xs font-black text-slate-400 uppercase tracking-wider">Menunggu</span>
-                        <span id="subStatusKurir" class="text-[9px] font-bold text-slate-400 leading-none"></span>
+                <div class="grid grid-cols-3 gap-1.5 text-center pt-1.5 border-t border-indigo-100/60">
+                    <div class="bg-white/90 p-1 rounded-xl border border-indigo-50">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase">Target</div>
+                        <div class="text-blue-700 font-black text-sm" id="setorTarget">0</div>
+                    </div>
+                    <div class="bg-white/90 p-1 rounded-xl border border-indigo-50">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase">Sdh Tarik</div>
+                        <div class="text-emerald-600 font-black text-sm" id="setorSudahTarik">0</div>
+                    </div>
+                    <div class="bg-white/90 p-1 rounded-xl border border-indigo-50">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase">Sisa</div>
+                        <div class="text-red-600 font-black text-sm" id="setorSisaKurang">0</div>
                     </div>
                 </div>
             </div>
 
-            <input type="hidden" id="targetKirimAngka">
-            <input type="hidden" id="transaksiIdTarik">
+            <!-- Catatan Riwayat Tarikan Sebelumnya -->
+            <div id="boxRiwayatKurir" class="hidden p-2 bg-slate-50 rounded-xl border border-slate-200/60 text-[10px] max-h-20 overflow-y-auto">
+                <div class="font-bold text-slate-500 uppercase mb-0.5">
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i> Penarikan Sebelumnya:
+                </div>
+                <div id="listRiwayatKurir" class="text-slate-700 space-y-0.5 font-medium"></div>
+            </div>
 
-            <button type="button" id="btnSimpanTarikKurir" onclick="simpanTarikKurir()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl shadow-md text-sm transition flex items-center justify-center gap-1.5">
-                <i class="fa-solid fa-check-double"></i> SIMPAN HASIL TARIKAN
+            <!-- Input Jumlah Bal yang Ditarik Sekarang -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1 text-center">
+                    Jumlah Ditarik Sekarang (Bal)
+                </label>
+                <input type="number" id="inputTarikBal" min="1" placeholder="0" oninput="hitungStatusTarikKurir()" required class="w-full py-2.5 bg-emerald-50/50 border-2 border-emerald-300 focus:border-emerald-500 rounded-2xl text-center text-2xl font-black text-emerald-700 outline-none transition shadow-inner">
+                
+                <!-- Prediksi Akumulasi -->
+                <div class="mt-2 text-center text-[11px] font-bold text-slate-500" id="infoPrediksiKurir">
+                    Total menjadi: <span class="text-emerald-700 font-black">0</span> Bal
+                </div>
+            </div>
+
+            <!-- Hidden Inputs -->
+            <input type="hidden" id="transaksiIdTarik">
+            <input type="hidden" id="targetKirimAngka">
+            <input type="hidden" id="tarikLamaAngka">
+            <input type="hidden" id="riwayatLamaTeks">
+
+            <button type="button" id="btnSimpanTarikKurir" onclick="simpanTarikKurir()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl shadow-md text-xs transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-check-double"></i> SIMPAN PENARIKAN INI
             </button>
+        </div>
+    </div>
+
+
+	<!-- ========================================== -->
+    <!-- MODAL SHORTCUT: REVISI JUMLAH KIRIMAN      -->
+    <!-- ========================================== -->
+    <div id="modalRevisiKirim" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-3.5 transform translate-y-full sm:translate-y-0 transition-all duration-300" id="contentRevisiKirim">
+            <div class="flex justify-between items-center border-b pb-2.5">
+                <h3 class="font-black text-slate-900 text-sm flex items-center">
+                    <i class="fa-solid fa-pen-to-square text-amber-500 mr-2"></i> Revisi Jumlah Kirim
+                </h3>
+                <button onclick="tutupModalRevisiKirim()" class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-400">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Info Pekerja & Kiriman Saat Ini -->
+            <div class="bg-amber-50/70 p-3 rounded-2xl border border-amber-100">
+                <div class="text-[10px] font-bold text-slate-400 uppercase" id="revisiInfoWaktu">-</div>
+                <div class="text-slate-900 font-black text-sm uppercase mt-0.5" id="revisiNamaPacking">-</div>
+                <div class="text-[11px] font-bold text-amber-700 mt-1 flex items-center justify-between">
+                    <span id="revisiProduk">-</span>
+                    <span class="text-slate-500 font-medium">Tercatat: <b class="text-slate-800" id="revisiKirimLama">0</b> Bal</span>
+                </div>
+            </div>
+
+            <!-- Form Input Kirim yang Sebenarnya -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1 text-center">
+                    Jumlah Kirim Sebenarnya (Bal)
+                </label>
+                <input type="number" id="inputRevisiKirimBaru" min="1" oninput="hitungTargetRevisiOtomatis()" required class="w-full py-2.5 bg-amber-50/40 border-2 border-amber-300 focus:border-amber-500 rounded-2xl text-center text-2xl font-black text-amber-800 outline-none transition shadow-inner">
+                
+                <!-- Info Estimasi Target Baru -->
+                <div class="mt-2 text-center text-[11px] font-bold text-slate-500" id="infoTargetRevisi">
+                    Target baru menjadi: <span class="text-blue-700 font-black">0</span> Bal
+                </div>
+            </div>
+
+            <!-- Elemen Input Tersembunyi untuk ID dan Acuan Perhitungan -->
+            <input type="hidden" id="revisiIdTransaksi">
+            <input type="hidden" id="revisiJenisProduk">
+            <input type="hidden" id="revisiTarikJadiSaatIni">
+
+            <div class="flex gap-2 pt-1">
+                <button type="button" onclick="tutupModalRevisiKirim()" class="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+                    Batal
+                </button>
+                <button type="button" id="btnSimpanRevisi" onclick="simpanRevisiKirim()" class="w-2/3 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-check"></i> Simpan Revisi
+                </button>
+            </div>
         </div>
     </div>
 
@@ -365,6 +523,42 @@
     <!-- LOGIKA JAVASCRIPT APLIKASI                 -->
     <!-- ========================================== -->
     <script>
+		// ==============================================================
+        // SISTEM TEMA GELAP / TERANG (DENGAN LOCALSTORAGE)
+        // ==============================================================
+        function inisialisasiTema() {
+            // Ambil preferensi terakhir yang tersimpan (default: light)
+            const temaTersimpan = localStorage.getItem('sbr_tema') || 'light';
+            terapkanTema(temaTersimpan === 'dark');
+        }
+
+        function toggleTemaGelap() {
+            const sedangModeGelap = document.documentElement.classList.contains('dark');
+            const targetModeGelap = !sedangModeGelap;
+
+            // Terapkan ke tampilan dan simpan status terbaru ke LocalStorage
+            terapkanTema(targetModeGelap);
+            localStorage.setItem('sbr_tema', targetModeGelap ? 'dark' : 'light');
+        }
+
+        function terapkanTema(aktifkanGelap) {
+            const icons = document.querySelectorAll('.icon-tema-toggle');
+
+            if (aktifkanGelap) {
+                document.documentElement.classList.add('dark');
+                icons.forEach(ic => {
+                    ic.className = 'fa-solid fa-sun icon-tema-toggle text-amber-400 text-sm';
+                });
+            } else {
+                document.documentElement.classList.remove('dark');
+                icons.forEach(ic => {
+                    ic.className = 'fa-solid fa-moon icon-tema-toggle text-slate-600 text-xs';
+                });
+            }
+        }
+
+        // Panggil langsung agar tema aktif seketika saat halaman mulai dibuka
+        inisialisasiTema();
         const supabaseUrl = 'https://uocvuddqhviorebinpva.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvY3Z1ZGRxaHZpb3JlYmlucHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2OTQ0NDAsImV4cCI6MjEwMTI3MDQ0MH0.mWGTOTfHG4Q62S3P4LQi-5bGviMPWgMzo2p2AECquL8';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
@@ -374,20 +568,35 @@
         let semuaKaryawanAdmin = [];
         let deferredPrompt = null;
 
-        // 1. MANIFEST PWA STANDALONE
+        // ==============================================================
+        // 1. MANIFEST PWA STANDALONE (SBR DISTRIBUSI)
+        // ==============================================================
         function inisialisasiPWA() {
+            const urlIkonRaw = "https://raw.githubusercontent.com/kkurnia-sudo/systemapps/23d977fa5dbdb0df5a7e6d2fb2fb132cc9caacae/icon-192.png";
+
             const manifestData = {
-                name: "SBR Kurir Distribusi",
-                short_name: "SBR Kurir",
+                name: "SBR Distribusi",           // Nama lengkap saat proses instalasi
+                short_name: "SBR Distribusi",     // Nama label di bawah ikon layar utama HP
                 start_url: window.location.href,
                 display: "standalone",
                 background_color: "#f8fafc",
                 theme_color: "#4f46e5",
                 icons: [
-                    { src: "https://cdn-icons-png.flaticon.com/512/2830/2830305.png", sizes: "192x192", type: "image/png" },
-                    { src: "https://cdn-icons-png.flaticon.com/512/2830/2830305.png", sizes: "512x512", type: "image/png" }
+                    { 
+                        src: urlIkonRaw, 
+                        sizes: "192x192", 
+                        type: "image/png",
+                        purpose: "any maskable"
+                    },
+                    { 
+                        src: urlIkonRaw, 
+                        sizes: "512x512", 
+                        type: "image/png",
+                        purpose: "any maskable"
+                    }
                 ]
             };
+
             const stringManifest = JSON.stringify(manifestData);
             const blob = new Blob([stringManifest], { type: 'application/json' });
             const manifestURL = URL.createObjectURL(blob);
@@ -530,8 +739,26 @@
             return `${hari} ${dd}/${bln}/${yy}`;
         }
 
+        window.fpKirimTanggal = null;
+
+        function inisialisasiDatePickerKurir() {
+            const el = document.getElementById('kirimTanggal');
+            if (typeof flatpickr !== "undefined" && el) {
+                window.fpKirimTanggal = flatpickr(el, {
+                    locale: "id",          // Awalan hari Senin & Bahasa Indonesia
+                    altInput: true,        // Tampilan teks ramah pengguna
+                    altFormat: "l, d/m/y", // Format: Rabu, 16/09/26
+                    dateFormat: "Y-m-d",   // Standar Supabase
+                    defaultDate: new Date(),
+                    disableMobile: "true"  // Konsisten di Android & Browser
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             inisialisasiPWA();
+            inisialisasiDatePickerKurir();
+
             const savedKurir = localStorage.getItem('sbr_kurir_session');
             await loadDropdownKaryawan();
 
@@ -539,9 +766,6 @@
                 userKurirAktif = JSON.parse(savedKurir);
                 bukaAplikasi();
             }
-
-            const inputTgl = document.getElementById('kirimTanggal');
-            if (inputTgl) inputTgl.valueAsDate = new Date();
         });
 
         // 3. LOAD KARYAWAN
@@ -631,7 +855,7 @@
         }
 
         // ==============================================================
-        // 4. SIMPAN PENGIRIMAN & KIRIM LAPORAN WA OTOMATIS (SASARAN 2)
+        // SIMPAN PENGIRIMAN DENGAN PROTEKSI DUPLIKAT & LAPORAN WA
         // ==============================================================
         document.getElementById('formKirimKurir').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -640,12 +864,15 @@
             const sesi = document.getElementById('kirimSesi').value;
 
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i> Menyimpan...';
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i> Memeriksa data...';
 
             const rows = document.querySelectorAll('.baris-kiriman-kurir');
             const payloads = [];
             const listLaporanItem = [];
+            const listKaryawanTerpilih = [];
+            let duplikatDiForm = null;
 
+            // 1. LAPIS 1: Cek nama ganda di dalam baris formulir saat ini
             rows.forEach(row => {
                 const selectKaryawan = row.querySelector('.input-kurir-karyawan');
                 const kid = selectKaryawan.value;
@@ -654,6 +881,11 @@
                 const jenis = row.querySelector('.input-kurir-jenis').value;
 
                 if (kid && bal > 0) {
+                    if (listKaryawanTerpilih.includes(kid)) {
+                        duplikatDiForm = namaKaryawan;
+                    }
+
+                    listKaryawanTerpilih.push(kid);
                     payloads.push({
                         tanggal: tanggal,
                         sesi: sesi,
@@ -667,7 +899,6 @@
                         dikirim_oleh: userKurirAktif.id
                     });
 
-                    // Simpan data untuk kebutuhan format WhatsApp
                     listLaporanItem.push({
                         nama: namaKaryawan,
                         bal: bal,
@@ -683,47 +914,74 @@
                 return;
             }
 
-            // Simpan data transaksi ke database Supabase
-            const { error } = await supabaseClient.from('distribusi_packing').insert(payloads);
-
-            if (error) {
-                await showError("Gagal menyimpan kiriman: " + error.message);
+            if (duplikatDiForm) {
+                await showNotice(`Karyawan "${duplikatDiForm}" dipilih lebih dari 1 kali di formulir ini!\n\nSilakan gabungkan jumlah bal-nya menjadi satu baris.`, "Input Duplikat");
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
                 return;
             }
 
-            // ==========================================
-			// RANGKAI FORMAT TEKS LAPORAN WHATSAPP + FOOTER
-			// ==========================================
-			const tglWA = formatTglLaporanWA(tanggal);
-			let pesanWA = `Distribusi ${tglWA}\n_*${sesi}*_\n\n`;
+            // 2. LAPIS 2: Cek ke Supabase apakah karyawan sudah pernah menerima kiriman di hari & waktu yang sama
+            const { data: dataSudahAda, error: errorCek } = await supabaseClient
+                .from('distribusi_packing')
+                .select(`karyawan_id, karyawan!karyawan_id(nama)`)
+                .eq('tanggal', tanggal)
+                .eq('sesi', sesi)
+                .in('karyawan_id', listKaryawanTerpilih);
 
-			listLaporanItem.forEach((item, index) => {
-				pesanWA += `*${item.nama} ${item.bal} ${item.jenis}*\n`;
-				pesanWA += `_Simping_\n`;
-				pesanWA += `Pink = \n`;
-				pesanWA += `Hijau = \n`;
-				pesanWA += `Ungu = `;
+            if (errorCek) {
+                await showError("Gagal memverifikasi data: " + errorCek.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+                return;
+            }
 
-				if (index < listLaporanItem.length - 1) {
-					pesanWA += `\n\n`;
-				}
-			});
+            if (dataSudahAda && dataSudahAda.length > 0) {
+                const namaBentrok = dataSudahAda.map(item => item.karyawan?.nama || 'Karyawan').join(', ');
+                await showNotice(`Karyawan berikut SUDAH TERDAFTAR pada ${formatTglIndo(tanggal)} (Waktu: ${sesi}):\n\n👉 ${namaBentrok}\n\nSatu karyawan packing hanya boleh menerima 1 kiriman per waktu.`, "Sudah Terkirim");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+                return;
+            }
 
-			// Tambahkan Footer di bagian akhir pesan
-			pesanWA += `\n\n_Via © Sbr Systems_`;
+            // Simpan transaksi ke database Supabase
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i> Menyimpan ke server...';
+            const { error: errorInsert } = await supabaseClient.from('distribusi_packing').insert(payloads);
 
-			await showSuccess(`Data pengiriman berhasil disimpan!\n\nAplikasi akan mengalihkan Anda ke WhatsApp untuk membagikan laporan.`);
-			
-			// Buka tautan WhatsApp
-			const linkWA = `https://api.whatsapp.com/send?text=${encodeURIComponent(pesanWA)}`;
-			window.open(linkWA, '_blank');
+            if (errorInsert) {
+                await showError("Gagal menyimpan kiriman: " + errorInsert.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+                return;
+            }
 
-			inisialisasiFormMultiBarisKurir();
-			btn.disabled = false;
-			btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
-		});
+            // 3. Rangkai Format WhatsApp (Keterangan Waktu)
+            const tglWA = formatTglLaporanWA(tanggal);
+            let pesanWA = `Distribusi ${tglWA}\n_*Waktu: ${sesi}*_\n\n`;
+
+            listLaporanItem.forEach((item, index) => {
+                pesanWA += `*${item.nama} ${item.bal} ${item.jenis}*\n`;
+                pesanWA += `_Simping_\n`;
+                pesanWA += `Pink = \n`;
+                pesanWA += `Hijau = \n`;
+                pesanWA += `Ungu = `;
+
+                if (index < listLaporanItem.length - 1) {
+                    pesanWA += `\n\n`;
+                }
+            });
+
+            pesanWA += `\n\n_Via © Sbr Systems_`;
+
+            await showSuccess(`Data pengiriman berhasil disimpan!\n\nAplikasi akan membuka WhatsApp untuk membagikan laporan.`);
+            
+            const linkWA = `https://api.whatsapp.com/send?text=${encodeURIComponent(pesanWA)}`;
+            window.open(linkWA, '_blank');
+
+            inisialisasiFormMultiBarisKurir();
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+        });
 
         // 5. LOGIN & LOGOUT
         document.getElementById('formLogin').addEventListener('submit', async (e) => {
@@ -748,6 +1006,39 @@
             localStorage.setItem('sbr_kurir_session', JSON.stringify(userKurirAktif));
             bukaAplikasi();
         });
+
+
+		// ==============================================================
+        // SISTEM HAK AKSES REVISI KIRIMAN (ADMIN & IZIN KHUSUS)
+        // ==============================================================
+        function punyaAksesRevisi() {
+            if (!userKurirAktif) return false;
+            
+            // 1. Role Admin selalu memiliki izin
+            if (userKurirAktif.role === 'admin') return true;
+
+            // 2. Cek apakah ID karyawan terdaftar di whitelist izin khusus
+            const listIzin = JSON.parse(localStorage.getItem('sbr_izin_revisi') || '[]');
+            return listIzin.includes(userKurirAktif.id);
+        }
+
+        // Fungsi admin untuk mengaktifkan / mencabut izin karyawan
+        function toggleIzinRevisiKaryawan(karyawanId, namaKaryawan) {
+            let listIzin = JSON.parse(localStorage.getItem('sbr_izin_revisi') || '[]');
+
+            if (listIzin.includes(karyawanId)) {
+                listIzin = listIzin.filter(id => id !== karyawanId);
+                localStorage.setItem('sbr_izin_revisi', JSON.stringify(listIzin));
+                showNotice(`Izin revisi kirim untuk ${namaKaryawan} telah DICABUT.`, "Hak Akses Diperbarui");
+            } else {
+                listIzin.push(karyawanId);
+                localStorage.setItem('sbr_izin_revisi', JSON.stringify(listIzin));
+                showSuccess(`Izin revisi kirim untuk ${namaKaryawan} BERHASIL DIBERIKAN!`, "Hak Akses Diberikan");
+            }
+
+            // Muat ulang daftar karyawan agar badge izin langsung ter-update
+            loadManajemenKaryawan();
+        }
 
         // ==============================================================
         // 6. KONTROL TAMPILAN SESI & HAK AKSES ROLE (SASARAN 1)
@@ -1058,61 +1349,170 @@
             }
         }
 
-        // 8. STATUS HASIL TARIK REAL-TIME
-        function hitungStatusTarikKurir() {
-            const inputVal = document.getElementById('inputTarikBal').value;
-            const target = parseInt(document.getElementById('targetKirimAngka').value) || 0;
-            const box = document.getElementById('boxStatusKurir');
-            const label = document.getElementById('labelStatusKurir');
-            const sub = document.getElementById('subStatusKurir');
 
-            if (inputVal === '' || isNaN(parseInt(inputVal))) {
-                box.className = 'h-[46px] rounded-2xl border border-slate-200 bg-slate-50 flex flex-col items-center justify-center text-center p-1';
-                label.className = 'text-xs font-black text-slate-400 uppercase tracking-wider';
-                label.innerText = 'Menunggu';
-                sub.innerText = '';
+		// ==============================================================
+        // 1. LOGIKA SHORTCUT REVISI KIRIMAN (DENGAN PENGAMAN AKSES)
+        // ==============================================================
+
+        // Membuka modal revisi kiriman
+        function bukaModalRevisiKirim(item) {
+            // PENGAMAN 1: Cek apakah akun memiliki izin revisi
+            if (!punyaAksesRevisi()) {
+                showNotice("Fitur revisi kiriman hanya dapat diakses oleh Admin atau petugas yang diberi izin khusus.", "Akses Dibatasi");
+                return; // Berhenti di sini jika tidak punya akses
+            }
+
+            const jenis = item.jenis_produk || 'B12';
+
+            // Simpan data acuan ke input tersembunyi (hidden)
+            document.getElementById('revisiIdTransaksi').value = item.id;
+            document.getElementById('revisiJenisProduk').value = jenis;
+            document.getElementById('revisiTarikJadiSaatIni').value = item.tarik_jadi || 0;
+
+            // Tampilkan teks informasi pekerja dan kiriman lama
+            document.getElementById('revisiInfoWaktu').innerText = `${formatTglIndo(item.tanggal)} • Waktu: ${item.sesi}`;
+            document.getElementById('revisiNamaPacking').innerText = item.karyawan ? item.karyawan.nama : '-';
+            document.getElementById('revisiProduk').innerText = `Aromanis B${jenis.replace('B','')}`;
+            document.getElementById('revisiKirimLama').innerText = item.kirim_produksi || 0;
+
+            // Masukkan angka kirim lama ke input teks
+            const inputBaru = document.getElementById('inputRevisiKirimBaru');
+            inputBaru.value = item.kirim_produksi || '';
+            hitungTargetRevisiOtomatis();
+
+            // Buka pop-up modal
+            const modal = document.getElementById('modalRevisiKirim');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('contentRevisiKirim').classList.remove('translate-y-full');
+            setTimeout(() => inputBaru.focus(), 150);
+        }
+
+        // Menutup modal revisi kiriman
+        function tutupModalRevisiKirim() {
+            const modal = document.getElementById('modalRevisiKirim');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('contentRevisiKirim').classList.add('translate-y-full');
+        }
+
+        // Menghitung perubahan target secara real-time saat kurir mengetik
+        function hitungTargetRevisiOtomatis() {
+            const kirim = parseInt(document.getElementById('inputRevisiKirimBaru').value) || 0;
+            const jenis = document.getElementById('revisiJenisProduk').value;
+            // Jika produk B10 ada pengali 1.2, selain itu 1:1
+            const target = jenis === 'B10' ? Math.round(kirim * 1.2) : kirim;
+
+            document.getElementById('infoTargetRevisi').innerHTML = `
+                Target baru menjadi: <span class="text-blue-700 font-black">${target}</span> Bal
+            `;
+        }
+
+        // Menyimpan hasil revisi ke database Supabase
+        async function simpanRevisiKirim() {
+            // PENGAMAN 2: Cek ulang izin sebelum mengirim data ke Supabase
+            if (!punyaAksesRevisi()) {
+                await showNotice("Anda tidak memiliki wewenang untuk menyimpan perubahan ini.", "Akses Ditolak");
                 return;
             }
 
-            const tarik = parseInt(inputVal);
-            const selisih = tarik - target;
+            const id = document.getElementById('revisiIdTransaksi').value;
+            const kirimBaru = parseInt(document.getElementById('inputRevisiKirimBaru').value) || 0;
+            const jenis = document.getElementById('revisiJenisProduk').value;
+            const tarikJadiSaatIni = parseInt(document.getElementById('revisiTarikJadiSaatIni').value) || 0;
 
-            if (selisih === 0) {
-                box.className = 'h-[46px] rounded-2xl border border-emerald-300 bg-emerald-50 flex flex-col items-center justify-center text-center p-1 shadow-sm';
-                label.className = 'text-xs font-black text-emerald-700 uppercase tracking-wider';
-                label.innerText = 'PAS';
-                sub.className = 'text-[9px] font-bold text-emerald-600';
-                sub.innerText = 'Target Tercapai';
-            } else if (selisih < 0) {
-                box.className = 'h-[46px] rounded-2xl border border-amber-300 bg-amber-50 flex flex-col items-center justify-center text-center p-1 shadow-sm';
-                label.className = 'text-[11px] font-black text-amber-700 uppercase tracking-wider';
-                label.innerText = 'Kurang';
-                sub.className = 'text-[9px] font-bold text-amber-600';
-                sub.innerText = `Sisa ${Math.abs(selisih)} Bal`;
-            } else {
-                box.className = 'h-[46px] rounded-2xl border border-purple-300 bg-purple-50 flex flex-col items-center justify-center text-center p-1 shadow-sm';
-                label.className = 'text-[11px] font-black text-purple-700 uppercase tracking-wider';
-                label.innerText = 'Lebih';
-                sub.className = 'text-[9px] font-bold text-purple-600';
-                sub.innerText = `Lebih +${selisih} Bal`;
+            if (kirimBaru <= 0) {
+                await showNotice("Jumlah kirim revisi harus lebih dari 0 Bal!", "Periksa Jumlah");
+                return;
             }
+
+            const btn = document.getElementById('btnSimpanRevisi');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Menyimpan...';
+
+            // Hitung target baru dan selisih koreksi baru
+            const targetBaru = jenis === 'B10' ? Math.round(kirimBaru * 1.2) : kirimBaru;
+            const koreksiBaru = tarikJadiSaatIni > 0 ? (tarikJadiSaatIni - targetBaru) : 0;
+
+            const { error } = await supabaseClient
+                .from('distribusi_packing')
+                .update({
+                    kirim_produksi: kirimBaru,
+                    koreksi: koreksiBaru
+                })
+                .eq('id', id);
+
+            if (error) {
+                await showError("Gagal menyimpan revisi: " + error.message);
+            } else {
+                await showSuccess(`Kiriman berhasil direvisi menjadi ${kirimBaru} Bal.`);
+                tutupModalRevisiKirim();
+                loadAntreanTarik(); // Segarkan daftar antrean secara otomatis
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan Revisi';
         }
+        // ==============================================================
+        // PENARIKAN MULTI-PETUGAS & PREDIKSI AKUMULASI BAL
+        // ==============================================================
+        function bukaModalTarikKurirMulti(data, target) {
+            const jenis = data.jenis_produk || 'B12';
+            const tarikLama = data.tarik_jadi || 0;
+            const sisa = target - tarikLama;
 
-        function bukaModalTarikKurir(id, nama, target, nilaiTarikLama = 0) {
-            document.getElementById('transaksiIdTarik').value = id;
-            document.getElementById('setorPackingNama').innerText = nama;
-            document.getElementById('setorTarget').innerText = target;
+            document.getElementById('transaksiIdTarik').value = data.id;
             document.getElementById('targetKirimAngka').value = target;
+            document.getElementById('tarikLamaAngka').value = tarikLama;
+            document.getElementById('riwayatLamaTeks').value = data.riwayat_cicilan || '';
 
-            const input = document.getElementById('inputTarikBal');
-            input.value = nilaiTarikLama > 0 ? nilaiTarikLama : '';
-            
+            document.getElementById('setorInfoWaktu').innerText = `${formatTglIndo(data.tanggal)} • Waktu: ${data.sesi}`;
+            document.getElementById('setorPackingNama').innerText = data.karyawan ? data.karyawan.nama : '-';
+            document.getElementById('setorInfoProduk').innerText = `Aromanis B${jenis.replace('B','')}`;
+            document.getElementById('setorTarget').innerText = target;
+            document.getElementById('setorSudahTarik').innerText = tarikLama;
+            document.getElementById('setorSisaKurang').innerText = sisa > 0 ? sisa : 0;
+
+            // Tampilkan riwayat jika sudah pernah ditarik oleh kurir lain
+            const boxRiwayat = document.getElementById('boxRiwayatKurir');
+            const listRiwayat = document.getElementById('listRiwayatKurir');
+            if (data.riwayat_cicilan) {
+                boxRiwayat.classList.remove('hidden');
+                listRiwayat.innerHTML = data.riwayat_cicilan.split(', ').map(r => `<div>• ${r}</div>`).join('');
+            } else {
+                boxRiwayat.classList.add('hidden');
+                listRiwayat.innerHTML = '';
+            }
+
+            // Isi default dengan sisa bal
+            const inputTarik = document.getElementById('inputTarikBal');
+            inputTarik.value = sisa > 0 ? sisa : '';
             hitungStatusTarikKurir();
 
             const modal = document.getElementById('modalSetorKurir');
             modal.classList.remove('opacity-0', 'pointer-events-none');
             document.getElementById('contentSetorKurir').classList.remove('translate-y-full');
-            setTimeout(() => input.focus(), 150);
+            setTimeout(() => inputTarik.focus(), 150);
+        }
+
+        function hitungStatusTarikKurir() {
+            const tarikLama = parseInt(document.getElementById('tarikLamaAngka').value) || 0;
+            const inputBaru = parseInt(document.getElementById('inputTarikBal').value) || 0;
+            const target = parseInt(document.getElementById('targetKirimAngka').value) || 0;
+
+            const totalMenjadi = tarikLama + inputBaru;
+            const selisih = totalMenjadi - target;
+
+            let statusTeks = '';
+            if (selisih === 0) {
+                statusTeks = `<span class="text-emerald-600 font-black">(PAS Target)</span>`;
+            } else if (selisih < 0) {
+                statusTeks = `<span class="text-amber-600 font-black">(Kurang ${Math.abs(selisih)} Bal)</span>`;
+            } else {
+                statusTeks = `<span class="text-purple-600 font-black">(Lebih +${selisih} Bal)</span>`;
+            }
+
+            document.getElementById('infoPrediksiKurir').innerHTML = `
+                Total menjadi: <span class="text-emerald-700 font-black">${totalMenjadi}</span> Bal ${statusTeks}
+            `;
         }
 
         function tutupModalTarikKurir() {
@@ -1137,12 +1537,81 @@
             }
         }
 
-        // 9. LOAD ANTREAN TARIK
+
+		// ==============================================================
+        // FUNGSI MEMBUAT & MENGIRIM LAPORAN PENARIKAN KE WHATSAPP
+        // ==============================================================
+        async function kirimLaporanWATarikan(tgl) {
+            // Ambil data kiriman pada tanggal terpilih yang sudah ada tarikan fisiknya
+            const { data, error } = await supabaseClient
+                .from('distribusi_packing')
+                .select(`
+                    *,
+                    karyawan!karyawan_id(nama)
+                `)
+                .eq('tanggal', tgl)
+                .gt('tarik_jadi', 0); // Hanya ambil yang sudah ditarik
+
+            if (error) {
+                await showError("Gagal menyiapkan laporan: " + error.message);
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                await showNotice("Belum ada barang yang disetor/ditarik pada tanggal ini.", "Data Kosong");
+                return;
+            }
+
+            const namaKurir = userKurirAktif?.nama ? userKurirAktif.nama.toUpperCase() : 'KURIR';
+            const tglWA = typeof formatTglLaporanWA === 'function' ? formatTglLaporanWA(tgl) : tgl;
+
+            let totalMuatan = 0;
+            let totalB12 = 0;
+            let totalB10 = 0;
+            let daftarTeksItem = '';
+
+            data.forEach(item => {
+                const namaPacking = item.karyawan?.nama ? item.karyawan.nama.toUpperCase() : 'PACKING';
+                const jenis = item.jenis_produk || 'B12';
+                const tarik = item.tarik_jadi || 0;
+                const selisih = item.koreksi || 0;
+
+                totalMuatan += tarik;
+                if (jenis === 'B10') totalB10 += tarik;
+                else totalB12 += tarik;
+
+                let statusTeks = '_PAS_';
+                if (selisih < 0) {
+                    statusTeks = `_Kurang ${Math.abs(selisih)} Bal_`;
+                } else if (selisih > 0) {
+                    statusTeks = `_Lebih +${selisih} Bal_`;
+                }
+
+                daftarTeksItem += `• *${namaPacking}*: ${tarik} Bal (${jenis})\n`;
+            });
+
+            // Susun template pesan lengkap
+            let pesanWA = `*LAPORAN PENARIKAN AROMANIS*\n`;
+            pesanWA += `By: *${namaKurir}*\n`;
+            pesanWA += `*${tglWA}*\n\n`;
+            pesanWA += `📋 *Rincian Penarikan:*\n`;
+            pesanWA += daftarTeksItem;
+            pesanWA += `\n────────────────\n`;
+            pesanWA += `🚚 _TOTAL MUATAN: ${totalMuatan} BAL_\n`;
+            pesanWA += `_*(Rincian: B12: ${totalB12} Bal | B10: ${totalB10} Bal*_)\n\n`;
+            pesanWA += `_Via © Sbr Systems_`;
+
+            // Buka WhatsApp
+            const linkWA = `https://api.whatsapp.com/send?text=${encodeURIComponent(pesanWA)}`;
+            window.open(linkWA, '_blank');
+        }
+
+        // ==============================================================
+        // ANTREAN TARIK: TATA LETAK 2 BARIS (RESPONSIF LAYAR ANDROID)
+        // ==============================================================
         async function loadAntreanTarik() {
             const containerBelum = document.getElementById('containerAntreanTarik');
-            const containerSudah = document.getElementById('containerSudahSelesai');
             const sectionSelesai = document.getElementById('sectionSelesaiTarik');
-            const labelJumlahSelesai = document.getElementById('labelJumlahSelesai');
 
             if (!containerBelum) return;
 
@@ -1154,7 +1623,6 @@
                     <div class="text-xs font-bold text-slate-600">Memuat antrean barang...</div>
                 </div>
             `;
-            if (containerSudah) containerSudah.innerHTML = '';
             if (sectionSelesai) sectionSelesai.classList.add('hidden');
 
             const { data, error } = await supabaseClient
@@ -1164,7 +1632,7 @@
                     karyawan!karyawan_id(nama),
                     pengirim:karyawan!dikirim_oleh(nama)
                 `)
-                .eq('is_lunas', false)
+                .or('is_lunas.eq.false,koreksi.lt.0')
                 .order('tanggal', { ascending: false });
 
             if (error) {
@@ -1175,88 +1643,174 @@
             if (!data || data.length === 0) {
                 containerBelum.innerHTML = `
                     <div class="p-8 text-center text-xs text-slate-400 bg-white rounded-3xl border border-slate-100 shadow-sm space-y-1">
-                        <i class="fa-solid fa-boxes-packing text-2xl text-slate-300 mb-1"></i>
-                        <div class="font-bold text-slate-600">Tidak Ada Antrean</div>
-                        <div>Semua pengiriman sudah selesai dan terbayar lunas.</div>
+                        <i class="fa-solid fa-circle-check text-3xl text-emerald-400 mb-1"></i>
+                        <div class="font-bold text-slate-600 text-sm">Semua Antrean Beres</div>
+                        <div>Tidak ada barang aktif yang menunggu ditarik.</div>
                     </div>
                 `;
                 return;
             }
 
-            const antreanBelumBeres = [];
-            const sudahBeres = [];
-
+            // Kelompokkan data berdasarkan tanggal
+            const grouped = {};
             data.forEach(item => {
-                const target = item.jenis_produk === 'B10' ? Math.round(item.kirim_produksi * 1.2) : item.kirim_produksi;
-                const belumTarik = (item.tarik_jadi || 0) === 0;
-                const selisih = item.koreksi || 0;
-
-                if (belumTarik || selisih < 0) {
-                    antreanBelumBeres.push({ ...item, target });
-                } else {
-                    sudahBeres.push({ ...item, target });
-                }
+                const tgl = item.tanggal;
+                if (!grouped[tgl]) grouped[tgl] = [];
+                grouped[tgl].push(item);
             });
 
             containerBelum.innerHTML = '';
-            if (antreanBelumBeres.length === 0) {
-                containerBelum.innerHTML = `
-                    <div class="p-6 text-center text-xs bg-emerald-50 text-emerald-800 font-bold rounded-2xl border border-emerald-200">
-                        <i class="fa-solid fa-circle-check text-base mb-1"></i>
-                        <div>Semua kiriman saat ini sudah ditarik pas.</div>
-                    </div>
-                `;
-            } else {
-                antreanBelumBeres.forEach(item => {
-                    const belumTarik = (item.tarik_jadi || 0) === 0;
-                    const selisih = item.koreksi || 0;
+            const tglKeys = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
-                    let badgeStatus = belumTarik
-                        ? `<span class="text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md">Belum Ditarik</span>`
-                        : `<span class="text-[10px] font-extrabold bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-md">Kurang ${Math.abs(selisih)} Bal</span>`;
+            tglKeys.forEach((tgl, index) => {
+                const items = grouped[tgl];
+                const totalItem = items.length;
+                const belumBeres = items.filter(r => (r.tarik_jadi || 0) === 0 || (r.koreksi || 0) < 0).length;
+                const isOpen = (index === 0);
 
-                    containerBelum.innerHTML += `
-                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between gap-3">
-                            <div class="space-y-0.5">
-                                <div class="text-[10px] font-bold text-slate-400">${formatTglIndo(item.tanggal)} • Sesi ${item.sesi}</div>
-                                <div class="text-sm font-black text-slate-900 uppercase">${item.karyawan?.nama || '-'}</div>
-                                <div class="text-xs font-bold text-indigo-600">Aromanis ${item.jenis_produk} <span class="text-slate-400 font-normal">(Target: ${item.target} Bal)</span></div>
-                                <div class="text-[10px] text-slate-500 font-medium">Dikirim oleh: <b>${item.pengirim?.nama || '-'}</b></div>
-                                <div class="pt-1">${badgeStatus}</div>
-                            </div>
-                            <button onclick="bukaModalTarikKurir('${item.id}', '${item.karyawan?.nama || '-'}', ${item.target}, ${item.tarik_jadi || 0})" class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition whitespace-nowrap">
-                                <i class="fa-solid fa-box-open mr-1"></i> ${belumTarik ? 'Tarik' : 'Koreksi'}
-                            </button>
-                        </div>
-                    `;
+                // 1. Hitung total target & realisasi tarik
+                let targetB12 = 0;
+                let targetB10 = 0;
+                let totalTarget = 0;
+                let totalRealTarik = 0;
+
+                items.forEach(row => {
+                    const jenis = row.jenis_produk || 'B12';
+                    const target = jenis === 'B10' ? Math.round((row.kirim_produksi || 0) * 1.2) : (row.kirim_produksi || 0);
+                    const tarik = row.tarik_jadi || 0;
+
+                    totalTarget += target;
+                    totalRealTarik += tarik;
+
+                    if (jenis === 'B10') targetB10 += target;
+                    else targetB12 += target;
                 });
-            }
 
-            if (sudahBeres.length > 0 && sectionSelesai && containerSudah) {
-                sectionSelesai.classList.remove('hidden');
-                labelJumlahSelesai.innerText = `Sudah Selesai Ditarik (${sudahBeres.length})`;
+                // 2. Format chip ringkasan bal (dibuat bersih untuk baris bawah)
+                let chipsHTML = '';
+                if (targetB12 > 0) {
+                    chipsHTML += `<span class="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-lg border border-indigo-100 text-[10px]">B12: ${targetB12} Bal</span>`;
+                }
+                if (targetB10 > 0) {
+                    chipsHTML += `<span class="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-lg border border-indigo-100 text-[10px]">B10: ${targetB10} Bal</span>`;
+                }
+                chipsHTML += `
+                    <span class="bg-blue-50 text-blue-700 font-bold px-2.5 py-0.5 rounded-full border border-blue-200 text-[10px]">
+                        Tarik: <b class="${totalRealTarik >= totalTarget ? 'text-emerald-600' : 'text-blue-900'}">${totalRealTarik}</b>/${totalTarget} Bal
+                    </span>
+                `;
 
-                sudahBeres.forEach(item => {
+                // 3. Badge status penyelesaian
+                let badgeHeader = belumBeres > 0
+                    ? `<span class="text-[10px] font-black bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full border border-red-200 whitespace-nowrap">${belumBeres} Belum Beres</span>`
+                    : `<span class="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap">Semua Pas</span>`;
+
+                // Susun daftar antrean barang di dalam kartu
+                let barisHTML = '';
+                items.forEach(item => {
+                    const target = item.jenis_produk === 'B10' ? Math.round(item.kirim_produksi * 1.2) : item.kirim_produksi;
+                    const tarik = item.tarik_jadi || 0;
                     const selisih = item.koreksi || 0;
-                    const badgeSelesai = selisih === 0
-                        ? `<span class="text-[9px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">PAS (${item.tarik_jadi} Bal)</span>`
-                        : `<span class="text-[9px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded">LEBIH +${selisih} Bal</span>`;
+                    const belumTarik = (tarik === 0);
 
-                    containerSudah.innerHTML += `
-                        <div class="bg-white/80 p-3 rounded-xl border border-slate-200/60 flex items-center justify-between gap-2">
-                            <div>
-                                <div class="text-[10px] text-slate-400 font-semibold">${formatTglIndo(item.tanggal)} • Sesi ${item.sesi}</div>
-                                <div class="text-xs font-bold text-slate-700 uppercase">${item.karyawan?.nama || '-'}</div>
+                    let badgeStatus = '';
+                    if (belumTarik) {
+                        badgeStatus = `<span class="text-[9px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md">Belum Tarik</span>`;
+                    } else if (selisih === 0) {
+                        badgeStatus = `<span class="text-[9px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md">PAS (${tarik} Bal)</span>`;
+                    } else if (selisih < 0) {
+                        badgeStatus = `<span class="text-[9px] font-extrabold bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-md">Kurang ${Math.abs(selisih)} Bal</span>`;
+                    } else {
+                        badgeStatus = `<span class="text-[9px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md">Lebih +${selisih} Bal</span>`;
+                    }
+
+                    const infoPenarik = item.riwayat_cicilan
+                        ? `<div class="text-[9px] text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 mt-1 font-semibold">${item.riwayat_cicilan}</div>`
+                        : '';
+
+                    // LANGKAH 1: Siapkan tombol pensil sebelum merangkai HTML
+                    const tombolPensilHTML = punyaAksesRevisi() ? `
+                        <button type="button" onclick='bukaModalRevisiKirim(${JSON.stringify(item)})' class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-amber-100 hover:text-amber-700 active:scale-90 text-slate-500 flex items-center justify-center text-xs transition border border-slate-200/60 shadow-sm" title="Revisi Kiriman">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                    ` : '';
+
+                    // LANGKAH 2: Masukkan ke barisHTML menggunakan ${tombolPensilHTML}
+                    barisHTML += `
+                        <div class="p-3 bg-white border border-slate-100 rounded-2xl flex items-center justify-between gap-2.5 shadow-sm">
+                            <div class="space-y-0.5">
+                                <div class="text-[10px] font-bold text-slate-400">Waktu: ${item.sesi}</div>
+                                <div class="text-xs font-black text-slate-900 uppercase">${item.karyawan?.nama || '-'}</div>
+                                <div class="text-[11px] font-bold text-indigo-600">
+                                    Aromanis B${(item.jenis_produk || 'B12').replace('B','')} 
+                                    <span class="text-slate-400 font-normal">(Tgt: <b>${target}</b> | Masuk: <b>${tarik}</b>)</span>
+                                </div>
+                                <div class="pt-0.5">${badgeStatus}</div>
+                                ${infoPenarik}
                             </div>
-                            <div class="flex items-center gap-2">
-                                ${badgeSelesai}
-                                <button onclick="bukaModalTarikKurir('${item.id}', '${item.karyawan?.nama || '-'}', ${item.target}, ${item.tarik_jadi || 0})" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs flex items-center justify-center transition" title="Koreksi ulang">
-                                    <i class="fa-solid fa-pen"></i>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                ${tombolPensilHTML}
+                                <button onclick='bukaModalTarikKurirMulti(${JSON.stringify(item)}, ${target})' class="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition whitespace-nowrap flex items-center gap-1">
+                                    <i class="fa-solid fa-box-open text-xs"></i> Setor
                                 </button>
                             </div>
                         </div>
                     `;
                 });
+
+                // 5. Header akordion 2 baris (Atas: Tanggal & Status, Bawah: Chip Bal)
+                containerBelum.innerHTML += `
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden" id="cardTarik-${tgl}">
+                        <button type="button" onclick="toggleAkordionKurir('${tgl}')" class="w-full p-3.5 text-left hover:bg-slate-50 transition select-none flex flex-col gap-2.5">
+                            
+                            <!-- Baris 1: Tanggal & Status Beres -->
+                            <div class="flex items-center justify-between w-full">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                        <i class="fa-solid fa-calendar-day"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-black text-slate-900 leading-tight">${formatTglIndo(tgl)}</div>
+                                        <div class="text-[10px] text-slate-400 font-semibold">${totalItem} Antrean</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    ${badgeHeader}
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}" id="iconAkordion-${tgl}"></i>
+                                </div>
+                            </div>
+
+                            <!-- Baris 2: Rincian Target & Tombol Lapor WA -->
+                            <div class="flex items-center justify-between gap-1.5 pt-2 border-t border-slate-100/80 w-full">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    ${chipsHTML}
+                                </div>
+                                
+                                <!-- Tombol Khusus Lapor WA Penarikan -->
+                                <button type="button" onclick="event.stopPropagation(); kirimLaporanWATarikan('${tgl}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-[10px] rounded-lg shadow-sm transition flex items-center gap-1 shrink-0">
+                                    <i class="fa-brands fa-whatsapp text-xs"></i> Lapor WA
+                                </button>
+                            </div>
+
+                        </button>
+
+                        <div class="${isOpen ? 'block' : 'hidden'} p-3 pt-1 border-t border-slate-100 bg-slate-50/50 space-y-2" id="bodyAkordion-${tgl}">
+                            ${barisHTML}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleAkordionKurir(tgl) {
+            const body = document.getElementById(`bodyAkordion-${tgl}`);
+            const icon = document.getElementById(`iconAkordion-${tgl}`);
+            if (body.classList.contains('hidden')) {
+                body.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                body.classList.add('hidden');
+                icon.classList.remove('rotate-180');
             }
         }
 
@@ -1264,31 +1818,50 @@
         async function simpanTarikKurir() {
             const id = document.getElementById('transaksiIdTarik').value;
             const target = parseInt(document.getElementById('targetKirimAngka').value) || 0;
-            const tarik = parseInt(document.getElementById('inputTarikBal').value);
+            const tarikLama = parseInt(document.getElementById('tarikLamaAngka').value) || 0;
+            const inputBaru = parseInt(document.getElementById('inputTarikBal').value) || 0;
+            const riwayatLama = document.getElementById('riwayatLamaTeks').value;
 
-            if (isNaN(tarik) || tarik < 0) {
-                await showNotice("Masukkan angka tarikan yang valid!", "Periksa Input");
+            if (inputBaru <= 0) {
+                await showNotice("Masukkan jumlah bal yang ditarik saat ini dengan benar!", "Periksa Bal");
                 return;
             }
 
-            const koreksi = tarik - target;
+            const btn = document.getElementById('btnSimpanTarikKurir');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Menyimpan...';
+
+            const totalBaru = tarikLama + inputBaru;
+            const koreksiBaru = totalBaru - target;
+
+            // Catat jam penarikan saat ini
+            const now = new Date();
+            const jam = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const logBaru = `${userKurirAktif.nama}: ${inputBaru} Bal (${jam})`;
+            const logGabungan = riwayatLama ? `${riwayatLama}, ${logBaru}` : logBaru;
+
+            const payload = {
+                tarik_jadi: totalBaru,
+                koreksi: koreksiBaru,
+                ditarik_oleh: userKurirAktif.id,
+                riwayat_cicilan: logGabungan
+            };
 
             const { error } = await supabaseClient
                 .from('distribusi_packing')
-                .update({
-                    tarik_jadi: tarik,
-                    koreksi: koreksi,
-                    ditarik_oleh: userKurirAktif.id
-                })
+                .update(payload)
                 .eq('id', id);
 
             if (error) {
                 await showError("Gagal mencatat penarikan: " + error.message);
             } else {
-                await showSuccess(`Tarikan berhasil dicatat oleh: ${userKurirAktif.nama}`);
+                await showSuccess(`Berhasil disetor ${inputBaru} Bal oleh ${userKurirAktif.nama}`);
                 tutupModalTarikKurir();
                 loadAntreanTarik();
             }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check-double"></i> SIMPAN HASIL TARIKAN';
         }
 
         // 11. RIWAYAT TUGAS KURIR AKTIF
