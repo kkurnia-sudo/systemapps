@@ -108,11 +108,11 @@
         .modal-body { padding: 16px; max-height: 75vh; overflow-y: auto; color: var(--text-main); }
         .close-btn { font-size: 22px; cursor: pointer; color: var(--text-muted); background: none; border: none; }
         
-        /* STRUK */
-        .struk-box { background: #ffffff; border: 1px solid #cbd5e1; padding: 18px; border-radius: var(--radius-md); font-family: 'Courier New', Courier, monospace; color: #000000; font-size: 13px; line-height: 1.4; }
+        /* STRUK (Ditingkatkan Ukuran Font & Spasinya) */
+        .struk-box { background: #ffffff; border: 1px solid #cbd5e1; padding: 18px; border-radius: var(--radius-md); font-family: 'Courier New', Courier, monospace; color: #000000; font-size: 14.5px; line-height: 1.5; }
         .struk-center { text-align: center; }
         .struk-bold { font-weight: bold; }
-        .struk-title { font-size: 16px; font-weight: bold; margin: 0; font-family: 'Inter', sans-serif; }
+        .struk-title { font-size: 18px; font-weight: bold; margin: 0; font-family: 'Inter', sans-serif; }
         .struk-separator { border-top: 1px dashed #000000; margin: 6px 0; }
         .struk-double-separator { border-top: 2px double #000000; margin: 6px 0; }
         .struk-row { display: flex; justify-content: space-between; }
@@ -245,7 +245,7 @@
                 listAgen[a.nama_agen] = a.saldo_bon || 0;
             });
         }
-        loadTabelRiwayat();
+        await loadTabelRiwayat();
     }
 
     async function loadTabelRiwayat() {
@@ -379,24 +379,31 @@
             // 2. Update Master Agen
             await clientSupabase.from('agen').update({ saldo_bon: sisaAkhir }).eq('nama_agen', ag);
             
-            // 3. --- PERBAIKAN: Update nota secara berurutan (Looping) ---
+            // 3. --- OPTIMASI: Batch Update Nota sekaligus (Bukan Looping) ---
             if (semuaNota && semuaNota.length > 0) {
                 // A. Update nota TERBARU (index 0) dengan sisa akhir kalkulasi yang benar
                 await clientSupabase.from('transaksi')
                     .update({ sisa_akhir: sisaAkhir })
                     .eq('id', semuaNota[0].id);
                 
-                // B. Nol-kan semua nota LAMA (index 1 dan seterusnya) satu per satu
-                for (let i = 1; i < semuaNota.length; i++) {
+                // B. Nol-kan semua nota LAMA sekaligus (1 request batch)
+                if (semuaNota.length > 1) {
+                    const idsLama = semuaNota.slice(1).map(n => n.id);
                     await clientSupabase.from('transaksi')
                         .update({ sisa_akhir: 0 })
-                        .eq('id', semuaNota[i].id);
+                        .in('id', idsLama);
                 }
             }
 
             alert("✅ Sukses Melakukan Pembayaran! Nota Ref: " + noNotaRef);
             resetForm();
             await initHalaman();
+
+            // 4. OTOMATIS TAMPILKAN STRUK DETAIL NOTA SETELAH DISIMPAN
+            if (noNotaRef && noNotaRef !== "NON-NOTA") {
+                await bukaStrukNota(noNotaRef);
+            }
+
         } catch (e) { 
             alert("❌ Gagal: " + e.message); 
             btn.disabled = false; 
@@ -429,7 +436,7 @@
                         </div>
                         <div class="struk-separator"></div>
                         <div class="struk-row"><span>NO: ${trx.no_nota}</span><span>TGL: ${formatTanggalSingkat(trx.tanggal)}</span></div>
-                        <div class="struk-center struk-bold" style="font-size:14px; margin: 4px 0;">${trx.nama_agen.toUpperCase()}</div>
+                        <div class="struk-center struk-bold" style="font-size:15px; margin: 4px 0;">${trx.nama_agen.toUpperCase()}</div>
                         <div class="struk-center">DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
                         <div class="struk-separator"></div>`;
 
@@ -474,7 +481,7 @@
             s += `<div class="struk-row struk-bold"><span>TOTAL TAGIHAN:</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
             
             if (trx.ongkir && trx.ongkir > 0) {
-                s += `<div class="struk-row" style="font-size:12px; color:#555;">
+                s += `<div class="struk-row" style="font-size:13px; color:#555;">
                         <span>&nbsp;&nbsp;-Ongkir:</span>
                         <span>Rp ${trx.ongkir.toLocaleString('id-ID')}</span>
                       </div>`;
@@ -490,16 +497,16 @@
                 let riwayatSort = [...riwayatBayar].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
                 
                 riwayatSort.forEach(p => {
-                    let ket = p.keterangan ? `<div style="font-size:11px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
+                    let ket = p.keterangan ? `<div style="font-size:12px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
                     let tglLabel = `&nbsp;&nbsp;${formatTanggalSingkat(p.tanggal)}`;
                     
                     if ((p.bayar_cash || 0) > 0) {
-                        let barisKanan = `<span style="width:140px; display:flex; justify-content:space-between;"><span>CASH:</span><span>${p.bayar_cash.toLocaleString('id-ID')}</span></span>`;
+                        let barisKanan = `<span style="width:150px; display:flex; justify-content:space-between;"><span>CASH:</span><span>${p.bayar_cash.toLocaleString('id-ID')}</span></span>`;
                         s += `<div class="struk-row"><span>${tglLabel}</span>${barisKanan}</div>`;
                         tglLabel = `&nbsp;&nbsp;<span style="visibility:hidden;">${formatTanggalSingkat(p.tanggal)}</span>`; 
                     }
                     if ((p.bayar_transfer || 0) > 0) {
-                        let barisKanan = `<span style="width:140px; display:flex; justify-content:space-between;"><span>TRF:</span><span>${p.bayar_transfer.toLocaleString('id-ID')}</span></span>`;
+                        let barisKanan = `<span style="width:150px; display:flex; justify-content:space-between;"><span>TRF:</span><span>${p.bayar_transfer.toLocaleString('id-ID')}</span></span>`;
                         s += `<div class="struk-row"><span>${tglLabel}</span>${barisKanan}</div>`;
                     }
                     if (ket) s += ket;
@@ -522,7 +529,7 @@
                 colorSisa = "red";
             }
 
-            s += `<div class="struk-row struk-bold" style="font-size:18px; padding-top:4px; padding-bottom:4px; color:${colorSisa};"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-row struk-bold" style="font-size:19px; padding-top:4px; padding-bottom:4px; color:${colorSisa};"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
             
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
@@ -574,7 +581,6 @@
         txt += padLR(`NO: ${trx.no_nota}`, `TGL: ${formatTanggalSingkat(trx.tanggal)}`, charWidth) + "\n";
         
         txt += "\x1B\x61\x01"; 
-        // --- PERBAIKAN: MENEBALKAN NAMA AGEN SAAT CETAK ---
         txt += "\x1D\x21\x01"; // double height ON
         txt += `${trx.nama_agen.toUpperCase()}\n`;
         txt += "\x1D\x21\x00"; // double height OFF
