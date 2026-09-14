@@ -3,85 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Kurir Distribusi</title>
+    <title>SBR Kurir & Distribusi</title>
+    
+    <!-- PWA & Standalone Meta Tags untuk Android Chrome -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="application-name" content="SBR Kurir">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .smooth-transition { transition: all 0.2s ease-in-out; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen pb-24">
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-24 select-none">
 
     <!-- ========================================== -->
-    <!-- 1. LAYAR LOGIN KHUSUS DISTRIBUSI           -->
+    <!-- 1. LAYAR LOGIN KHUSUS DISTRIBUSI & ADMIN   -->
     <!-- ========================================== -->
     <div id="screenLogin" class="min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-sm bg-white p-6 rounded-3xl shadow-xl border border-slate-100 text-center">
+        <div class="w-full max-w-sm bg-white p-6 rounded-3xl shadow-xl border border-slate-100 text-center relative overflow-hidden">
             <div class="w-16 h-16 mx-auto mb-3 bg-indigo-600 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">
                 <i class="fa-solid fa-truck-ramp-box"></i>
             </div>
-            <h1 class="text-xl font-extrabold text-slate-900">SBR Putra Food</h1>
-            <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-6">Aplikasi Kurir Distribusi</p>
+            <h1 class="text-xl font-extrabold text-slate-900 leading-tight">SBR Putra Food</h1>
+            <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-6">Aplikasi Logistik & Kurir</p>
 
             <form id="formLogin" class="space-y-4 text-left">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nama Kurir</label>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Pilih Pengguna</label>
                     <select id="loginKaryawanId" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="">Pilih Nama Anda...</option>
+                        <option value="">Memuat nama...</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">PIN Masuk</label>
                     <input type="password" id="loginPin" maxlength="6" placeholder="••••" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-xl tracking-widest font-black text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-                <button type="submit" id="btnLogin" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-xl shadow-md transition text-sm">
-                    MASUK SEBAGAI KURIR
+                <button type="submit" id="btnLogin" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-xl shadow-md transition text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> MASUK APLIKASI
                 </button>
             </form>
+
+            <div id="boxInstallApp" class="hidden mt-5 pt-4 border-t border-slate-100">
+                <button type="button" onclick="picuInstallPWA()" class="w-full py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95">
+                    <i class="fa-solid fa-mobile-screen-button text-emerald-600"></i> Pasang Aplikasi ke Layar HP
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- ========================================== -->
-    <!-- 2. APLIKASI UTAMA (SETELAH LOGIN)          -->
+    <!-- 2. APLIKASI UTAMA                          -->
     <!-- ========================================== -->
     <div id="screenApp" class="hidden">
         <!-- Top Bar Profil -->
         <header class="bg-white px-4 py-3.5 shadow-sm sticky top-0 z-30 flex items-center justify-between border-b border-slate-100">
             <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center font-black text-sm">
-                    <i class="fa-solid fa-user-check"></i>
+                <div id="avatarRoleIcon" class="w-9 h-9 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center font-black text-sm shadow-inner">
+                    <i class="fa-solid fa-truck-fast"></i>
                 </div>
                 <div>
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kurir Aktif</div>
-                    <div class="text-sm font-black text-slate-900 leading-tight" id="labelKurirNama">-</div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none" id="labelRoleBadge">Petugas</div>
+                    <div class="text-sm font-black text-slate-900 leading-tight mt-0.5" id="labelKurirNama">-</div>
                 </div>
             </div>
-            <button onclick="prosesLogout()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 hover:text-red-600 flex items-center justify-center text-xs transition" title="Keluar">
+            <button onclick="prosesLogout()" class="w-8 h-8 rounded-xl bg-slate-100 text-slate-500 hover:text-red-600 flex items-center justify-center text-xs transition active:scale-90" title="Keluar">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </button>
         </header>
 
-        <!-- Container Menu Tab Handphone -->
         <main class="max-w-md mx-auto p-4">
 
-            <!-- TAB 1: FORM INPUT KIRIMAN BARANG (MULTI-BARIS BATCH) -->
+            <!-- TAB 1: FORM INPUT KIRIMAN BARANG -->
             <div id="tabKirim" class="space-y-4">
                 <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-                    <h2 class="text-base font-extrabold text-slate-900 pb-3 border-b border-slate-100 flex items-center">
-                        <i class="fa-solid fa-paper-plane text-indigo-600 mr-2"></i> Kirim Muatan ke Packing
+                    <h2 class="text-base font-extrabold text-slate-900 pb-3 border-b border-slate-100 flex items-center justify-between">
+                        <span class="flex items-center"><i class="fa-solid fa-paper-plane text-indigo-600 mr-2"></i> Kirim Barang ke Packing</span>
+                        <span class="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-bold uppercase">Distribusi</span>
                     </h2>
 
                     <form id="formKirimKurir" class="space-y-4 mt-4">
-                        <!-- Header Tanggal & Sesi Bersama -->
                         <div class="grid grid-cols-2 gap-3 pb-3 border-b border-slate-100">
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tanggal</label>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tanggal</label>
                                 <input type="date" id="kirimTanggal" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                             </div>
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sesi</label>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sesi</label>
                                 <select id="kirimSesi" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                                     <option value="Pagi">Pagi</option>
                                     <option value="Sore">Sore</option>
@@ -89,25 +107,19 @@
                             </div>
                         </div>
 
-                        <!-- Header Kolom Baris -->
                         <div class="flex items-center gap-2 px-1 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                            <span class="flex-1">Karyawan</span>
+                            <span class="flex-1">Karyawan Packing</span>
                             <span class="w-16 text-center text-blue-600">Kirim</span>
                             <span class="w-20 text-center text-indigo-600">Jenis</span>
                             <span class="w-7 text-center">Aksi</span>
                         </div>
 
-                        <!-- Wadah Baris Dinamis -->
-                        <div id="containerRowsKurir" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-                            <!-- 3 Baris default dimuat oleh JavaScript -->
-                        </div>
+                        <div id="containerRowsKurir" class="space-y-2.5 max-h-[360px] overflow-y-auto pr-1"></div>
 
-                        <!-- Tombol Tambah Baris -->
                         <button type="button" onclick="tambahBarisInputKurir()" class="w-full py-2.5 border-2 border-dashed border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-indigo-600 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition">
                             <i class="fa-solid fa-circle-plus"></i> Tambah Baris Karyawan
                         </button>
 
-                        <!-- Tombol Submit -->
                         <div class="pt-2">
                             <button type="submit" id="btnSimpanKirim" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-2xl shadow-md transition text-sm flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-check"></i> SIMPAN PENGIRIMAN
@@ -117,59 +129,73 @@
                 </div>
             </div>
 
-            <!-- TAB 2: CATAT PENARIKAN BARANG (DENGAN PEMISAH SELESAI HIDE/SHOW) -->
+            <!-- TAB 2: CATAT PENARIKAN BARANG -->
             <div id="tabTarik" class="hidden space-y-4">
                 <div class="flex items-center justify-between px-1">
                     <div>
                         <h2 class="text-sm font-extrabold text-slate-900 flex items-center">
                             <i class="fa-solid fa-boxes-packing text-emerald-600 mr-1.5"></i> Antrean Tarik Barang
                         </h2>
-                        <p class="text-[11px] text-slate-400">Muatan yang menunggu penarikan atau belum pas</p>
+                        <p class="text-[11px] text-slate-400">Muatan yang menunggu ditarik dari pekerja packing</p>
                     </div>
                     <button onclick="loadAntreanTarik()" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition flex items-center gap-1 active:scale-95">
                         <i class="fa-solid fa-rotate-right"></i> Segarkan
                     </button>
                 </div>
 
-                <!-- Bagian 1: Antrean Utama (Belum Ditarik / Sisa Kurang) -->
-                <div id="containerAntreanTarik" class="space-y-3">
-                    <!-- Dimuat dinamis via JS -->
-                </div>
+                <div id="containerAntreanTarik" class="space-y-3"></div>
 
-                <!-- Bagian 2: Muatan yang Sudah Selesai/Pas (Bisa di Hide / Show) -->
                 <div id="sectionSelesaiTarik" class="hidden pt-2">
                     <button type="button" onclick="toggleSelesaiTarik()" class="w-full py-2.5 px-4 bg-slate-200/70 hover:bg-slate-200 text-slate-600 font-extrabold text-xs rounded-2xl flex items-center justify-between transition select-none">
                         <span class="flex items-center gap-2">
                             <i class="fa-solid fa-circle-check text-emerald-600"></i>
                             <span id="labelJumlahSelesai">Sudah Ditarik (0)</span>
                         </span>
-                        <span class="text-[11px] text-indigo-600 flex items-center gap-1">
+                        <span class="text-[11px] text-indigo-600 flex items-center gap-1 font-bold">
                             <span id="textToggleSelesai">Tampilkan</span>
                             <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" id="iconToggleSelesai"></i>
                         </span>
                     </button>
 
-                    <!-- Wadah Kartu yang Sudah Beres (Default Tersembunyi) -->
-                    <div id="containerSudahSelesai" class="hidden space-y-2.5 mt-3">
-                        <!-- Dimuat dinamis via JS -->
-                    </div>
+                    <div id="containerSudahSelesai" class="hidden space-y-2.5 mt-3"></div>
                 </div>
             </div>
 
-            <!-- TAB 3: RIWAYAT TUGAS SAYA HARI INI -->
+            <!-- TAB 3: RIWAYAT TUGAS KURIR AKTIF -->
             <div id="tabRiwayatSaya" class="hidden space-y-3">
-                <h2 class="text-sm font-extrabold text-slate-900 px-1 flex items-center">
-                    <i class="fa-solid fa-list-check text-indigo-600 mr-1.5"></i> Aktivitas Saya Hari Ini
-                </h2>
-                <div id="containerRiwayatSaya" class="space-y-2.5">
-                    <!-- Aktivitas kurir dimuat via JS -->
+                <div class="flex items-center justify-between px-1">
+                    <h2 class="text-sm font-extrabold text-slate-900 flex items-center">
+                        <i class="fa-solid fa-list-check text-indigo-600 mr-1.5"></i> Aktivitas Saya
+                    </h2>
+                    <button onclick="loadRiwayatTugasSaya()" class="text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-xl transition flex items-center gap-1 active:scale-95">
+                        <i class="fa-solid fa-rotate-right"></i> Segarkan
+                    </button>
                 </div>
+                <div id="containerRiwayatSaya" class="space-y-2.5"></div>
+            </div>
+
+            <!-- TAB 4: MANAJEMEN KARYAWAN (KHUSUS ADMIN) -->
+            <div id="tabKaryawan" class="hidden space-y-4">
+                <div class="flex items-center justify-between px-1">
+                    <div>
+                        <h2 class="text-sm font-extrabold text-slate-900 flex items-center">
+                            <i class="fa-solid fa-users-gear text-purple-600 mr-1.5"></i> Manajemen Karyawan
+                        </h2>
+                        <p class="text-[11px] text-slate-400">Kelola akun, jabatan, dan reset PIN staf</p>
+                    </div>
+                    <button onclick="bukaModalFormKaryawan()" class="text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-xl shadow-sm transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-user-plus"></i> Tambah
+                    </button>
+                </div>
+
+                <!-- Wadah Kartu Karyawan -->
+                <div id="containerListKaryawanAdmin" class="space-y-2.5"></div>
             </div>
 
         </main>
 
-        <!-- Bottom Navigation Menu Bar (ID Diperbaiki) -->
-        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center z-40 max-w-md mx-auto shadow-lg">
+        <!-- Bottom Navigation Bar -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-2.5 flex justify-around items-center z-40 max-w-md mx-auto shadow-lg">
             <button onclick="navMobile('kirim')" id="btnNavKirim" class="flex flex-col items-center gap-1 text-indigo-600 font-bold text-[10px]">
                 <i class="fa-solid fa-paper-plane text-lg"></i> Kirim
             </button>
@@ -179,10 +205,96 @@
             <button onclick="navMobile('riwayatSaya')" id="btnNavRiwayatSaya" class="flex flex-col items-center gap-1 text-slate-400 font-semibold text-[10px]">
                 <i class="fa-solid fa-clock-rotate-left text-lg"></i> Tugas Saya
             </button>
+            <!-- Tombol Navigasi Admin (Tampil Hanya Jika role = 'admin') -->
+            <button onclick="navMobile('karyawan')" id="btnNavKaryawan" class="hidden flex flex-col items-center gap-1 text-slate-400 font-semibold text-[10px]">
+                <i class="fa-solid fa-users-gear text-lg"></i> Karyawan
+            </button>
         </nav>
     </div>
 
-    <!-- MODAL PENARIKAN DENGAN STATUS REAL-TIME (PAS, KURANG, LEBIH) -->
+    <!-- MODAL FORM TAMBAH / EDIT KARYAWAN -->
+    <div id="modalFormKaryawan" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-5 space-y-4 transform scale-95 transition-all duration-300">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-extrabold text-slate-900 text-sm flex items-center" id="titleModalKaryawan">
+                    <i class="fa-solid fa-user-plus text-purple-600 mr-2"></i> Tambah Karyawan Baru
+                </h3>
+                <button onclick="tutupModalFormKaryawan()" class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-400">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="formKaryawanAdmin" class="space-y-3">
+                <input type="hidden" id="karyawanEditId">
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nama Lengkap</label>
+                    <input type="text" id="inputNamaKaryawan" required placeholder="Contoh: Budi Santoso" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Jabatan / Role</label>
+                    <select id="inputRoleKaryawan" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="packing">Packing (Pekerja Produksi)</option>
+                        <option value="distribusi">Distribusi (Kurir Antar-Jemput)</option>
+                        <option value="admin">Admin (Pengelola Sistem)</option>
+                    </select>
+                </div>
+
+                <div id="fieldPinKaryawan">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">PIN Masuk (4-6 Digit)</label>
+                    <input type="password" id="inputPinKaryawan" maxlength="6" placeholder="••••" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-purple-500 text-center tracking-widest text-base">
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="tutupModalFormKaryawan()" class="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+                        Batal
+                    </button>
+                    <button type="submit" id="btnSimpanKaryawan" class="w-2/3 py-2.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Data
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL RESET PIN KARYAWAN -->
+    <div id="modalResetPin" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-5 space-y-4 transform scale-95 transition-all duration-300">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-extrabold text-slate-900 text-sm flex items-center">
+                    <i class="fa-solid fa-key text-amber-500 mr-2"></i> Reset PIN Karyawan
+                </h3>
+                <button onclick="tutupModalResetPin()" class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-400">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="bg-amber-50 p-3 rounded-2xl border border-amber-100 text-left">
+                <div class="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Nama Karyawan</div>
+                <div class="text-sm font-black text-slate-900 uppercase" id="labelResetNama">-</div>
+            </div>
+
+            <form id="formResetPin" class="space-y-3">
+                <input type="hidden" id="resetKaryawanId">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 text-center">Masukkan PIN Baru (4-6 Digit)</label>
+                    <input type="password" id="inputPinBaru" required maxlength="6" placeholder="••••" class="w-full py-3 bg-slate-50 border border-slate-200 rounded-2xl text-center text-xl font-black tracking-widest text-slate-800 outline-none focus:ring-2 focus:ring-amber-400">
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="tutupModalResetPin()" class="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+                        Batal
+                    </button>
+                    <button type="submit" id="btnSimpanPinBaru" class="w-2/3 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-check"></i> Simpan PIN
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PENARIKAN (SETOR HASIL PRODUKSI) -->
     <div id="modalSetorKurir" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
         <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-4 transform translate-y-full sm:translate-y-0 transition-all duration-300" id="contentSetorKurir">
             <div class="flex justify-between items-center border-b pb-3">
@@ -194,7 +306,6 @@
                 </button>
             </div>
 
-            <!-- Info Penerima & Target -->
             <div class="bg-slate-50 p-3.5 rounded-2xl text-xs flex justify-between items-center border border-slate-100">
                 <div>
                     <div class="text-[10px] font-bold text-slate-400 uppercase">Karyawan Packing</div>
@@ -206,7 +317,6 @@
                 </div>
             </div>
 
-            <!-- Input Bal & Kotak Status Real-Time Berdampingan -->
             <div class="grid grid-cols-2 gap-3 items-center">
                 <div>
                     <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1 text-center">Jumlah Tarik</label>
@@ -224,14 +334,35 @@
             <input type="hidden" id="targetKirimAngka">
             <input type="hidden" id="transaksiIdTarik">
 
-            <button type="button" id="btnSimpanTarikKurir" onclick="simpanTarikKurir()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl shadow-md text-sm transition">
-                <i class="fa-solid fa-check-double mr-1.5"></i> SIMPAN HASIL TARIKAN
+            <button type="button" id="btnSimpanTarikKurir" onclick="simpanTarikKurir()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl shadow-md text-sm transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-check-double"></i> SIMPAN HASIL TARIKAN
             </button>
         </div>
     </div>
 
+    <!-- MODAL POPUP MODERN: ALERT & CONFIRM DIALOG (Z-[100]) -->
+    <div id="modalDialog" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div id="modalDialogCard" class="bg-white rounded-3xl shadow-2xl w-full max-w-xs mx-4 p-5 text-center transform scale-95 transition-all duration-300">
+            <div id="dialogIconBox" class="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-indigo-50 text-indigo-600">
+                <i id="dialogIcon" class="fa-solid fa-circle-info"></i>
+            </div>
+            
+            <h3 id="dialogTitle" class="font-extrabold text-slate-900 text-base mb-1 leading-snug">Pemberitahuan</h3>
+            <p id="dialogMessage" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line mb-5 font-medium"></p>
+            
+            <div id="dialogActions" class="flex gap-2">
+                <button id="dialogBtnCancel" type="button" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95">
+                    Batal
+                </button>
+                <button id="dialogBtnConfirm" type="button" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ========================================== -->
-    <!-- LOGIKA JAVASCRIPT APLIKASI KURIR           -->
+    <!-- LOGIKA JAVASCRIPT APLIKASI                 -->
     <!-- ========================================== -->
     <script>
         const supabaseUrl = 'https://uocvuddqhviorebinpva.supabase.co';
@@ -240,8 +371,135 @@
 
         let userKurirAktif = null;
         let daftarPackingGlobal = [];
+        let semuaKaryawanAdmin = [];
+        let deferredPrompt = null;
 
-        // FUNGSI FORMAT TANGGAL INDONESIA (Mgg, 13/09/26)
+        // 1. DAFTARKAN MANIFEST PWA SECARA DINAMIS
+        function inisialisasiPWA() {
+            const manifestData = {
+                name: "SBR Kurir Distribusi",
+                short_name: "SBR Kurir",
+                start_url: window.location.href,
+                display: "standalone",
+                background_color: "#f8fafc",
+                theme_color: "#4f46e5",
+                icons: [
+                    {
+                        src: "https://cdn-icons-png.flaticon.com/512/2830/2830305.png",
+                        sizes: "192x192",
+                        type: "image/png"
+                    },
+                    {
+                        src: "https://cdn-icons-png.flaticon.com/512/2830/2830305.png",
+                        sizes: "512x512",
+                        type: "image/png"
+                    }
+                ]
+            };
+
+            const stringManifest = JSON.stringify(manifestData);
+            const blob = new Blob([stringManifest], { type: 'application/json' });
+            const manifestURL = URL.createObjectURL(blob);
+
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = manifestURL;
+            document.head.appendChild(manifestLink);
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const boxInstall = document.getElementById('boxInstallApp');
+            if (boxInstall) boxInstall.classList.remove('hidden');
+        });
+
+        async function picuInstallPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('boxInstallApp').classList.add('hidden');
+                }
+                deferredPrompt = null;
+            } else {
+                showNotice("Untuk memasang ke layar utama:\n1. Ketuk titik tiga (⋮) di pojok kanan atas Chrome\n2. Pilih 'Tambahkan ke Layar Utama' atau 'Pasang Aplikasi'", "Pasang Aplikasi");
+            }
+        }
+
+        // 2. DIALOG POPUP MODERN
+        function showDialog({ title = "Pemberitahuan", message = "", type = "info", confirmText = "OK", cancelText = "Batal", showCancel = false }) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('modalDialog');
+                const card = document.getElementById('modalDialogCard');
+                const iconBox = document.getElementById('dialogIconBox');
+                const icon = document.getElementById('dialogIcon');
+                const elTitle = document.getElementById('dialogTitle');
+                const elMsg = document.getElementById('dialogMessage');
+                const btnCancel = document.getElementById('dialogBtnCancel');
+                const btnConfirm = document.getElementById('dialogBtnConfirm');
+
+                elTitle.innerText = title;
+                elMsg.innerText = message;
+                btnConfirm.innerText = confirmText;
+                btnCancel.innerText = cancelText;
+
+                if (type === 'success') {
+                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-emerald-50 text-emerald-600";
+                    icon.className = "fa-solid fa-circle-check";
+                    btnConfirm.className = "w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95";
+                } else if (type === 'warning') {
+                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-amber-50 text-amber-600";
+                    icon.className = "fa-solid fa-triangle-exclamation";
+                    btnConfirm.className = "w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95";
+                } else if (type === 'question') {
+                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-indigo-50 text-indigo-600";
+                    icon.className = "fa-solid fa-circle-question";
+                    btnConfirm.className = "w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95";
+                } else if (type === 'error') {
+                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-red-50 text-red-600";
+                    icon.className = "fa-solid fa-circle-exclamation";
+                    btnConfirm.className = "w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95";
+                } else {
+                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-indigo-50 text-indigo-600";
+                    icon.className = "fa-solid fa-circle-info";
+                    btnConfirm.className = "w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95";
+                }
+
+                if (showCancel) {
+                    btnCancel.classList.remove('hidden');
+                    btnConfirm.classList.remove('w-full');
+                    btnConfirm.classList.add('w-1/2');
+                } else {
+                    btnCancel.classList.add('hidden');
+                    btnConfirm.classList.remove('w-1/2');
+                    btnConfirm.classList.add('w-full');
+                }
+
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                card.classList.remove('scale-95');
+
+                function onConfirmClick() { cleanup(true); }
+                function onCancelClick() { cleanup(false); }
+
+                function cleanup(result) {
+                    modal.classList.add('opacity-0', 'pointer-events-none');
+                    card.classList.add('scale-95');
+                    btnConfirm.removeEventListener('click', onConfirmClick);
+                    btnCancel.removeEventListener('click', onCancelClick);
+                    resolve(result);
+                }
+
+                btnConfirm.addEventListener('click', onConfirmClick);
+                btnCancel.addEventListener('click', onCancelClick);
+            });
+        }
+
+        const showNotice = (msg, title = "Informasi") => showDialog({ title, message: msg, type: "info", showCancel: false });
+        const showSuccess = (msg, title = "Berhasil!") => showDialog({ title, message: msg, type: "success", showCancel: false });
+        const showError = (msg, title = "Terjadi Kesalahan") => showDialog({ title, message: msg, type: "error", showCancel: false });
+        const showConfirm = (msg, title = "Konfirmasi") => showDialog({ title, message: msg, type: "question", showCancel: true, confirmText: "Ya", cancelText: "Batal" });
+
         function formatTglIndo(tglStr) {
             if (!tglStr) return "-";
             const parts = tglStr.split('-');
@@ -260,8 +518,8 @@
             return `${hari}, ${dd}/${mm}/${yy}`;
         }
 
-        // CEK SESI LOGIN
         document.addEventListener('DOMContentLoaded', async () => {
+            inisialisasiPWA();
             const savedKurir = localStorage.getItem('sbr_kurir_session');
             await loadDropdownKaryawan();
 
@@ -274,7 +532,7 @@
             if (inputTgl) inputTgl.valueAsDate = new Date();
         });
 
-        // 1. LOAD KARYAWAN (ROLE SIMPEL: 'Distribusi' & 'Packing')
+        // 3. LOAD KARYAWAN (MENAMPUNG ROLE DAN PIN)
         async function loadDropdownKaryawan() {
             const { data, error } = await supabaseClient
                 .from('karyawan')
@@ -287,19 +545,21 @@
             }
 
             if (data) {
-                // Dropdown Login: Hanya staf Distribusi atau Admin
+                semuaKaryawanAdmin = data;
+
+                // Pengguna Login: Hanya yang memiliki role distribusi atau admin
                 const selectLogin = document.getElementById('loginKaryawanId');
                 if (selectLogin) {
                     selectLogin.innerHTML = '<option value="">Pilih Nama Anda...</option>';
                     data.forEach(k => {
                         const role = (k.role || '').toLowerCase().trim();
                         if (role === 'distribusi' || role === 'admin') {
-                            selectLogin.innerHTML += `<option value="${k.id}" data-pin="${k.pin || '1234'}">${k.nama}</option>`;
+                            selectLogin.innerHTML += `<option value="${k.id}" data-pin="${k.pin || '1234'}" data-role="${role}">${k.nama} (${role.toUpperCase()})</option>`;
                         }
                     });
                 }
 
-                // Dropdown Penerima Kiriman: Hanya staf Packing
+                // Penerima Kiriman: Hanya pekerja packing
                 daftarPackingGlobal = data.filter(k => {
                     const role = (k.role || '').toLowerCase().trim();
                     return role === 'packing' || role === 'karyawan';
@@ -309,7 +569,6 @@
             }
         }
 
-        // 2. FUNGSI MULTI-BARIS FORM KIRIM
         function inisialisasiFormMultiBarisKurir() {
             const container = document.getElementById('containerRowsKurir');
             if (!container) return;
@@ -361,7 +620,7 @@
             }
         }
 
-        // 3. SIMPAN BATCH KIRIMAN
+        // 4. SIMPAN PENGIRIMAN
         document.getElementById('formKirimKurir').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSimpanKirim');
@@ -396,7 +655,7 @@
             });
 
             if (payloads.length === 0) {
-                alert("Harap isi minimal 1 baris nama karyawan packing dan jumlah bal!");
+                await showNotice("Harap isi minimal 1 baris nama karyawan packing dan jumlah bal!", "Form Kosong");
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-check mr-1.5"></i> SIMPAN PENGIRIMAN';
                 return;
@@ -405,9 +664,9 @@
             const { error } = await supabaseClient.from('distribusi_packing').insert(payloads);
 
             if (error) {
-                alert("Gagal menyimpan kiriman: " + error.message);
+                await showError("Gagal menyimpan kiriman: " + error.message);
             } else {
-                alert(`Sukses! Berhasil mencatat ${payloads.length} kiriman atas nama kurir: ${userKurirAktif.nama}`);
+                await showSuccess(`Berhasil mencatat ${payloads.length} kiriman atas nama kurir: ${userKurirAktif.nama}`);
                 inisialisasiFormMultiBarisKurir();
             }
 
@@ -415,22 +674,24 @@
             btn.innerHTML = '<i class="fa-solid fa-check mr-1.5"></i> SIMPAN PENGIRIMAN';
         });
 
-        // 4. LOGIN & LOGOUT
-        document.getElementById('formLogin').addEventListener('submit', (e) => {
+        // 5. LOGIN & LOGOUT DENGAN ROLE
+        document.getElementById('formLogin').addEventListener('submit', async (e) => {
             e.preventDefault();
             const select = document.getElementById('loginKaryawanId');
             const selectedOpt = select.options[select.selectedIndex];
             const pinInput = document.getElementById('loginPin').value;
             const validPin = selectedOpt.getAttribute('data-pin');
+            const role = selectedOpt.getAttribute('data-role');
 
             if (pinInput !== validPin) {
-                alert("PIN Salah! Silakan periksa kembali PIN Anda.");
+                await showError("PIN salah! Silakan periksa kembali PIN Anda.");
                 return;
             }
 
             userKurirAktif = {
                 id: select.value,
-                nama: selectedOpt.text
+                nama: selectedOpt.text.replace(/\s*\(.*\)$/, ''),
+                role: role
             };
 
             localStorage.setItem('sbr_kurir_session', JSON.stringify(userKurirAktif));
@@ -441,22 +702,44 @@
             document.getElementById('screenLogin').classList.add('hidden');
             document.getElementById('screenApp').classList.remove('hidden');
             document.getElementById('labelKurirNama').innerText = userKurirAktif.nama;
+
+            const btnNavKaryawan = document.getElementById('btnNavKaryawan');
+            const labelRoleBadge = document.getElementById('labelRoleBadge');
+            const avatarIcon = document.getElementById('avatarRoleIcon');
+
+            // Kontrol Menu Navigasi Admin
+            if (userKurirAktif.role === 'admin') {
+                btnNavKaryawan.classList.remove('hidden');
+                labelRoleBadge.innerText = "Administrator";
+                labelRoleBadge.className = "text-[10px] font-bold text-purple-600 uppercase tracking-wider leading-none";
+                avatarIcon.className = "w-9 h-9 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center font-black text-sm shadow-inner";
+                avatarIcon.innerHTML = '<i class="fa-solid fa-user-shield"></i>';
+            } else {
+                btnNavKaryawan.classList.add('hidden');
+                labelRoleBadge.innerText = "Petugas Distribusi";
+                labelRoleBadge.className = "text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none";
+                avatarIcon.className = "w-9 h-9 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center font-black text-sm shadow-inner";
+                avatarIcon.innerHTML = '<i class="fa-solid fa-truck-fast"></i>';
+            }
+
             navMobile('kirim');
         }
 
-        function prosesLogout() {
-            if (confirm("Ingin keluar dari sesi kurir?")) {
+        async function prosesLogout() {
+            const konfirmasi = await showConfirm("Ingin keluar dari akun ini?", "Keluar Sesi");
+            if (konfirmasi) {
                 localStorage.removeItem('sbr_kurir_session');
                 userKurirAktif = null;
                 document.getElementById('screenApp').classList.add('hidden');
                 document.getElementById('screenLogin').classList.remove('hidden');
                 document.getElementById('loginPin').value = '';
+                await loadDropdownKaryawan();
             }
         }
 
-        // 5. NAVIGASI MOBILE (DEFENSIF TERHADAP ID NULL)
+        // 6. NAVIGASI MOBILE (MENDUKUNG TAB KARYAWAN)
         function navMobile(tab) {
-            ['kirim', 'tarik', 'riwayatSaya'].forEach(t => {
+            ['kirim', 'tarik', 'riwayatSaya', 'karyawan'].forEach(t => {
                 const view = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
                 const btn = document.getElementById(`btnNav${t.charAt(0).toUpperCase() + t.slice(1)}`);
                 
@@ -476,9 +759,246 @@
 
             if (tab === 'tarik') loadAntreanTarik();
             if (tab === 'riwayatSaya') loadRiwayatTugasSaya();
+            if (tab === 'karyawan') loadManajemenKaryawan();
         }
 
-        // 6. LOGIKA STATUS REAL-TIME POPUP TARIK
+        // 7. MODUL MANAJEMEN KARYAWAN (KHUSUS ADMIN)
+        async function loadManajemenKaryawan() {
+            const container = document.getElementById('containerListKaryawanAdmin');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="p-8 text-center bg-white rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <div class="w-10 h-10 mx-auto bg-purple-50 text-purple-600 rounded-full flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    </div>
+                    <div class="text-xs font-bold text-slate-600">Memuat daftar staf karyawan...</div>
+                </div>
+            `;
+
+            const { data, error } = await supabaseClient
+                .from('karyawan')
+                .select('*')
+                .order('role', { ascending: true })
+                .order('nama', { ascending: true });
+
+            if (error) {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-red-500 font-bold bg-white rounded-2xl border border-red-100">Error: ${error.message}</div>`;
+                return;
+            }
+
+            semuaKaryawanAdmin = data || [];
+
+            if (semuaKaryawanAdmin.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 bg-white rounded-2xl border border-slate-100">Belum ada data karyawan.</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            semuaKaryawanAdmin.forEach(k => {
+                const role = (k.role || 'karyawan').toLowerCase().trim();
+                
+                let badgeRole = '';
+                if (role === 'admin') {
+                    badgeRole = '<span class="text-[9px] font-black bg-purple-100 text-purple-700 px-2 py-0.5 rounded-md uppercase">Admin</span>';
+                } else if (role === 'distribusi') {
+                    badgeRole = '<span class="text-[9px] font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md uppercase">Distribusi</span>';
+                } else {
+                    badgeRole = '<span class="text-[9px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md uppercase">Packing</span>';
+                }
+
+                container.innerHTML += `
+                    <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between gap-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <div class="text-xs font-black text-slate-900 uppercase">${k.nama}</div>
+                                ${badgeRole}
+                            </div>
+                            <div class="text-[10px] text-slate-400 font-semibold mt-0.5">
+                                <i class="fa-solid fa-lock text-[9px] mr-0.5"></i> PIN: <b>${k.pin ? '••••' : 'Belum diatur'}</b>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 whitespace-nowrap">
+                            <button onclick="bukaModalResetPin('${k.id}', '${k.nama}')" class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 flex items-center justify-center text-xs transition shadow-sm active:scale-90" title="Reset PIN">
+                                <i class="fa-solid fa-key"></i>
+                            </button>
+                            <button onclick='bukaModalEditKaryawan(${JSON.stringify(k)})' class="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center text-xs transition shadow-sm active:scale-90" title="Edit Profil">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="hapusKaryawan('${k.id}', '${k.nama}')" class="w-8 h-8 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center text-xs transition shadow-sm active:scale-90" title="Hapus">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // BUKA FORM TAMBAH KARYAWAN
+        function bukaModalFormKaryawan() {
+            document.getElementById('karyawanEditId').value = '';
+            document.getElementById('inputNamaKaryawan').value = '';
+            document.getElementById('inputRoleKaryawan').value = 'packing';
+            document.getElementById('inputPinKaryawan').value = '1234';
+            document.getElementById('fieldPinKaryawan').classList.remove('hidden');
+
+            document.getElementById('titleModalKaryawan').innerHTML = `<i class="fa-solid fa-user-plus text-purple-600 mr-2"></i> Tambah Karyawan Baru`;
+            
+            const modal = document.getElementById('modalFormKaryawan');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.firstElementChild.classList.remove('scale-95');
+        }
+
+        // BUKA FORM EDIT KARYAWAN
+        function bukaModalEditKaryawan(data) {
+            document.getElementById('karyawanEditId').value = data.id;
+            document.getElementById('inputNamaKaryawan').value = data.nama;
+            
+            const role = (data.role || 'packing').toLowerCase().trim();
+            document.getElementById('inputRoleKaryawan').value = (role === 'admin' || role === 'distribusi') ? role : 'packing';
+            
+            // Sembunyikan field PIN pada saat edit profil (gunakan tombol reset PIN tersendiri)
+            document.getElementById('fieldPinKaryawan').classList.add('hidden');
+
+            document.getElementById('titleModalKaryawan').innerHTML = `<i class="fa-solid fa-user-pen text-purple-600 mr-2"></i> Edit Data Karyawan`;
+
+            const modal = document.getElementById('modalFormKaryawan');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.firstElementChild.classList.remove('scale-95');
+        }
+
+        function tutupModalFormKaryawan() {
+            const modal = document.getElementById('modalFormKaryawan');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.firstElementChild.classList.add('scale-95');
+        }
+
+        // SIMPAN TAMBAH / EDIT KARYAWAN
+        document.getElementById('formKaryawanAdmin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSimpanKaryawan');
+            const editId = document.getElementById('karyawanEditId').value;
+            const nama = document.getElementById('inputNamaKaryawan').value.trim();
+            const role = document.getElementById('inputRoleKaryawan').value;
+            const pin = document.getElementById('inputPinKaryawan').value.trim();
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i> Menyimpan...';
+
+            if (editId) {
+                const { error } = await supabaseClient
+                    .from('karyawan')
+                    .update({ nama: nama, role: role })
+                    .eq('id', editId);
+
+                if (error) {
+                    await showError("Gagal memperbarui data: " + error.message);
+                } else {
+                    await showSuccess("Data karyawan berhasil diperbarui!");
+                    tutupModalFormKaryawan();
+                    loadManajemenKaryawan();
+                    loadDropdownKaryawan();
+                }
+            } else {
+                const payload = {
+                    nama: nama,
+                    role: role,
+                    pin: pin || '1234'
+                };
+
+                const { error } = await supabaseClient.from('karyawan').insert([payload]);
+
+                if (error) {
+                    await showError("Gagal menambah karyawan: " + error.message);
+                } else {
+                    await showSuccess("Karyawan baru berhasil ditambahkan!");
+                    tutupModalFormKaryawan();
+                    loadManajemenKaryawan();
+                    loadDropdownKaryawan();
+                }
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Data';
+        });
+
+        // BUKA FORM RESET PIN
+        function bukaModalResetPin(id, nama) {
+            document.getElementById('resetKaryawanId').value = id;
+            document.getElementById('labelResetNama').innerText = nama;
+            document.getElementById('inputPinBaru').value = '';
+
+            const modal = document.getElementById('modalResetPin');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.firstElementChild.classList.remove('scale-95');
+            setTimeout(() => document.getElementById('inputPinBaru').focus(), 150);
+        }
+
+        function tutupModalResetPin() {
+            const modal = document.getElementById('modalResetPin');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.firstElementChild.classList.add('scale-95');
+        }
+
+        // SIMPAN PIN BARU
+        document.getElementById('formResetPin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSimpanPinBaru');
+            const id = document.getElementById('resetKaryawanId').value;
+            const pinBaru = document.getElementById('inputPinBaru').value.trim();
+
+            if (pinBaru.length < 4) {
+                await showNotice("PIN minimal harus terdiri dari 4 digit angka!", "PIN Terlalu Pendek");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i> Menyimpan...';
+
+            const { error } = await supabaseClient
+                .from('karyawan')
+                .update({ pin: pinBaru })
+                .eq('id', id);
+
+            if (error) {
+                await showError("Gagal menyetel ulang PIN: " + error.message);
+            } else {
+                await showSuccess("PIN baru berhasil disimpan dan langsung aktif!");
+                tutupModalResetPin();
+                loadManajemenKaryawan();
+                loadDropdownKaryawan();
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan PIN';
+        });
+
+        // HAPUS KARYAWAN
+        async function hapusKaryawan(id, nama) {
+            if (id === userKurirAktif.id) {
+                await showNotice("Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif!", "Peringatan");
+                return;
+            }
+
+            const konfirmasi = await showConfirm(
+                `Hapus data karyawan ${nama}?\n\nPeringatan: Menghapus karyawan dapat mempengaruhi riwayat tugas yang bersangkutan.`,
+                "Konfirmasi Hapus"
+            );
+
+            if (!konfirmasi) return;
+
+            const { error } = await supabaseClient.from('karyawan').delete().eq('id', id);
+
+            if (error) {
+                await showError("Gagal menghapus karyawan: " + error.message);
+            } else {
+                await showSuccess(`Karyawan ${nama} berhasil dihapus.`);
+                loadManajemenKaryawan();
+                loadDropdownKaryawan();
+            }
+        }
+
+        // 8. STATUS HASIL TARIK REAL-TIME
         function hitungStatusTarikKurir() {
             const inputVal = document.getElementById('inputTarikBal').value;
             const target = parseInt(document.getElementById('targetKirimAngka').value) || 0;
@@ -502,13 +1022,13 @@
                 label.className = 'text-xs font-black text-emerald-700 uppercase tracking-wider';
                 label.innerText = 'PAS';
                 sub.className = 'text-[9px] font-bold text-emerald-600';
-                sub.innerText = 'Target Beres';
+                sub.innerText = 'Target Tercapai';
             } else if (selisih < 0) {
                 box.className = 'h-[46px] rounded-2xl border border-amber-300 bg-amber-50 flex flex-col items-center justify-center text-center p-1 shadow-sm';
                 label.className = 'text-[11px] font-black text-amber-700 uppercase tracking-wider';
-                label.innerText = 'Belum Selesai';
+                label.innerText = 'Kurang';
                 sub.className = 'text-[9px] font-bold text-amber-600';
-                sub.innerText = `Kurang ${Math.abs(selisih)} Bal`;
+                sub.innerText = `Sisa ${Math.abs(selisih)} Bal`;
             } else {
                 box.className = 'h-[46px] rounded-2xl border border-purple-300 bg-purple-50 flex flex-col items-center justify-center text-center p-1 shadow-sm';
                 label.className = 'text-[11px] font-black text-purple-700 uppercase tracking-wider';
@@ -557,7 +1077,7 @@
             }
         }
 
-        // 7. LOAD ANTREAN TARIK (QUERY JOIN & PEMISAH SELESAI)
+        // 9. LOAD ANTREAN TARIK
         async function loadAntreanTarik() {
             const containerBelum = document.getElementById('containerAntreanTarik');
             const containerSudah = document.getElementById('containerSudahSelesai');
@@ -579,7 +1099,11 @@
 
             const { data, error } = await supabaseClient
                 .from('distribusi_packing')
-                .select('*, karyawan!karyawan_id(nama)')
+                .select(`
+                    *,
+                    karyawan!karyawan_id(nama),
+                    pengirim:karyawan!dikirim_oleh(nama)
+                `)
                 .eq('is_lunas', false)
                 .order('tanggal', { ascending: false });
 
@@ -619,7 +1143,7 @@
                 containerBelum.innerHTML = `
                     <div class="p-6 text-center text-xs bg-emerald-50 text-emerald-800 font-bold rounded-2xl border border-emerald-200">
                         <i class="fa-solid fa-circle-check text-base mb-1"></i>
-                        <div>Luar biasa! Semua antrean muatan sudah ditarik pas.</div>
+                        <div>Semua kiriman saat ini sudah ditarik pas.</div>
                     </div>
                 `;
             } else {
@@ -637,7 +1161,8 @@
                                 <div class="text-[10px] font-bold text-slate-400">${formatTglIndo(item.tanggal)} • Sesi ${item.sesi}</div>
                                 <div class="text-sm font-black text-slate-900 uppercase">${item.karyawan?.nama || '-'}</div>
                                 <div class="text-xs font-bold text-indigo-600">Aromanis ${item.jenis_produk} <span class="text-slate-400 font-normal">(Target: ${item.target} Bal)</span></div>
-                                <div class="pt-0.5">${badgeStatus}</div>
+                                <div class="text-[10px] text-slate-500 font-medium">Dikirim oleh: <b>${item.pengirim?.nama || '-'}</b></div>
+                                <div class="pt-1">${badgeStatus}</div>
                             </div>
                             <button onclick="bukaModalTarikKurir('${item.id}', '${item.karyawan?.nama || '-'}', ${item.target}, ${item.tarik_jadi || 0})" class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition whitespace-nowrap">
                                 <i class="fa-solid fa-box-open mr-1"></i> ${belumTarik ? 'Tarik' : 'Koreksi'}
@@ -665,7 +1190,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 ${badgeSelesai}
-                                <button onclick="bukaModalTarikKurir('${item.id}', '${item.karyawan?.nama || '-'}', ${item.target}, ${item.tarik_jadi || 0})" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs flex items-center justify-center transition" title="Edit jika salah input">
+                                <button onclick="bukaModalTarikKurir('${item.id}', '${item.karyawan?.nama || '-'}', ${item.target}, ${item.tarik_jadi || 0})" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs flex items-center justify-center transition" title="Koreksi ulang">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                             </div>
@@ -675,14 +1200,14 @@
             }
         }
 
-        // 8. SIMPAN TARIKAN KURIR
+        // 10. SIMPAN TARIKAN KURIR
         async function simpanTarikKurir() {
             const id = document.getElementById('transaksiIdTarik').value;
             const target = parseInt(document.getElementById('targetKirimAngka').value) || 0;
             const tarik = parseInt(document.getElementById('inputTarikBal').value);
 
             if (isNaN(tarik) || tarik < 0) {
-                alert("Masukkan angka setoran yang valid!");
+                await showNotice("Masukkan angka tarikan yang valid!", "Periksa Input");
                 return;
             }
 
@@ -698,17 +1223,15 @@
                 .eq('id', id);
 
             if (error) {
-                alert("Gagal mencatat penarikan: " + error.message);
+                await showError("Gagal mencatat penarikan: " + error.message);
             } else {
-                alert(`Berhasil dicatat atas nama kurir: ${userKurirAktif.nama}`);
+                await showSuccess(`Tarikan berhasil dicatat oleh: ${userKurirAktif.nama}`);
                 tutupModalTarikKurir();
                 loadAntreanTarik();
             }
         }
 
-        // ==============================================================
-        // 9. RIWAYAT TUGAS SAYA (STABIL & MENDUKUNG TANGGAL PENARIKAN)
-        // ==============================================================
+        // 11. RIWAYAT TUGAS KURIR AKTIF
         async function loadRiwayatTugasSaya() {
             const container = document.getElementById('containerRiwayatSaya');
             if (!container) return;
@@ -716,7 +1239,7 @@
             if (!userKurirAktif || !userKurirAktif.id) {
                 container.innerHTML = `
                     <div class="p-6 text-center text-xs text-red-500 bg-white rounded-2xl border border-red-100">
-                        Sesi login kurir tidak ditemukan. Silakan logout dan login kembali.
+                        Sesi login tidak ditemukan. Silakan login kembali.
                     </div>
                 `;
                 return;
@@ -727,12 +1250,11 @@
                     <div class="w-10 h-10 mx-auto bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center text-lg shadow-inner">
                         <i class="fa-solid fa-circle-notch fa-spin"></i>
                     </div>
-                    <div class="text-xs font-bold text-slate-600">Memuat riwayat tugas kurir...</div>
+                    <div class="text-xs font-bold text-slate-600">Memuat riwayat tugas Anda...</div>
                 </div>
             `;
 
             try {
-                // Ambil data kiriman dan tarikan secara paralel agar kueri aman dan cepat
                 const [resKirim, resTarik] = await Promise.all([
                     supabaseClient
                         .from('distribusi_packing')
@@ -749,7 +1271,6 @@
                 if (resKirim.error) throw resKirim.error;
                 if (resTarik.error) throw resTarik.error;
 
-                // Gabungkan kedua data dan hilangkan duplikasi berdasarkan ID transaksi
                 const mapData = new Map();
                 (resKirim.data || []).forEach(item => mapData.set(item.id, item));
                 (resTarik.data || []).forEach(item => mapData.set(item.id, item));
@@ -767,7 +1288,6 @@
                     return;
                 }
 
-                // Hitung total akumulasi kirim dan tarik
                 let totalKirim = 0;
                 let totalTarik = 0;
                 const rekapPacking = {};
@@ -791,7 +1311,6 @@
                     rekapPacking[kid].tarik += tVal;
                 });
 
-                // Susun ringkasan per karyawan packing
                 let htmlPacking = '';
                 Object.values(rekapPacking).forEach(item => {
                     htmlPacking += `
@@ -802,7 +1321,7 @@
                                 </div>
                                 <div>
                                     <div class="text-xs font-black text-slate-900 uppercase">${item.nama}</div>
-                                    <div class="text-[10px] text-slate-400 font-semibold">Tugas Terselesaikan</div>
+                                    <div class="text-[10px] text-slate-400 font-semibold">Tugas Selesai</div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2 text-right">
@@ -819,7 +1338,6 @@
                     `;
                 });
 
-                // Susun baris riwayat detail
                 let htmlDetail = '';
                 listAktivitas.forEach(row => {
                     const isKirim = (row.dikirim_oleh === userKurirAktif.id);
@@ -844,7 +1362,6 @@
                     `;
                 });
 
-                // Render tampilan utuh ke DOM
                 container.innerHTML = `
                     <div class="grid grid-cols-2 gap-2.5">
                         <div class="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-3.5 rounded-2xl shadow-sm text-center">
@@ -877,7 +1394,7 @@
                 `;
 
             } catch (err) {
-                console.error("Gagal memuat tugas saya:", err);
+                console.error("Gagal memuat tugas kurir:", err);
                 container.innerHTML = `
                     <div class="p-4 text-center text-xs text-red-500 font-bold bg-white rounded-2xl border border-red-100">
                         Terjadi kesalahan: ${err.message}
