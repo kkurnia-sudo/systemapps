@@ -720,6 +720,28 @@
         const supabaseUrl = 'https://uocvuddqhviorebinpva.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvY3Z1ZGRxaHZpb3JlYmlucHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2OTQ0NDAsImV4cCI6MjEwMTI3MDQ0MH0.mWGTOTfHG4Q62S3P4LQi-5bGviMPWgMzo2p2AECquL8';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+		
+		// ==============================================================
+        // 1. RUMUS TARGET & SATUAN PENARIKAN (B12, B10, & OLEH-OLEH)
+        // ==============================================================
+        function hitungTargetProduk(kirim, jenis) {
+            const k = parseInt(kirim) || 0;
+            // Jika jenisnya Oleh-oleh: 1 Kirim = 10 Toros
+            if (jenis === 'Oleh-oleh') {
+                return k * 10;
+            }
+            // Jika jenisnya B10: Kirim x 1.2
+            if (jenis === 'B10') {
+                return Math.round(k * 1.2);
+            }
+            // Standar (B12 atau lainnya): 1:1
+            return k;
+        }
+
+        function getSatuanTarik(jenis) {
+            // Jika Oleh-oleh satuannya Toros, selain itu Bal
+            return jenis === 'Oleh-oleh' ? 'Toros' : 'Bal';
+        }
 
         const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
         
@@ -1019,10 +1041,11 @@
 
                 <input type="number" min="1" placeholder="0" value="${kirim}" class="input-kirim w-16 px-2 py-1.5 text-center text-sm font-black text-blue-700 bg-blue-50/50 rounded-lg border border-blue-200 outline-none focus:ring-2 focus:ring-blue-400">
 
-                <select class="input-jenis w-20 px-2 py-1.5 text-[11px] font-bold text-gray-700 bg-gray-50 rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="B12" ${jenis === 'B12' ? 'selected' : ''}>B12</option>
-                    <option value="B10" ${jenis === 'B10' ? 'selected' : ''}>B10</option>
-                </select>
+                <select class="input-jenis w-24 px-2 py-1.5 text-[11px] font-bold text-gray-700 bg-gray-50 rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-500">
+					<option value="B12" ${jenis === 'B12' ? 'selected' : ''}>B12</option>
+					<option value="B10" ${jenis === 'B10' ? 'selected' : ''}>B10</option>
+					<option value="Oleh-oleh" ${jenis === 'Oleh-oleh' ? 'selected' : ''}>Oleh-oleh</option>
+				</select>
 
                 <button type="button" onclick="hapusBarisInput(this)" class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Hapus baris">
                     <i class="fa-solid fa-xmark text-xs"></i>
@@ -1101,29 +1124,41 @@
                 const belumTarik = items.filter(r => (r.tarik_jadi || 0) === 0).length;
                 const adaGantung = items.filter(r => (r.koreksi || 0) < 0).length;
 
+                // 1. Inisialisasi wadah hitungan untuk semua jenis produk
                 let targetB12 = 0;
                 let targetB10 = 0;
+                let targetOleholeh = 0;
                 let totalTarget = 0;
                 let totalRealTarik = 0;
 
+                // 2. Perulangan akumulasi data kiriman
                 items.forEach(row => {
                     const jenis = row.jenis_produk || 'B12';
-                    const target = jenis === 'B10' ? Math.round((row.kirim_produksi || 0) * 1.2) : (row.kirim_produksi || 0);
+                    // Hitung target sesuai rumus (Oleh-oleh x10, B10 x1.2, B12 x1)
+                    const target = hitungTargetProduk(row.kirim_produksi, jenis);
                     const tarik = row.tarik_jadi || 0;
 
                     totalTarget += target;
                     totalRealTarik += tarik;
 
-                    if (jenis === 'B10') targetB10 += target;
-                    else targetB12 += target;
+                    // Pisahkan akumulasi target per produk
+                    if (jenis === 'Oleh-oleh') {
+                        targetOleholeh += target;
+                    } else if (jenis === 'B10') {
+                        targetB10 += target;
+                    } else {
+                        targetB12 += target;
+                    }
                 });
 
+                // 3. Tampilan chip ringkasan target di header kartu tanggal
                 let ringkasanTargetHTML = `
                     <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] flex-wrap justify-end">
                         ${targetB12 > 0 ? `<span class="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-100">B12: ${targetB12} Bal</span>` : ''}
                         ${targetB10 > 0 ? `<span class="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-100">B10: ${targetB10} Bal</span>` : ''}
+                        ${targetOleholeh > 0 ? `<span class="bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded border border-amber-200">Oleh-oleh: ${targetOleholeh} Toros</span>` : ''}
                         <span class="bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-full border border-blue-200">
-                            Tarik: <b class="${totalRealTarik >= totalTarget ? 'text-emerald-600' : 'text-blue-900'}">${totalRealTarik}</b>/${totalTarget} Bal
+                            Tarik: <b class="${totalRealTarik >= totalTarget ? 'text-emerald-600' : 'text-blue-900'}">${totalRealTarik}</b>/${totalTarget}
                         </span>
                     </div>
                 `;
@@ -1327,7 +1362,8 @@
                 let rowsHTML = '';
                 items.forEach(row => {
                     const jenis = row.jenis_produk || 'B12';
-                    const targetKirim = jenis === 'B10' ? Math.round(row.kirim_produksi * 1.2) : row.kirim_produksi;
+                    const targetKirim = hitungTargetProduk(row.kirim_produksi, row.jenis_produk);
+					const satuanTarik = getSatuanTarik(row.jenis_produk);
                     const isDisetor = (row.tarik_jadi > 0);
                     const selisih = row.koreksi || 0;
 
@@ -2037,16 +2073,23 @@
             }
         }
 
+       // ==========================================================
+        // FUNGSI CETAK BLUETOOTH (OFFSET SPASI AMAN KERTAS 58MM DI PRINTER 80MM)
+        // ==========================================================
         async function kirimPerintahCetakBluetooth(nama, b12, b10, totalGaji, gantung, totalKirimMurni, dapatUangMakan, start, end) {
             try {
                 if (!navigator.bluetooth) {
-                    throw new Error("Web Bluetooth tidak didukung atau diblokir karena file dibuka tanpa server lokal (HTTPS/localhost).");
+                    throw new Error("Fitur Web Bluetooth tidak didukung pada browser ini.");
                 }
 
                 if (!printCharacteristic) {
                     const device = await navigator.bluetooth.requestDevice({
                         acceptAllDevices: true,
-                        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', '0000fee7-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2']
+                        optionalServices: [
+                            '000018f0-0000-1000-8000-00805f9b34fb',
+                            '0000fee7-0000-1000-8000-00805f9b34fb',
+                            'e7810a71-73ae-499d-8c15-faa9aef0c3f2'
+                        ]
                     });
 
                     device.addEventListener('gattserverdisconnected', () => {
@@ -2060,59 +2103,110 @@
                     const characteristics = await selectedService.getCharacteristics();
                     printCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
                     
-                    if (!printCharacteristic) throw new Error("Karakteristik printer tidak ditemukan.");
+                    if (!printCharacteristic) throw new Error("Karakteristik Bluetooth printer tidak ditemukan.");
                 }
 
+                // ==========================================================
+                // 1. PENGATURAN TATA LETAK FISIK KERTAS 58MM
+                // ==========================================================
+                // Jarak celah kosong dari dinding kiri ke kertas 58mm (~11 karakter)
+                const OFFSET_SPASI = 16; 
+                const LEBAR_KERTAS = 30; // Lebar baris aman kertas 58mm
+                const PAD = " ".repeat(OFFSET_SPASI);
+
+                // Fungsi pembantu tata letak teks berbasis spasi aman
+                const barisTeks = (teks) => PAD + teks + "\n";
+                const barisTengah = (teks) => {
+                    const sisa = Math.max(0, LEBAR_KERTAS - teks.length);
+                    const padKiri = Math.floor(sisa / 2);
+                    return PAD + " ".repeat(padKiri) + teks + "\n";
+                };
+                const barisKiriKanan = (kiri, kanan) => {
+                    const sKiri = String(kiri);
+                    const sKanan = String(kanan);
+                    const spasi = Math.max(1, LEBAR_KERTAS - sKiri.length - sKanan.length);
+                    return PAD + sKiri + " ".repeat(spasi) + sKanan + "\n";
+                };
+
+                // ==========================================================
+                // 2. PERINTAH ESC/POS MURNI (SEMUA BYTE < 128 / BEBAS CORRUPT)
+                // ==========================================================
                 const ESC = "\x1B";
                 const GS  = "\x1D";
-                const init = ESC + "@";                 
-                const center = ESC + "a" + "\x01";      
-                const left = ESC + "a" + "\x00";        
-                const boldOn = ESC + "E" + "\x01";      
-                const boldOff = ESC + "E" + "\x00";     
-                const doubleHeight = GS + "!" + "\x01"; 
-                const normalSize = GS + "!" + "\x00";   
-                
-                const tarif = getTarif();
-                const periode = `${formatTglIndo(start)} - ${formatTglIndo(end)}`;
+                const init = ESC + "@";                 // Reset printer
+                const boldOn = ESC + "E" + "\x01";      // Huruf tebal ON
+                const boldOff = ESC + "E" + "\x00";     // Huruf tebal OFF
+                const doubleHeight = GS + "!" + "\x01"; // Tinggi ganda
+                const normalSize = GS + "!" + "\x00";   // Ukuran normal
+                const cutPaper = GS + "V" + "\x00";     // Auto-cut kertas
 
+                const tarif = getTarif();
+                const garisPemisah = "-".repeat(LEBAR_KERTAS);
+
+                // Format tanggal singkat (DD/MM/YY)
+				function potongTgl(str) {
+					if (!str) return '-';
+					const p = str.split('-'); // Memecah [YYYY, MM, DD]
+					if (p.length !== 3) return str;
+					const dd = p[2].padStart(2, '0');
+					const mm = p[1].padStart(2, '0');
+					const yy = p[0].slice(-2); // Mengambil 2 angka terakhir tahun (2026 -> 26)
+					return `${dd}/${mm}/${yy}`;
+				}
+
+				const periodeRingkas = `${potongTgl(start)} - ${potongTgl(end)}`;
+                // ==========================================================
+                // 3. MENYUSUN STRUK DENGAN OFFSET SPASI
+                // ==========================================================
                 let struk = "";
                 struk += init;
-                struk += center + boldOn + "SBR PUTRA FOOD\n" + boldOff;
-                struk += "Slip Gaji Packing Aromanis\n";
-                struk += "--------------------------------\n";
-                struk += left;
-                struk += formatKiriKanan("Nama Karyawan", nama.toUpperCase()) + "\n";
-                struk += formatKiriKanan("Periode", periode) + "\n";
-                struk += "--------------------------------\n";
-                
+
+                // Header Toko
+                struk += barisTengah(boldOn + "SBR PUTRA FOOD" + boldOff);
+                struk += barisTengah("Slip Gaji Packing Aromanis");
+                struk += barisTeks(garisPemisah);
+
+                // Identitas Karyawan & Periode
+                struk += barisTeks(`Karyawan : ${nama.toUpperCase()}`);
+                struk += barisTeks(`Periode  : ${periodeRingkas}`);
+                struk += barisTeks(garisPemisah);
+
+                // Rincian Pembayaran
                 if (b12 > 0) {
-                    struk += `Aromanis B12 (${b12} x ${tarif.b12.toLocaleString('id-ID')})\n`;
-                    struk += formatKiriKanan("", formatRpStruk(b12 * tarif.b12)) + "\n";
+                    struk += barisTeks(`Aromanis B12 (${b12} Bal)`);
+                    struk += barisKiriKanan(`@ ${tarif.b12.toLocaleString('id-ID')}`, formatRpStruk(b12 * tarif.b12));
                 }
                 if (b10 > 0) {
-                    struk += `Aromanis B10 (${b10} x ${tarif.b10.toLocaleString('id-ID')})\n`;
-                    struk += formatKiriKanan("", formatRpStruk(b10 * tarif.b10)) + "\n";
+                    struk += barisTeks(`Aromanis B10 (${b10} Bal)`);
+                    struk += barisKiriKanan(`@ ${tarif.b10.toLocaleString('id-ID')}`, formatRpStruk(b10 * tarif.b10));
                 }
                 if (dapatUangMakan && totalKirimMurni > 0) {
                     const nominalMakan = totalKirimMurni * tarif.makan;
-                    struk += `Uang Makan (${totalKirimMurni} x ${tarif.makan.toLocaleString('id-ID')})\n`;
-                    struk += formatKiriKanan("", formatRpStruk(nominalMakan)) + "\n";
+                    struk += barisTeks(`Uang Makan (${totalKirimMurni} Bal)`);
+                    struk += barisKiriKanan(`@ ${tarif.makan.toLocaleString('id-ID')}`, formatRpStruk(nominalMakan));
                 }
-                
-                struk += "--------------------------------\n";
-                struk += boldOn + doubleHeight + formatKiriKanan("TOTAL GAJI", formatRpStruk(totalGaji)) + normalSize + boldOff + "\n";
-                struk += "--------------------------------\n";
-                
-                if (gantung > 0) {
-                    struk += center + boldOn + `( ! ) CATATAN TANGGUNGAN ( ! )\n`;
-                    struk += `Sisa ${gantung} Bal Belum Setor/Beres!\n` + boldOff;
-                } else {
-                    struk += center + `Kerjaan Beres. Terima Kasih!\n`;
-                }
-                
-                struk += "\n\n\n"; 
 
+                // Total Gaji
+                struk += barisTeks(garisPemisah);
+                struk += barisTeks(boldOn + "TOTAL GAJI:" + boldOff);
+                struk += barisKiriKanan("", boldOn + doubleHeight + formatRpStruk(totalGaji) + normalSize + boldOff);
+                struk += barisTeks(garisPemisah);
+
+                // Catatan Status
+                if (gantung > 0) {
+                    struk += barisTengah(boldOn + "(!) TANGGUNGAN GANTUNG (!)" + boldOff);
+                    struk += barisTengah(`Kurang ${gantung} Bal Belum Setor!`);
+                } else {
+                    struk += barisTengah("Kerjaan Beres. Terima Kasih!");
+                }
+
+                // Gulung kertas keluar secukupnya, lalu potong
+                struk += "\n\n\n\n";
+                struk += cutPaper;
+
+                // ==========================================================
+                // 4. PENGIRIMAN DATA
+                // ==========================================================
                 const encoder = new TextEncoder();
                 const data = encoder.encode(struk);
                 
@@ -2127,7 +2221,7 @@
 
             } catch (error) {
                 console.error("Kesalahan Print Bluetooth:", error);
-                await showError("Gagal terhubung ke Printer: " + error.message);
+                await showError("Gagal mencetak: " + error.message);
                 printCharacteristic = null; 
                 return false;
             }
@@ -2929,22 +3023,26 @@
         }
 
         function openModal(data) {
-            document.getElementById('setId').value = data.id;
-            document.getElementById('setInfoTanggal').innerText = `${formatTglIndo(data.tanggal)} • SESI ${data.sesi}`;
-            document.getElementById('setKaryawanNama').innerText = data.karyawan ? data.karyawan.nama : '-';
-            document.getElementById('setDitarikOleh').value = data.ditarik_oleh || '';
-            
-            currentTargetKirim = data.jenis_produk === 'B10' ? Math.round(data.kirim_produksi * 1.2) : data.kirim_produksi;
-            document.getElementById('setInfoKirim').innerText = currentTargetKirim;
-            document.getElementById('setInfoProduk').innerText = `Aromanis B${data.jenis_produk.replace('B','')}`;
+			document.getElementById('setId').value = data.id;
+			document.getElementById('setInfoTanggal').innerText = `${formatTglIndo(data.tanggal)} • SESI ${data.sesi}`;
+			document.getElementById('setKaryawanNama').innerText = data.karyawan ? data.karyawan.nama : '-';
+			document.getElementById('setDitarikOleh').value = data.ditarik_oleh || '';
+			
+			// Menggunakan fungsi hitung target terpusat
+			const jenis = data.jenis_produk || 'B12';
+			currentTargetKirim = hitungTargetProduk(data.kirim_produksi, jenis);
+			const satuanTarik = getSatuanTarik(jenis);
 
-            document.getElementById('setTarikJadi').value = data.tarik_jadi > 0 ? data.tarik_jadi : '';
-            calculateStatus();
+			document.getElementById('setInfoKirim').innerText = `${currentTargetKirim} ${satuanTarik}`;
+			document.getElementById('setInfoProduk').innerText = jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${jenis.replace('B','')}`;
 
-            const modal = document.getElementById('modalSetoran');
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            document.getElementById('modalContent').classList.remove('scale-95');
-        }
+			document.getElementById('setTarikJadi').value = data.tarik_jadi > 0 ? data.tarik_jadi : '';
+			calculateStatus();
+
+			const modal = document.getElementById('modalSetoran');
+			modal.classList.remove('opacity-0', 'pointer-events-none');
+			document.getElementById('modalContent').classList.remove('scale-95');
+		}
 
         function closeModal() {
             const modal = document.getElementById('modalSetoran');
