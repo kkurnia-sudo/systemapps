@@ -6,12 +6,12 @@
     <title>Nota Pembayaran - SBR Putra Food</title>
     <!-- Import Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Import html2pdf dan html2canvas untuk fitur Export PDF & JPG -->
+    <!-- Import html2pdf dan html2canvas untuk fitur Export PDF & JPG/PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         :root {
             --bg-body: #f8fafc;
@@ -139,7 +139,6 @@
         .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: var(--text-muted); }
         .summary-row.deposit-row:hover { background-color: var(--bg-card); border-radius: 8px; padding: 8px; margin: 0 -8px; }
         .summary-row.total { border-top: 2px dashed var(--border-color); margin-top: 10px; padding-top: 14px; font-weight: 700; font-size: 16px; color: var(--text-main); }
-        .summary-row.total span:last-child { color: var(--primary); font-style: italic; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
         .modal.active { display: flex; }
@@ -175,11 +174,11 @@
             font-family: 'Inter', sans-serif !important;
         }
         #previewContent { padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        #prevBalance { color: #10b981 !important; }
+        #prevBalance { font-weight: 800; font-size: 15px; }
         #prevItemsBody td { border-bottom: 1px solid #eee !important; }
         #previewContent table { min-width: 100% !important; width: 100%; table-layout: auto; }
 
-        /* Optimasi Tampilan Mobile (HP) */
+        /* Optimasi Tampilan Mobile */
         @media (max-width: 768px) {
             body { padding: 12px; font-size: 13px; }
             .container { padding: 0; }
@@ -233,6 +232,7 @@
 </head>
 <body>
 
+<!-- Popup Global Notifikasi & Loading -->
 <div class="popup-overlay" id="popupOverlay">
     <div class="popup-box">
         <div id="popupLoadingState">
@@ -289,7 +289,7 @@
         </div>
     </div>
 
-    <!-- Perbaikan Penutupan Card Informasi Supplier -->
+    <!-- Informasi Supplier & Transaksi -->
     <div class="card">
         <div class="card-header-title">
             <h3>Informasi Supplier & Transaksi</h3>
@@ -310,6 +310,7 @@
         </div>
     </div>
 
+    <!-- Tabel Rincian Pemesanan Baru -->
     <div class="card" style="margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none;">
         <div class="card-header-title">
             <h3>Rincian Barang Pesanan Baru</h3>
@@ -333,6 +334,7 @@
         <button class="btn btn-outline" id="btnAddRow" onclick="addRow()" style="margin-top: 4px; border-style: dashed;">+ Tambah Baris Barang</button>
     </div>
 
+    <!-- Ringkasan Pembayaran & Tombol Aksi Utama -->
     <div class="card bottom-section" style="border-top-left-radius: 0; border-top-right-radius: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 24px; padding-top: 10px; margin-bottom: 16px;">
         <div class="action-buttons-container" style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 330px;">
             <button class="btn btn-outline" onclick="openDepositModal(-1)" style="width: 100%; justify-content: center; padding: 10px;"><svg class="humbleicons hi-currency-dollar-circle" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.5 10-.035-.139A2.457 2.457 0 0 0 12.082 8h-.522a1.841 1.841 0 0 0-.684 3.55l2.248.9A1.841 1.841 0 0 1 12.44 16h-.521a2.457 2.457 0 0 1-2.384-1.861L9.5 14M12 6v2m0 8v2m9-6a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg> Tambah Deposit / Cicilan</button>
@@ -359,6 +361,7 @@
     </div>
 </div>
 
+<!-- Modal Pratinjau Nota / Kuitansi -->
 <div class="modal" id="previewModal" style="z-index: 1300;">
     <div class="modal-content" style="max-width: 650px; background: #f8fafc;">
         <div class="modal-header">
@@ -375,7 +378,7 @@
                     </div>
                 </div>
                 <div style="text-align: right;">
-                    <h3 style="font-size: 18px; color: #10b981 !important; margin: 0; font-weight: 700;">NOTA PEMBAYARAN</h3>
+                    <h3 id="prevDocTitle" style="font-size: 18px; color: #10b981 !important; margin: 0; font-weight: 700;">NOTA PEMBAYARAN</h3>
                     <p style="font-size: 12px; font-weight: 600; margin: 4px 0 0 0; color: #000 !important;" id="prevInvNo">-</p>
                 </div>
             </div>
@@ -397,12 +400,12 @@
             </table>
             <div class="summary-table-container" style="width: 100%; max-width: 330px; margin-left: auto;">
                 <table style="width: 100%; font-size: 13px;">
-                    <tr><td style="padding: 4px; color: #555;">Subtotal Barang Baru</td><td style="padding: 4px; text-align: right; font-weight: 600; font-style: italic;" id="prevSubtotal">-</td></tr>
+                    <tr id="prevSubtotalRow"><td style="padding: 4px; color: #555;">Subtotal Barang Baru</td><td style="padding: 4px; text-align: right; font-weight: 600; font-style: italic;" id="prevSubtotal">-</td></tr>
                     <tr id="prevPiutangRow" style="display: none;"><td style="padding: 4px; color: #555;">Sisa Tagihan Sebelumnya</td><td style="padding: 4px; text-align: right; font-weight: 600; font-style: italic;" id="prevPiutangAmount">-</td></tr>
                     <tr id="prevTotalTagihanRow" style="display: none;"><td style="padding: 8px 4px; color: #000; font-weight: 600; border-top: 1px dashed #ccc;">Total Keseluruhan Tagihan</td><td style="padding: 8px 4px; text-align: right; font-weight: 700; border-top: 1px dashed #ccc; color: #ef4444 !important; font-style: italic;" id="prevTotalTagihanAmount">-</td></tr>
                     
                     <tbody id="prevDepositBody"></tbody>
-                    <tr><td id="prevBalanceLabel" style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;">SISA PEMBAYARAN</td><td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; color: #10b981!important; font-style: italic;" id="prevBalance">-</td></tr>
+                    <tr><td id="prevBalanceLabel" style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;">SISA PEMBAYARAN</td><td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; font-style: italic;" id="prevBalance">-</td></tr>
                 </table>
             </div>
             <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #777;"><p>Terima Kasih Atas Kerjasamanya<br>Mulus Rahayu, Berkah Salamet<br>**SBR SYSTEMS**</p></div>
@@ -413,19 +416,19 @@
                 <button class="btn btn-white" onclick="tutupPratinjauKeEdit()">✏️ Edit Nota</button>
                 <button class="btn btn-primary" id="btnSaveInvoicePreview" onclick="simpanInvoiceAndClose()">💾 Simpan Rekap</button>
             </div>
-            <!-- Bagian Tombol Aksi Modal Pratinjau -->
-			<div style="display: flex; gap: 10px; margin-left: auto;">
-				<button class="btn btn-secondary" onclick="exportToPNG()" title="Simpan PNG HD" style="padding: 10px 14px;">
-					🖼️ PNG
-				</button>
-				<button class="btn btn-danger" onclick="exportToPDF()" title="Simpan PDF" style="padding: 10px 14px;">
-					📄 PDF
-				</button>
-			</div>
+            <div style="display: flex; gap: 10px; margin-left: auto;">
+                <button class="btn btn-secondary" onclick="exportToPNG()" title="Simpan PNG HD" style="padding: 10px 14px;">
+                    🖼️ PNG
+                </button>
+                <button class="btn btn-danger" onclick="exportToPDF()" title="Simpan PDF" style="padding: 10px 14px;">
+                    📄 PDF
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- Modal Bayar Cepat Tagihan -->
 <div class="modal" id="quickPayModal" style="z-index: 1250;">
     <div class="modal-content" style="max-width: 400px;">
         <div class="modal-header">
@@ -440,7 +443,10 @@
             <input type="text" id="qpKet" value="Pembayaran Tagihan">
         </div>
         <div class="form-group">
-            <label>Nominal Bayar (Rp)</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                <label>Nominal Bayar (Rp)</label>
+                <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 11px; color: var(--primary); border-color: var(--primary); height: auto;" onclick="setBayarLunas()">⚡ Lunasi Semua</button>
+            </div>
             <input type="text" id="qpNom" placeholder="0" oninput="formatRibuanInput(this)">
         </div>
         <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
@@ -450,6 +456,7 @@
     </div>
 </div>
 
+<!-- Modal Riwayat Rekap -->
 <div class="modal" id="historyModal">
     <div class="modal-content" style="max-width: 850px;">
         <div class="modal-header">
@@ -487,6 +494,7 @@
     </div>
 </div>
 
+<!-- Modal Deposit / Cicilan Biasa -->
 <div class="modal" id="depositModal" style="z-index: 1200;">
     <div class="modal-content" style="max-width: 400px;">
         <div class="modal-header">
@@ -503,6 +511,7 @@
     </div>
 </div>
 
+<!-- Modal Data Master -->
 <div class="modal" id="dataModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -539,6 +548,7 @@
     </div>
 </div>
 
+<!-- Modal Form Tambah/Edit Master -->
 <div class="modal" id="formModal" style="z-index: 1500;">
     <div class="modal-content" style="max-width: 450px;">
         <div class="modal-header">
@@ -555,14 +565,18 @@
 </div>
 
 <script>
+    // --- KONFIGURASI SUPABASE ---
     const SUPABASE_URL = 'https://acpkdnktanrucyfyhckw.supabase.co'; 
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U'; 
     
     let supabaseClient = null; 
     let isSupabaseConnected = false;
 
-    if(SUPABASE_URL !== '' && SUPABASE_KEY !== '') { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
+    if(SUPABASE_URL !== '' && SUPABASE_KEY !== '') { 
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); 
+    }
 
+    // --- VARIABEL STATUS APLIKASI ---
     let customers = [];
     let products = [];
     let customerBalances = {};
@@ -584,8 +598,8 @@
 
     let isEditingMode = false;
     let originalEditingInvoiceNo = null;
-    let selectedActionInvoice = null;
 
+    // --- FUNGSI POPUP / NOTIFIKASI ---
     function showLoadingPopup(text = "Memproses...") {
         document.getElementById('popupLoadingText').innerText = text;
         document.getElementById('popupWarningState').style.display = 'none';
@@ -619,10 +633,14 @@
         document.getElementById('popupOverlay').classList.remove('active');
     }
 
+    // --- FUNGSI RESET REKAP BARU ---
     function buatInvoiceBaru() {
-        isEditingMode = false; originalEditingInvoiceNo = null; depositList = []; currentPiutang = 0;
-        document.getElementById('editModeBanner').style.display = 'none'; 
+        isEditingMode = false; 
+        originalEditingInvoiceNo = null; 
+        depositList = []; 
+        currentPiutang = 0;
         
+        document.getElementById('editModeBanner').style.display = 'none'; 
         document.getElementById('btnSaveInvoiceMain').innerHTML = `<svg class="humbleicons hi-save" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-1.828-1.828A2 2 0 0 0 16.172 4H15M8 4v4a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4M8 4h7M7 17v-3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"/></svg> Simpan Rekap`;
 
         const btnNew = document.getElementById('btnBuatInvBaru');
@@ -643,9 +661,9 @@
         buatInvoiceBaru();
     }
 
+    // --- FUNGSI FORMAT TANGGAL & MATA UANG ---
     function formatCustomDate(dateString) {
         if(!dateString) return '-';
-        
         if(dateString.length === 10 && dateString.includes('-')) {
             const parts = dateString.split('-');
             if(parts.length === 3) {
@@ -674,6 +692,56 @@
         if (delDateEl) delDateEl.value = `${year}-${month}-${day}`;
     }
 
+    function generateRandomInvoice() {
+        if(isEditingMode) return; 
+        const randomNum = Math.floor(10000 + Math.random() * 90000);
+        document.getElementById('invoiceNumber').value = 'PYM.SBR' + randomNum;
+    }
+
+    function formatMoney(amount) { 
+        return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount); 
+    }
+    
+    function formatRibuanInput(input) { 
+        let v = input.value.replace(/\D/g, ''); 
+        input.value = v !== '' ? new Intl.NumberFormat('id-ID').format(v) : ''; 
+    }
+    
+    function getCleanNumber(inputId) { 
+        const val = document.getElementById(inputId).value; 
+        return val ? parseFloat(val.replace(/\./g, '')) || 0 : 0; 
+    }
+    
+    function toggleModal(id) { 
+        document.getElementById(id).classList.toggle('active'); 
+    }
+
+    // Fungsi terpusat: Menentukan Label, Teks Nominal, dan Warna status tagihan
+    function getBalanceStatus(amount) {
+        const val = Math.round(parseFloat(amount) || 0);
+        
+        if (val === 0) {
+            return {
+                label: 'STATUS PEMBAYARAN',
+                text: 'LUNAS',
+                color: '#10b981' // Hijau
+            };
+        } else if (val > 0) {
+            return {
+                label: 'Sisa Tagihan',
+                text: formatMoney(val),
+                color: '#ef4444' // Merah (Masih Hutang)
+            };
+        } else {
+            return {
+                label: 'Deposit / Kelebihan Bayar',
+                text: formatMoney(Math.abs(val)),
+                color: '#3b82f6' // Biru
+            };
+        }
+    }
+
+    // Inisialisasi Saat Halaman Dimuat
     document.addEventListener('DOMContentLoaded', async () => {
         generateRandomInvoice(); 
         setTodayDeliveryDate();
@@ -682,12 +750,7 @@
         renderDataManagement();
     });
 
-    function generateRandomInvoice() {
-        if(isEditingMode) return; 
-        const randomNum = Math.floor(10000 + Math.random() * 90000);
-        document.getElementById('invoiceNumber').value = 'PYM.SBR' + randomNum;
-    }
-
+    // --- PENGAMBILAN DATA SUPABASE ---
     async function fetchDataFromSupabase() {
         if(!supabaseClient) return;
         try {
@@ -736,37 +799,6 @@
         return customerBalances[customerName] !== undefined ? customerBalances[customerName] : 0;
     }
 
-    function formatMoney(amount) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount); }
-    function formatRibuanInput(input) { let v = input.value.replace(/\D/g, ''); input.value = v !== '' ? new Intl.NumberFormat('id-ID').format(v) : ''; }
-    function getCleanNumber(inputId) { const val = document.getElementById(inputId).value; return val ? parseFloat(val.replace(/\./g, '')) || 0 : 0; }
-    function toggleModal(id) { document.getElementById(id).classList.toggle('active'); }
-    
-	
-	// Fungsi terpusat untuk menentukan Label, Teks Nominal, dan Warna berdasarkan Sisa Tagihan
-	function getBalanceStatus(amount) {
-		const val = parseFloat(amount) || 0;
-		
-		if (val === 0) {
-			return {
-				label: 'LUNAS',
-				text: 'LUNAS',
-				color: '#10b981' // Hijau
-			};
-		} else if (val > 0) {
-			return {
-				label: 'Sisa Tagihan',
-				text: formatMoney(val),
-				color: '#ef4444' // Merah
-			};
-		} else {
-			return {
-				label: 'Deposit / Kelebihan Bayar',
-				text: formatMoney(Math.abs(val)),
-				color: '#3b82f6' // Biru
-			};
-		}
-	}
-	
     function tutupPratinjauKeEdit() {
         const invoiceNo = document.getElementById('prevInvNo').innerText;
         document.getElementById('previewModal').classList.remove('active');
@@ -777,6 +809,7 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
+    // --- RIWAYAT REKAP (HISTORY) ---
     async function openHistoryModal() {
         toggleModal('historyModal');
         document.getElementById('filterGlobal').value = '';
@@ -786,7 +819,10 @@
     async function fetchHistoryDataSilent() {
         const tbody = document.getElementById('historyTableBody');
         tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">⏳ Mengambil data...</td></tr>';
-        if(!isSupabaseConnected) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Mode simulasi.</td></tr>'; return; }
+        if(!isSupabaseConnected) { 
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Mode simulasi.</td></tr>'; 
+            return; 
+        }
         try {
             const { data, error } = await supabaseClient.from('supplier_recaps').select('*').order('created_at', { ascending: false });
             if (error) throw error;
@@ -794,7 +830,9 @@
             filteredHistoryData = [...allHistoryData];
             currentPage = 1;
             renderHistoryTable();
-        } catch (err) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Gagal memuat.</td></tr>`; }
+        } catch (err) { 
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Gagal memuat.</td></tr>`; 
+        }
     }
 
     function renderHistoryTable() {
@@ -817,19 +855,17 @@
         const pageData = filteredHistoryData.slice(startIndex, startIndex + itemsPerPage);
 
         tbody.innerHTML = pageData.map(inv => {
-			// Ambil status warna dan teks berdasarkan balance_due
-			const status = getBalanceStatus(inv.balance_due);
-
-			return `<tr>
-				<td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="previewInvoiceFromHistory('${inv.invoice_no}')">${inv.invoice_no}</span></td>
-				<td class="text-center">${formatCustomDate(inv.created_at)}</td>
-				<td>${inv.customer_name}</td>
-				<td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
-				<td class="text-right" style="color:var(--danger); font-style: italic;">${formatMoney(inv.deposit)}</td>
-				<td class="text-right" style="font-weight:700; font-style: italic; color: ${status.color};">${status.text}</td>
-				<td class="text-center"><button class="btn-icon-danger" onclick="deleteInvoice('${inv.invoice_no}')">🗑️</button></td>
-			</tr>`;
-		}).join('');
+            const status = getBalanceStatus(inv.balance_due);
+            return `<tr>
+                <td><span style="font-weight:600; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="previewInvoiceFromHistory('${inv.invoice_no}')">${inv.invoice_no}</span></td>
+                <td class="text-center">${formatCustomDate(inv.created_at)}</td>
+                <td>${inv.customer_name}</td>
+                <td class="text-right" style="font-style: italic;">${formatMoney(inv.subtotal)}</td>
+                <td class="text-right" style="color:var(--danger); font-style: italic;">${formatMoney(inv.deposit)}</td>
+                <td class="text-right" style="font-weight:700; font-style: italic; color: ${status.color};">${status.text}</td>
+                <td class="text-center"><button class="btn-icon-danger" onclick="deleteInvoice('${inv.invoice_no}')">🗑️</button></td>
+            </tr>`;
+        }).join('');
 
         document.getElementById('pageInfo').innerText = `Halaman ${currentPage} dari ${totalPages}`;
         
@@ -870,7 +906,8 @@
                 toggleModal('historyModal');
             }
             
-            isEditingMode = true; originalEditingInvoiceNo = invoiceNo;
+            isEditingMode = true; 
+            originalEditingInvoiceNo = invoiceNo;
             document.getElementById('editingInvoiceLabel').innerText = invoiceNo; 
             document.getElementById('editModeBanner').style.display = 'flex';
             document.getElementById('btnSaveInvoiceMain').innerText = '💾 Simpan Perubahan';
@@ -884,7 +921,8 @@
 
             document.getElementById('custName').disabled = true;
             
-            depositList = []; const productItems = []; 
+            depositList = []; 
+            const productItems = []; 
             let piutangFromItems = null;
 
             if (itemsData) {
@@ -895,7 +933,9 @@
                     else if (item.product_id === 'PIUTANG') {
                         piutangFromItems = parseFloat(item.total) || 0;
                     }
-                    else { productItems.push(item); }
+                    else { 
+                        productItems.push(item); 
+                    }
                 });
             }
 
@@ -924,23 +964,29 @@
             const customerObj = customers.find(c => c.name === invData.customer_name);
             const custSelect = document.getElementById('custName');
             if(customerObj) {
-                custSelect.value = customerObj.id; currentCustomerId = customerObj.id;
-                document.getElementById('warningRow').innerText = '✓ Mode Edit Supplier Aktif'; document.getElementById('warningRow').style.color = 'var(--primary)';
+                custSelect.value = customerObj.id; 
+                currentCustomerId = customerObj.id;
+                document.getElementById('warningRow').innerText = '✓ Mode Edit Supplier Aktif'; 
+                document.getElementById('warningRow').style.color = 'var(--primary)';
             } else {
                 custSelect.value = ""; 
             }
 
-            const tbody = document.getElementById('itemsBody'); tbody.innerHTML = '';
+            const tbody = document.getElementById('itemsBody'); 
+            tbody.innerHTML = '';
             productItems.forEach(item => {
                 const tr = document.createElement('tr');
                 const availableProducts = getAvailableProductsForCurrentAgent();
-                let productOptions = '<option value="">-- Barang --</option>'; let isProductFound = false;
+                let productOptions = '<option value="">-- Barang --</option>'; 
+                let isProductFound = false;
                 availableProducts.forEach(p => {
                     const isSelected = (String(p.id) === String(item.product_id) || p.name === item.product_name) ? 'selected' : '';
                     if (isSelected) isProductFound = true;
                     productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.custom_price}" data-unit="${p.unit}" ${isSelected}>${p.name}</option>`;
                 });
-                if (!isProductFound && item.product_id) productOptions += `<option value="${item.product_id}" data-name="${item.product_name}" data-price="${item.price}" data-unit="${item.unit}" selected>${item.product_name}</option>`;
+                if (!isProductFound && item.product_id) {
+                    productOptions += `<option value="${item.product_id}" data-name="${item.product_name}" data-price="${item.price}" data-unit="${item.unit}" selected>${item.product_name}</option>`;
+                }
                 
                 tr.innerHTML = `
                     <td><input type="number" class="item-qty text-right" value="${item.qty}" min="1" oninput="calculate()"></td>
@@ -952,10 +998,14 @@
                 `;
                 tbody.appendChild(tr);
             });
-            calculate(); window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (err) { showWarningPopup("Terjadi Kesalahan", "Gagal memuat: " + err.message); }
+            calculate(); 
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (err) { 
+            showWarningPopup("Terjadi Kesalahan", "Gagal memuat: " + err.message); 
+        }
     }
 
+    // --- FUNGSI PRATINJAU DARI RIWAYAT (DIPERBAIKI SECARA ADAPTIF) ---
     async function previewInvoiceFromHistory(invoiceNo) {
         if(!isSupabaseConnected) return;
         showLoadingPopup("Memuat Pratinjau...");
@@ -976,8 +1026,8 @@
             let totalDeposit = parseFloat(invData.deposit) || 0;
             let displayDate = formatCustomDate(invData.created_at);
 
-            if (itemsData && itemsData.length > 0 && itemsData[0].tanggal) {
-                displayDate = formatCustomDate(itemsData[0].tanggal);
+            if (itemsData && itemsData.length > 0) {
+                if (itemsData[0].tanggal) displayDate = formatCustomDate(itemsData[0].tanggal);
                 itemsData.forEach(item => {
                     if (item.unit === 'DEPOSIT' || item.product_id === 'DEPOSIT') {
                         depositHtml += `<tr><td style="padding: 4px; color: #555;">${item.product_name}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(item.price)}</td></tr>`;
@@ -990,6 +1040,19 @@
                 });
             }
 
+            // Adaptasi tampilan nota jika transaksi adalah Bayar Cepat
+            const docTitleEl = document.getElementById('prevDocTitle');
+            const prevSubtotalRow = document.getElementById('prevSubtotalRow');
+
+            if (subtotalBarang === 0) {
+                if (docTitleEl) docTitleEl.innerText = "KUITANSI PEMBAYARAN";
+                if (prevSubtotalRow) prevSubtotalRow.style.display = 'none';
+                itemsHtml = `<tr><td colspan="5" style="text-align: center; padding: 18px; color: #64748b; font-style: italic; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">⚡ Pembayaran / Cicilan Tagihan Supplier (Tanpa Pemesanan Barang Baru)</td></tr>`;
+            } else {
+                if (docTitleEl) docTitleEl.innerText = "NOTA PEMBAYARAN";
+                if (prevSubtotalRow) prevSubtotalRow.style.display = 'table-row';
+            }
+
             let currentPiutangView = 0;
             if (piutangFromItems !== null) {
                 currentPiutangView = piutangFromItems;
@@ -997,21 +1060,15 @@
                 currentPiutangView = balanceDue - subtotalBarang + totalDeposit;
             }
 
-            let labelTxt = balanceDue > 0 ? 'SISA PEMBAYARAN' : (balanceDue === 0 ? 'LUNAS' : 'DEPOSIT / KELEBIHAN BAYAR');
-            // Digunakan di dalam openPreviewModal() dan previewInvoiceFromHistory()
-			const status = getBalanceStatus(balanceDue);
+            const status = getBalanceStatus(balanceDue);
+            let prevBalanceLabelEl = document.getElementById('prevBalanceLabel');
+            let prevBalanceEl = document.getElementById('prevBalance');
 
-			let prevBalanceLabelEl = document.getElementById('prevBalanceLabel');
-			let prevBalanceEl = document.getElementById('prevBalance');
-
-			if (prevBalanceLabelEl) {
-				prevBalanceLabelEl.innerText = status.label;
-			}
-
-			if (prevBalanceEl) {
-				prevBalanceEl.innerText = status.text;
-				prevBalanceEl.style.color = status.color + ' !important'; // Paksa warna sesuai logika
-			}
+            if (prevBalanceLabelEl) prevBalanceLabelEl.innerText = status.label;
+            if (prevBalanceEl) {
+                prevBalanceEl.innerText = status.text;
+                prevBalanceEl.style.color = status.color;
+            }
 
             document.getElementById('prevInvNo').innerText = invData.invoice_no; 
             document.getElementById('prevCustName').innerText = invData.customer_name;
@@ -1027,11 +1084,7 @@
                 prevPiutangRow.style.display = 'table-row';
                 prevPiutangRow.querySelector('td').innerText = currentPiutangView > 0 ? 'Sisa Tagihan Sebelumnya' : 'Deposit Sebelumnya';
                 document.getElementById('prevPiutangAmount').innerText = currentPiutangView > 0 ? formatMoney(currentPiutangView) : `- ${formatMoney(Math.abs(currentPiutangView))}`;
-                if (currentPiutangView < 0) {
-                    document.getElementById('prevPiutangAmount').style.color = '#dc2626';
-                } else {
-                    document.getElementById('prevPiutangAmount').style.color = '';
-                }
+                document.getElementById('prevPiutangAmount').style.color = currentPiutangView < 0 ? '#dc2626' : '';
 
                 prevTotalTagihanRow.style.display = 'table-row';
                 let totalTagihan = subtotalBarang + currentPiutangView;
@@ -1042,8 +1095,6 @@
             }
 
             document.getElementById('prevDepositBody').innerHTML = depositHtml; 
-            document.getElementById('prevBalance').innerText = formatMoney(Math.abs(balanceDue));
-
             document.getElementById('invoiceNumber').value = invoiceNo; 
             
             const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
@@ -1083,9 +1134,12 @@
         };
     }
 
+    // --- MANAJEMEN DATA MASTER ---
     function switchTab(tabId, btn, type) {
         document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active'); btn.classList.add('active'); activeTabType = type; 
+        document.getElementById(tabId).classList.add('active'); 
+        btn.classList.add('active'); 
+        activeTabType = type; 
     }
 
     function renderDataManagement() {
@@ -1115,7 +1169,9 @@
 
     function renderDropdownCustomers() {
         let options = '<option value="">-- Pilih Supplier --</option>';
-        [...customers].sort((a,b)=>a.name.localeCompare(b.name)).forEach(c => { options += `<option value="${c.id}">${c.name}</option>`; });
+        [...customers].sort((a,b)=>a.name.localeCompare(b.name)).forEach(c => { 
+            options += `<option value="${c.id}">${c.name}</option>`; 
+        });
         document.getElementById('custName').innerHTML = options;
     }
     
@@ -1183,7 +1239,8 @@
 
     async function saveData() {
         const btnSave = document.getElementById('btnSaveForm');
-        btnSave.innerText = 'Menyimpan...'; btnSave.disabled = true;
+        btnSave.innerText = 'Menyimpan...'; 
+        btnSave.disabled = true;
 
         try {
             if(editingType === 'customer') {
@@ -1232,7 +1289,9 @@
                     customerBalances[name] = finalBal;
                 }
             } else if(editingType === 'product') {
-                const name = document.getElementById('inputProdName').value; const unit = document.getElementById('inputProdUnit').value; const default_price = getCleanNumber('inputProdPrice');
+                const name = document.getElementById('inputProdName').value; 
+                const unit = document.getElementById('inputProdUnit').value; 
+                const default_price = getCleanNumber('inputProdPrice');
                 if (isCreating) {
                     if(isSupabaseConnected) {
                         const { data, error } = await supabaseClient.from('supplier_products').insert([{ name, unit, default_price }]).select();
@@ -1240,7 +1299,8 @@
                     } else products.push({ id: Date.now(), name, unit, default_price });
                 } else {
                     if(isSupabaseConnected) await supabaseClient.from('supplier_products').update({ name, unit, default_price }).eq('id', editingId);
-                    const idx = products.findIndex(p => p.id === editingId); if(idx > -1) products[idx] = { ...products[idx], name, unit, default_price };
+                    const idx = products.findIndex(p => p.id === editingId); 
+                    if(idx > -1) products[idx] = { ...products[idx], name, unit, default_price };
                 }
             }
 
@@ -1249,7 +1309,12 @@
             autoFillCustomer(); 
             toggleModal('formModal');
             
-        } catch (error) { showWarningPopup("Gagal Menyimpan", error.message); } finally { btnSave.innerText = 'Simpan'; btnSave.disabled = false; }
+        } catch (error) { 
+            showWarningPopup("Gagal Menyimpan", error.message); 
+        } finally { 
+            btnSave.innerText = 'Simpan'; 
+            btnSave.disabled = false; 
+        }
     }
 
     async function deleteData() {
@@ -1271,24 +1336,34 @@
                     if(isSupabaseConnected) await supabaseClient.from('supplier_products').delete().eq('id', editingId);
                     products = products.filter(p => p.id !== editingId); 
                 }
-                renderDataManagement(); renderDropdownCustomers(); autoFillCustomer(); toggleModal('formModal');
-            } catch (error) { showWarningPopup("Gagal Menghapus", error.message); }
+                renderDataManagement(); 
+                renderDropdownCustomers(); 
+                autoFillCustomer(); 
+                toggleModal('formModal');
+            } catch (error) { 
+                showWarningPopup("Gagal Menghapus", error.message); 
+            }
         };
     }
 
+    // --- LOGIKA FORM TRANSAKSI & RINCIAN BARANG ---
     async function autoFillCustomer() {
         const select = document.getElementById('custName');
         currentCustomerId = parseInt(select.value) || null;
         const customer = customers.find(c => c.id === currentCustomerId);
         
         if (customer) {
-            document.getElementById('warningRow').style.color = 'var(--primary)'; document.getElementById('warningRow').innerText = '✓ Supplier aktif, silakan tambah barang baru';
+            document.getElementById('warningRow').style.color = 'var(--primary)'; 
+            document.getElementById('warningRow').innerText = '✓ Supplier aktif, silakan tambah barang baru';
         } else {
-            document.getElementById('warningRow').style.color = 'var(--text-muted)'; document.getElementById('warningRow').innerText = 'Pilih supplier terlebih dahulu untuk menambah barang';
+            document.getElementById('warningRow').style.color = 'var(--text-muted)'; 
+            document.getElementById('warningRow').innerText = 'Pilih supplier terlebih dahulu untuk menambah barang';
         }
 
         if(!isEditingMode) {
-            document.getElementById('itemsBody').innerHTML = ''; depositList = []; currentPiutang = 0;
+            document.getElementById('itemsBody').innerHTML = ''; 
+            depositList = []; 
+            currentPiutang = 0;
             if(currentCustomerId && customer) {
                 const prevBalance = await fetchPreviousBalance(customer.name);
                 currentPiutang = prevBalance;
@@ -1298,11 +1373,7 @@
 
             const btnQuickPay = document.getElementById('btnQuickPay');
             if (btnQuickPay) {
-                if (currentPiutang > 0) {
-                    btnQuickPay.style.display = 'flex';
-                } else {
-                    btnQuickPay.style.display = 'none';
-                }
+                btnQuickPay.style.display = (currentPiutang > 0) ? 'flex' : 'none';
             }
         } else {
             const btnQuickPay = document.getElementById('btnQuickPay');
@@ -1311,7 +1382,12 @@
     }
 
     function getAvailableProductsForCurrentAgent() {
-        return [...products].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => ({ id: p.id, name: p.name, unit: p.unit, custom_price: p.default_price }));
+        return [...products].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => ({ 
+            id: p.id, 
+            name: p.name, 
+            unit: p.unit, 
+            custom_price: p.default_price 
+        }));
     }
 
     function addRow() {
@@ -1320,11 +1396,13 @@
             return;
         }
 
-        const tbody = document.getElementById('itemsBody'); const tr = document.createElement('tr');
+        const tbody = document.getElementById('itemsBody'); 
+        const tr = document.createElement('tr');
         let productOptions = '<option value="">-- Barang --</option>';
-        getAvailableProductsForCurrentAgent().forEach(p => { productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.custom_price}" data-unit="${p.unit}">${p.name}</option>`; });
+        getAvailableProductsForCurrentAgent().forEach(p => { 
+            productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.custom_price}" data-unit="${p.unit}">${p.name}</option>`; 
+        });
 
-        // Nilai awal Qty diset default = 1
         tr.innerHTML = `
             <td><input type="number" class="item-qty text-right" value="1" min="1" oninput="calculate()"></td>
             <td><input type="text" class="item-unit text-right" readonly placeholder="-"></td>
@@ -1337,34 +1415,75 @@
     }
 
     function onProductSelect(selectElement) {
-        const row = selectElement.closest('tr'); const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const row = selectElement.closest('tr'); 
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
         if(selectElement.value !== "") {
             const price = selectedOption.getAttribute('data-price');
-            row.querySelector('.item-price').value = price; row.querySelector('.item-price-display').value = formatMoney(price).replace('Rp ', ''); row.querySelector('.item-unit').value = selectedOption.getAttribute('data-unit');
-        } else { row.querySelector('.item-price').value = 0; row.querySelector('.item-price-display').value = "0"; row.querySelector('.item-unit').value = ""; }
+            row.querySelector('.item-price').value = price; 
+            row.querySelector('.item-price-display').value = formatMoney(price).replace('Rp ', ''); 
+            row.querySelector('.item-unit').value = selectedOption.getAttribute('data-unit');
+        } else { 
+            row.querySelector('.item-price').value = 0; 
+            row.querySelector('.item-price-display').value = "0"; 
+            row.querySelector('.item-unit').value = ""; 
+        }
         calculate();
     }
 
-    function removeRow(btn) { btn.closest('tr').remove(); calculate(); }
+    function removeRow(btn) { 
+        btn.closest('tr').remove(); 
+        calculate(); 
+    }
 
+    // --- DEPOSIT / CICILAN ---
     function openDepositModal(index) {
         editingDepositIndex = index;
-        if(index >= 0) { const dep = depositList[index]; document.getElementById('depKet').value = dep.ket; document.getElementById('depNom').value = new Intl.NumberFormat('id-ID').format(dep.nom); document.getElementById('btnHapusDeposit').style.display = 'block'; }
-        else { document.getElementById('depKet').value = ''; document.getElementById('depNom').value = ''; document.getElementById('btnHapusDeposit').style.display = 'none'; }
+        if(index >= 0) { 
+            const dep = depositList[index]; 
+            document.getElementById('depKet').value = dep.ket; 
+            document.getElementById('depNom').value = new Intl.NumberFormat('id-ID').format(dep.nom); 
+            document.getElementById('btnHapusDeposit').style.display = 'block'; 
+        } else { 
+            document.getElementById('depKet').value = ''; 
+            document.getElementById('depNom').value = ''; 
+            document.getElementById('btnHapusDeposit').style.display = 'none'; 
+        }
         toggleModal('depositModal');
     }
-    function simpanDeposit() { const ket = document.getElementById('depKet').value || 'Deposit'; const nom = getCleanNumber('depNom'); if(nom<=0)return; if(editingDepositIndex>=0) depositList[editingDepositIndex]={ket,nom}; else depositList.push({ket,nom}); toggleModal('depositModal'); calculate(); }
-    function hapusDeposit() { if(editingDepositIndex>=0) depositList.splice(editingDepositIndex,1); toggleModal('depositModal'); calculate(); }
 
+    function simpanDeposit() { 
+        const ket = document.getElementById('depKet').value || 'Deposit'; 
+        const nom = getCleanNumber('depNom'); 
+        if(nom <= 0) return; 
+        if(editingDepositIndex >= 0) depositList[editingDepositIndex] = { ket, nom }; 
+        else depositList.push({ ket, nom }); 
+        toggleModal('depositModal'); 
+        calculate(); 
+    }
+
+    function hapusDeposit() { 
+        if(editingDepositIndex >= 0) depositList.splice(editingDepositIndex, 1); 
+        toggleModal('depositModal'); 
+        calculate(); 
+    }
+
+    // --- KALKULASI TOTAL TRANSAKSI ---
     function calculate() {
         let subtotalBarang = 0;
         document.querySelectorAll('#itemsBody tr').forEach(row => {
-            const total = (parseFloat(row.querySelector('.item-qty').value)||0) * (parseFloat(row.querySelector('.item-price').value)||0);
-            row.querySelector('.item-total').innerText = formatMoney(total); subtotalBarang += total;
+            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            const total = qty * price;
+            row.querySelector('.item-total').innerText = formatMoney(total); 
+            subtotalBarang += total;
         });
         
-        let totalDeposit = 0; let depositHtml = '';
-        depositList.forEach((dep, idx) => { totalDeposit += dep.nom; depositHtml += `<div class="summary-row deposit-row" style="cursor:pointer;" onclick="openDepositModal(${idx})"><span>${dep.ket} <span class="hide-export">✏️</span></span><span style="color:var(--danger); font-weight:600; font-style: italic;">- ${formatMoney(dep.nom)}</span></div>`; });
+        let totalDeposit = 0; 
+        let depositHtml = '';
+        depositList.forEach((dep, idx) => { 
+            totalDeposit += dep.nom; 
+            depositHtml += `<div class="summary-row deposit-row" style="cursor:pointer;" onclick="openDepositModal(${idx})"><span>${dep.ket} <span class="hide-export">✏️</span></span><span style="color:var(--danger); font-weight:600; font-style: italic;">- ${formatMoney(dep.nom)}</span></div>`; 
+        });
         
         const piutangRow = document.getElementById('piutangSummaryRow');
         const totalTagihanRow = document.getElementById('totalTagihanRow');
@@ -1375,11 +1494,7 @@
             piutangRow.style.display = 'flex';
             piutangRow.querySelector('span').innerText = currentPiutang > 0 ? 'Sisa Tagihan Sebelumnya' : 'Deposit Sebelumnya';
             document.getElementById('piutangAmount').innerText = currentPiutang > 0 ? formatMoney(currentPiutang) : `- ${formatMoney(Math.abs(currentPiutang))}`;
-            if (currentPiutang < 0) {
-                document.getElementById('piutangAmount').style.color = 'var(--danger)';
-            } else {
-                document.getElementById('piutangAmount').style.color = 'var(--text-main)';
-            }
+            document.getElementById('piutangAmount').style.color = currentPiutang < 0 ? 'var(--danger)' : 'var(--text-main)';
 
             totalTagihanRow.style.display = 'flex';
             document.getElementById('totalTagihanAmount').innerText = formatMoney(totalTagihan);
@@ -1388,26 +1503,20 @@
             totalTagihanRow.style.display = 'none';
         }
 
-        // Bagian dalam fungsi calculate()
-		let sisa = totalTagihan - totalDeposit;
-		const status = getBalanceStatus(sisa);
+        let sisa = totalTagihan - totalDeposit;
+        const status = getBalanceStatus(sisa);
 
-		// Update Label dan Nilai Sisa Pembayaran di Ringkasan Utama
-		let balanceLabelEl = document.getElementById('balanceLabel');
-		let balanceDueEl = document.getElementById('balanceDue');
+        let balanceLabelEl = document.getElementById('balanceLabel');
+        let balanceDueEl = document.getElementById('balanceDue');
 
-		if (balanceLabelEl) {
-			balanceLabelEl.innerText = status.label;
-		}
+        if (balanceLabelEl) balanceLabelEl.innerText = status.label;
+        if (balanceDueEl) {
+            balanceDueEl.innerText = status.text;
+            balanceDueEl.style.color = status.color;
+        }
 
-		if (balanceDueEl) {
-			balanceDueEl.innerText = status.text;
-			balanceDueEl.style.color = status.color; // Menerapkan warna Hijau / Merah / Biru
-		}
-
-		document.getElementById('subTotal').innerText = formatMoney(subtotalBarang);
-		document.getElementById('depositListSummary').innerHTML = depositHtml; 
-        document.getElementById('balanceDue').innerText = formatMoney(Math.abs(sisa));
+        document.getElementById('subTotal').innerText = formatMoney(subtotalBarang);
+        document.getElementById('depositListSummary').innerHTML = depositHtml; 
     }
 
     function simpanInvoiceAndClose() {
@@ -1415,6 +1524,7 @@
         simpanInvoice();
     }
 
+    // --- MODAL PRATINJAU LANGSUNG ---
     function openPreviewModal() {
         if(!currentCustomerId) return showWarningPopup("Pilih Supplier!", "Pilih Supplier terlebih dahulu sebelum melakukan pratinjau!");
         
@@ -1438,7 +1548,9 @@
             }
         });
         
-        if(validItems.length === 0 && depositList.length === 0 && currentPiutang === 0) return showWarningPopup("Data Kosong!", "Belum ada rincian pesanan baru atau data keuangan!");
+        if(validItems.length === 0 && depositList.length === 0 && currentPiutang === 0) {
+            return showWarningPopup("Data Kosong!", "Belum ada rincian pesanan baru atau data keuangan!");
+        }
 
         let itemsHtml = '';
         validItems.forEach(item => {
@@ -1446,31 +1558,43 @@
             itemsHtml += `<tr><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: center;">${item.qty}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: left;">${item.unit}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee;"><strong>${prodName}</strong></td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: right;">${formatMoney(item.price).replace('Rp ', '')}</td><td style="padding: 10px 4px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600; font-style: italic;">${formatMoney(item.total)}</td></tr>`;
         });
 
-        let totalDeposit = 0; let depositHtml = '';
-        depositList.forEach(dep => { totalDeposit += dep.nom; depositHtml += `<tr><td style="padding: 4px; color: #555;">${dep.ket}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(dep.nom)}</td></tr>`; });
+        // Adaptasi nota bila transaksi tanpa pemesanan barang
+        const docTitleEl = document.getElementById('prevDocTitle');
+        const prevSubtotalRow = document.getElementById('prevSubtotalRow');
+
+        if (subtotalBarang === 0) {
+            if (docTitleEl) docTitleEl.innerText = "KUITANSI PEMBAYARAN";
+            if (prevSubtotalRow) prevSubtotalRow.style.display = 'none';
+            itemsHtml = `<tr><td colspan="5" style="text-align: center; padding: 18px; color: #64748b; font-style: italic; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">⚡ Pembayaran / Cicilan Tagihan Supplier (Tanpa Pemesanan Barang Baru)</td></tr>`;
+        } else {
+            if (docTitleEl) docTitleEl.innerText = "NOTA PEMBAYARAN";
+            if (prevSubtotalRow) prevSubtotalRow.style.display = 'table-row';
+        }
+
+        let totalDeposit = 0; 
+        let depositHtml = '';
+        depositList.forEach(dep => { 
+            totalDeposit += dep.nom; 
+            depositHtml += `<tr><td style="padding: 4px; color: #555;">${dep.ket}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(dep.nom)}</td></tr>`; 
+        });
         
         let totalTagihan = subtotalBarang + currentPiutang;
         const balanceDue = totalTagihan - totalDeposit;
         
-        let labelTxt = balanceDue > 0 ? 'SISA PEMBAYARAN' : (balanceDue === 0 ? 'LUNAS' : 'DEPOSIT / KELEBIHAN BAYAR');
-        // Digunakan di dalam openPreviewModal() dan previewInvoiceFromHistory()
-		const status = getBalanceStatus(balanceDue);
+        const status = getBalanceStatus(balanceDue);
+        let prevBalanceLabelEl = document.getElementById('prevBalanceLabel');
+        let prevBalanceEl = document.getElementById('prevBalance');
 
-		let prevBalanceLabelEl = document.getElementById('prevBalanceLabel');
-		let prevBalanceEl = document.getElementById('prevBalance');
-
-		if (prevBalanceLabelEl) {
-			prevBalanceLabelEl.innerText = status.label;
-		}
-
-		if (prevBalanceEl) {
-			prevBalanceEl.innerText = status.text;
-			prevBalanceEl.style.color = status.color + ' !important'; // Paksa warna sesuai logika
-		}
+        if (prevBalanceLabelEl) prevBalanceLabelEl.innerText = status.label;
+        if (prevBalanceEl) {
+            prevBalanceEl.innerText = status.text;
+            prevBalanceEl.style.color = status.color;
+        }
 
         const deliveryDateVal = document.getElementById('deliveryDate').value;
 
-        document.getElementById('prevInvNo').innerText = invoiceNo; document.getElementById('prevCustName').innerText = customer.name;
+        document.getElementById('prevInvNo').innerText = invoiceNo; 
+        document.getElementById('prevCustName').innerText = customer.name;
         document.getElementById('prevDate').innerText = formatCustomDate(deliveryDateVal);
         
         document.getElementById('prevItemsBody').innerHTML = itemsHtml; 
@@ -1483,22 +1607,16 @@
             prevPiutangRow.style.display = 'table-row';
             prevPiutangRow.querySelector('td').innerText = currentPiutang > 0 ? 'Sisa Tagihan Sebelumnya' : 'Deposit Sebelumnya';
             document.getElementById('prevPiutangAmount').innerText = currentPiutang > 0 ? formatMoney(currentPiutang) : `- ${formatMoney(Math.abs(currentPiutang))}`;
-            if (currentPiutang < 0) {
-                document.getElementById('prevPiutangAmount').style.color = '#dc2626';
-            } else {
-                document.getElementById('prevPiutangAmount').style.color = '';
-            }
+            document.getElementById('prevPiutangAmount').style.color = currentPiutang < 0 ? '#dc2626' : '';
 
             prevTotalTagihanRow.style.display = 'table-row';
             document.getElementById('prevTotalTagihanAmount').innerText = formatMoney(totalTagihan);
-
         } else {
             prevPiutangRow.style.display = 'none';
             prevTotalTagihanRow.style.display = 'none';
         }
 
         document.getElementById('prevDepositBody').innerHTML = depositHtml; 
-        document.getElementById('prevBalance').innerText = formatMoney(Math.abs(balanceDue));
         
         const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
         if(btnSavePreview) {
@@ -1508,6 +1626,7 @@
         toggleModal('previewModal');
     }
     
+    // --- EKSPOR PDF & PNG ---
     function exportToPDF() {
         if (typeof html2pdf === 'undefined') {
             showWarningPopup("Sistem Belum Siap", "Sistem PDF belum termuat sempurna. Pastikan koneksi internet Anda aktif dan muat ulang halaman.");
@@ -1540,13 +1659,11 @@
                 element.style.border = originalBorder;
                 element.style.width = originalWidth;
                 element.style.maxWidth = originalMaxWidth;
-                
                 showSuccessPopup("PDF Berhasil Disimpan!", `File Rekap_${invoiceNo}.pdf berhasil diunduh.`);
             }).catch(err => {
                 element.style.border = originalBorder;
                 element.style.width = originalWidth;
                 element.style.maxWidth = originalMaxWidth;
-                
                 closePopup();
                 showWarningPopup("Gagal Ekspor", "Terjadi kesalahan saat memproses PDF: " + err.message);
             });
@@ -1554,86 +1671,88 @@
     }
     
     async function exportToPNG() {
-		// 1. Validasi kesiapan library html2canvas
-		if (typeof html2canvas === 'undefined') {
-			showWarningPopup("Sistem Belum Siap", "Library html2canvas belum termuat. Pastikan koneksi internet aktif.");
-			return;
-		}
+        if (typeof html2canvas === 'undefined') {
+            showWarningPopup("Sistem Belum Siap", "Library html2canvas belum termuat. Pastikan koneksi internet aktif.");
+            return;
+        }
 
-		showLoadingPopup("Menyiapkan Berkas PNG...");
+        showLoadingPopup("Menyiapkan Berkas PNG...");
 
-		setTimeout(async () => {
-			const originalElement = document.getElementById('previewContent');
-			const invoiceNo = document.getElementById('invoiceNumber').value || 'Rekap';
+        setTimeout(async () => {
+            const originalElement = document.getElementById('previewContent');
+            const invoiceNo = document.getElementById('invoiceNumber').value || 'Rekap';
 
-			// 2. Kloning elemen nota agar terbebas dari batasan modal & layar HP
-			const clone = originalElement.cloneNode(true);
+            const clone = originalElement.cloneNode(true);
+            clone.style.position = 'absolute';
+            clone.style.top = '-9999px';
+            clone.style.left = '0';
+            clone.style.width = '800px';
+            clone.style.maxWidth = '800px';
+            clone.style.height = 'auto';
+            clone.style.backgroundColor = '#ffffff';
+            clone.style.boxSizing = 'border-box';
 
-			// Set properti klon agar dirender di luar layar dengan proporsi ideal (800px)
-			clone.style.position = 'absolute';
-			clone.style.top = '-9999px';
-			clone.style.left = '0';
-			clone.style.width = '800px';
-			clone.style.maxWidth = '800px';
-			clone.style.height = 'auto';
-			clone.style.backgroundColor = '#ffffff';
-			clone.style.boxSizing = 'border-box';
+            document.body.appendChild(clone);
 
-			// Sisipkan sementara klon ke dalam DOM body
-			document.body.appendChild(clone);
+            try {
+                const canvas = await html2canvas(clone, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    width: 800,
+                    height: clone.scrollHeight,
+                    windowWidth: 1024,
+                    scrollY: 0,
+                    scrollX: 0
+                });
 
-			try {
-				// 3. Proses render gambar dengan html2canvas
-				const canvas = await html2canvas(clone, {
-					scale: 2,              // Skala 2x untuk hasil HD & teks tajam
-					useCORS: true,         // Izinkan gambar logo eksternal termuat
-					backgroundColor: '#ffffff',
-					width: 800,
-					height: clone.scrollHeight, // Mengambil seluruh tinggi elemen tanpa terpotong
-					windowWidth: 1024,
-					scrollY: 0,
-					scrollX: 0
-				});
+                const imageURI = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `Nota_${invoiceNo}.png`;
+                link.href = imageURI;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
 
-				// 4. Konversi hasil canvas ke format PNG dan unduh
-				const imageURI = canvas.toDataURL('image/png');
-				const link = document.createElement('a');
-				link.download = `Nota_${invoiceNo}.png`;
-				link.href = imageURI;
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
+                showSuccessPopup("PNG Berhasil Disimpan!", `File Nota_${invoiceNo}.png berhasil diunduh.`);
+            } catch (err) {
+                closePopup();
+                showWarningPopup("Gagal Ekspor PNG", "Terjadi kesalahan: " + err.message);
+            } finally {
+                if (document.body.contains(clone)) {
+                    document.body.removeChild(clone);
+                }
+            }
+        }, 400);
+    }
 
-				showSuccessPopup("PNG Berhasil Disimpan!", `File Nota_${invoiceNo}.png berhasil diunduh.`);
-			} catch (err) {
-				closePopup();
-				showWarningPopup("Gagal Ekspor PNG", "Terjadi kesalahan: " + err.message);
-			} finally {
-				// 5. Bersihkan klon dari halaman web
-				if (document.body.contains(clone)) {
-					document.body.removeChild(clone);
-				}
-			}
-		}, 400);
-	}
-
+    // --- PENYIMPANAN INVOICE / REKAP ---
     async function simpanInvoice() {
         if(!currentCustomerId) return showWarningPopup("Pilih Supplier!", "Pilih Supplier terlebih dahulu sebelum menyimpan rekap!");
         const invoiceNo = document.getElementById('invoiceNumber').value;
         const customer = customers.find(c => c.id === currentCustomerId);
         const rows = document.querySelectorAll('#itemsBody tr');
         const deliveryDateVal = document.getElementById('deliveryDate').value;
-        let subtotalBarang = 0; let itemsPayload = [];
+        let subtotalBarang = 0; 
+        let itemsPayload = [];
         
         rows.forEach(row => {
-            const prodSelect = row.querySelector('.item-select'); const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const price = parseFloat(row.querySelector('.item-price').value) || 0; const total = qty * price; 
+            const prodSelect = row.querySelector('.item-select'); 
+            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0; 
+            const total = qty * price; 
             if (prodSelect.value && qty > 0) {
                 subtotalBarang += total;
                 itemsPayload.push({
-                    invoice_no: invoiceNo, tanggal: deliveryDateVal,
-                    product_id: String(prodSelect.value), product_name: prodSelect.options[prodSelect.selectedIndex].getAttribute('data-name'),
-                    qty: qty, unit: row.querySelector('.item-unit').value, destination: "-", price: price, total: total                    
+                    invoice_no: invoiceNo, 
+                    tanggal: deliveryDateVal,
+                    product_id: String(prodSelect.value), 
+                    product_name: prodSelect.options[prodSelect.selectedIndex].getAttribute('data-name'),
+                    qty: qty, 
+                    unit: row.querySelector('.item-unit').value, 
+                    destination: "-", 
+                    price: price, 
+                    total: total                    
                 });
             }
         });
@@ -1645,7 +1764,17 @@
         let totalDeposit = 0;
         depositList.forEach(dep => {
             totalDeposit += dep.nom;
-            itemsPayload.push({ invoice_no: invoiceNo, tanggal: deliveryDateVal, product_id: 'DEPOSIT', product_name: dep.ket, qty: 1, unit: 'DEPOSIT', destination: '-', price: dep.nom, total: dep.nom });
+            itemsPayload.push({ 
+                invoice_no: invoiceNo, 
+                tanggal: deliveryDateVal, 
+                product_id: 'DEPOSIT', 
+                product_name: dep.ket, 
+                qty: 1, 
+                unit: 'DEPOSIT', 
+                destination: '-', 
+                price: dep.nom, 
+                total: dep.nom 
+            });
         });
 
         const actionText = isEditingMode ? "Menyimpan Perubahan..." : "Menyimpan Rekap...";
@@ -1667,12 +1796,27 @@
         try {
             if(isEditingMode) {
                 await supabaseClient.from('supplier_recap_items').delete().eq('invoice_no', invoiceNo);
-                await supabaseClient.from('supplier_recaps').update({ customer_name: customer.name, customer_phone: customer.phone || "-", customer_address: customer.address || "-", subtotal: subtotalDB, deposit: totalDeposit, balance_due: balanceDueDB }).eq('invoice_no', invoiceNo);
+                await supabaseClient.from('supplier_recaps').update({ 
+                    customer_name: customer.name, 
+                    customer_phone: customer.phone || "-", 
+                    customer_address: customer.address || "-", 
+                    subtotal: subtotalDB, 
+                    deposit: totalDeposit, 
+                    balance_due: balanceDueDB 
+                }).eq('invoice_no', invoiceNo);
                 await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
                 showSuccessPopup(successTitle, successSub);
                 buatInvoiceBaru(); 
             } else {
-                await supabaseClient.from('supplier_recaps').insert([{ invoice_no: invoiceNo, customer_name: customer.name, customer_phone: customer.phone || "-", customer_address: customer.address || "-", subtotal: subtotalDB, deposit: totalDeposit, balance_due: balanceDueDB }]);
+                await supabaseClient.from('supplier_recaps').insert([{ 
+                    invoice_no: invoiceNo, 
+                    customer_name: customer.name, 
+                    customer_phone: customer.phone || "-", 
+                    customer_address: customer.address || "-", 
+                    subtotal: subtotalDB, 
+                    deposit: totalDeposit, 
+                    balance_due: balanceDueDB 
+                }]);
                 await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
                 showSuccessPopup(successTitle, successSub);
                 buatInvoiceBaru(); 
@@ -1683,12 +1827,18 @@
         }
     }
     
+    // --- FITUR BAYAR CEPAT (QUICK PAY) ---
+    function setBayarLunas() {
+        if (currentPiutang > 0) {
+            document.getElementById('qpNom').value = new Intl.NumberFormat('id-ID').format(currentPiutang);
+        }
+    }
+
     function openQuickPayModal() {
         if(!currentCustomerId) return;
         
         const qpDebtEl = document.getElementById('qpCurrentDebt');
         
-        // Menutup modal quick pay saat membuka pratinjau nota terakhir
         if (currentLastInvoiceNo) {
             qpDebtEl.innerHTML = `<span style="text-decoration: underline; cursor: pointer; color: #2563eb;" title="Klik untuk lihat pratinjau nota terakhir" onclick="toggleModal('quickPayModal'); previewInvoiceFromHistory('${currentLastInvoiceNo}')">${formatMoney(currentPiutang)} <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></span>`;
         } else {
