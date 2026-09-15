@@ -498,7 +498,67 @@
         </div>
     </div>
 
-    <!-- MODAL POPUP MODERN: ALERT & CONFIRM DIALOG (Z-[100]) -->
+    
+	<!-- ========================================== -->
+    <!-- MODAL POPUP: PILIH KLOTER & CHECKLIST WA   -->
+    <!-- ========================================== -->
+    <div id="modalKloterWA" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-3.5 transform translate-y-full sm:translate-y-0 transition-all duration-300 border border-slate-100 dark:border-slate-700" id="contentKloterWA">
+            
+            <!-- Header Modal -->
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-2.5">
+                <h3 class="font-black text-slate-900 dark:text-white text-sm flex items-center">
+                    <i class="fa-brands fa-whatsapp text-emerald-500 mr-2 text-base"></i> Pilih Kloter Penarikan
+                </h3>
+                <button type="button" onclick="tutupModalKloterWA()" class="w-7 h-7 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Pilihan Nomor Kloter -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Pilih Kloter / Trip Tarikan
+                </label>
+                <div class="grid grid-cols-3 gap-2" id="groupPilihanKloter">
+                    <button type="button" onclick="setNomorKloter('Kloter 1')" class="btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-emerald-700 dark:text-emerald-400" data-kloter="Kloter 1">
+                        Kloter 1
+                    </button>
+                    <button type="button" onclick="setNomorKloter('Kloter 2')" class="btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300" data-kloter="Kloter 2">
+                        Kloter 2
+                    </button>
+                    <button type="button" onclick="setNomorKloter('Kloter 3')" class="btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300" data-kloter="Kloter 3">
+                        Kloter 3
+                    </button>
+                </div>
+                <input type="hidden" id="kloterTerpilihNilai" value="Kloter 1">
+            </div>
+
+            <!-- Header Pilihan Pekerja -->
+            <div class="flex items-center justify-between pt-1">
+                <span class="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                    Muatan Yang Dibawa Sekarang:
+                </span>
+                <button type="button" onclick="toggleCentangSemuaKloter()" class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                    Pilih Semua
+                </button>
+            </div>
+
+            <!-- Daftar Checklist Pekerja -->
+            <div id="containerListChecklistKloter" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+
+            <input type="hidden" id="kloterTanggalAktif">
+
+            <!-- Tombol Konfirmasi -->
+            <div class="pt-1">
+                <button type="button" onclick="eksekusiKirimWAKloter()" id="btnSubmitKloterWA" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl shadow-md text-xs transition flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> BAGIKAN LAPORAN KLOTER KE WA
+                </button>
+            </div>
+        </div>
+    </div>
+	
+	<!-- MODAL POPUP MODERN: ALERT & CONFIRM DIALOG (Z-[100]) -->
     <div id="modalDialog" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
         <div id="modalDialogCard" class="bg-white rounded-3xl shadow-2xl w-full max-w-xs mx-4 p-5 text-center transform scale-95 transition-all duration-300">
             <div id="dialogIconBox" class="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-indigo-50 text-indigo-600">
@@ -1009,35 +1069,26 @@
 
 
 		// ==============================================================
-        // SISTEM HAK AKSES REVISI KIRIMAN (ADMIN & IZIN KHUSUS)
+        // SISTEM HAK AKSES REVISI KIRIMAN (ADMIN & WHITELIST KARYAWAN)
         // ==============================================================
         function punyaAksesRevisi() {
             if (!userKurirAktif) return false;
             
-            // 1. Role Admin selalu memiliki izin
-            if (userKurirAktif.role === 'admin') return true;
+            const role = (userKurirAktif.role || '').toLowerCase().trim();
+            const nama = (userKurirAktif.nama || '').toLowerCase().trim();
 
-            // 2. Cek apakah ID karyawan terdaftar di whitelist izin khusus
-            const listIzin = JSON.parse(localStorage.getItem('sbr_izin_revisi') || '[]');
-            return listIzin.includes(userKurirAktif.id);
-        }
+            // 1. Role Admin selalu memiliki izin revisi
+            if (role === 'admin') return true;
 
-        // Fungsi admin untuk mengaktifkan / mencabut izin karyawan
-        function toggleIzinRevisiKaryawan(karyawanId, namaKaryawan) {
-            let listIzin = JSON.parse(localStorage.getItem('sbr_izin_revisi') || '[]');
-
-            if (listIzin.includes(karyawanId)) {
-                listIzin = listIzin.filter(id => id !== karyawanId);
-                localStorage.setItem('sbr_izin_revisi', JSON.stringify(listIzin));
-                showNotice(`Izin revisi kirim untuk ${namaKaryawan} telah DICABUT.`, "Hak Akses Diperbarui");
-            } else {
-                listIzin.push(karyawanId);
-                localStorage.setItem('sbr_izin_revisi', JSON.stringify(listIzin));
-                showSuccess(`Izin revisi kirim untuk ${namaKaryawan} BERHASIL DIBERIKAN!`, "Hak Akses Diberikan");
+            // 2. Whitelist nama karyawan khusus (Candra otomatis diizinkan)
+            const whitelistNama = ['candra'];
+            if (whitelistNama.some(target => nama.includes(target))) {
+                return true;
             }
 
-            // Muat ulang daftar karyawan agar badge izin langsung ter-update
-            loadManajemenKaryawan();
+            // 3. Pengecekan daftar izin khusus berbasis ID
+            const listIzin = JSON.parse(localStorage.getItem('sbr_izin_revisi') || '[]');
+            return listIzin.includes(userKurirAktif.id);
         }
 
         // ==============================================================
@@ -1539,21 +1590,20 @@
 
 
 		// ==============================================================
-        // FUNGSI MEMBUAT & MENGIRIM LAPORAN PENARIKAN KE WHATSAPP
+        // SISTEM LAPORAN PENARIKAN WHATSAPP BERBASIS KLOTER / TRIP
         // ==============================================================
+        let dataTarikanAktifPerTgl = [];
+
+        // 1. Membuka modal checklist saat tombol "Lapor WA" ditekan
         async function kirimLaporanWATarikan(tgl) {
-            // Ambil data kiriman pada tanggal terpilih yang sudah ada tarikan fisiknya
             const { data, error } = await supabaseClient
                 .from('distribusi_packing')
-                .select(`
-                    *,
-                    karyawan!karyawan_id(nama)
-                `)
+                .select(`*, karyawan!karyawan_id(nama)`)
                 .eq('tanggal', tgl)
-                .gt('tarik_jadi', 0); // Hanya ambil yang sudah ditarik
+                .gt('tarik_jadi', 0);
 
             if (error) {
-                await showError("Gagal menyiapkan laporan: " + error.message);
+                await showError("Gagal memuat data penarikan: " + error.message);
                 return;
             }
 
@@ -1562,6 +1612,95 @@
                 return;
             }
 
+            dataTarikanAktifPerTgl = data;
+            document.getElementById('kloterTanggalAktif').value = tgl;
+
+            // Ambil daftar transaksi yang sudah pernah dilaporkan pada tanggal ini
+            const keyReported = `sbr_wa_reported_${tgl}`;
+            const riwayatDilaporkan = JSON.parse(localStorage.getItem(keyReported) || '[]');
+
+            // Atur default kloter otomatis berdasarkan jumlah laporan sebelumnya
+            let defaultKloter = 'Kloter 1';
+            if (riwayatDilaporkan.length > 0) {
+                defaultKloter = 'Kloter 2';
+            }
+            setNomorKloter(defaultKloter);
+
+            // Tampilkan daftar pekerja yang ditarik beserta kotak centang
+            const container = document.getElementById('containerListChecklistKloter');
+            container.innerHTML = '';
+
+            data.forEach(item => {
+                const namaPacking = item.karyawan?.nama ? item.karyawan.nama.toUpperCase() : 'PACKING';
+                const jenis = item.jenis_produk || 'B12';
+                const tarik = item.tarik_jadi || 0;
+                const sudahKirim = riwayatDilaporkan.includes(item.id);
+
+                // Jika belum pernah dikirim, otomatis dicentang
+                const isChecked = !sudahKirim ? 'checked' : '';
+
+                container.innerHTML += `
+                    <label class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-emerald-400 transition select-none">
+                        <div class="flex items-center gap-2.5">
+                            <input type="checkbox" value="${item.id}" ${isChecked} class="check-item-kloter w-4 h-4 rounded text-emerald-600 focus:ring-0 cursor-pointer">
+                            <div>
+                                <div class="text-xs font-black text-slate-800 dark:text-slate-100 uppercase">${namaPacking}</div>
+                                <div class="text-[10px] text-slate-400 font-semibold">
+                                    ${item.sesi} • Aromanis B${jenis.replace('B','')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs font-black text-emerald-600 dark:text-emerald-400">${tarik} Bal</div>
+                            ${sudahKirim ? '<span class="text-[9px] text-slate-400 italic">Sudah dilapor</span>' : '<span class="text-[9px] text-amber-500 font-bold">Baru ditarik</span>'}
+                        </div>
+                    </label>
+                `;
+            });
+
+            // Buka modal pop-up
+            const modal = document.getElementById('modalKloterWA');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('contentKloterWA').classList.remove('translate-y-full');
+        }
+
+        // 2. Mengubah nomor kloter terpilih
+        function setNomorKloter(namaKloter) {
+            document.getElementById('kloterTerpilihNilai').value = namaKloter;
+            document.querySelectorAll('.btn-pilih-kloter').forEach(btn => {
+                const isMatch = btn.getAttribute('data-kloter') === namaKloter;
+                if (isMatch) {
+                    btn.className = "btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-emerald-700 dark:text-emerald-400";
+                } else {
+                    btn.className = "btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300";
+                }
+            });
+        }
+
+        // 3. Tombol pilih/batalkan semua centang
+        function toggleCentangSemuaKloter() {
+            const checkboxes = document.querySelectorAll('.check-item-kloter');
+            const adaYangKosong = Array.from(checkboxes).some(cb => !cb.checked);
+            checkboxes.forEach(cb => cb.checked = adaYangKosong);
+        }
+
+        function tutupModalKloterWA() {
+            const modal = document.getElementById('modalKloterWA');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('contentKloterWA').classList.add('translate-y-full');
+        }
+
+        // 4. Eksekusi penyusunan template WhatsApp dan simpan riwayat
+        async function eksekusiKirimWAKloter() {
+            const checkboxes = document.querySelectorAll('.check-item-kloter:checked');
+            if (checkboxes.length === 0) {
+                await showNotice("Pilih minimal satu muatan pekerja yang dibawa pada kloter ini!", "Pilih Muatan");
+                return;
+            }
+
+            const idTerpilih = Array.from(checkboxes).map(cb => cb.value);
+            const kloterNama = document.getElementById('kloterTerpilihNilai').value;
+            const tgl = document.getElementById('kloterTanggalAktif').value;
             const namaKurir = userKurirAktif?.nama ? userKurirAktif.nama.toUpperCase() : 'KURIR';
             const tglWA = typeof formatTglLaporanWA === 'function' ? formatTglLaporanWA(tgl) : tgl;
 
@@ -1570,42 +1709,47 @@
             let totalB10 = 0;
             let daftarTeksItem = '';
 
-            data.forEach(item => {
+            // Saring hanya data yang dicentang
+            const dataTerpilih = dataTarikanAktifPerTgl.filter(item => idTerpilih.includes(item.id));
+
+            dataTerpilih.forEach(item => {
                 const namaPacking = item.karyawan?.nama ? item.karyawan.nama.toUpperCase() : 'PACKING';
                 const jenis = item.jenis_produk || 'B12';
                 const tarik = item.tarik_jadi || 0;
-                const selisih = item.koreksi || 0;
 
                 totalMuatan += tarik;
                 if (jenis === 'B10') totalB10 += tarik;
                 else totalB12 += tarik;
 
-                let statusTeks = '_PAS_';
-                if (selisih < 0) {
-                    statusTeks = `_Kurang ${Math.abs(selisih)} Bal_`;
-                } else if (selisih > 0) {
-                    statusTeks = `_Lebih +${selisih} Bal_`;
-                }
-
                 daftarTeksItem += `• *${namaPacking}*: ${tarik} Bal (${jenis})\n`;
             });
 
-            // Susun template pesan lengkap
+            // Susun template WhatsApp rapi per kloter
             let pesanWA = `*LAPORAN PENARIKAN AROMANIS*\n`;
             pesanWA += `By: *${namaKurir}*\n`;
-            pesanWA += `*${tglWA}*\n\n`;
-            pesanWA += `📋 *Rincian Penarikan:*\n`;
+            pesanWA += `*${tglWA}* • _[ ${kloterNama.toUpperCase()} ]_\n\n`;
+            pesanWA += `📋 *Rincian Muatan ${kloterNama}:*\n`;
             pesanWA += daftarTeksItem;
             pesanWA += `\n────────────────\n`;
             pesanWA += `🚚 _TOTAL MUATAN: ${totalMuatan} BAL_\n`;
-            pesanWA += `_*(Rincian: B12: ${totalB12} Bal | B10: ${totalB10} Bal*_)\n\n`;
+            pesanWA += `_*(Rincian: B12: ${totalB12} Bal | B10: ${totalB10} Bal)*_\n\n`;
+            pesanWA += `_Barang kloter ini sedang menuju gudang/pabrik._\n\n`;
             pesanWA += `_Via © Sbr Systems_`;
+
+            // Simpan ID yang terkirim ke LocalStorage agar kloter berikutnya tahu
+            const keyReported = `sbr_wa_reported_${tgl}`;
+            let riwayatLama = JSON.parse(localStorage.getItem(keyReported) || '[]');
+            idTerpilih.forEach(id => {
+                if (!riwayatLama.includes(id)) riwayatLama.push(id);
+            });
+            localStorage.setItem(keyReported, JSON.stringify(riwayatLama));
 
             // Buka WhatsApp
             const linkWA = `https://api.whatsapp.com/send?text=${encodeURIComponent(pesanWA)}`;
             window.open(linkWA, '_blank');
-        }
 
+            tutupModalKloterWA();
+        }
         // ==============================================================
         // ANTREAN TARIK: TATA LETAK 2 BARIS (RESPONSIF LAYAR ANDROID)
         // ==============================================================
@@ -1750,9 +1894,10 @@
                             </div>
                             <div class="flex items-center gap-1.5 shrink-0">
                                 ${tombolPensilHTML}
-                                <button onclick='bukaModalTarikKurirMulti(${JSON.stringify(item)}, ${target})' class="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition whitespace-nowrap flex items-center gap-1">
-                                    <i class="fa-solid fa-box-open text-xs"></i> Setor
-                                </button>
+                                <!-- SESUDAH: -->
+							<button onclick='bukaModalTarikKurirMulti(${JSON.stringify(item)}, ${target})' class="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition whitespace-nowrap flex items-center gap-1">
+								<i class="fa-solid fa-box-open text-xs"></i> Tarik
+							</button>
                             </div>
                         </div>
                     `;
@@ -1855,7 +2000,7 @@
             if (error) {
                 await showError("Gagal mencatat penarikan: " + error.message);
             } else {
-                await showSuccess(`Berhasil disetor ${inputBaru} Bal oleh ${userKurirAktif.nama}`);
+				await showSuccess(`Berhasil ditarik ${inputBaru} Bal oleh ${userKurirAktif.nama}`);
                 tutupModalTarikKurir();
                 loadAntreanTarik();
             }
@@ -1986,9 +2131,9 @@
                             <div>
                                 <div class="text-[10px] text-slate-400 font-semibold">${formatTglIndo(row.tanggal)} • Sesi ${row.sesi}</div>
                                 <div class="text-xs font-black text-slate-800 uppercase">${row.karyawan?.nama || '-'}</div>
-                                <div class="text-[11px] text-slate-500 font-medium">
-                                    Kirim: <b class="text-blue-600">${row.kirim_produksi || 0}</b> | Setor: <b class="text-emerald-600">${row.tarik_jadi || 0}</b> Bal
-                                </div>
+							<div class="text-[11px] text-slate-500 font-medium">
+								Kirim: <b class="text-blue-600">${row.kirim_produksi || 0}</b> | Tarik: <b class="text-emerald-600">${row.tarik_jadi || 0}</b> Bal
+							</div>
                             </div>
                             <div>${badge}</div>
                         </div>
