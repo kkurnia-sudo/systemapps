@@ -35,13 +35,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold text-gray-900 tracking-tight leading-tight">SBR Putra Food</h1>
-                    <p class="text-xs font-semibold text-indigo-600 tracking-wide uppercase">Packing Aromanis</p>
-                </div>
-				<!-- Tombol Toggle Dark Mode -->
-				<!--<button onclick="toggleDarkMode()" class="ml-4 w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-yellow-400 hover:bg-gray-300 transition">
-					<i class="fa-solid fa-moon dark:hidden"></i> <!-- Muncul di mode terang -->
-					<i class="fa-solid fa-sun hidden dark:block"></i> <!-- Muncul di mode gelap -->
-				</button>
+                    <p class="text-xs font-semibold text-indigo-600 tracking-wide uppercase">Distribusi Aromanis</p>
             </div>
             
             <!-- Navigasi Menu Header yang Diringkas -->
@@ -335,6 +329,29 @@
                         </button>
                     </div>
                 </form>
+				<!-- ============================================== -->
+                <!-- AREA KHUSUS: RESET DATA UJI COBA (ZONA BAHAYA) -->
+                <!-- ============================================== -->
+                <div class="mt-8 pt-6 border-t border-red-100 dark:border-red-900/40">
+                    <div class="bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-2xl p-5">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-300 flex items-center justify-center font-bold text-lg shrink-0">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-sm font-black text-red-900 dark:text-red-200 leading-tight">Zona Bahaya (Kosongkan Tabel Distribusi)</h3>
+                                <p class="text-xs text-red-600 dark:text-red-400 mt-1 leading-relaxed">
+                                    Tombol ini akan <b>menghapus seluruh data transaksi kiriman dan tarikan</b> pada tabel <code>distribusi_packing</code>. Data profil karyawan dan pengaturan tarif upah tetap aman.
+                                </p>
+                                
+                                <button type="button" onclick="resetSemuaDataDistribusi()" id="btnResetData" class="mt-4 px-4 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                    <span>Hapus Semua Isi Tabel Distribusi</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -393,57 +410,92 @@
         </div>
     </div>
 
-    <!-- MODAL PENARIKAN (INPUT SETORAN) -->
+    <!-- ============================================================== -->
+    <!-- MODAL PENARIKAN (INPUT SETORAN MULTI-PETUGAS & BERTAHAP)       -->
+    <!-- ============================================================== -->
     <div id="modalSetoran" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-all duration-300" id="modalContent">
-            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-base font-extrabold text-gray-800"><i class="fa-solid fa-box-open text-emerald-500 mr-2 text-lg"></i> Form Penarikan</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center smooth-transition"><i class="fa-solid fa-xmark"></i></button>
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-all duration-300 border border-gray-100 dark:border-gray-700" id="modalContent">
+            
+            <!-- Header Modal -->
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                <h3 class="text-base font-extrabold text-gray-800 dark:text-gray-100 flex items-center">
+                    <i class="fa-solid fa-boxes-packing text-emerald-500 mr-2 text-lg"></i> Form Penarikan Barang
+                </h3>
+                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-white dark:bg-gray-700 rounded-full w-8 h-8 flex items-center justify-center shadow-sm border border-gray-100 dark:border-gray-600 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
+            
             <form id="formSetoran" class="p-5 space-y-4">
+                <!-- Data Acuan Tersembunyi (Hidden Inputs) -->
                 <input type="hidden" id="setId">
-                <input type="hidden" id="setKoreksi">
+                <input type="hidden" id="setTargetAsli">
+                <input type="hidden" id="setTarikLama">
+                <input type="hidden" id="setRiwayatLama">
+                <input type="hidden" id="setJenisProduk">
                 
-                <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100/50 flex justify-between items-center">
-                    <div>
-                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1" id="setInfoTanggal">-</div>
-                        <div class="font-black text-indigo-900 text-lg leading-none mb-1" id="setKaryawanNama">-</div>
-                        <div class="inline-block px-1.5 py-0.5 bg-white rounded text-[10px] font-bold text-indigo-600 shadow-sm border border-indigo-100" id="setInfoProduk">-</div>
+                <!-- Kartu Ringkasan Karyawan & Target -->
+                <div class="bg-indigo-50/60 dark:bg-indigo-950/30 p-3.5 rounded-2xl border border-indigo-100/60 dark:border-indigo-900/40">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <div class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider" id="setInfoTanggal">-</div>
+                            <div class="font-black text-indigo-950 dark:text-indigo-200 text-base" id="setKaryawanNama">-</div>
+                        </div>
+                        <span class="px-2 py-0.5 bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 rounded-md text-[10px] font-extrabold border border-indigo-100 dark:border-indigo-800 shadow-sm" id="setInfoProduk">-</span>
                     </div>
-                    <div class="text-right">
-                        <div class="text-[9px] font-black uppercase tracking-wider text-indigo-400 mb-0.5">Target Tarik</div>
-                        <div class="font-black text-blue-700 text-2xl leading-none"><span id="setInfoKirim">0</span></div>
+
+                    <!-- 3 Kotak Data: Target, Sudah Tarik, Sisa -->
+                    <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-indigo-100/80 dark:border-indigo-900/40 text-center">
+                        <div class="bg-white/90 dark:bg-gray-800 p-1.5 rounded-xl border border-indigo-100/50 dark:border-gray-700">
+                            <div class="text-[9px] font-bold text-gray-400 uppercase">Target</div>
+                            <div class="font-black text-blue-700 dark:text-blue-400 text-xs sm:text-sm" id="setInfoKirim">0</div>
+                        </div>
+                        <div class="bg-white/90 dark:bg-gray-800 p-1.5 rounded-xl border border-indigo-100/50 dark:border-gray-700">
+                            <div class="text-[9px] font-bold text-gray-400 uppercase">Sdh Tarik</div>
+                            <div class="font-black text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm" id="setInfoSudahTarik">0</div>
+                        </div>
+                        <div class="bg-white/90 dark:bg-gray-800 p-1.5 rounded-xl border border-indigo-100/50 dark:border-gray-700">
+                            <div class="text-[9px] font-bold text-gray-400 uppercase">Sisa</div>
+                            <div class="font-black text-red-600 dark:text-red-400 text-xs sm:text-sm" id="setInfoSisaKurang">0</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="space-y-3 pt-2">
+                <!-- Riwayat Penarik Sebelumnya (Jika Ada) -->
+                <div id="boxRiwayatPenarik" class="hidden p-2.5 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-200/70 dark:border-gray-700 text-[11px] max-h-24 overflow-y-auto">
+                    <div class="font-bold text-gray-500 dark:text-gray-400 text-[10px] uppercase mb-1">
+                        <i class="fa-solid fa-clock-rotate-left mr-1 text-indigo-500"></i> Catatan Penarikan Bertahap:
+                    </div>
+                    <div id="listRiwayatPenarik" class="text-gray-700 dark:text-gray-300 font-medium space-y-0.5"></div>
+                </div>
+
+                <!-- Form Input Petugas & Jumlah Tarikan Saat Ini -->
+                <div class="space-y-3 pt-1">
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1">
-                            <i class="fa-solid fa-person-walking-arrow-right text-emerald-600 mr-1"></i> Ditarik Oleh Petugas
+                        <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-1">
+                            Petugas Penarik Sekarang
                         </label>
-                        <select id="setDitarikOleh" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-bold text-xs text-gray-800 outline-none focus:ring-2 focus:ring-emerald-500">
+                        <select id="setDitarikOleh" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-800 dark:text-gray-100 outline-none focus:ring-2 focus:ring-emerald-500">
                             <option value="">-- Pilih Petugas Penarik --</option>
                         </select>
                     </div>
 
-                    <div class="bg-emerald-50 rounded-2xl p-3 border border-emerald-100 flex items-center gap-3">
-                        <div class="w-1/2">
-                            <label class="block text-[11px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Tarik Jadi (Ball)</label>
-                            <input type="number" id="setTarikJadi" required min="0" class="w-full px-3 py-2 text-2xl font-black text-emerald-700 bg-white border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-center shadow-sm">
-                        </div>
-                        <div class="w-1/2">
-                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status</label>
-                            <div id="statusBox" class="w-full px-2 border border-gray-200 bg-white rounded-xl flex flex-col justify-center items-center h-[46px] text-center shadow-sm">
-                                <span id="statusText" class="text-xs font-black text-gray-400 uppercase tracking-wider">Menunggu</span>
-                                <span id="statusSub" class="text-[9px] font-bold text-gray-400"></span>
-                            </div>
+                    <div class="bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl p-3.5 border border-emerald-100 dark:border-emerald-900/40">
+                        <label id="labelInputTarikBaru" class="block text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider mb-1 text-center">
+                            Jumlah Ditarik Sekarang (Bal)
+                        </label>
+                        <input type="number" id="setInputTarikBaru" required min="1" placeholder="0" class="w-full px-3 py-2 text-2xl font-black text-emerald-700 dark:text-emerald-400 bg-white dark:bg-gray-900 border-2 border-emerald-300 dark:border-emerald-600 focus:border-emerald-500 rounded-xl outline-none text-center shadow-inner">
+                        
+                        <!-- Estimasi Akumulasi Real-Time -->
+                        <div class="mt-2 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400" id="infoPrediksiTotal">
+                            Total menjadi: <span class="text-emerald-700 dark:text-emerald-400 font-black">0</span> Bal
                         </div>
                     </div>
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" id="btnSubmitSetoran" class="w-full bg-emerald-500 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-600 active:scale-95 smooth-transition shadow-sm flex justify-center items-center text-sm">
-                        <i class="fa-solid fa-check-double mr-2"></i> KONFIRMASI
+                    <button type="submit" id="btnSubmitSetoran" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-3 rounded-xl transition shadow-md flex justify-center items-center gap-1.5 text-xs">
+                        <i class="fa-solid fa-check-double text-sm"></i> SIMPAN PENARIKAN INI
                     </button>
                 </div>
             </form>
@@ -1193,6 +1245,13 @@
                         ? `<button onclick='openModal(${JSON.stringify(row)})' class="w-7 h-7 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"><i class="fa-solid fa-check-double text-xs"></i></button>` 
                         : `<button onclick='openModal(${JSON.stringify(row)})' class="w-7 h-7 rounded bg-amber-100 text-amber-700 hover:bg-amber-200 ring-1 ring-amber-300 shadow-sm transition"><i class="fa-solid fa-box-open text-xs"></i></button>`;
 
+                    // 1. DEKLARASIKAN VARIABEL DI SINI (SEBELUM TEMPLATE HTML)
+                    const labelProduk = jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${jenis.replace('B','')}`;
+                    const infoTarikPetugas = row.riwayat_cicilan 
+                        ? row.riwayat_cicilan 
+                        : (row.penarik?.nama || '-');
+
+                    // 2. RANGKAI STRING HTML MENGGUNAKAN VARIABEL YANG SUDAH DIBUAT
                     rowsHTML += `
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-0 transition">
                             <td class="px-4 py-3 whitespace-nowrap">
@@ -1200,8 +1259,10 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="font-black text-gray-900 dark:text-gray-100 text-xs uppercase">${row.karyawan?.nama || '-'}</div>
-                                <div class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">Aromanis B${jenis.replace('B','')}</div>
-                                <div class="text-[9px] text-gray-400 mt-0.5">Kirim: ${row.pengirim?.nama || '-'} | Tarik: ${row.penarik?.nama || '-'}</div>
+                                <div class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">${labelProduk}</div>
+                                <div class="text-[9px] text-gray-400 mt-0.5">
+                                    Kirim: <b>${row.pengirim?.nama || '-'}</b> | Tarik: <b class="text-indigo-600 dark:text-indigo-400">${infoTarikPetugas}</b>
+                                </div>
                             </td>
                             <td class="px-3 py-3 text-center leading-tight">
                                 <span class="font-black text-blue-700 dark:text-blue-400 text-base">${row.kirim_produksi}</span>
@@ -3022,75 +3083,172 @@
             }
         }
 
+        // ====================================================================
+        // SISTEM PENARIKAN MULTI-PETUGAS & BERTAHAP (SINKRON DENGAN MOBILE)
+        // ====================================================================
+
+        // 1. Membuka Modal Penarikan dengan Data Akumulasi & Riwayat
         function openModal(data) {
-			document.getElementById('setId').value = data.id;
-			document.getElementById('setInfoTanggal').innerText = `${formatTglIndo(data.tanggal)} • SESI ${data.sesi}`;
-			document.getElementById('setKaryawanNama').innerText = data.karyawan ? data.karyawan.nama : '-';
-			document.getElementById('setDitarikOleh').value = data.ditarik_oleh || '';
-			
-			// Menggunakan fungsi hitung target terpusat
-			const jenis = data.jenis_produk || 'B12';
-			currentTargetKirim = hitungTargetProduk(data.kirim_produksi, jenis);
-			const satuanTarik = getSatuanTarik(jenis);
+            const jenis = data.jenis_produk || 'B12';
+            const targetKirim = hitungTargetProduk(data.kirim_produksi, jenis);
+            const satuan = getSatuanTarik(jenis);
+            const tarikLama = data.tarik_jadi || 0;
+            const sisa = targetKirim - tarikLama;
 
-			document.getElementById('setInfoKirim').innerText = `${currentTargetKirim} ${satuanTarik}`;
-			document.getElementById('setInfoProduk').innerText = jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${jenis.replace('B','')}`;
+            // Simpan nilai acuan ke input hidden
+            document.getElementById('setId').value = data.id;
+            document.getElementById('setTargetAsli').value = targetKirim;
+            document.getElementById('setTarikLama').value = tarikLama;
+            document.getElementById('setRiwayatLama').value = data.riwayat_cicilan || '';
+            document.getElementById('setJenisProduk').value = jenis;
 
-			document.getElementById('setTarikJadi').value = data.tarik_jadi > 0 ? data.tarik_jadi : '';
-			calculateStatus();
+            // Tampilkan informasi kartu ringkasan
+            document.getElementById('setInfoTanggal').innerText = `${formatTglIndo(data.tanggal)} • Sesi ${data.sesi}`;
+            document.getElementById('setKaryawanNama').innerText = data.karyawan ? data.karyawan.nama : '-';
+            document.getElementById('setInfoProduk').innerText = jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${jenis.replace('B','')}`;
+            
+            document.getElementById('setInfoKirim').innerText = `${targetKirim} ${satuan}`;
+            document.getElementById('setInfoSudahTarik').innerText = `${tarikLama} ${satuan}`;
+            document.getElementById('setInfoSisaKurang').innerText = `${sisa > 0 ? sisa : 0} ${satuan}`;
 
-			const modal = document.getElementById('modalSetoran');
-			modal.classList.remove('opacity-0', 'pointer-events-none');
-			document.getElementById('modalContent').classList.remove('scale-95');
-		}
+            // Sesuaikan label input dinamis sesuai satuan (Bal atau Toros)
+            document.getElementById('labelInputTarikBaru').innerText = `Jumlah Ditarik Sekarang (${satuan})`;
 
+            // Tampilkan riwayat bertahap jika sudah pernah ada kurir yang menarik
+            const boxRiwayat = document.getElementById('boxRiwayatPenarik');
+            const listRiwayat = document.getElementById('listRiwayatPenarik');
+            if (data.riwayat_cicilan) {
+                boxRiwayat.classList.remove('hidden');
+                listRiwayat.innerHTML = data.riwayat_cicilan.split(', ').map(item => `<div>• ${item}</div>`).join('');
+            } else {
+                boxRiwayat.classList.add('hidden');
+                listRiwayat.innerHTML = '';
+            }
+
+            // Atur dropdown kurir (default kosong agar dipilih siapa yang menarik saat ini)
+            document.getElementById('setDitarikOleh').value = '';
+
+            // Input otomatis diisi sejumlah sisa barang yang belum ditarik
+            const inputTarikBaru = document.getElementById('setInputTarikBaru');
+            inputTarikBaru.value = sisa > 0 ? sisa : '';
+            hitungPrediksiTotal();
+
+            // Tampilkan modal
+            const modal = document.getElementById('modalSetoran');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('modalContent').classList.remove('scale-95');
+            setTimeout(() => inputTarikBaru.focus(), 150);
+        }
+
+        // 2. Menutup Modal Penarikan
         function closeModal() {
             const modal = document.getElementById('modalSetoran');
             modal.classList.add('opacity-0', 'pointer-events-none');
             document.getElementById('modalContent').classList.add('scale-95');
         }
 
-        document.getElementById('setTarikJadi').addEventListener('input', calculateStatus);
-        function calculateStatus() {
-            const val = document.getElementById('setTarikJadi').value;
-            const selisih = (parseInt(val) || 0) - currentTargetKirim;
-            document.getElementById('setKoreksi').value = selisih;
+        // 3. Menghitung Prediksi Akumulasi Total Secara Real-Time
+        function hitungPrediksiTotal() {
+            const elTarikLama = document.getElementById('setTarikLama');
+            const elInputBaru = document.getElementById('setInputTarikBaru');
+            const elTarget = document.getElementById('setTargetAsli');
+            const elInfo = document.getElementById('infoPrediksiTotal');
+            const jenis = document.getElementById('setJenisProduk').value || 'B12';
+            const satuan = getSatuanTarik(jenis);
 
-            const box = document.getElementById('statusBox');
-            const text = document.getElementById('statusText');
-            const sub = document.getElementById('statusSub');
-            box.className = 'w-full px-2 border rounded-xl flex flex-col justify-center items-center h-[46px] text-center shadow-sm';
+            if (!elTarikLama || !elInputBaru || !elTarget || !elInfo) return;
 
-            if (val === '') { 
-                box.classList.add('bg-white', 'border-gray-200'); text.className = 'text-xs font-black text-gray-400 uppercase'; text.innerText = 'Menunggu'; sub.innerText = '';
-            } else if (selisih === 0) { 
-                box.classList.add('bg-emerald-50', 'border-emerald-200'); text.className = 'text-xs font-black text-emerald-600 uppercase'; text.innerText = 'Pas'; sub.innerText = '';
-            } else if (selisih < 0) { 
-                box.classList.add('bg-amber-50', 'border-amber-300'); text.className = 'text-[10px] font-black text-amber-600 uppercase'; text.innerText = 'Sisa'; sub.className = 'text-[10px] font-bold text-amber-500 leading-none'; sub.innerText = Math.abs(selisih) + ' Bal';
-            } else { 
-                box.classList.add('bg-purple-50', 'border-purple-300'); text.className = 'text-[10px] font-black text-purple-600 uppercase'; text.innerText = 'Lebih'; sub.className = 'text-[10px] font-bold text-purple-500 leading-none'; sub.innerText = selisih + ' Bal'; 
+            const tarikLama = parseInt(elTarikLama.value) || 0;
+            const inputBaru = parseInt(elInputBaru.value) || 0;
+            const targetKirim = parseInt(elTarget.value) || 0;
+
+            const totalPrediksi = tarikLama + inputBaru;
+            const selisih = totalPrediksi - targetKirim;
+
+            let statusTeks = '';
+            if (selisih === 0) {
+                statusTeks = `<span class="text-emerald-600 font-black">(PAS Target)</span>`;
+            } else if (selisih < 0) {
+                statusTeks = `<span class="text-amber-600 font-black">(Kurang ${Math.abs(selisih)} ${satuan})</span>`;
+            } else {
+                statusTeks = `<span class="text-purple-600 font-black">(Lebih +${selisih} ${satuan})</span>`;
             }
+
+            elInfo.innerHTML = `
+                Total menjadi: <span class="text-emerald-700 dark:text-emerald-400 font-black">${totalPrediksi}</span> ${satuan} ${statusTeks}
+            `;
         }
 
-        document.getElementById('formSetoran').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btnSubmitSetoran');
-            btn.innerHTML = 'MENYIMPAN...'; btn.disabled = true;
-            
-            const ditarikOlehId = document.getElementById('setDitarikOleh').value || null;
+        // Event listener saat kurir mengetik angka di kolom tarikan baru
+        const inputTarikBaruEl = document.getElementById('setInputTarikBaru');
+        if (inputTarikBaruEl) {
+            inputTarikBaruEl.addEventListener('input', hitungPrediksiTotal);
+        }
 
-            const payload = {
-                tarik_jadi: parseInt(document.getElementById('setTarikJadi').value) || 0,
-                koreksi: parseInt(document.getElementById('setKoreksi').value) || 0,
-                ditarik_oleh: ditarikOlehId
-            };
-            await supabaseClient.from('distribusi_packing').update(payload).eq('id', document.getElementById('setId').value);
-            
-            closeModal();
-            loadDataLogistik();
-            loadDataPenarikan();
-            btn.innerHTML = '<i class="fa-solid fa-check-double mr-2"></i> KONFIRMASI'; btn.disabled = false;
-        });
+        // 4. Menyimpan Hasil Tarikan ke Database Supabase
+        const formSetoranEl = document.getElementById('formSetoran');
+        if (formSetoranEl) {
+            formSetoranEl.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btnSubmitSetoran');
+                const teksAsli = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i> Menyimpan...';
+                btn.disabled = true;
+
+                const rowId = document.getElementById('setId').value;
+                const targetKirim = parseInt(document.getElementById('setTargetAsli').value) || 0;
+                const tarikLama = parseInt(document.getElementById('setTarikLama').value) || 0;
+                const inputBaru = parseInt(document.getElementById('setInputTarikBaru').value) || 0;
+                const riwayatLama = document.getElementById('setRiwayatLama').value;
+                const jenis = document.getElementById('setJenisProduk').value || 'B12';
+                const satuan = getSatuanTarik(jenis);
+
+                const penarikSelect = document.getElementById('setDitarikOleh');
+                const penarikId = penarikSelect.value;
+                const penarikNama = penarikSelect.options[penarikSelect.selectedIndex]?.text.split(' (')[0] || 'Petugas';
+
+                if (inputBaru <= 0) {
+                    await showNotice(`Jumlah ditarik harus lebih dari 0 ${satuan}!`, "Periksa Jumlah", "warning");
+                    btn.innerHTML = teksAsli;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Hitung total akumulasi penarikan baru dan selisihnya
+                const tarikTotalBaru = tarikLama + inputBaru;
+                const koreksiBaru = tarikTotalBaru - targetKirim;
+
+                // Catat nama dan waktu penarikan saat ini
+                const now = new Date();
+                const jam = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+                const logBaru = `${penarikNama}: ${inputBaru} ${satuan} (${jam})`;
+                const logGabungan = riwayatLama ? `${riwayatLama}, ${logBaru}` : logBaru;
+
+                const payload = {
+                    tarik_jadi: tarikTotalBaru,
+                    koreksi: koreksiBaru,
+                    ditarik_oleh: penarikId,
+                    riwayat_cicilan: logGabungan
+                };
+
+                const { error } = await supabaseClient
+                    .from('distribusi_packing')
+                    .update(payload)
+                    .eq('id', rowId);
+
+                if (error) {
+                    await showError("Gagal mencatat penarikan: " + error.message);
+                } else {
+                    await showSuccess(`Berhasil ditarik ${inputBaru} ${satuan} oleh ${penarikNama}!`);
+                    closeModal();
+                    if (typeof loadDataLogistik === 'function') loadDataLogistik();
+                    if (typeof loadDataPenarikan === 'function') loadDataPenarikan();
+                }
+
+                btn.innerHTML = teksAsli;
+                btn.disabled = false;
+            });
+        }
 
         function loadFormTarif() {
             const tarif = getTarif();
@@ -3132,6 +3290,64 @@
 			localStorage.setItem('sbr_theme', 'dark');
 		}
 	}
+		
+		
+	// =========================================================
+        // FUNGSI MENGHAPUS / ME-RESET SELURUH DATA TABEL DISTRIBUSI
+        // =========================================================
+        async function resetSemuaDataDistribusi() {
+            // Konfirmasi Lapis 1
+            const konfirmasi1 = await showConfirm(
+                "PERINGATAN:\nKamu akan menghapus SELURUH data pada tabel distribusi_packing!\n\nSemua riwayat pengiriman, tarikan, dan catatan gantung akan hilang permanen. Lanjutkan?",
+                "Kosongkan Tabel Distribusi?"
+            );
+
+            if (!konfirmasi1) return;
+
+            // Konfirmasi Lapis 2 (Pencegahan salah klik)
+            const konfirmasi2 = await showConfirm(
+                "Apakah kamu BENAR-BENAR yakin?\nTindakan ini bersifat permanen dan tidak dapat dibatalkan kembali!",
+                "Konfirmasi Terakhir"
+            );
+
+            if (!konfirmasi2) return;
+
+            const btn = document.getElementById('btnResetData');
+            const teksAsli = btn.innerHTML;
+            
+            // Tampilkan animasi loading pada tombol
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Sedang Menghapus Data...';
+
+            try {
+                // Menghapus semua baris data di tabel distribusi_packing Supabase
+                const { error } = await supabaseClient
+                    .from('distribusi_packing')
+                    .delete()
+                    .not('id', 'is', null);
+
+                if (error) {
+                    throw error;
+                }
+
+                await showSuccess("Seluruh isi tabel distribusi_packing berhasil dibersihkan!", "Reset Selesai");
+
+                // Segarkan tampilan data pada tab logistik dan tab penarikan
+                if (typeof loadDataLogistik === 'function') {
+                    loadDataLogistik();
+                }
+                if (typeof loadDataPenarikan === 'function') {
+                    loadDataPenarikan();
+                }
+
+            } catch (err) {
+                console.error("Gagal menghapus data tabel:", err);
+                await showError("Terjadi kesalahan saat menghapus data:\n" + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = teksAsli;
+            }
+        }	
 		
     </script>
 </body>
