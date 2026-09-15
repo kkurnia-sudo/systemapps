@@ -39,6 +39,16 @@
         }
         .smooth-transition { transition: all 0.2s ease-in-out; }
         
+        /* HILANGKAN PANAH STEPPER / SPINNER PADA INPUT NUMBER */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0 !important;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield !important;
+        }
+
         /* PENGATURAN WARNA MODE GELAP (DARK MODE) */
         html.dark body {
             background-color: #0f172a !important;
@@ -51,8 +61,13 @@
             border-color: #334155 !important;
             color: #f8fafc !important;
         }
-        html.dark .bg-slate-50,
-        html.dark .bg-slate-100 {
+        html.dark .bg-slate-50 {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+        html.dark .bg-slate-100,
+        html.dark [class*="bg-slate-100"] {
             background-color: #0f172a !important;
             border-color: #334155 !important;
             color: #cbd5e1 !important;
@@ -151,7 +166,7 @@
                         <span class="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-bold uppercase">Distribusi</span>
                     </h2>
 
-                    <form id="formKirimKurir" class="space-y-4 mt-4">
+                    <form id="formKirimKurir" class="space-y-3.5 mt-4">
                         <div class="grid grid-cols-2 gap-3 pb-3 border-b border-slate-100">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tanggal</label>
@@ -173,16 +188,46 @@
                             <span class="w-7 text-center">Aksi</span>
                         </div>
 
-                        <div id="containerRowsKurir" class="space-y-2.5 max-h-[360px] overflow-y-auto pr-1"></div>
+                        <div id="containerRowsKurir" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1"></div>
 
-                        <button type="button" onclick="tambahBarisInputKurir()" class="w-full py-2.5 border-2 border-dashed border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-indigo-600 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition">
-                            <i class="fa-solid fa-circle-plus"></i> Tambah Baris Karyawan
-                        </button>
-
-                        <div class="pt-2">
-                            <button type="submit" id="btnSimpanKirim" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl shadow-md transition text-sm flex items-center justify-center gap-2">
-                                <i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA
+                        <!-- TOMBOL SIDE-TO-SIDE (TAMBAH BARIS & SIMPAN) -->
+                        <div class="grid grid-cols-2 gap-2 pt-2">
+                            <button type="button" onclick="tambahBarisInputKurir()" class="py-3 px-2 border-2 border-dashed border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 font-black rounded-2xl text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-2xs">
+                                <i class="fa-solid fa-circle-plus text-sm"></i> Tambah Baris
                             </button>
+
+                            <button type="submit" id="btnSimpanKirim" class="py-3 px-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black rounded-2xl shadow-md transition text-xs flex items-center justify-center gap-1.5">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> Simpan & WA
+                            </button>
+                        </div>
+
+                        <!-- KARTU REAL-TIME ESTIMASI PENGIRIMAN & TARGET TARIK (BARIS BARU RAPI) -->
+                        <div class="p-3 bg-slate-50 dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-2">
+                            <div class="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                <span class="flex items-center gap-1.5">
+                                    <i class="fa-solid fa-calculator text-indigo-600 dark:text-indigo-400"></i>
+                                    <span>Estimasi Real-Time</span>
+                                </span>
+                                <span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-extrabold text-[9px]" id="badgeRealtimeBaris">
+                                    0 Packing
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 items-stretch">
+                                <div class="p-2.5 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 text-center flex flex-col justify-center">
+                                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Total Kirim (Bahan)</div>
+                                    <div class="text-lg font-black text-blue-600 dark:text-blue-400 leading-tight mt-1">
+                                        <span id="realtimeTotalKirimBal">0</span> <span class="text-[10px] font-bold text-slate-400">Bal</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-2.5 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 text-center flex flex-col justify-center">
+                                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Target Hasil Tarik</div>
+                                    <div id="realtimeTargetTarikDetail" class="text-[14px] font-black text-emerald-600 dark:text-emerald-400 leading-tight mt-1 flex flex-col items-center justify-center gap-1 min-h-[24px]">
+                                        <span class="text-slate-400 text-[12px] font-semibold">0 Bal</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -246,17 +291,16 @@
 
             <!-- TAB 3: GABUNGAN MONITORING (ANTREAN HARI + TUGAS SAYA) -->
             <div id="tabRiwayatSaya" class="hidden space-y-3">
-                <!-- Saklar Sub-Menu -->
-                <div class="bg-slate-200/80 p-1 rounded-2xl grid grid-cols-2 gap-1 select-none">
-                    <button type="button" id="btnSubAntrean" onclick="gantiSubMenuMonitoring('antrean')" class="py-2 text-xs font-black rounded-xl transition shadow-sm bg-white text-indigo-600">
+                <div class="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl grid grid-cols-2 gap-1 select-none border border-slate-300/50 dark:border-slate-700">
+                    <button type="button" id="btnSubAntrean" onclick="gantiSubMenuMonitoring('antrean')" class="py-2 text-xs font-black rounded-xl transition shadow-sm bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300">
                         <i class="fa-solid fa-calendar-days mr-1"></i> Antrean Hari
                     </button>
-                    <button type="button" id="btnSubAktivitas" onclick="gantiSubMenuMonitoring('aktivitas')" class="py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800">
+                    <button type="button" id="btnSubAktivitas" onclick="gantiSubMenuMonitoring('aktivitas')" class="py-2 text-xs font-bold rounded-xl transition text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
                         <i class="fa-solid fa-user-check mr-1"></i> Tugas Saya
                     </button>
                 </div>
 
-                <!-- SUB-PANEL 1: ANTREAN TANGGUNGAN PER HARI DENGAN SEPARATOR JELAS -->
+                <!-- SUB-PANEL 1: ANTREAN TANGGUNGAN PER HARI DENGAN DARK MODE HARMONIS -->
                 <div id="subPanelAntrean" class="space-y-3">
                     <div class="flex items-center justify-between px-1">
                         <div class="text-[11px] font-bold text-slate-400">Arsip hari & kontrol revisi</div>
@@ -268,12 +312,12 @@
                     <div id="containerAntreanTarik" class="space-y-3.5"></div>
 
                     <div id="sectionSelesaiTarik" class="hidden pt-2">
-                        <button type="button" onclick="toggleSelesaiTarik()" class="w-full py-2.5 px-4 bg-slate-200/80 text-slate-700 font-extrabold text-xs rounded-2xl flex items-center justify-between transition border border-slate-300/70">
+                        <button type="button" onclick="toggleSelesaiTarik()" class="w-full py-2.5 px-4 bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-xs rounded-2xl flex items-center justify-between transition border border-slate-300/70 dark:border-slate-700">
                             <span class="flex items-center gap-2">
                                 <i class="fa-solid fa-circle-check text-emerald-600"></i>
                                 <span id="labelJumlahSelesai">Sudah Selesai (0 Hari)</span>
                             </span>
-                            <span class="text-[11px] text-indigo-600 flex items-center gap-1 font-bold">
+                            <span class="text-[11px] text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-bold">
                                 <span id="textToggleSelesai">Tampilkan</span>
                                 <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" id="iconToggleSelesai"></i>
                             </span>
@@ -331,40 +375,36 @@
 
     <!-- MODAL FORM TAMBAH / EDIT KARYAWAN -->
     <div id="modalFormKaryawan" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-5 space-y-4 transform scale-95 transition-all duration-300">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-extrabold text-slate-900 text-sm flex items-center" id="titleModalKaryawan">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-5 space-y-4 transform scale-95 transition-all duration-300 border border-slate-100 dark:border-slate-700">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="font-extrabold text-slate-900 dark:text-white text-sm flex items-center" id="titleModalKaryawan">
                     <i class="fa-solid fa-user-plus text-purple-600 mr-2"></i> Tambah Karyawan Baru
                 </h3>
-                <button onclick="tutupModalFormKaryawan()" class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-400">
+                <button onclick="tutupModalFormKaryawan()" class="w-7 h-7 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center text-xs text-slate-400">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
             <form id="formKaryawanAdmin" class="space-y-3">
                 <input type="hidden" id="karyawanEditId">
-
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nama Lengkap</label>
-                    <input type="text" id="inputNamaKaryawan" required placeholder="Contoh: Budi Santoso" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-purple-500">
+                    <input type="text" id="inputNamaKaryawan" required placeholder="Contoh: Budi Santoso" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-purple-500">
                 </div>
-
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Jabatan / Role</label>
-                    <select id="inputRoleKaryawan" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-purple-500">
+                    <select id="inputRoleKaryawan" required class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-purple-500">
                         <option value="packing">Packing (Pekerja Produksi)</option>
                         <option value="distribusi">Distribusi (Kurir Antar-Jemput)</option>
                         <option value="admin">Admin (Pengelola Sistem)</option>
                     </select>
                 </div>
-
                 <div id="fieldPinKaryawan">
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">PIN Masuk (4-6 Digit)</label>
-                    <input type="password" id="inputPinKaryawan" maxlength="6" placeholder="••••" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-purple-500 text-center tracking-widest text-base">
+                    <input type="password" id="inputPinKaryawan" maxlength="6" placeholder="••••" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-purple-500 text-center tracking-widest text-base">
                 </div>
-
                 <div class="flex gap-2 pt-2">
-                    <button type="button" onclick="tutupModalFormKaryawan()" class="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+                    <button type="button" onclick="tutupModalFormKaryawan()" class="w-1/3 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
                         Batal
                     </button>
                     <button type="submit" id="btnSimpanKaryawan" class="w-2/3 py-2.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
@@ -377,30 +417,27 @@
 
     <!-- MODAL RESET PIN KARYAWAN -->
     <div id="modalResetPin" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-5 space-y-4 transform scale-95 transition-all duration-300">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-extrabold text-slate-900 text-sm flex items-center">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-5 space-y-4 transform scale-95 transition-all duration-300 border border-slate-100 dark:border-slate-700">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="font-extrabold text-slate-900 dark:text-white text-sm flex items-center">
                     <i class="fa-solid fa-key text-amber-500 mr-2"></i> Reset PIN Karyawan
                 </h3>
-                <button onclick="tutupModalResetPin()" class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-400">
+                <button onclick="tutupModalResetPin()" class="w-7 h-7 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center text-xs text-slate-400">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-
-            <div class="bg-amber-50 p-3 rounded-2xl border border-amber-100 text-left">
-                <div class="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Nama Karyawan</div>
-                <div class="text-sm font-black text-slate-900 uppercase" id="labelResetNama">-</div>
+            <div class="bg-amber-50 dark:bg-amber-950/40 p-3 rounded-2xl border border-amber-100 dark:border-amber-900/50 text-left">
+                <div class="text-[10px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Nama Karyawan</div>
+                <div class="text-sm font-black text-slate-900 dark:text-white uppercase" id="labelResetNama">-</div>
             </div>
-
             <form id="formResetPin" class="space-y-3">
                 <input type="hidden" id="resetKaryawanId">
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 text-center">Masukkan PIN Baru (4-6 Digit)</label>
-                    <input type="password" id="inputPinBaru" required maxlength="6" placeholder="••••" class="w-full py-3 bg-slate-50 border border-slate-200 rounded-2xl text-center text-xl font-black tracking-widest text-slate-800 outline-none focus:ring-2 focus:ring-amber-400">
+                    <input type="password" id="inputPinBaru" required maxlength="6" placeholder="••••" class="w-full py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-center text-xl font-black tracking-widest text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-400">
                 </div>
-
                 <div class="flex gap-2 pt-2">
-                    <button type="button" onclick="tutupModalResetPin()" class="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+                    <button type="button" onclick="tutupModalResetPin()" class="w-1/3 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
                         Batal
                     </button>
                     <button type="submit" id="btnSimpanPinBaru" class="w-2/3 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
@@ -411,61 +448,58 @@
         </div>
     </div>
 
-    <!-- MODAL PENARIKAN LENGKAP (SETOR MULTI-PETUGAS) -->
+    <!-- MODAL PENARIKAN LENGKAP -->
     <div id="modalSetorKurir" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-3.5 transform translate-y-full sm:translate-y-0 transition-all duration-300" id="contentSetorKurir">
-            <div class="flex justify-between items-center border-b pb-2.5">
-                <h3 class="font-black text-slate-900 text-sm flex items-center">
+        <div class="bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-3.5 transform translate-y-full sm:translate-y-0 transition-all duration-300 border border-slate-100 dark:border-slate-700" id="contentSetorKurir">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-2.5">
+                <h3 class="font-black text-slate-900 dark:text-white text-sm flex items-center">
                     <i class="fa-solid fa-boxes-packing text-emerald-600 mr-2"></i> Konfirmasi Tarik Barang
                 </h3>
-                <button onclick="tutupModalTarikKurir()" class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-400">
+                <button onclick="tutupModalTarikKurir()" class="w-7 h-7 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center text-xs text-slate-400">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <!-- Ringkasan Info Pekerja & Bal -->
-            <div class="bg-indigo-50/60 p-3 rounded-2xl border border-indigo-100/70">
+            <div class="bg-indigo-50/60 dark:bg-indigo-950/40 p-3 rounded-2xl border border-indigo-100/70 dark:border-indigo-900/50">
                 <div class="flex justify-between items-start mb-2">
                     <div>
                         <div class="text-[10px] font-bold text-slate-400 uppercase" id="setorInfoWaktu">-</div>
-                        <div class="text-indigo-950 font-black text-sm uppercase" id="setorPackingNama">-</div>
+                        <div class="text-indigo-950 dark:text-indigo-200 font-black text-sm uppercase" id="setorPackingNama">-</div>
                     </div>
-                    <span class="px-2 py-0.5 bg-white text-indigo-700 rounded-md text-[10px] font-extrabold border border-indigo-100 shadow-sm" id="setorInfoProduk">-</span>
+                    <span class="px-2 py-0.5 bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 rounded-md text-[10px] font-extrabold border border-indigo-100 dark:border-slate-700 shadow-sm" id="setorInfoProduk">-</span>
                 </div>
 
-                <div class="grid grid-cols-3 gap-1.5 text-center pt-1.5 border-t border-indigo-100/60">
-                    <div class="bg-white/90 p-1 rounded-xl border border-indigo-50">
+                <div class="grid grid-cols-3 gap-1.5 text-center pt-1.5 border-t border-indigo-100/60 dark:border-indigo-900/40">
+                    <div class="bg-white/90 dark:bg-slate-900 p-1 rounded-xl border border-indigo-50 dark:border-slate-800">
                         <div class="text-[9px] font-bold text-slate-400 uppercase">Target</div>
-                        <div class="text-blue-700 font-black text-sm" id="setorTarget">0</div>
+                        <div class="text-blue-700 dark:text-blue-400 font-black text-sm" id="setorTarget">0</div>
                     </div>
-                    <div class="bg-white/90 p-1 rounded-xl border border-indigo-50">
+                    <div class="bg-white/90 dark:bg-slate-900 p-1 rounded-xl border border-indigo-50 dark:border-slate-800">
                         <div class="text-[9px] font-bold text-slate-400 uppercase">Sdh Tarik</div>
-                        <div class="text-emerald-600 font-black text-sm" id="setorSudahTarik">0</div>
+                        <div class="text-emerald-600 dark:text-emerald-400 font-black text-sm" id="setorSudahTarik">0</div>
                     </div>
-                    <div class="bg-white/90 p-1 rounded-xl border border-indigo-50">
+                    <div class="bg-white/90 dark:bg-slate-900 p-1 rounded-xl border border-indigo-50 dark:border-slate-800">
                         <div class="text-[9px] font-bold text-slate-400 uppercase">Sisa</div>
-                        <div class="text-red-600 font-black text-sm" id="setorSisaKurang">0</div>
+                        <div class="text-red-600 dark:text-red-400 font-black text-sm" id="setorSisaKurang">0</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Catatan Riwayat Tarikan Sebelumnya -->
-            <div id="boxRiwayatKurir" class="hidden p-2 bg-slate-50 rounded-xl border border-slate-200/60 text-[10px] max-h-20 overflow-y-auto">
+            <div id="boxRiwayatKurir" class="hidden p-2 bg-slate-50 dark:bg-slate-900/80 rounded-xl border border-slate-200/60 dark:border-slate-800 text-[10px] max-h-20 overflow-y-auto">
                 <div class="font-bold text-slate-500 uppercase mb-0.5">
                     <i class="fa-solid fa-clock-rotate-left mr-1"></i> Penarikan Sebelumnya:
                 </div>
-                <div id="listRiwayatKurir" class="text-slate-700 space-y-0.5 font-medium"></div>
+                <div id="listRiwayatKurir" class="text-slate-700 dark:text-slate-300 space-y-0.5 font-medium"></div>
             </div>
 
-            <!-- Input Jumlah Bal/Toros -->
             <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1 text-center" id="labelInputTarikModal">
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase mb-1 text-center" id="labelInputTarikModal">
                     Jumlah Ditarik Sekarang (Bal)
                 </label>
-                <input type="number" id="inputTarikBal" min="1" placeholder="0" oninput="hitungStatusTarikKurir()" required class="w-full py-2.5 bg-emerald-50/50 border-2 border-emerald-300 focus:border-emerald-500 rounded-2xl text-center text-2xl font-black text-emerald-700 outline-none transition shadow-inner">
+                <input type="number" id="inputTarikBal" min="1" placeholder="0" oninput="hitungStatusTarikKurir()" required class="w-full py-2.5 bg-emerald-50/50 dark:bg-slate-900 border-2 border-emerald-300 dark:border-emerald-700 focus:border-emerald-500 rounded-2xl text-center text-2xl font-black text-emerald-700 dark:text-emerald-400 outline-none transition shadow-inner">
                 
-                <div class="mt-2 text-center text-[11px] font-bold text-slate-500" id="infoPrediksiKurir">
-                    Total menjadi: <span class="text-emerald-700 font-black">0</span> Bal
+                <div class="mt-2 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400" id="infoPrediksiKurir">
+                    Total menjadi: <span class="text-emerald-700 dark:text-emerald-400 font-black">0</span> Bal
                 </div>
             </div>
 
@@ -481,35 +515,32 @@
         </div>
     </div>
 
-    <!-- ============================================================== -->
-    <!-- MODAL REVISI: EDIT KIRIM, SESI, TARIKAN PARSIAL & HAPUS TOTAL  -->
-    <!-- ============================================================== -->
+    <!-- MODAL REVISI -->
     <div id="modalRevisiKirim" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-3.5 transform translate-y-full sm:translate-y-0 transition-all duration-300 border border-slate-100 max-h-[90vh] overflow-y-auto" id="contentRevisiKirim">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
-                <h3 class="font-black text-slate-900 text-sm flex items-center">
+        <div class="bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-3.5 transform translate-y-full sm:translate-y-0 transition-all duration-300 border border-slate-100 dark:border-slate-700 max-h-[90vh] overflow-y-auto" id="contentRevisiKirim">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-2.5">
+                <h3 class="font-black text-slate-900 dark:text-white text-sm flex items-center">
                     <i class="fa-solid fa-pen-to-square text-amber-500 mr-2"></i> Revisi Kiriman & Tarikan
                 </h3>
-                <button type="button" onclick="tutupModalRevisiKirim()" class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-400 hover:text-slate-600">
+                <button type="button" onclick="tutupModalRevisiKirim()" class="w-7 h-7 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center text-xs text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <!-- Info Pekerja & Kiriman Saat Ini -->
-            <div class="bg-amber-50/70 p-3 rounded-2xl border border-amber-100">
+            <div class="bg-amber-50/70 dark:bg-amber-950/40 p-3 rounded-2xl border border-amber-100 dark:border-amber-900/50">
                 <div class="text-[10px] font-bold text-slate-400 uppercase" id="revisiInfoWaktu">-</div>
-                <div class="text-slate-900 font-black text-sm uppercase mt-0.5" id="revisiNamaPacking">-</div>
-                <div class="text-[11px] font-bold text-amber-700 mt-1 flex items-center justify-between">
+                <div class="text-slate-900 dark:text-white font-black text-sm uppercase mt-0.5" id="revisiNamaPacking">-</div>
+                <div class="text-[11px] font-bold text-amber-700 dark:text-amber-400 mt-1 flex items-center justify-between">
                     <span id="revisiProdukLama">-</span>
-                    <span class="text-slate-500 font-medium">Kirim: <b class="text-slate-800" id="revisiKirimLama">0</b> | Masuk: <b class="text-emerald-600" id="revisiTarikLamaTeks">0</b></span>
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Kirim: <b class="text-slate-800 dark:text-slate-200" id="revisiKirimLama">0</b> | Masuk: <b class="text-emerald-600 dark:text-emerald-400" id="revisiTarikLamaTeks">0</b></span>
                 </div>
             </div>
 
             <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                     Jenis Produk
                 </label>
-                <select id="selectRevisiJenis" onchange="hitungTargetRevisiOtomatis()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500">
+                <select id="selectRevisiJenis" onchange="hitungTargetRevisiOtomatis()" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500">
                     <option value="B12">Aromanis B12</option>
                     <option value="B10">Aromanis B10</option>
                     <option value="Oleh-oleh">Oleh-oleh (1 Kirim = 10 Toros)</option>
@@ -518,23 +549,22 @@
 
             <div class="grid grid-cols-2 gap-2">
                 <div class="flex flex-col">
-                    <label class="h-9 flex items-center justify-center text-[10px] font-bold text-slate-600 uppercase mb-1 text-center leading-tight">
+                    <label class="h-9 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase mb-1 text-center leading-tight">
                         Kirim Sebenarnya (Bal)
                     </label>
-                    <input type="number" id="inputRevisiKirimBaru" min="1" oninput="hitungTargetRevisiOtomatis()" required class="w-full py-2 bg-amber-50/40 border-2 border-amber-300 focus:border-amber-500 rounded-xl text-center text-xl font-black text-amber-800 outline-none transition shadow-inner">
+                    <input type="number" id="inputRevisiKirimBaru" min="1" oninput="hitungTargetRevisiOtomatis()" required class="w-full py-2 bg-amber-50/40 dark:bg-slate-900 border-2 border-amber-300 dark:border-amber-700 focus:border-amber-500 rounded-xl text-center text-xl font-black text-amber-800 dark:text-amber-400 outline-none transition shadow-inner">
                 </div>
                 <div class="flex flex-col">
-                    <label class="h-9 flex items-center justify-center text-[10px] font-bold text-emerald-700 uppercase mb-1 text-center leading-tight" id="labelRevisiTarikSatuan">
+                    <label class="h-9 flex items-center justify-center text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase mb-1 text-center leading-tight" id="labelRevisiTarikSatuan">
                         Total Masuk / Tarik (Bal)
                     </label>
-                    <input type="number" id="inputRevisiTarikBaru" min="0" oninput="hitungTargetRevisiOtomatis()" required class="w-full py-2 bg-emerald-50/40 border-2 border-emerald-300 focus:border-emerald-500 rounded-xl text-center text-xl font-black text-emerald-800 outline-none transition shadow-inner">
+                    <input type="number" id="inputRevisiTarikBaru" min="0" oninput="hitungTargetRevisiOtomatis()" required class="w-full py-2 bg-emerald-50/40 dark:bg-slate-900 border-2 border-emerald-300 dark:border-emerald-700 focus:border-emerald-500 rounded-xl text-center text-xl font-black text-emerald-800 dark:text-emerald-400 outline-none transition shadow-inner">
                 </div>
             </div>
 
-            <!-- DAFTAR KOREKSI/HAPUS TARIKAN PARSIAL PER PETUGAS -->
-            <div class="space-y-2 pt-2 border-t border-slate-100">
+            <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-700">
                 <div class="flex items-center justify-between">
-                    <label class="text-[11px] font-black text-slate-700 uppercase tracking-wider">
+                    <label class="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                         Rincian Setoran Masuk:
                     </label>
                     <span class="text-[10px] text-slate-400 font-semibold">Bisa edit / hapus per petugas</span>
@@ -543,14 +573,14 @@
             </div>
 
             <div class="pt-1">
-                <button type="button" onclick="eksekusiHapusKirimanTotal()" class="w-full py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1.5">
+                <button type="button" onclick="eksekusiHapusKirimanTotal()" class="w-full py-2 px-3 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60 rounded-xl text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-trash-can"></i> Batalkan / Hapus Transaksi Kiriman Ini
                 </button>
             </div>
 
-            <div class="p-2.5 bg-slate-50 rounded-xl text-center border border-slate-200 space-y-0.5">
-                <div class="text-[11px] font-bold text-slate-500" id="infoTargetRevisi">
-                    Target baru: <span class="text-blue-700 font-black">0</span> Bal
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-center border border-slate-200 dark:border-slate-800 space-y-0.5">
+                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400" id="infoTargetRevisi">
+                    Target baru: <span class="text-blue-700 dark:text-blue-400 font-black">0</span> Bal
                 </div>
                 <div class="text-[11px] font-extrabold" id="infoSelisihRevisi">-</div>
             </div>
@@ -559,7 +589,7 @@
             <input type="hidden" id="revisiTanggalTransaksi">
 
             <div class="flex gap-2 pt-1">
-                <button type="button" onclick="tutupModalRevisiKirim()" class="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+                <button type="button" onclick="tutupModalRevisiKirim()" class="w-1/3 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
                     Batal
                 </button>
                 <button type="button" id="btnSimpanRevisi" onclick="simpanRevisiKirim()" class="w-2/3 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
@@ -569,30 +599,30 @@
         </div>
     </div>
 
-    <!-- MODAL POPUP: PILIH KLOTER & CHECKLIST WA -->
+    <!-- MODAL KLOTER WA -->
     <div id="modalKloterWA" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-3.5 transform translate-y-full sm:translate-y-0 transition-all duration-300 border border-slate-100" id="contentKloterWA">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
-                <h3 class="font-black text-slate-900 text-sm flex items-center">
+        <div class="bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-sm p-5 space-y-3.5 transform translate-y-full sm:translate-y-0 transition-all duration-300 border border-slate-100 dark:border-slate-700" id="contentKloterWA">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-2.5">
+                <h3 class="font-black text-slate-900 dark:text-white text-sm flex items-center">
                     <i class="fa-brands fa-whatsapp text-emerald-500 mr-2 text-base"></i> Pilih Kloter Penarikan
                 </h3>
-                <button type="button" onclick="tutupModalKloterWA()" class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs text-slate-400 hover:text-slate-600">
+                <button type="button" onclick="tutupModalKloterWA()" class="w-7 h-7 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center text-xs text-slate-400">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
             <div>
-                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                     Pilih Kloter / Trip Tarikan
                 </label>
                 <div class="grid grid-cols-3 gap-2" id="groupPilihanKloter">
-                    <button type="button" onclick="setNomorKloter('Kloter 1')" class="btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-emerald-50 border-emerald-300 text-emerald-700" data-kloter="Kloter 1">
+                    <button type="button" onclick="setNomorKloter('Kloter 1')" class="btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400" data-kloter="Kloter 1">
                         Kloter 1
                     </button>
-                    <button type="button" onclick="setNomorKloter('Kloter 2')" class="btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-slate-50 border-slate-200 text-slate-600" data-kloter="Kloter 2">
+                    <button type="button" onclick="setNomorKloter('Kloter 2')" class="btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400" data-kloter="Kloter 2">
                         Kloter 2
                     </button>
-                    <button type="button" onclick="setNomorKloter('Kloter 3')" class="btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-slate-50 border-slate-200 text-slate-600" data-kloter="Kloter 3">
+                    <button type="button" onclick="setNomorKloter('Kloter 3')" class="btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400" data-kloter="Kloter 3">
                         Kloter 3
                     </button>
                 </div>
@@ -600,10 +630,10 @@
             </div>
 
             <div class="flex items-center justify-between pt-1">
-                <span class="text-[11px] font-black text-slate-700 uppercase tracking-wide">
+                <span class="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                     Muatan Yang Dibawa Sekarang:
                 </span>
-                <button type="button" onclick="toggleCentangSemuaKloter()" class="text-[10px] font-bold text-indigo-600 hover:underline">
+                <button type="button" onclick="toggleCentangSemuaKloter()" class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                     Pilih Semua
                 </button>
             </div>
@@ -620,18 +650,18 @@
         </div>
     </div>
     
-    <!-- MODAL DIALOG INFORMASI & KONFIRMASI -->
+    <!-- MODAL POPUP DIALOG -->
     <div id="modalDialog" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div id="modalDialogCard" class="bg-white rounded-3xl shadow-2xl w-full max-w-xs mx-4 p-5 text-center transform scale-95 transition-all duration-300">
-            <div id="dialogIconBox" class="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-indigo-50 text-indigo-600">
+        <div id="modalDialogCard" class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-xs mx-4 p-5 text-center transform scale-95 transition-all duration-300 border border-slate-100 dark:border-slate-700">
+            <div id="dialogIconBox" class="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
                 <i id="dialogIcon" class="fa-solid fa-circle-info"></i>
             </div>
             
-            <h3 id="dialogTitle" class="font-extrabold text-slate-900 text-base mb-1 leading-snug">Pemberitahuan</h3>
-            <p id="dialogMessage" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line mb-5 font-medium"></p>
+            <h3 id="dialogTitle" class="font-extrabold text-slate-900 dark:text-white text-base mb-1 leading-snug">Pemberitahuan</h3>
+            <p id="dialogMessage" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line mb-5 font-medium"></p>
             
             <div id="dialogActions" class="flex gap-2">
-                <button id="dialogBtnCancel" type="button" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition active:scale-95">
+                <button id="dialogBtnCancel" type="button" class="w-1/2 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition active:scale-95">
                     Batal
                 </button>
                 <button id="dialogBtnConfirm" type="button" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95">
@@ -778,23 +808,19 @@
                 btnCancel.innerText = cancelText;
 
                 if (type === 'success') {
-                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-emerald-50 text-emerald-600";
+                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400";
                     icon.className = "fa-solid fa-circle-check";
                     btnConfirm.className = "w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95";
                 } else if (type === 'warning') {
-                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-amber-50 text-amber-600";
+                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400";
                     icon.className = "fa-solid fa-triangle-exclamation";
                     btnConfirm.className = "w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95";
-                } else if (type === 'question') {
-                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-indigo-50 text-indigo-600";
-                    icon.className = "fa-solid fa-circle-question";
-                    btnConfirm.className = "w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95";
                 } else if (type === 'error') {
-                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-red-50 text-red-600";
+                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400";
                     icon.className = "fa-solid fa-circle-exclamation";
                     btnConfirm.className = "w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95";
                 } else {
-                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-indigo-50 text-indigo-600";
+                    iconBox.className = "w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl shadow-inner bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400";
                     icon.className = "fa-solid fa-circle-info";
                     btnConfirm.className = "w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition shadow-md active:scale-95";
                 }
@@ -894,6 +920,13 @@
                 userKurirAktif = JSON.parse(savedKurir);
                 bukaAplikasi();
             }
+
+            // Pasang pendeteksi otomatis untuk hitung realtime kirim
+            const containerKirim = document.getElementById('containerRowsKurir');
+            if (containerKirim) {
+                containerKirim.addEventListener('input', hitungEstimasiRealtimeKirim);
+                containerKirim.addEventListener('change', hitungEstimasiRealtimeKirim);
+            }
         });
 
         async function loadDropdownKaryawan() {
@@ -933,6 +966,7 @@
             for (let i = 0; i < 3; i++) {
                 tambahBarisInputKurir();
             }
+            hitungEstimasiRealtimeKirim();
         }
 
         function tambahBarisInputKurir() {
@@ -945,13 +979,13 @@
             });
 
             const rowDiv = document.createElement('div');
-            rowDiv.className = 'baris-kiriman-kurir flex items-center gap-2 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm transition';
+            rowDiv.className = 'baris-kiriman-kurir flex items-center gap-2 bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs transition';
             rowDiv.innerHTML = `
-                <select class="input-kurir-karyawan flex-1 px-2.5 py-2 text-xs font-bold text-slate-800 bg-slate-50 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500">
+                <select class="input-kurir-karyawan flex-1 px-2.5 py-2 text-xs font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
                     ${opsiKaryawan}
                 </select>
-                <input type="number" min="1" placeholder="0" class="input-kurir-bal w-16 px-2 py-2 text-center text-sm font-black text-blue-700 bg-blue-50/50 rounded-lg border border-blue-200 outline-none focus:ring-2 focus:ring-blue-400">
-                <select class="input-kurir-jenis w-24 px-2 py-2 text-[11px] font-bold text-slate-700 bg-slate-50 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="number" min="1" placeholder="0" class="input-kurir-bal w-16 px-2 py-2 text-center text-sm font-black text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-slate-900 rounded-lg border border-blue-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-400">
+                <select class="input-kurir-jenis w-24 px-2 py-2 text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="B12">B12</option>
                     <option value="B10">B10</option>
                     <option value="Oleh-oleh">Oleh-oleh</option>
@@ -961,6 +995,7 @@
                 </button>
             `;
             container.appendChild(rowDiv);
+            hitungEstimasiRealtimeKirim();
         }
 
         function hapusBarisInputKurir(btn) {
@@ -972,6 +1007,64 @@
                 row.querySelector('.input-kurir-karyawan').value = '';
                 row.querySelector('.input-kurir-bal').value = '';
                 row.querySelector('.input-kurir-jenis').value = 'B12';
+            }
+            hitungEstimasiRealtimeKirim();
+        }
+
+        // FUNGSI KALKULASI REAL-TIME ESTIMASI PENGIRIMAN & TARGET TARIK (BARIS BARU RAPI)
+        function hitungEstimasiRealtimeKirim() {
+            const rows = document.querySelectorAll('.baris-kiriman-kurir');
+            let totalKirimBal = 0;
+            let totalB12 = 0;
+            let totalB10 = 0;
+            let totalOleholeh = 0;
+            let countValid = 0;
+
+            rows.forEach(row => {
+                const kid = row.querySelector('.input-kurir-karyawan')?.value;
+                const bal = parseInt(row.querySelector('.input-kurir-bal')?.value) || 0;
+                const jenis = row.querySelector('.input-kurir-jenis')?.value || 'B12';
+
+                if (bal > 0) {
+                    totalKirimBal += bal;
+                    if (kid) countValid++;
+
+                    if (jenis === 'Oleh-oleh') {
+                        totalOleholeh += (bal * 10);
+                    } else if (jenis === 'B10') {
+                        totalB10 += Math.round(bal * 1.2);
+                    } else {
+                        totalB12 += bal;
+                    }
+                }
+            });
+
+            const elTotalKirim = document.getElementById('realtimeTotalKirimBal');
+            const elTargetDetail = document.getElementById('realtimeTargetTarikDetail');
+            const elBadge = document.getElementById('badgeRealtimeBaris');
+
+            if (elTotalKirim) elTotalKirim.innerText = totalKirimBal;
+            if (elBadge) elBadge.innerText = `${countValid} Packing`;
+
+            if (elTargetDetail) {
+                if (totalKirimBal === 0) {
+                    elTargetDetail.className = "text-[12px] font-black text-emerald-600 dark:text-emerald-400 leading-tight mt-1 flex items-center justify-center min-h-[24px]";
+                    elTargetDetail.innerHTML = '<span class="text-slate-400 font-semibold">0 Bal</span>';
+                } else {
+                    let parts = [];
+                    if (totalB12 > 0) parts.push(`B12 : <b> ${totalB12} </b> Bal`);
+                    if (totalB10 > 0) parts.push(`B10 : <b> ${totalB10} </b> Bal`);
+                    if (totalOleholeh > 0) parts.push(`Oleh : <b> ${totalOleholeh} </b> Toros`);
+                    
+                    // JIKA LEBIH DARI 1 JENIS, SUSUN BARIS BARU BERTINGKAT (STACKED VERTICAL)
+                    if (parts.length > 1) {
+                        elTargetDetail.className = "text-[12px] font-black text-emerald-600 dark:text-emerald-400 leading-tight mt-1 flex flex-col items-center justify-center gap-1 min-h-[24px]";
+                        elTargetDetail.innerHTML = parts.map(p => `<span class="bg-emerald-50/80 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-900/50 w-full text-center">${p}</span>`).join('');
+                    } else {
+                        elTargetDetail.className = "text-[12px] font-black text-emerald-600 dark:text-emerald-400 leading-tight mt-1 flex items-center justify-center min-h-[24px]";
+                        elTargetDetail.innerHTML = parts[0];
+                    }
+                }
             }
         }
 
@@ -1024,14 +1117,14 @@
             if (payloads.length === 0) {
                 await showNotice("Harap isi minimal 1 baris nama karyawan packing dan jumlah bal!", "Form Kosong");
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Simpan & WA';
                 return;
             }
 
             if (duplikatDiForm) {
                 await showNotice(`Karyawan "${duplikatDiForm}" dipilih lebih dari 1 kali di formulir ini!\nSilakan gabungkan menjadi satu baris.`, "Input Duplikat");
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Simpan & WA';
                 return;
             }
 
@@ -1045,7 +1138,7 @@
             if (errorCek) {
                 await showError("Gagal memverifikasi data: " + errorCek.message);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Simpan & WA';
                 return;
             }
 
@@ -1053,7 +1146,7 @@
                 const namaBentrok = dataSudahAda.map(item => item.karyawan?.nama || 'Karyawan').join(', ');
                 await showNotice(`Karyawan berikut SUDAH TERDAFTAR pada ${formatTglIndo(tanggal)} (Waktu: ${sesi}):\n\n👉 ${namaBentrok}\n\nSatu karyawan packing hanya boleh menerima 1 kiriman per waktu.`, "Sudah Terkirim");
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Simpan & WA';
                 return;
             }
 
@@ -1063,12 +1156,12 @@
             if (errorInsert) {
                 await showError("Gagal menyimpan kiriman: " + errorInsert.message);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+                btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Simpan & WA';
                 return;
             }
 
             const tglWA = formatTglLaporanWA(tanggal);
-            let pesanWA = `Distribusi ${tglWA}\n_*Waktu: ${sesi}*_\n\n`;
+            let pesanWA = `Distribusi *${sesi}*\n_*${tglWA}*_\n────────────────\n\n`;
 
             listLaporanItem.forEach((item, index) => {
                 pesanWA += `*${item.nama} ${item.bal} ${item.jenis}*\n`;
@@ -1087,7 +1180,7 @@
 
             inisialisasiFormMultiBarisKurir();
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-brands fa-whatsapp text-lg"></i> SIMPAN & LAPOR WA';
+            btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Simpan & WA';
         });
 
         document.getElementById('formLogin').addEventListener('submit', async (e) => {
@@ -1203,14 +1296,14 @@
             const panelAktivitas = document.getElementById('subPanelAktivitas');
 
             if (sub === 'antrean') {
-                btnAntrean.className = "py-2 text-xs font-black rounded-xl transition shadow-sm bg-white text-indigo-600";
-                btnAktivitas.className = "py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800";
+                btnAntrean.className = "py-2 text-xs font-black rounded-xl transition shadow-sm bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300";
+                btnAktivitas.className = "py-2 text-xs font-bold rounded-xl transition text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200";
                 panelAntrean.classList.remove('hidden');
                 panelAktivitas.classList.add('hidden');
                 loadAntreanTarik();
             } else {
-                btnAktivitas.className = "py-2 text-xs font-black rounded-xl transition shadow-sm bg-white text-indigo-600";
-                btnAntrean.className = "py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800";
+                btnAktivitas.className = "py-2 text-xs font-black rounded-xl transition shadow-sm bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300";
+                btnAntrean.className = "py-2 text-xs font-bold rounded-xl transition text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200";
                 panelAktivitas.classList.remove('hidden');
                 panelAntrean.classList.add('hidden');
                 loadRiwayatTugasSaya();
@@ -1284,16 +1377,16 @@
                     const namaProduk = item.jenis_produk === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${item.jenis_produk.replace('B','')}`;
 
                     containerRadio.innerHTML += `
-                        <label class="flex items-center justify-between p-3 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl cursor-pointer transition select-none">
+                        <label class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer transition select-none">
                             <div class="flex items-center gap-2.5">
                                 <input type="radio" name="pilihBarangSetor" value="${item.id}" onchange='onPilihOpsiBarangSpesifik(${JSON.stringify(item)})' class="w-4 h-4 text-emerald-600 focus:ring-0">
                                 <div>
-                                    <div class="text-xs font-black text-slate-800">${namaProduk}</div>
+                                    <div class="text-xs font-black text-slate-800 dark:text-slate-100">${namaProduk}</div>
                                     <div class="text-[10px] text-slate-400 font-semibold">${formatTglIndo(item.tanggal)} • ${item.sesi}</div>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-xs font-black text-red-600">Sisa ${sisa} ${satuan}</div>
+                                <div class="text-xs font-black text-red-600 dark:text-red-400">Sisa ${sisa} ${satuan}</div>
                                 <div class="text-[9px] text-slate-400">Target: ${target}</div>
                             </div>
                         </label>
@@ -1338,11 +1431,11 @@
 
             let infoText = '';
             if (selisih === 0) {
-                infoText = `<span class="text-emerald-600 font-black">Total: ${totalMenjadi} ${satuan} (PAS LUNAS)</span>`;
+                infoText = `<span class="text-emerald-600 dark:text-emerald-400 font-black">Total: ${totalMenjadi} ${satuan} (PAS LUNAS)</span>`;
             } else if (selisih < 0) {
-                infoText = `<span class="text-amber-600 font-black">Total: ${totalMenjadi} ${satuan} (Masih Kurang ${Math.abs(selisih)} ${satuan})</span>`;
+                infoText = `<span class="text-amber-600 dark:text-amber-400 font-black">Total: ${totalMenjadi} ${satuan} (Masih Kurang ${Math.abs(selisih)} ${satuan})</span>`;
             } else {
-                infoText = `<span class="text-purple-600 font-black">Total: ${totalMenjadi} ${satuan} (LEBIH +${selisih} ${satuan})</span>`;
+                infoText = `<span class="text-purple-600 dark:text-purple-400 font-black">Total: ${totalMenjadi} ${satuan} (LEBIH +${selisih} ${satuan})</span>`;
             }
 
             document.getElementById('infoPrediksiSetorCepat').innerHTML = infoText;
@@ -1414,9 +1507,7 @@
             kirimLaporanWATarikan(tglHariIni);
         }
 
-        // ==============================================================
-        // LAPORAN WA: FILTER OTOMATIS BERDASARKAN KURIR AKTIF
-        // ==============================================================
+        // LAPORAN WA
         let dataTarikanAktifPerTgl = [];
 
         async function kirimLaporanWATarikan(tgl) {
@@ -1472,18 +1563,18 @@
                 const namaProduk = jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${jenis.replace('B','')}`;
 
                 container.innerHTML += `
-                    <label class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:border-emerald-400 transition select-none">
+                    <label class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer transition select-none">
                         <div class="flex items-center gap-2.5">
                             <input type="checkbox" value="${item.id}" ${isChecked} class="check-item-kloter w-4 h-4 rounded text-emerald-600 focus:ring-0 cursor-pointer">
                             <div>
-                                <div class="text-xs font-black text-slate-800 uppercase">${namaPacking}</div>
+                                <div class="text-xs font-black text-slate-800 dark:text-slate-100 uppercase">${namaPacking}</div>
                                 <div class="text-[10px] text-slate-400 font-semibold">
                                     ${item.sesi} • ${namaProduk}
                                 </div>
                             </div>
                         </div>
                         <div class="text-right">
-                            <div class="text-xs font-black text-emerald-600">${tarik} ${satuan}</div>
+                            <div class="text-xs font-black text-emerald-600 dark:text-emerald-400">${tarik} ${satuan}</div>
                             ${sudahKirim ? '<span class="text-[9px] text-slate-400 italic">Sudah dilapor</span>' : '<span class="text-[9px] text-amber-500 font-bold">Siap lapor</span>'}
                         </div>
                     </label>
@@ -1500,9 +1591,9 @@
             document.querySelectorAll('.btn-pilih-kloter').forEach(btn => {
                 const isMatch = btn.getAttribute('data-kloter') === namaKloter;
                 if (isMatch) {
-                    btn.className = "btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-emerald-50 border-emerald-300 text-emerald-700";
+                    btn.className = "btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400";
                 } else {
-                    btn.className = "btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-slate-50 border-slate-200 text-slate-600";
+                    btn.className = "btn-pilih-kloter py-2 px-3 rounded-xl border text-xs font-black transition active:scale-95 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400";
                 }
             });
         }
@@ -1581,7 +1672,7 @@
         }
 
         // ==============================================================
-        // ANTREAN TARIK: OPTIMASI MOBILE DENGAN SEPARATOR & BORDER AKSEN
+        // ANTREAN TARIK: GELAP HARMONIS & SEPARATOR JELAS
         // ==============================================================
         async function loadAntreanTarik() {
             const containerBelum = document.getElementById('containerAntreanTarik');
@@ -1592,11 +1683,11 @@
             if (!containerBelum) return;
 
             containerBelum.innerHTML = `
-                <div class="p-8 text-center bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-3">
+                <div class="p-8 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-3">
                     <div class="w-10 h-10 mx-auto bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-lg shadow-inner">
                         <i class="fa-solid fa-circle-notch fa-spin"></i>
                     </div>
-                    <div class="text-xs font-bold text-slate-600">Memuat antrean barang...</div>
+                    <div class="text-xs font-bold text-slate-600 dark:text-slate-300">Memuat antrean barang...</div>
                 </div>
             `;
             if (sectionSelesai) sectionSelesai.classList.add('hidden');
@@ -1611,15 +1702,15 @@
                 .order('tanggal', { ascending: false });
 
             if (error) {
-                containerBelum.innerHTML = `<div class="p-4 text-center text-xs text-red-500 font-bold bg-white rounded-2xl border border-red-200">Error: ${error.message}</div>`;
+                containerBelum.innerHTML = `<div class="p-4 text-center text-xs text-red-500 font-bold bg-white dark:bg-slate-800 rounded-2xl border border-red-200 dark:border-red-900">Error: ${error.message}</div>`;
                 return;
             }
 
             if (!data || data.length === 0) {
                 containerBelum.innerHTML = `
-                    <div class="p-8 text-center text-xs text-slate-400 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-1">
+                    <div class="p-8 text-center text-xs text-slate-400 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-1">
                         <i class="fa-solid fa-circle-check text-3xl text-emerald-400 mb-1"></i>
-                        <div class="font-bold text-slate-700 text-sm">Semua Antrean Kosong</div>
+                        <div class="font-bold text-slate-700 dark:text-slate-200 text-sm">Semua Antrean Kosong</div>
                         <div>Belum ada data barang aktif yang perlu ditarik.</div>
                     </div>
                 `;
@@ -1674,7 +1765,6 @@
                 const belumBeresCount = listBelumBeres.length;
                 const hariSudahBeresPenuh = (belumBeresCount === 0);
 
-                // FUNGSI RENDER BARIS PEKERJA DENGAN GARIS TEBAL AKSEN (LEFT BORDER ACCENT)
                 function renderBarisKaryawan(item) {
                     const target = hitungTargetProduk(item.kirim_produksi, item.jenis_produk);
                     const tarik = item.tarik_jadi || 0;
@@ -1685,27 +1775,26 @@
                     let badgeStatus = '';
                     let accentBorderClass = '';
 
-                    // Penanda garis samping berdasarkan status
                     if (belumTarik) {
-                        badgeStatus = `<span class="text-[9px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md">Belum Tarik</span>`;
+                        badgeStatus = `<span class="text-[9px] font-extrabold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md">Belum Tarik</span>`;
                         accentBorderClass = 'border-l-4 border-l-amber-500';
                     } else if (selisih === 0) {
-                        badgeStatus = `<span class="text-[9px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md">PAS (${tarik} ${satuan})</span>`;
+                        badgeStatus = `<span class="text-[9px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-md">PAS (${tarik} ${satuan})</span>`;
                         accentBorderClass = 'border-l-4 border-l-emerald-500';
                     } else if (selisih < 0) {
-                        badgeStatus = `<span class="text-[9px] font-extrabold bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-md">Kurang ${Math.abs(selisih)} ${satuan}</span>`;
+                        badgeStatus = `<span class="text-[9px] font-extrabold bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/60 px-2 py-0.5 rounded-md">Kurang ${Math.abs(selisih)} ${satuan}</span>`;
                         accentBorderClass = 'border-l-4 border-l-red-500';
                     } else {
-                        badgeStatus = `<span class="text-[9px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md">Lebih +${selisih} ${satuan}</span>`;
+                        badgeStatus = `<span class="text-[9px] font-extrabold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 px-2 py-0.5 rounded-md">Lebih +${selisih} ${satuan}</span>`;
                         accentBorderClass = 'border-l-4 border-l-purple-500';
                     }
 
                     const infoPenarik = item.riwayat_cicilan
-                        ? `<div class="text-[10px] text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 mt-1 font-semibold flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-[9px] text-indigo-500"></i> ${item.riwayat_cicilan}</div>`
+                        ? `<div class="text-[10px] text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/90 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 mt-1 font-semibold flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-[9px] text-indigo-500"></i> ${item.riwayat_cicilan}</div>`
                         : '';
 
                     const tombolPensilHTML = punyaAksesRevisi() ? `
-                        <button type="button" onclick='bukaModalRevisiKirim(${JSON.stringify(item)})' class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-amber-100 hover:text-amber-700 active:scale-90 text-slate-500 flex items-center justify-center text-xs transition border border-slate-200 shadow-sm" title="Revisi Kirim & Tarikan">
+                        <button type="button" onclick='bukaModalRevisiKirim(${JSON.stringify(item)})' class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-amber-100 hover:text-amber-700 active:scale-90 text-slate-500 dark:text-slate-300 flex items-center justify-center text-xs transition border border-slate-200 dark:border-slate-600 shadow-sm" title="Revisi Kirim & Tarikan">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
                     ` : '';
@@ -1713,11 +1802,11 @@
                     const namaProdukFix = item.jenis_produk === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${(item.jenis_produk || 'B12').replace('B','')}`;
 
                     return `
-                        <div class="p-3 bg-white border border-slate-200/90 rounded-2xl flex items-center justify-between gap-2.5 shadow-sm hover:shadow transition ${accentBorderClass}">
+                        <div class="p-3 bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 rounded-2xl flex items-center justify-between gap-2.5 shadow-2xs transition ${accentBorderClass}">
                             <div class="space-y-0.5">
                                 <div class="text-[10px] font-bold text-slate-400">Waktu: ${item.sesi}</div>
-                                <div class="text-xs font-black text-slate-900 uppercase tracking-tight">${item.karyawan?.nama || '-'}</div>
-                                <div class="text-[11px] font-bold text-indigo-600">
+                                <div class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight">${item.karyawan?.nama || '-'}</div>
+                                <div class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
                                     ${namaProdukFix} 
                                     <span class="text-slate-400 font-normal">(Tgt: <b>${target}</b> | Masuk: <b>${tarik}</b>)</span>
                                 </div>
@@ -1740,13 +1829,13 @@
                 let toggleSudahHTML = '';
                 if (listSudahBeres.length > 0 && !hariSudahBeresPenuh) {
                     toggleSudahHTML = `
-                        <div class="pt-2 border-t-2 border-dashed border-slate-200/90 mt-2">
-                            <button type="button" onclick="togglePekerjaSelesai('${tgl}')" class="w-full py-2.5 px-3 bg-emerald-50/90 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 font-bold text-[10px] rounded-xl flex items-center justify-between transition active:scale-98">
+                        <div class="pt-2 border-t-2 border-dashed border-slate-200/90 dark:border-slate-700/80 mt-2">
+                            <button type="button" onclick="togglePekerjaSelesai('${tgl}')" class="w-full py-2.5 px-3 bg-emerald-50/90 dark:bg-emerald-950/50 hover:bg-emerald-100/80 border border-emerald-200 dark:border-emerald-800/70 text-emerald-800 dark:text-emerald-300 font-bold text-[10px] rounded-xl flex items-center justify-between transition active:scale-98">
                                 <span class="flex items-center gap-1.5">
                                     <i class="fa-solid fa-circle-check text-emerald-600"></i>
                                     <span>${listSudahBeres.length} Pekerja Selesai (Pas / Lebih)</span>
                                 </span>
-                                <span class="text-emerald-700 font-extrabold flex items-center gap-1">
+                                <span class="text-emerald-700 dark:text-emerald-400 font-extrabold flex items-center gap-1">
                                     <span id="txtTogglePekerja-${tgl}">Tampilkan</span>
                                     <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" id="iconTogglePekerja-${tgl}"></i>
                                 </span>
@@ -1761,18 +1850,18 @@
                 }
 
                 let chipsHTML = '';
-                if (targetB12 > 0) chipsHTML += `<span class="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-lg border border-indigo-100 text-[10px]">B12: ${targetB12} Bal</span>`;
-                if (targetB10 > 0) chipsHTML += `<span class="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-lg border border-indigo-100 text-[10px]">B10: ${targetB10} Bal</span>`;
-                if (targetOleholeh > 0) chipsHTML += `<span class="bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-lg border border-amber-200 text-[10px]">Oleh-oleh: ${targetOleholeh} Toros</span>`;
+                if (targetB12 > 0) chipsHTML += `<span class="bg-indigo-50 dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-slate-700 text-[10px]">B12: ${targetB12} Bal</span>`;
+                if (targetB10 > 0) chipsHTML += `<span class="bg-indigo-50 dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-slate-700 text-[10px]">B10: ${targetB10} Bal</span>`;
+                if (targetOleholeh > 0) chipsHTML += `<span class="bg-amber-50 dark:bg-slate-900 text-amber-700 dark:text-amber-300 font-bold px-2 py-0.5 rounded-lg border border-amber-200 dark:border-slate-700 text-[10px]">Oleh-oleh: ${targetOleholeh} Toros</span>`;
                 chipsHTML += `
-                    <span class="bg-blue-50 text-blue-700 font-bold px-2.5 py-0.5 rounded-full border border-blue-200 text-[10px]">
-                        Tarik: <b class="${totalRealTarik >= totalTarget ? 'text-emerald-600' : 'text-blue-900'}">${totalRealTarik}</b>/${totalTarget}
+                    <span class="bg-blue-50 dark:bg-slate-900 text-blue-700 dark:text-blue-300 font-bold px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-slate-700 text-[10px]">
+                        Tarik: <b class="${totalRealTarik >= totalTarget ? 'text-emerald-600' : 'text-blue-900 dark:text-blue-200'}">${totalRealTarik}</b>/${totalTarget}
                     </span>
                 `;
 
                 let badgeHeader = belumBeresCount > 0
-                    ? `<span class="text-[10px] font-black bg-red-50 text-red-600 border border-red-200 px-2.5 py-0.5 rounded-full whitespace-nowrap">${belumBeresCount} Belum Beres</span>`
-                    : `<span class="text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full whitespace-nowrap"><i class="fa-solid fa-check mr-1"></i>Selesai Penuh</span>`;
+                    ? `<span class="text-[10px] font-black bg-red-50 dark:bg-red-950/70 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60 px-2.5 py-0.5 rounded-full whitespace-nowrap">${belumBeresCount} Belum Beres</span>`
+                    : `<span class="text-[10px] font-black bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 px-2.5 py-0.5 rounded-full whitespace-nowrap"><i class="fa-solid fa-check mr-1"></i>Selesai Penuh</span>`;
 
                 const parts = tgl.split('-');
                 const dObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
@@ -1781,11 +1870,11 @@
 
                 // KARTU INDUK DENGAN BORDER AKSEN & INDIKATOR KONTROL TOMBOL BUKA/TUTUP
                 const kartuHTML = `
-                    <div class="bg-white rounded-3xl shadow-sm border-2 border-slate-200/90 overflow-hidden transition" id="cardTarik-${tgl}">
-                        <button type="button" onclick="toggleAkordionKurir('${tgl}')" class="w-full p-4 text-left hover:bg-slate-50/70 transition select-none flex flex-col gap-2.5">
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border-2 border-slate-200/90 dark:border-slate-700 overflow-hidden transition" id="cardTarik-${tgl}">
+                        <button type="button" onclick="toggleAkordionKurir('${tgl}')" class="w-full p-4 text-left hover:bg-slate-50/70 dark:hover:bg-slate-700/50 transition select-none flex flex-col gap-2.5">
                             <div class="flex items-center justify-between w-full">
                                 <div class="flex items-center gap-2.5">
-                                    <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                    <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">
                                         <i class="fa-solid fa-calendar-day"></i>
                                     </div>
                                     <div>
@@ -1793,7 +1882,7 @@
                                             <span class="px-2.5 py-0.5 bg-indigo-600 text-white rounded-lg text-xs font-black tracking-wider uppercase shadow-sm">
                                                 ${namaHariBesar}
                                             </span>
-                                            <span class="text-xs font-extrabold text-slate-800">
+                                            <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100">
                                                 ${tglFormatText}
                                             </span>
                                         </div>
@@ -1802,15 +1891,14 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     ${badgeHeader}
-                                    <!-- Indikator Tombol Aksi Buka/Tutup Yang Nyata -->
-                                    <span class="px-2 py-1 rounded-lg bg-slate-100 text-[10px] font-extrabold text-indigo-600 border border-slate-200/80 flex items-center gap-1">
+                                    <span class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-300 border border-slate-200/80 dark:border-slate-600 flex items-center gap-1">
                                         <span id="txtAkordion-${tgl}">Buka</span>
                                         <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300" id="iconAkordion-${tgl}"></i>
                                     </span>
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-between gap-1.5 pt-2 border-t border-slate-100 w-full">
+                            <div class="flex items-center justify-between gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-700 w-full">
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                     ${chipsHTML}
                                 </div>
@@ -1820,10 +1908,10 @@
                             </div>
                         </button>
 
-                        <!-- AREA INSET KHUSUS DAFTAR ANAK (WARNA KONTRAS SLATE & PEMISAH TEGAS) -->
-                        <div class="hidden p-3.5 pt-2.5 border-t-2 border-slate-200/80 bg-slate-100/90 space-y-2.5" id="bodyAkordion-${tgl}">
-                            <div class="flex items-center gap-1.5 px-1 text-[10px] font-extrabold text-slate-500 uppercase tracking-wide">
-                                <i class="fa-solid fa-layer-group text-indigo-600"></i>
+                        <!-- AREA INSET KHUSUS DENGAN DARK MODE HARMONIS -->
+                        <div class="hidden p-3.5 pt-2.5 border-t-2 border-slate-200/80 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-900/95 space-y-2.5" id="bodyAkordion-${tgl}">
+                            <div class="flex items-center gap-1.5 px-1 text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                <i class="fa-solid fa-layer-group text-indigo-600 dark:text-indigo-400"></i>
                                 <span>Rincian Pekerja:</span>
                             </div>
                             
@@ -1853,9 +1941,9 @@
 
             if (totalHariAktif === 0 && totalHariSelesai > 0) {
                 containerBelum.innerHTML = `
-                    <div class="p-6 text-center text-xs text-slate-500 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-1">
+                    <div class="p-6 text-center text-xs text-slate-500 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-1">
                         <i class="fa-solid fa-circle-check text-3xl text-emerald-500 mb-1"></i>
-                        <div class="font-extrabold text-slate-800 text-sm">Semua Antrean Hari Ini Sudah Beres!</div>
+                        <div class="font-extrabold text-slate-800 dark:text-slate-200 text-sm">Semua Antrean Hari Ini Sudah Beres!</div>
                         <div>Semua tarikan telah tuntas. Cek folder di bawah untuk melihat arsip.</div>
                     </div>
                 `;
@@ -1879,7 +1967,6 @@
             }
         }
 
-        // FUNGSI BUKA/TUTUP AKORDION DENGAN PERUBAHAN TEKS INDIKATOR
         function toggleAkordionKurir(tgl) {
             const body = document.getElementById(`bodyAkordion-${tgl}`);
             const icon = document.getElementById(`iconAkordion-${tgl}`);
@@ -1916,9 +2003,7 @@
             }
         }
 
-        // ==============================================================
         // REVISI MODAL & EDIT PARSIAL PER KURIR
-        // ==============================================================
         function bukaModalRevisiKirim(item) {
             if (!punyaAksesRevisi()) {
                 showNotice("Fitur revisi hanya dapat diakses oleh Admin atau Candra.", "Akses Dibatasi");
@@ -1968,12 +2053,12 @@
             const satuan = getSatuanTarik(jenis);
 
             document.getElementById('labelRevisiTarikSatuan').innerText = `Total Masuk / Tarik (${satuan})`;
-            document.getElementById('infoTargetRevisi').innerHTML = `Target baru: <span class="text-blue-700 font-black">${target}</span> ${satuan}`;
+            document.getElementById('infoTargetRevisi').innerHTML = `Target baru: <span class="text-blue-700 dark:text-blue-400 font-black">${target}</span> ${satuan}`;
 
             const selisih = tarik - target;
             let statusText = '';
             if (tarik === 0) statusText = '<span class="text-amber-500 font-bold">Status: Belum Ada Tarikan (0)</span>';
-            else if (selisih === 0) statusText = '<span class="text-emerald-600 font-bold">Status: PAS Target</span>';
+            else if (selisih === 0) statusText = '<span class="text-emerald-600 dark:text-emerald-400 font-bold">Status: PAS Target</span>';
             else if (selisih < 0) statusText = `<span class="text-red-500 font-bold">Status: Kurang ${Math.abs(selisih)} ${satuan}</span>`;
             else statusText = `<span class="text-purple-600 font-bold">Status: Lebih +${selisih} ${satuan}</span>`;
             
@@ -2039,7 +2124,7 @@
 
             if (listCicilanAktif.length === 0) {
                 container.innerHTML = `
-                    <div class="p-3 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="p-3 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
                         Belum ada catatan tarikan untuk pekerja ini.
                     </div>
                 `;
@@ -2049,14 +2134,14 @@
             container.innerHTML = '';
             listCicilanAktif.forEach((cicilan) => {
                 container.innerHTML += `
-                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-2" id="cardCicilan-${cicilan.index}">
+                    <div class="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between gap-2" id="cardCicilan-${cicilan.index}">
                         <div>
-                            <div class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                            <div class="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                                 <i class="fa-solid fa-user-check text-emerald-600 text-[10px]"></i>
                                 <span>${cicilan.nama}</span>
                             </div>
-                            <div class="text-[11px] text-slate-500 font-bold mt-0.5">
-                                <b class="text-emerald-600">${cicilan.qty} ${cicilan.satuan}</b> • Sesi: <span class="text-indigo-600 font-black">${cicilan.waktu}</span>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-bold mt-0.5">
+                                <b class="text-emerald-600">${cicilan.qty} ${cicilan.satuan}</b> • Sesi: <span class="text-indigo-600 dark:text-indigo-400 font-black">${cicilan.waktu}</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-1">
@@ -2069,16 +2154,16 @@
                         </div>
                     </div>
 
-                    <div id="formInlineCicilan-${cicilan.index}" class="hidden p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-2">
-                        <div class="text-[10px] font-extrabold text-amber-900 uppercase">Koreksi Tarikan: ${cicilan.nama}</div>
+                    <div id="formInlineCicilan-${cicilan.index}" class="hidden p-3 bg-amber-50/70 dark:bg-slate-900 border border-amber-200 dark:border-amber-900/60 rounded-xl space-y-2">
+                        <div class="text-[10px] font-extrabold text-amber-900 dark:text-amber-300 uppercase">Koreksi Tarikan: ${cicilan.nama}</div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="block text-[9px] font-bold text-slate-500 uppercase">Jumlah (${cicilan.satuan})</label>
-                                <input type="number" min="1" id="editQtyCicilan-${cicilan.index}" value="${cicilan.qty}" class="w-full px-2 py-1.5 bg-white border rounded-lg text-xs font-black text-center">
+                                <input type="number" min="1" id="editQtyCicilan-${cicilan.index}" value="${cicilan.qty}" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs font-black text-center">
                             </div>
                             <div>
                                 <label class="block text-[9px] font-bold text-slate-500 uppercase">Sesi Waktu</label>
-                                <select id="editWaktuCicilan-${cicilan.index}" class="w-full px-2 py-1.5 bg-white border rounded-lg text-xs font-bold">
+                                <select id="editWaktuCicilan-${cicilan.index}" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs font-bold">
                                     <option value="Pagi" ${cicilan.waktu === 'Pagi' ? 'selected' : ''}>Pagi</option>
                                     <option value="Siang" ${cicilan.waktu === 'Siang' ? 'selected' : ''}>Siang</option>
                                     <option value="Sore" ${cicilan.waktu === 'Sore' ? 'selected' : ''}>Sore</option>
@@ -2087,7 +2172,7 @@
                             </div>
                         </div>
                         <div class="flex justify-end gap-1.5 pt-1">
-                            <button type="button" onclick="batalEditSatuCicilan(${cicilan.index})" class="px-2.5 py-1 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition">Batal</button>
+                            <button type="button" onclick="batalEditSatuCicilan(${cicilan.index})" class="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-bold rounded-lg transition">Batal</button>
                             <button type="button" onclick="simpanEditSatuCicilan(${cicilan.index})" class="px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded-lg transition">Terapkan</button>
                         </div>
                     </div>
@@ -2246,11 +2331,11 @@
             const selisih = totalMenjadi - target;
 
             let statusTeks = '';
-            if (selisih === 0) statusTeks = `<span class="text-emerald-600 font-black">(PAS Target)</span>`;
-            else if (selisih < 0) statusTeks = `<span class="text-amber-600 font-black">(Kurang ${Math.abs(selisih)} ${satuan})</span>`;
-            else statusTeks = `<span class="text-purple-600 font-black">(Lebih +${selisih} ${satuan})</span>`;
+            if (selisih === 0) statusTeks = `<span class="text-emerald-600 dark:text-emerald-400 font-black">(PAS Target)</span>`;
+            else if (selisih < 0) statusTeks = `<span class="text-amber-600 dark:text-amber-400 font-black">(Kurang ${Math.abs(selisih)} ${satuan})</span>`;
+            else statusTeks = `<span class="text-purple-600 dark:text-purple-400 font-black">(Lebih +${selisih} ${satuan})</span>`;
 
-            document.getElementById('infoPrediksiKurir').innerHTML = `Total: <span class="text-emerald-700 font-black">${totalMenjadi}</span> ${satuan} ${statusTeks}`;
+            document.getElementById('infoPrediksiKurir').innerHTML = `Total: <span class="text-emerald-700 dark:text-emerald-400 font-black">${totalMenjadi}</span> ${satuan} ${statusTeks}`;
         }
 
         function tutupModalTarikKurir() {
@@ -2319,11 +2404,11 @@
             }
 
             container.innerHTML = `
-                <div class="p-8 text-center bg-white rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                <div class="p-8 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
                     <div class="w-10 h-10 mx-auto bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center text-lg shadow-inner">
                         <i class="fa-solid fa-circle-notch fa-spin"></i>
                     </div>
-                    <div class="text-xs font-bold text-slate-600">Memuat riwayat tugas Anda...</div>
+                    <div class="text-xs font-bold text-slate-600 dark:text-slate-300">Memuat riwayat tugas Anda...</div>
                 </div>
             `;
 
@@ -2352,9 +2437,9 @@
 
                 if (listAktivitas.length === 0) {
                     container.innerHTML = `
-                        <div class="p-8 text-center text-xs text-slate-400 bg-white rounded-3xl border border-slate-100 shadow-sm space-y-1">
+                        <div class="p-8 text-center text-xs text-slate-400 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-1">
                             <i class="fa-solid fa-clipboard-check text-3xl text-slate-300 mb-2"></i>
-                            <div class="font-bold text-slate-600">Belum Ada Aktivitas</div>
+                            <div class="font-bold text-slate-600 dark:text-slate-200">Belum Ada Aktivitas</div>
                             <div>Belum ada data barang yang Anda kirim atau tarik.</div>
                         </div>
                     `;
@@ -2387,24 +2472,24 @@
                 let htmlPacking = '';
                 Object.values(rekapPacking).forEach(item => {
                     htmlPacking += `
-                        <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
                             <div class="flex items-center gap-2.5">
                                 <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-xs">
                                     <i class="fa-solid fa-user"></i>
                                 </div>
                                 <div>
-                                    <div class="text-xs font-black text-slate-900 uppercase">${item.nama}</div>
+                                    <div class="text-xs font-black text-slate-900 dark:text-white uppercase">${item.nama}</div>
                                     <div class="text-[10px] text-slate-400 font-semibold">Tugas Selesai</div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2 text-right">
-                                <div class="px-2.5 py-1 bg-blue-50 border border-blue-100 rounded-lg">
+                                <div class="px-2.5 py-1 bg-blue-50 dark:bg-slate-900 border border-blue-100 dark:border-slate-700 rounded-lg">
                                     <div class="text-[9px] font-bold text-blue-600 uppercase">Kirim</div>
-                                    <div class="text-xs font-black text-blue-700">${item.kirim} <span class="text-[9px] font-normal">Bal</span></div>
+                                    <div class="text-xs font-black text-blue-700 dark:text-blue-300">${item.kirim} <span class="text-[9px] font-normal">Bal</span></div>
                                 </div>
-                                <div class="px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-lg">
+                                <div class="px-2.5 py-1 bg-emerald-50 dark:bg-slate-900 border border-emerald-100 dark:border-slate-700 rounded-lg">
                                     <div class="text-[9px] font-bold text-emerald-600 uppercase">Tarik</div>
-                                    <div class="text-xs font-black text-emerald-700">${item.tarik} <span class="text-[9px] font-normal">Bal</span></div>
+                                    <div class="text-xs font-black text-emerald-700 dark:text-emerald-300">${item.tarik} <span class="text-[9px] font-normal">Bal</span></div>
                                 </div>
                             </div>
                         </div>
@@ -2424,7 +2509,7 @@
                     </div>
 
                     <div class="space-y-2 pt-1">
-                        <div class="text-xs font-black text-slate-700 uppercase tracking-wide px-1">
+                        <div class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wide px-1">
                             Ringkasan per Karyawan Packing:
                         </div>
                         <div class="space-y-2">
