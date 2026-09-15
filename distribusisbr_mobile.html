@@ -762,6 +762,7 @@
         const showError = (msg, title = "Terjadi Kesalahan") => showDialog({ title, message: msg, type: "error", showCancel: false });
         const showConfirm = (msg, title = "Konfirmasi") => showDialog({ title, message: msg, type: "question", showCancel: true, confirmText: "Ya", cancelText: "Batal" });
 
+        // FORMAT TANGGAL LENGKAP BAHASA INDONESIA (NAMA HARI UTUH)
         function formatTglIndo(tglStr) {
             if (!tglStr) return "-";
             const parts = tglStr.split('-');
@@ -771,7 +772,8 @@
             const day = parseInt(parts[2], 10);
             const d = new Date(year, month, day);
             
-            const namaHari = ['Mgg', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+            // Nama hari dibuat utuh dan lengkap
+            const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
             const hari = namaHari[d.getDay()];
             const dd = String(day).padStart(2, '0');
             const mm = String(month + 1).padStart(2, '0');
@@ -1695,26 +1697,46 @@
 
         let dataTarikanAktifPerTgl = [];
 
+		// ==============================================================
+        // SISTEM LAPORAN PENARIKAN WHATSAPP (FILTER OTOMATIS KURIR)
+        // ==============================================================
         async function kirimLaporanWATarikan(tgl) {
-            const { data, error } = await supabaseClient
+            // 1. Siapkan query dasar pengambilan data barang yang sudah ditarik
+            let query = supabaseClient
                 .from('distribusi_packing')
-                .select(`*, karyawan!karyawan_id(nama)`)
+                .select(`
+                    *,
+                    karyawan!karyawan_id(nama),
+                    penarik:karyawan!ditarik_oleh(nama)
+                `)
                 .eq('tanggal', tgl)
                 .gt('tarik_jadi', 0);
+
+            // 2. Filter kurir: Jika bukan admin, hanya ambil barang yang ditarik oleh kurir ini
+            if (userKurirAktif?.role !== 'admin') {
+                query = query.eq('ditarik_oleh', userKurirAktif.id);
+            }
+
+            const { data, error } = await query;
 
             if (error) {
                 await showError("Gagal memuat data penarikan: " + error.message);
                 return;
             }
 
+            // 3. Pesan notifikasi jika belum ada tarikan
             if (!data || data.length === 0) {
-                await showNotice("Belum ada barang yang disetor/ditarik pada tanggal ini.", "Data Kosong");
+                const pesanKosong = (userKurirAktif?.role === 'admin')
+                    ? "Belum ada barang yang disetor/ditarik pada tanggal ini."
+                    : "Anda belum mencatat penarikan barang apa pun pada tanggal ini.";
+                await showNotice(pesanKosong, "Data Kosong");
                 return;
             }
 
             dataTarikanAktifPerTgl = data;
             document.getElementById('kloterTanggalAktif').value = tgl;
 
+            // 4. Periksa riwayat kloter yang tersimpan sebelumnya
             const keyReported = `sbr_wa_reported_${tgl}`;
             const riwayatDilaporkan = JSON.parse(localStorage.getItem(keyReported) || '[]');
 
@@ -1724,6 +1746,7 @@
             }
             setNomorKloter(defaultKloter);
 
+            // 5. Susun daftar checklist hanya untuk barang milik kurir yang login
             const container = document.getElementById('containerListChecklistKloter');
             container.innerHTML = '';
 
@@ -1734,7 +1757,6 @@
                 const sudahKirim = riwayatDilaporkan.includes(item.id);
                 const satuan = getSatuanTarik(jenis);
                 const isChecked = !sudahKirim ? 'checked' : '';
-
                 const namaProduk = jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${jenis.replace('B','')}`;
 
                 container.innerHTML += `
@@ -1750,12 +1772,13 @@
                         </div>
                         <div class="text-right">
                             <div class="text-xs font-black text-emerald-600 dark:text-emerald-400">${tarik} ${satuan}</div>
-                            ${sudahKirim ? '<span class="text-[9px] text-slate-400 italic">Sudah dilapor</span>' : '<span class="text-[9px] text-amber-500 font-bold">Baru ditarik</span>'}
+                            ${sudahKirim ? '<span class="text-[9px] text-slate-400 italic">Sudah dilapor</span>' : '<span class="text-[9px] text-amber-500 font-bold">Siap lapor</span>'}
                         </div>
                     </label>
                 `;
             });
 
+            // 6. Buka pop-up modal
             const modal = document.getElementById('modalKloterWA');
             modal.classList.remove('opacity-0', 'pointer-events-none');
             document.getElementById('contentKloterWA').classList.remove('translate-y-full');
@@ -2000,10 +2023,27 @@
                                     <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
                                         <i class="fa-solid fa-calendar-day"></i>
                                     </div>
-                                    <div>
-                                        <div class="text-xs font-black text-slate-900 leading-tight">${formatTglIndo(tgl)}</div>
-                                        <div class="text-[10px] text-slate-400 font-semibold">${totalItem} Antrean</div>
-                                    </div>
+                                    <!-- KODE BARU (HARI MENCOROK & JELAS): -->
+									<div>
+										<div class="flex items-center gap-2">
+											<!-- Badge Nama Hari (Huruf Besar & Kontras) -->
+											<span class="px-2.5 py-0.5 bg-indigo-600 text-white rounded-lg text-xs font-black tracking-wider uppercase shadow-sm">
+												${(() => {
+													const p = tgl.split('-');
+													const d = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
+													return ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][d.getDay()];
+												})()}
+											</span>
+											<!-- Angka Tanggal -->
+											<span class="text-xs font-extrabold text-black-600">
+												${(() => {
+													const p = tgl.split('-');
+													return `${p[2]}/${p[1]}/${p[0].slice(-2)}`;
+												})()}
+											</span>
+										</div>
+										<div class="text-[10px] text-slate-500 font-semibold mt-0.5">${totalItem} Antrean</div>
+									</div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     ${badgeHeader}
