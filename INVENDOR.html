@@ -144,9 +144,70 @@
             <!-- AREA KANAN (Tabel Invoice) -->
             <div class="w-full lg:w-2/3 xl:w-3/4">
                 <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden h-full flex flex-col">
-                    <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
-                        <h2 class="font-bold text-gray-800 dark:text-white">Daftar Tagihan Berjalan</h2>
-                    </div>
+                    <!-- HEADER DAFTAR TAGIHAN & TOOLBAR FILTER (VERSI RAPI & TERPADU) -->
+			<div class="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col gap-3">
+				
+				<!-- BARIS 1: Judul, Badge Peringatan, & Setelan Batas Tempo -->
+				<div class="flex items-center justify-between flex-wrap gap-2">
+					<div class="flex items-center gap-2.5">
+						<h2 class="font-bold text-gray-800 dark:text-white text-base tracking-tight">Daftar Tagihan Berjalan</h2>
+						
+						<!-- Badge Peringatan: Dibuat sebagai tombol interaktif (Bisa diklik untuk filter cepat) -->
+						<button type="button" id="overdueBadgeNotice" onclick="toggleOverdueFilter()" title="Klik untuk langsung menampilkan nota yang lewat batas hari" class="hidden items-center gap-1.5 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:hover:bg-amber-950/60 dark:text-amber-400 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800 transition-all cursor-pointer shadow-sm">
+							<span class="relative flex h-2 w-2">
+								<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+								<span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+							</span>
+							<span id="overdueBadgeText">0 Nota > 10 Hari</span>
+						</button>
+					</div>
+
+					<!-- Pengaturan Batas Hari (Diletakkan manis & kompak di pojok kanan atas) -->
+					<div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1 shadow-sm">
+						<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+						</svg>
+						<span class="font-medium">Batas Tempo:</span>
+						<input type="number" id="reminderDaysInput" min="1" max="999" value="10" oninput="handleReminderDaysChange()" class="w-10 text-center font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-amber-500">
+						<span class="text-[11px]">Hari</span>
+					</div>
+				</div>
+
+				<!-- BARIS 2: Toolbar Pencarian & Dropdown Filter (Sejajar Sempurna) -->
+				<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
+					
+					<!-- Input Cari (Mengambil 6 dari 12 kolom = 50% lebar) -->
+					<div class="relative sm:col-span-6">
+						<input type="text" id="filterKeyword" oninput="renderUI()" placeholder="Cari nomor nota, supplier, keterangan..." class="w-full text-xs pl-8 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm transition-all">
+						<svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+						</svg>
+					</div>
+
+					<!-- Filter Kategori (Mengambil 3 dari 12 kolom = 25% lebar) -->
+					<div class="sm:col-span-3">
+						<select id="filterCategory" onchange="renderUI()" class="w-full text-xs px-2.5 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm cursor-pointer transition-all">
+							<option value="">Semua Kategori</option>
+							<option value="Bahan Baku">Bahan Baku</option>
+							<option value="Plastik">Plastik</option>
+							<option value="Dus">Dus</option>
+							<option value="Lainnya">Lainnya</option>
+						</select>
+					</div>
+
+					<!-- Filter Status (Mengambil 3 dari 12 kolom = 25% lebar) -->
+					<div class="sm:col-span-3">
+						<select id="filterStatus" onchange="renderUI()" class="w-full text-xs px-2.5 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm cursor-pointer transition-all">
+							<option value="">Semua Status</option>
+							<option value="overdue">⚠️ Lewat Tempo</option>
+							<option value="unpaid">Belum Bayar</option>
+							<option value="partial">Sebagian</option>
+							<option value="sj">Menunggu Invoice</option>
+						</select>
+					</div>
+
+				</div>
+			</div>
                     
                     <div class="overflow-x-auto flex-1">
                         <table class="w-full text-left border-collapse">
@@ -318,12 +379,12 @@
 		</div>
 	</div>
 
-	<!-- Modal Manajemen Data -->
+	<!-- Modal Manajemen Data (Sudah Dioptimalkan untuk Dark Mode) -->
 	<div id="dataModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center">
-		<div class="bg-white dark:bg-gray-900 dark:text-gray-100 dark:border dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl transform transition-all flex flex-col h-[80vh]">
+		<div class="bg-white dark:bg-gray-900 dark:text-gray-100 border border-gray-100 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl transform transition-all flex flex-col h-[80vh]">
 			
 			<!-- Header & Tabs -->
-			<div class="border-b border-gray-100 p-6 pb-0">
+			<div class="border-b border-gray-100 dark:border-gray-800 p-6 pb-0">
 				<div class="flex justify-between items-center mb-6">
 					<h3 class="text-xl font-bold flex items-center gap-2">
 						<span class="text-yellow-500">
@@ -331,21 +392,22 @@
 						</span>
 						Manajemen Data
 					</h3>
-					<button onclick="toggleModal('dataModal')" class="text-gray-400 hover:text-gray-600">&times;</button>
+					<button onclick="toggleModal('dataModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl leading-none">&times;</button>
 				</div>
 				
+				<!-- Menggunakan Aksen Emerald pada Tab Aktif agar Senada dengan Tema Aplikasi -->
 				<div class="flex gap-6 text-sm font-medium">
-					<button id="tabRiwayat" onclick="switchTab('riwayat')" class="pb-3 border-b-2 border-black text-black">Riwayat Nota (Lunas)</button>
-					<button id="tabLainnya" onclick="switchTab('lainnya')" class="pb-3 border-b-2 border-transparent text-gray-400 hover:text-gray-600">Lainnya</button>
+					<button id="tabRiwayat" onclick="switchTab('riwayat')" class="pb-3 border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400 font-semibold transition-colors">Riwayat Nota (Lunas)</button>
+					<button id="tabLainnya" onclick="switchTab('lainnya')" class="pb-3 border-b-2 border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Lainnya</button>
 				</div>
 			</div>
 
 			<!-- Konten Tab Riwayat Nota -->
 			<div id="contentRiwayat" class="p-6 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-950">
-				<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+				<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
 					<table class="w-full text-left border-collapse">
 						<thead>
-							<tr class="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+							<tr class="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-800 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
 								<th class="p-4 font-medium">No. Invoice & Tgl</th>
 								<th class="p-4 font-medium">Supplier</th>
 								<th class="p-4 font-medium">Nominal</th>
@@ -353,27 +415,27 @@
 								<th class="p-4 font-medium text-right">Aksi</th>
 							</tr>
 						</thead>
-						<tbody id="historyTableBody" class="text-sm divide-y divide-gray-100">
-							<!-- Data nota lunas akan muncul di sini -->
+						<tbody id="historyTableBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-800">
+							<!-- Data nota lunas dirender oleh JS -->
 						</tbody>
 					</table>
-					<!-- KONTROL PAGINATION RIWAYAT -->
-                    <div id="historyPagination" class="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50/50 mt-auto hidden">
-                        <button id="btnPrevHistory" onclick="prevPageHistory()" class="px-3 py-1.5 bg-white border border-gray-200 rounded text-xs font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                            &larr; Sebelumnya
-                        </button>
-                        <span class="text-xs font-medium text-gray-500" id="historyPageInfo">Halaman 1 dari 1</span>
-                        <button id="btnNextHistory" onclick="nextPageHistory()" class="px-3 py-1.5 bg-white border border-gray-200 rounded text-xs font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                            Selanjutnya &rarr;
-                        </button>
-                    </div>
+
+					<!-- Kontrol Pagination Riwayat -->
+					<div id="historyPagination" class="p-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50 mt-auto hidden">
+						<button id="btnPrevHistory" onclick="prevPageHistory()" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+							&larr; Sebelumnya
+						</button>
+						<span class="text-xs font-medium text-gray-500 dark:text-gray-400" id="historyPageInfo">Halaman 1 dari 1</span>
+						<button id="btnNextHistory" onclick="nextPageHistory()" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+							Selanjutnya &rarr;
+						</button>
+					</div>
 				</div>
 			</div>
-			
 
 			<!-- Konten Tab Lainnya -->
-			<div id="contentLainnya" class="p-6 overflow-y-auto flex-1 bg-gray-50 hidden">
-				<div class="flex flex-col items-center justify-center h-full text-gray-400">
+			<div id="contentLainnya" class="p-6 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-950 hidden">
+				<div class="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
 					<p>Fitur tambahan akan dikembangkan di sini.</p>
 				</div>
@@ -1131,93 +1193,292 @@
 		}
 	}
 	
-    // Render Data (Hanya menampilkan yang BELUM LUNAS di Dashboard)
+	
+	// Menghitung selisih hari dari format dd/Mmm/yy ke tanggal sekarang
+	function calculateDaysElapsed(dateStr) {
+		if (!dateStr) return 0;
+		const parts = dateStr.split('/');
+		if (parts.length === 3) {
+			const monthMap = { 
+				'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'Mei': 4, 'Jun': 5, 
+				'Jul': 6, 'Agu': 7, 'Sep': 8, 'Okt': 9, 'Nov': 10, 'Des': 11 
+			};
+			const year = 2000 + parseInt(parts[2], 10);
+			const month = monthMap[parts[1]] !== undefined ? monthMap[parts[1]] : 0;
+			const day = parseInt(parts[0], 10);
+
+			const invDate = new Date(year, month, day);
+			const today = new Date();
+			
+			// Samakan jam ke 00:00 agar murni menghitung selisih hari kalender
+			today.setHours(0, 0, 0, 0);
+			invDate.setHours(0, 0, 0, 0);
+
+			const diffInMs = today - invDate;
+			return Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+		}
+		return 0;
+	}
+	
+	
+	// 1. Fungsi mengambil batas hari yang tersimpan di memori browser (default: 10 hari)
+	function getReminderDays() {
+		const savedDays = localStorage.getItem('sbr_reminder_days');
+		const parsed = parseInt(savedDays, 10);
+		return (!isNaN(parsed) && parsed > 0) ? parsed : 10;
+	}
+
+	// 2. Fungsi yang dipanggil saat Anda mengetik angka baru di kotak input
+	function handleReminderDaysChange() {
+		const input = document.getElementById('reminderDaysInput');
+		let days = parseInt(input.value, 10);
+		
+		// Jika input kosong atau tidak valid, jangan crash, gunakan default minimum 1
+		if (isNaN(days) || days < 1) {
+			days = 1;
+		}
+		
+		// Simpan ke memori browser agar tidak hilang saat reload
+		localStorage.setItem('sbr_reminder_days', days);
+		
+		// Render ulang tabel secara otomatis dengan batas hari baru
+		renderUI();
+	}
+	
+	// Fungsi filter cepat saat badge kuning di samping judul diklik
+	function toggleOverdueFilter() {
+		const statusSelect = document.getElementById('filterStatus');
+		if (!statusSelect) return;
+
+		// Jika sedang dalam mode 'overdue', kembalikan ke 'Semua Status'
+		if (statusSelect.value === 'overdue') {
+			statusSelect.value = '';
+		} else {
+			// Jika belum, aktifkan filter 'overdue'
+			statusSelect.value = 'overdue';
+		}
+		
+		// Perbarui tabel langsung
+		renderUI();
+	}
+	
+
+	// 3. Menghitung selisih hari kalender dari tanggal nota (dd/Mmm/yy) ke hari ini
+	function calculateDaysElapsed(dateStr) {
+		if (!dateStr) return 0;
+		const parts = dateStr.split('/');
+		if (parts.length === 3) {
+			const monthMap = { 
+				'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'Mei': 4, 'Jun': 5, 
+				'Jul': 6, 'Agu': 7, 'Sep': 8, 'Okt': 9, 'Nov': 10, 'Des': 11 
+			};
+			const year = 2000 + parseInt(parts[2], 10);
+			const month = monthMap[parts[1]] !== undefined ? monthMap[parts[1]] : 0;
+			const day = parseInt(parts[0], 10);
+
+			const invDate = new Date(year, month, day);
+			const today = new Date();
+			
+			// Samakan jam ke 00:00:00 agar murni menghitung selisih pergantian hari kalender
+			today.setHours(0, 0, 0, 0);
+			invDate.setHours(0, 0, 0, 0);
+
+			const diffInMs = today - invDate;
+			return Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+		}
+		return 0;
+	}
+	
     function renderUI() {
-        const tbody = document.getElementById('invoiceTableBody');
-        tbody.innerHTML = '';
-        
-        let totalUnpaid = 0;
-        let totalUnpaidCount = 0; 
-        
-        // Variabel penampung per kategori
-        let hutangBahanBaku = 0;
-        let hutangPlastik = 0;
-        let hutangDus = 0;
-        let hutangLainnya = 0;
+    const tbody = document.getElementById('invoiceTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    // Ambil batas hari yang sedang aktif
+    const thresholdDays = getReminderDays();
 
-        invoices.forEach(inv => {
-            const sisa = inv.total - inv.paid;
-			// Tambahkan kondisi "|| inv.total === 0" 
-			if (sisa > 0 || inv.total === 0) {
-				totalUnpaid += sisa;
-				totalUnpaidCount++;
-                
-                // Distribusikan nilai hutang sesuai kategori
-                if (inv.category === 'Bahan Baku') hutangBahanBaku += sisa;
-                else if (inv.category === 'Plastik') hutangPlastik += sisa;
-                else if (inv.category === 'Dus') hutangDus += sisa;
-                else hutangLainnya += sisa; // Semua di luar 3 itu masuk ke Lainnya
-
-                let statusBadge = '';
-				if (inv.total === 0) {
-					statusBadge = '<span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md text-[11px] font-semibold border border-gray-300">Menunggu Invoice</span>';
-				} else if(inv.paid > 0) {
-					statusBadge = '<span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-md text-[11px] font-semibold border border-amber-200/60">Sebagian</span>';
-				} else {
-					statusBadge = '<span class="px-2.5 py-1 bg-rose-50 text-rose-600 rounded-md text-[11px] font-semibold border border-rose-200/60">Belum Bayar</span>';
-				}
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50/50 transition-colors group";
-                tr.innerHTML = `
-                    <td class="p-4 border-b border-gray-50">
-                        <div class="font-bold text-gray-900 dark:text-gray-100">${inv.number}</div>
-                        <div class="text-xs text-gray-400 dark:text-gray-100 mt-1">${inv.date}</div>
-                    </td>
-                    <td class="p-4 border-b border-gray-50">
-                        <div class="font-medium text-gray-800 dark:text-gray-100">${inv.supplier}</div>
-						<div class="text-xs text-gray-500 dark:text-gray-100 italic mt-0.5">${inv.keterangan ? inv.keterangan : ''}</div>
-                        <!-- Perubahan 1: Kategori menjadi Badge Berwarna -->
-                        <div class="mt-1.5">
-                            <span class="inline-block px-2 py-0.5 rounded font-semibold text-[10px] tracking-wide ${getCategoryBadgeStyle(inv.category)}">
-                                ${inv.category}
-                            </span>
-                        </div>
-                    </td>
-                    <td class="p-4 border-b border-gray-50 font-bold text-gray-900 dark:text-white">${formatRp(inv.total)}</td>
-                    <td class="p-4 border-b border-gray-50">${statusBadge}</td>
-                    <td class="p-4 border-b border-gray-50">
-						<div class="flex items-center justify-end gap-1">
-							<!-- Tambahan: Tombol Bayar (Ikon Mata Uang) -->
-							<button onclick="openPayment('${inv.id}')" title="Bayar Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all focus:outline-none">
-								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg>
-							</button>
-							
-							<!-- Tombol Koreksi (Icon Pensil) -->
-							<button onclick="openEditInvoice('${inv.id}')" title="Koreksi Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all focus:outline-none">
-								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-								</svg>
-							</button>
-						</div>
-					</td>
-                `;
-                tbody.appendChild(tr);
-            }
-        });
-
-        // Update Text Dashboard
-        document.getElementById('totalUnpaid').innerText = formatRp(totalUnpaid);
-        document.getElementById('totalInvoicesBadge').innerText = totalUnpaidCount + ' Nota Belum Lunas';
-        
-        // Update Text Widget Kategori
-        document.getElementById('widgetBahanBaku').innerText = formatRp(hutangBahanBaku);
-        document.getElementById('widgetPlastik').innerText = formatRp(hutangPlastik);
-        document.getElementById('widgetDus').innerText = formatRp(hutangDus);
-        document.getElementById('widgetLainnya').innerText = formatRp(hutangLainnya);
+    // Pastikan input di layar menampilkan angka yang aktif
+    const reminderInput = document.getElementById('reminderDaysInput');
+    if (reminderInput && document.activeElement !== reminderInput) {
+        reminderInput.value = thresholdDays;
     }
+
+    // Ambil nilai filter pencarian
+    const keyword = (document.getElementById('filterKeyword')?.value || '').toLowerCase().trim();
+    const selectedCategory = document.getElementById('filterCategory')?.value || '';
+    const selectedStatus = document.getElementById('filterStatus')?.value || '';
+
+    let totalUnpaid = 0;
+    let totalUnpaidCount = 0;
+    let overdueCount = 0;
+    
+    let hutangBahanBaku = 0;
+    let hutangPlastik = 0;
+    let hutangDus = 0;
+    let hutangLainnya = 0;
+
+    // 1. Saring nota yang masih berjalan (belum lunas atau surat jalan nol rupiah)
+    const activeInvoices = invoices.filter(inv => {
+        const sisa = inv.total - inv.paid;
+        return sisa > 0 || inv.total === 0;
+    });
+
+    // 2. Akumulasi data widget samping (dihitung dari seluruh data berjalan)
+    activeInvoices.forEach(inv => {
+        const sisa = inv.total - inv.paid;
+        totalUnpaid += sisa;
+        totalUnpaidCount++;
+
+        if (inv.category === 'Bahan Baku') hutangBahanBaku += sisa;
+        else if (inv.category === 'Plastik') hutangPlastik += sisa;
+        else if (inv.category === 'Dus') hutangDus += sisa;
+        else hutangLainnya += sisa;
+
+        // Cek apakah nota ini melebihi batas hari yang disetel pengguna
+        const days = calculateDaysElapsed(inv.date);
+        if (days > thresholdDays && inv.total > 0 && sisa > 0) {
+            overdueCount++;
+        }
+    });
+
+    // 3. Perbarui Badge Peringatan di Atas Tabel
+    const overdueNotice = document.getElementById('overdueBadgeNotice');
+    const overdueText = document.getElementById('overdueBadgeText');
+    if (overdueNotice && overdueText) {
+        if (overdueCount > 0) {
+            overdueNotice.classList.remove('hidden');
+            overdueNotice.classList.add('flex');
+            overdueText.innerText = `${overdueCount} Nota > ${thresholdDays} Hari`;
+        } else {
+            overdueNotice.classList.add('hidden');
+            overdueNotice.classList.remove('flex');
+        }
+    }
+
+    // 4. Terapkan Filter yang Dipilih Pengguna
+    const filteredInvoices = activeInvoices.filter(inv => {
+        const sisa = inv.total - inv.paid;
+        const days = calculateDaysElapsed(inv.date);
+
+        // Filter kata kunci pencarian
+        const matchKeyword = !keyword || 
+            (inv.number && inv.number.toLowerCase().includes(keyword)) ||
+            (inv.supplier && inv.supplier.toLowerCase().includes(keyword)) ||
+            (inv.keterangan && inv.keterangan.toLowerCase().includes(keyword));
+
+        // Filter kategori
+        const matchCategory = !selectedCategory || inv.category === selectedCategory;
+
+        // Filter status / usia tagihan
+        let matchStatus = true;
+        if (selectedStatus === 'overdue') {
+            matchStatus = (days > thresholdDays && sisa > 0 && inv.total > 0);
+        } else if (selectedStatus === 'unpaid') {
+            matchStatus = (inv.paid === 0 && inv.total > 0);
+        } else if (selectedStatus === 'partial') {
+            matchStatus = (inv.paid > 0 && sisa > 0);
+        } else if (selectedStatus === 'sj') {
+            matchStatus = (inv.total === 0);
+        }
+
+        return matchKeyword && matchCategory && matchStatus;
+    });
+
+    // 5. Tampilkan Baris Tabel
+    if (filteredInvoices.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">
+                    Tidak ada tagihan yang cocok dengan filter atau pencarian Anda.
+                </td>
+            </tr>`;
+    } else {
+        filteredInvoices.forEach(inv => {
+            const sisa = inv.total - inv.paid;
+            const days = calculateDaysElapsed(inv.date);
+            const isOverdue = days > thresholdDays && inv.total > 0 && sisa > 0;
+
+            // Penentuan lencana status
+            let statusBadge = '';
+            if (inv.total === 0) {
+                statusBadge = '<span class="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-md text-[11px] font-semibold border border-gray-300 dark:border-gray-700">Menunggu Invoice</span>';
+            } else if (inv.paid > 0) {
+                statusBadge = '<span class="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-md text-[11px] font-semibold border border-amber-200/60 dark:border-amber-800/60">Sebagian</span>';
+            } else {
+                statusBadge = '<span class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-md text-[11px] font-semibold border border-rose-200/60 dark:border-rose-800/60">Belum Bayar</span>';
+            }
+
+            // Indikator Kelap-Kelip Oranye (Animasi Ping)
+            const overdueDot = isOverdue ? `
+                <span class="relative flex h-2.5 w-2.5 mr-1" title="Tagihan ini sudah berumur ${days} hari (melebihi batas ${thresholdDays} hari)">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                </span>` : '';
+
+            // Badge umur hari nota
+            const overdueDaysText = isOverdue ? `
+                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                    ${days} hari
+                </span>` : '';
+
+            // Warna baris: Jika lewat batas hari, beri aksen garis oranye tebal di kiri (border-l-4)
+            const rowClass = isOverdue 
+                ? "bg-amber-50/20 dark:bg-amber-950/15 border-l-4 border-amber-500 hover:bg-amber-50/40 dark:hover:bg-amber-950/30 transition-colors group" 
+                : "hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors group";
+
+            const tr = document.createElement('tr');
+            tr.className = rowClass;
+            tr.innerHTML = `
+                <td class="p-4 border-b border-gray-50 dark:border-gray-800">
+                    <div class="flex items-center gap-1.5">
+                        ${overdueDot}
+                        <div class="font-bold text-gray-900 dark:text-gray-100">${inv.number}</div>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-400 mt-1">
+                        <span>${inv.date}</span>
+                        ${overdueDaysText}
+                    </div>
+                </td>
+                <td class="p-4 border-b border-gray-50 dark:border-gray-800">
+                    <div class="font-medium text-gray-800 dark:text-gray-100">${inv.supplier}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 italic mt-0.5">${inv.keterangan || ''}</div>
+                    <div class="mt-1.5">
+                        <span class="inline-block px-2 py-0.5 rounded font-semibold text-[10px] tracking-wide ${getCategoryBadgeStyle(inv.category)}">
+                            ${inv.category}
+                        </span>
+                    </div>
+                </td>
+                <td class="p-4 border-b border-gray-50 dark:border-gray-800 font-bold text-gray-900 dark:text-white">
+                    ${formatRp(inv.total)}
+                </td>
+                <td class="p-4 border-b border-gray-50 dark:border-gray-800">${statusBadge}</td>
+                <td class="p-4 border-b border-gray-50 dark:border-gray-800">
+                    <div class="flex items-center justify-end gap-1">
+                        <button onclick="openPayment('${inv.id}')" title="Bayar Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-gray-800 rounded-lg transition-all focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                        <button onclick="openEditInvoice('${inv.id}')" title="Koreksi Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-lg transition-all focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Perbarui Teks Total di Widget Kiri
+    document.getElementById('totalUnpaid').innerText = formatRp(totalUnpaid);
+    document.getElementById('totalInvoicesBadge').innerText = totalUnpaidCount + ' Nota Belum Lunas';
+    document.getElementById('widgetBahanBaku').innerText = formatRp(hutangBahanBaku);
+    document.getElementById('widgetPlastik').innerText = formatRp(hutangPlastik);
+    document.getElementById('widgetDus').innerText = formatRp(hutangDus);
+    document.getElementById('widgetLainnya').innerText = formatRp(hutangLainnya);
+}
 
     // Fungsi Bantuan untuk Warna Badge Kategori di Tabel
     function getCategoryBadgeStyle(category) {
@@ -1240,84 +1501,85 @@
     let cachedTransactions = [];
 
     function renderHistoryTable() {
-        const tbody = document.getElementById('historyTableBody');
-        const paginationContainer = document.getElementById('historyPagination');
-        tbody.innerHTML = '';
+		const tbody = document.getElementById('historyTableBody');
+		const paginationContainer = document.getElementById('historyPagination');
+		tbody.innerHTML = '';
 
-        let transactionMap = {};
+		let transactionMap = {};
 
-        // Kelompokkan riwayat pembayaran berdasarkan Tanggal + Via + Supplier
-        invoices.forEach(inv => {
-            if (inv.history && inv.history.length > 0) {
-                inv.history.forEach(h => {
-                    const key = `${h.date}_${h.via}_${inv.supplier}`;
-                    if (!transactionMap[key]) {
-                        transactionMap[key] = {
-                            date: h.date, via: h.via, supplier: inv.supplier, category: inv.category, invoices: []
-                        };
-                    }
-                    
-                    const existingInv = transactionMap[key].invoices.find(i => i.number === inv.number);
-                    if (existingInv) existingInv.amount += Number(h.amount);
-                    else transactionMap[key].invoices.push({
-                        id: inv.id, number: inv.number, date: inv.date, supplier: inv.supplier, amount: Number(h.amount)
-                    });
-                });
-            }
-        });
+		// Kelompokkan riwayat pembayaran berdasarkan Tanggal + Via + Supplier
+		invoices.forEach(inv => {
+			if (inv.history && inv.history.length > 0) {
+				inv.history.forEach(h => {
+					const key = `${h.date}_${h.via}_${inv.supplier}`;
+					if (!transactionMap[key]) {
+						transactionMap[key] = {
+							date: h.date, via: h.via, supplier: inv.supplier, category: inv.category, invoices: []
+						};
+					}
+					
+					const existingInv = transactionMap[key].invoices.find(i => i.number === inv.number);
+					if (existingInv) existingInv.amount += Number(h.amount);
+					else transactionMap[key].invoices.push({
+						id: inv.id, number: inv.number, date: inv.date, supplier: inv.supplier, amount: Number(h.amount)
+					});
+				});
+			}
+		});
 
-        cachedTransactions = Object.values(transactionMap);
+		cachedTransactions = Object.values(transactionMap);
 
-        // Jika Kosong
-        if (cachedTransactions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400">Belum ada riwayat pembayaran</td></tr>';
-            paginationContainer.classList.add('hidden');
-            return;
-        }
+		// Jika Riwayat Kosong
+		if (cachedTransactions.length === 0) {
+			tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400 dark:text-gray-500">Belum ada riwayat pembayaran</td></tr>';
+			paginationContainer.classList.add('hidden');
+			return;
+		}
 
-        paginationContainer.classList.remove('hidden');
+		paginationContainer.classList.remove('hidden');
 
-        // LOGIKA PAGINATION
-        const totalPages = Math.ceil(cachedTransactions.length / itemsPerPageHistory) || 1;
-        if (currentPageHistory > totalPages) currentPageHistory = totalPages; // Reset jika kelebihan
-        
-        const startIndex = (currentPageHistory - 1) * itemsPerPageHistory;
-        const endIndex = startIndex + itemsPerPageHistory;
-        const paginatedTrx = cachedTransactions.slice(startIndex, endIndex); // Potong data sesuai halaman
+		// Logika Pagination
+		const totalPages = Math.ceil(cachedTransactions.length / itemsPerPageHistory) || 1;
+		if (currentPageHistory > totalPages) currentPageHistory = totalPages;
+		
+		const startIndex = (currentPageHistory - 1) * itemsPerPageHistory;
+		const endIndex = startIndex + itemsPerPageHistory;
+		const paginatedTrx = cachedTransactions.slice(startIndex, endIndex);
 
-        // Render hanya data yang sudah dipotong
-        paginatedTrx.forEach((trx) => {
-            const originalIndex = cachedTransactions.indexOf(trx); // Ambil index asli untuk modal preview
-            const totalTrxAmount = trx.invoices.reduce((sum, i) => sum + i.amount, 0);
-            const invNumbers = trx.invoices.map(i => i.number).join(', '); 
+		// Render baris dengan dukungan penuh Dark Mode
+		paginatedTrx.forEach((trx) => {
+			const originalIndex = cachedTransactions.indexOf(trx);
+			const totalTrxAmount = trx.invoices.reduce((sum, i) => sum + i.amount, 0);
+			const invNumbers = trx.invoices.map(i => i.number).join(', '); 
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="p-4">
-                    <div class="font-medium text-gray-900">${invNumbers}</div>
-                    <div class="text-xs text-gray-500">${trx.date}</div>
-                </td>
-                <td class="p-4">
-                    <div class="font-medium text-gray-900">${trx.supplier}</div>
-                    <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">${trx.category || '-'}</div>
-                </td>
-                <td class="p-4 font-bold text-gray-900">${formatRp(totalTrxAmount)}</td>
-                <td class="p-4">
-                    <div class="font-medium text-emerald-600">${trx.date}</div>
-                    <div class="text-[10px] font-bold text-gray-600 bg-gray-100 inline-block px-2 py-0.5 rounded mt-1">${trx.via}</div>
-                </td>
-                <td class="p-4 text-right">
-                    <button onclick="openBatchHistoryPreview(${originalIndex})" class="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg font-medium transition-all shadow-sm">Lihat Nota</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+			const tr = document.createElement('tr');
+			tr.className = "hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors";
+			tr.innerHTML = `
+				<td class="p-4">
+					<div class="font-medium text-gray-900 dark:text-gray-100">${invNumbers}</div>
+					<div class="text-xs text-gray-500 dark:text-gray-400">${trx.date}</div>
+				</td>
+				<td class="p-4">
+					<div class="font-medium text-gray-900 dark:text-gray-100">${trx.supplier}</div>
+					<div class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-400 tracking-wider">${trx.category || '-'}</div>
+				</td>
+				<td class="p-4 font-bold text-gray-900 dark:text-gray-100">${formatRp(totalTrxAmount)}</td>
+				<td class="p-4">
+					<div class="font-medium text-emerald-600 dark:text-emerald-400">${trx.date}</div>
+					<div class="text-[10px] font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 inline-block px-2 py-0.5 rounded mt-1 border border-gray-200 dark:border-gray-700">${trx.via}</div>
+				</td>
+				<td class="p-4 text-right">
+					<button onclick="openBatchHistoryPreview(${originalIndex})" class="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-lg font-medium transition-all shadow-sm">Lihat Nota</button>
+				</td>
+			`;
+			tbody.appendChild(tr);
+		});
 
-        // Update Tombol & Teks Pagination
-        document.getElementById('historyPageInfo').innerText = `Halaman ${currentPageHistory} dari ${totalPages}`;
-        document.getElementById('btnPrevHistory').disabled = currentPageHistory === 1;
-        document.getElementById('btnNextHistory').disabled = currentPageHistory === totalPages;
-    }
+		// Update Label & Tombol Pagination
+		document.getElementById('historyPageInfo').innerText = `Halaman ${currentPageHistory} dari ${totalPages}`;
+		document.getElementById('btnPrevHistory').disabled = currentPageHistory === 1;
+		document.getElementById('btnNextHistory').disabled = currentPageHistory === totalPages;
+	}
 
     // Fungsi Pindah Halaman
     function prevPageHistory() {
@@ -1369,25 +1631,29 @@
 		toggleModal('dataModal');
 		toggleModal('invoicePreviewModal');
 	}
-    // Fungsi Switch Tab pada Modal Data
-    function switchTab(tab) {
-        const tabRiwayat = document.getElementById('tabRiwayat');
-        const tabLainnya = document.getElementById('tabLainnya');
-        const contentRiwayat = document.getElementById('contentRiwayat');
-        const contentLainnya = document.getElementById('contentLainnya');
+    // Fungsi Switch Tab pada Modal Data yang Mendukung Dark Mode
+	function switchTab(tab) {
+		const tabRiwayat = document.getElementById('tabRiwayat');
+		const tabLainnya = document.getElementById('tabLainnya');
+		const contentRiwayat = document.getElementById('contentRiwayat');
+		const contentLainnya = document.getElementById('contentLainnya');
 
-        if (tab === 'riwayat') {
-            tabRiwayat.className = "pb-3 border-b-2 border-black text-black";
-            tabLainnya.className = "pb-3 border-b-2 border-transparent text-gray-400 hover:text-gray-600";
-            contentRiwayat.classList.remove('hidden');
-            contentLainnya.classList.add('hidden');
-        } else {
-            tabLainnya.className = "pb-3 border-b-2 border-black text-black";
-            tabRiwayat.className = "pb-3 border-b-2 border-transparent text-gray-400 hover:text-gray-600";
-            contentLainnya.classList.remove('hidden');
-            contentRiwayat.classList.add('hidden');
-			}
+		// Kelas seragam dengan aksen warna emerald
+		const activeClass = "pb-3 border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400 font-semibold transition-colors";
+		const inactiveClass = "pb-3 border-b-2 border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors";
+
+		if (tab === 'riwayat') {
+			tabRiwayat.className = activeClass;
+			tabLainnya.className = inactiveClass;
+			contentRiwayat.classList.remove('hidden');
+			contentLainnya.classList.add('hidden');
+		} else {
+			tabLainnya.className = activeClass;
+			tabRiwayat.className = inactiveClass;
+			contentLainnya.classList.remove('hidden');
+			contentRiwayat.classList.add('hidden');
 		}
+	}
 		
 		// Helper Format Tanggal ke dd/mmm/yy (Contoh: 09/Sep/26)
 	function formatDateID(dateInput) {
