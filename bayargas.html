@@ -5,33 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Pembayaran Gas Modern</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
+        /* PALET WARNA MODE TERANG (CALM SLATE) */
         :root {
-            --bg-body: #f8fafc;
+            --bg-body: #f1f5f9;
             --bg-card: #ffffff;
-            --text-main: #1e293b;
+            --text-main: #0f172a;
             --text-muted: #64748b;
             --border-light: #e2e8f0;
+            --border-focus: #10b981;
+            
+            --input-bg: #ffffff;
+            --table-head-bg: #f8fafc;
+            --table-border: #e2e8f0;
             
             --color-primary: #10b981;
             --color-primary-hover: #059669;
             --color-secondary: #3b82f6;
             --color-secondary-hover: #2563eb;
-            --color-date: #ffedd5;
-            --color-date-text: #c2410c;
-            --color-head: #dcfce7;
-            --color-highlight: #fef08a;
+            
+            --color-badge-bg: #d1fae5;
+            --color-badge-text: #065f46;
+            --color-badge-border: #a7f3d0;
+            
+            --color-accent-bg: #fef3c7;
+            --color-accent-text: #92400e;
+            --color-accent-border: #fde68a;
+
+            --row-total-bg: linear-gradient(180deg, #fef9c3 0%, #fef08a 100%);
+            --row-total-text: #713f12;
+
+            --box-shadow-card: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
+            --box-item-bg: #f8fafc;
+            --kotret-input-bg: #ffffff;
+            --kotret-input-filled: #f8fafc;
         }
 
-        * { box-sizing: border-box; }
+        /* PALET WARNA MODE GELAP (CALM DARK SLATE) */
+        body.dark-mode {
+            --bg-body: #0b1120;
+            --bg-card: #151f32;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-light: #24324d;
+            --border-focus: #34d399;
+            
+            --input-bg: #0f172a;
+            --table-head-bg: #0f172a;
+            --table-border: #24324d;
+            
+            --color-badge-bg: rgba(16, 185, 129, 0.15);
+            --color-badge-text: #34d399;
+            --color-badge-border: rgba(16, 185, 129, 0.3);
+            
+            --color-accent-bg: rgba(245, 158, 11, 0.15);
+            --color-accent-text: #fcd34d;
+            --color-accent-border: rgba(245, 158, 11, 0.3);
+
+            --row-total-bg: linear-gradient(180deg, #854d0e 0%, #713f12 100%);
+            --row-total-text: #fef08a;
+
+            --box-shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            --box-item-bg: #0f172a;
+            --kotret-input-bg: #0b1120;
+            --kotret-input-filled: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease;
+        }
 
         body { 
-            font-family: 'Inter', sans-serif; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
             background-color: var(--bg-body); 
             color: var(--text-main); 
-            padding: 2rem; 
-            margin: 0; 
+            padding: 2rem 1.5rem; 
+            min-height: 100vh;
         }
 
         #printArea { display: none; }
@@ -39,7 +92,7 @@
         .layout-wrapper {
             display: flex;
             gap: 2rem;
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
             align-items: flex-start;
         }
@@ -47,51 +100,114 @@
         .main-panel, .side-panel {
             background: var(--bg-card); 
             padding: 2rem; 
-            border-radius: 16px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+            border-radius: 20px; 
+            box-shadow: var(--box-shadow-card);
             border: 1px solid var(--border-light);
         }
 
-        .main-panel { flex: 1; }
-        .side-panel { width: 380px; }
+        .main-panel { 
+            flex: 1; 
+            min-width: 0;
+        }
+        
+        .side-panel { 
+            width: 480px; 
+            flex-shrink: 0; 
+        }
 
+        /* Header Form */
         .header-section {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             margin-bottom: 2rem;
-            padding-bottom: 1rem;
+            padding-bottom: 1.5rem;
             border-bottom: 1px dashed var(--border-light);
+            gap: 1rem;
         }
 
-        .title-area h1 { margin: 0 0 0.5rem 0; font-size: 1.5rem; color: #0f172a; }
+        .title-area h1 { 
+            font-size: 1.6rem; 
+            font-weight: 800; 
+            letter-spacing: -0.02em;
+            color: var(--text-main); 
+            margin-bottom: 0.35rem;
+        }
+
         .title-area input {
             font-size: 1rem;
-            font-style: italic;
             border: none;
-            border-bottom: 1px solid var(--border-light);
-            padding: 0.25rem 0;
-            width: 200px;
-            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            padding: 0.2rem 0;
+            width: 220px;
+            font-weight: 600;
+            color: var(--color-secondary);
             background: transparent;
         }
-        .title-area input:focus { outline: none; border-bottom-color: var(--color-primary); color: var(--text-main); }
+        .title-area input:hover { border-bottom-color: var(--border-light); }
+        .title-area input:focus { 
+            outline: none; 
+            border-bottom-color: var(--color-secondary); 
+        }
 
-        .date-wrapper {
-            position: relative;
-            background-color: var(--color-date);
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            border: 1px solid #fdba74;
-            cursor: pointer;
-            transition: all 0.2s;
+        .header-controls {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
-        .date-wrapper:hover { filter: brightness(0.95); }
-        .date-display { font-weight: 600; font-size: 0.95rem; color: var(--color-date-text); pointer-events: none; }
-        .date-icon { color: var(--color-date-text); font-size: 1.1rem; pointer-events: none; }
+
+        /* Tombol Toggle Tema */
+        .theme-toggle-btn {
+            background: var(--box-item-bg);
+            border: 1px solid var(--border-light);
+            color: var(--text-main);
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+        }
+        .theme-toggle-btn:hover {
+            border-color: var(--border-focus);
+            transform: translateY(-1px);
+        }
+        .theme-toggle-btn svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2;
+        }
+
+        /* Date Picker */
+        .date-wrapper {
+            position: relative;
+            background-color: var(--color-accent-bg);
+            padding: 0.65rem 1.15rem;
+            border-radius: 12px;
+            border: 1px solid var(--color-accent-border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            height: 44px;
+        }
+        .date-wrapper:hover { 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+        }
+        .date-display { 
+            font-weight: 700; 
+            font-size: 0.9rem; 
+            color: var(--color-accent-text); 
+            pointer-events: none; 
+        }
+        .date-icon { 
+            font-size: 1.1rem; 
+            pointer-events: none; 
+        }
         .date-wrapper input[type="date"] {
             position: absolute;
             top: 0; left: 0;
@@ -100,52 +216,124 @@
             cursor: pointer;
         }
 
-        table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
-        th, td { padding: 1rem; text-align: center; border-bottom: 1px solid var(--border-light); }
-        th { background-color: var(--color-head); font-weight: 600; font-size: 0.95rem; border-bottom: 2px solid #bbf7d0; }
-        td.text-right { text-align: right; }
+        /* Tabel Transaksi Modern */
+        .table-responsive {
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+            margin-bottom: 1.75rem;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: var(--bg-card);
+        }
+
+        th { 
+            background-color: var(--table-head-bg); 
+            font-weight: 700; 
+            font-size: 0.85rem; 
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        td { 
+            padding: 1rem; 
+            text-align: center; 
+            border-bottom: 1px solid var(--border-light); 
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        tr:last-child td { border-bottom: none; }
         
         .font-bold { font-weight: 700; }
+        .text-right { text-align: right; }
         
+        /* Input Form */
         .form-input {
             width: 100%;
-            border: 1px solid var(--border-light);
-            padding: 0.5rem;
-            border-radius: 6px;
+            border: 1.5px solid var(--border-light);
+            padding: 0.55rem 0.75rem;
+            border-radius: 8px;
             font-family: inherit;
             font-size: 0.95rem;
-            transition: all 0.2s;
+            font-weight: 600;
+            color: var(--text-main);
+            background: var(--input-bg);
             text-align: center;
         }
-        .form-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
-        .w-qty { width: 80px; }
-        .w-price { width: 130px; text-align: right; }
+        .form-input:focus { 
+            outline: none; 
+            border-color: var(--border-focus); 
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15); 
+        }
+        .w-qty { width: 90px; }
+        .w-price { width: 140px; text-align: right; }
 
-        .row-total { background-color: var(--color-highlight); border-bottom: none; }
-        .row-total td { font-size: 1.1rem; border-bottom: none; }
+        /* Row Total Card Highlight */
+        .row-total { 
+            background: var(--row-total-bg);
+            color: var(--row-total-text);
+        }
+        .row-total td { 
+            font-size: 1.05rem; 
+            font-weight: 800;
+            color: var(--row-total-text);
+            border-bottom: none;
+            padding: 1.1rem 1rem;
+        }
 
-        .footer-section { display: flex; justify-content: flex-end; margin-bottom: 1.5rem; }
+        /* Footer Sisa Section */
+        .footer-section { 
+            display: flex; 
+            justify-content: flex-end; 
+            margin-bottom: 2rem; 
+        }
+
         .sisa-box {
-            background: #f8fafc;
+            background: var(--box-item-bg);
             border: 1px solid var(--border-light);
-            border-radius: 10px;
-            width: 260px;
+            border-radius: 14px;
+            width: 290px;
             overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         }
         .sisa-box-title {
-            background-color: var(--color-highlight);
-            padding: 0.6rem;
-            font-weight: 600;
+            background: var(--table-head-bg);
+            padding: 0.7rem 1rem;
+            font-weight: 700;
             text-align: center;
-            font-size: 0.9rem;
-            border-bottom: 1px solid #fde047;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-light);
         }
-        .sisa-content { padding: 1rem; }
-        .sisa-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .sisa-content { padding: 1.1rem; }
+        .sisa-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 0.75rem; 
+        }
         .sisa-row:last-child { margin-bottom: 0; }
-        .sisa-row span { font-size: 0.95rem; font-weight: 500; }
-        .sisa-row input { width: 70px; text-align: right; }
+        .sisa-row span { 
+            font-size: 0.9rem; 
+            font-weight: 700; 
+            color: var(--text-main); 
+        }
+        .sisa-row input { 
+            width: 80px; 
+            text-align: center; 
+            padding: 0.4rem;
+        }
 
+        /* Action Buttons */
         .btn-group {
             display: flex;
             gap: 1rem;
@@ -154,54 +342,187 @@
             flex: 1;
             color: white;
             border: none;
-            padding: 1rem;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
+            padding: 0.95rem 1.25rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
             display: flex;
             justify-content: center;
             align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+        }
+        .btn-export { 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+        }
+        .btn-export:hover { 
+            filter: brightness(1.08); 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.25);
+        }
+        
+        .btn-print { 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+        }
+        .btn-print:hover { 
+            filter: brightness(1.08); 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 15px rgba(59, 130, 246, 0.25);
+        }
+
+        /* Side Panel: Kalkulator Mini Kotretan */
+        .kotret-title { 
+            font-size: 1.2rem; 
+            font-weight: 800; 
+            letter-spacing: -0.01em; 
+            margin-bottom: 0.25rem; 
+            color: var(--text-main);
+        }
+        .kotret-subtitle { 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            margin-bottom: 1.5rem; 
+        }
+        
+        .kotret-group { 
+            margin-bottom: 1.25rem; 
+            background: var(--box-item-bg); 
+            border: 1px solid var(--border-light); 
+            padding: 1rem 1.1rem; 
+            border-radius: 14px; 
+        }
+
+        /* Header toggle collapse */
+        .kotret-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer;
+            user-select: none;
+            padding: 0.35rem 0.4rem;
+            margin: -0.35rem -0.4rem 0.75rem -0.4rem;
+            border-radius: 8px;
+        }
+        .kotret-header:hover {
+            background-color: var(--border-light);
+        }
+
+        .kotret-label {
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
             gap: 0.5rem;
         }
-        .btn-export { background-color: var(--color-primary); }
-        .btn-export:hover { background-color: var(--color-primary-hover); transform: translateY(-1px); }
-        
-        .btn-print { background-color: var(--color-secondary); }
-        .btn-print:hover { background-color: var(--color-secondary-hover); transform: translateY(-1px); }
 
-        .kotret-title { font-size: 1.1rem; margin: 0 0 0.25rem 0; font-weight: 700; }
-        .kotret-subtitle { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 1.5rem 0; }
-        
-        .kotret-group { margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid var(--border-light); padding: 1rem; border-radius: 10px; }
-        .kotret-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; }
-        .kotret-sum { color: var(--color-primary); font-weight: 700; background: #dcfce7; padding: 0.2rem 0.6rem; border-radius: 6px; }
-        
-        .grid-10 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-        .kotret-input {
-            width: 100%; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 6px;
-            text-align: center; font-size: 0.9rem; outline: none; transition: border 0.2s;
+        .chevron-icon {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: inline-block;
+            transition: transform 0.2s ease;
         }
-        .kotret-input:focus { border-color: var(--color-primary); }
+
+        .kotret-right {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .kotret-sum { 
+            color: var(--color-badge-text); 
+            font-weight: 700; 
+            font-size: 0.85rem;
+            background: var(--color-badge-bg); 
+            padding: 0.25rem 0.65rem; 
+            border-radius: 8px; 
+            border: 1px solid var(--color-badge-border);
+        }
+
+        /* Tombol Kosongkan Kotretan */
+        .btn-clear {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: 6px;
+        }
+        .btn-clear:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        /* Logic Collapse */
+        .kotret-group.collapsed .kotret-header {
+            margin-bottom: 0;
+        }
+        .kotret-group.collapsed .chevron-icon {
+            transform: rotate(-90deg);
+        }
+        .kotret-group.collapsed .kotret-body {
+            display: none;
+        }
+        
+        /* Grid 5 Baris x 8 Kolom */
+        .grid-kotret { 
+            display: grid; 
+            grid-template-columns: repeat(8, 1fr); 
+            gap: 5px; 
+        }
+
+        .kotret-input {
+            width: 100%; 
+            height: 34px;
+            padding: 0.2rem; 
+            border: 1px solid var(--border-light); 
+            border-radius: 6px;
+            text-align: center; 
+            font-size: 0.85rem; 
+            font-weight: 600;
+            outline: none; 
+            background: var(--kotret-input-bg);
+            color: var(--text-main);
+        }
+        .kotret-input:focus { 
+            border-color: var(--color-primary); 
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            background: var(--input-bg);
+        }
+        .kotret-input:not(:placeholder-shown) {
+            background: var(--kotret-input-filled);
+            border-color: var(--border-light);
+        }
 
         input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
         input[type=number] { -moz-appearance: textfield; }
 
-        @media (max-width: 1024px) {
+        /* Responsif Layar */
+        @media (max-width: 1080px) {
             .layout-wrapper { flex-direction: column; }
             .side-panel { width: 100%; }
-            .grid-10 { grid-template-columns: repeat(10, 1fr); }
         }
-        @media (max-width: 600px) {
-            .grid-10 { grid-template-columns: repeat(5, 1fr); }
-            .header-section { flex-direction: column; gap: 1rem; }
+        @media (max-width: 640px) {
+            body { padding: 1rem; }
+            .main-panel, .side-panel { padding: 1.25rem; border-radius: 16px; }
+            .header-section { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .header-controls { width: 100%; justify-content: space-between; }
+            .date-wrapper { flex: 1; justify-content: center; }
             .btn-group { flex-direction: column; }
+            .grid-kotret { grid-template-columns: repeat(8, 1fr); gap: 4px; }
+            .kotret-input { height: 32px; font-size: 0.75rem; }
         }
 
+        /* Cetak Struk */
         @media print {
-            body { background: white; padding: 0; margin: 0; font-family: Arial, sans-serif; }
+            body { background: #ffffff !important; color: #000000 !important; padding: 0; margin: 0; font-family: Arial, sans-serif; }
             .layout-wrapper { display: none !important; }
             
             #printArea { 
@@ -217,8 +538,8 @@
                 padding-bottom: 10px;
                 margin-bottom: 10px;
             }
-            .print-header h2 { margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase; color: #0f172a; }
-            .print-header p { margin: 2px 0; font-size: 12px; }
+            .print-header h2 { margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase; color: #000000; }
+            .print-header p { margin: 2px 0; font-size: 12px; color: #000000; }
 
             .print-table {
                 width: 100%;
@@ -229,8 +550,10 @@
             .print-table th, .print-table td {
                 border: 1px solid #000;
                 padding: 6px;
+                color: #000000 !important;
+                background: transparent !important;
             }
-            .print-table th { background-color: #f0f0f0; text-align: center !important; font-weight: bold;}
+            .print-table th { background-color: #f0f0f0 !important; text-align: center !important; font-weight: bold;}
             
             .print-table th:nth-child(1), .print-table td:nth-child(1) { width: 15%; }
             .print-table th:nth-child(2), .print-table td:nth-child(2) { width: 25%; }
@@ -240,7 +563,6 @@
             .t-center { text-align: center !important; }
             .t-right { text-align: right !important; }
             .f-bold { font-weight: bold; }
-            .text-blue { color: #0f4a8a; }
 
             .print-sisa-table {
                 width: 55%;
@@ -251,17 +573,20 @@
             .print-sisa-table th, .print-sisa-table td {
                 border: 1px solid #000;
                 padding: 6px;
+                color: #000000 !important;
+                background: transparent !important;
             }
-            .print-sisa-table th { background-color: #f0f0f0; font-weight: bold; }
+            .print-sisa-table th { background-color: #f0f0f0 !important; font-weight: bold; }
             
-            .sisa-col-jenis { width: 60%; font-weight: bold; text-align: center; color: #000000; }
-            .sisa-col-nilai { width: 40%; text-align: center; color: #000000; }
+            .sisa-col-jenis { width: 60%; font-weight: bold; text-align: center; }
+            .sisa-col-nilai { width: 40%; text-align: center; }
 
             @page {
-				margin-top: 10mm;
-				margin-right: 5mm;
-				margin-bottom: 5mm;
-				margin-left: 10mm;
+                margin-top: 10mm;
+                margin-right: 5mm;
+                margin-bottom: 5mm;
+                margin-left: 10mm;
+            }
         }
     </style>
 </head>
@@ -270,64 +595,73 @@
 <div id="printArea"></div>
 
 <div class="layout-wrapper">
+    <!-- Panel Utama -->
     <div class="main-panel">
         <div class="header-section">
             <div class="title-area">
                 <h1>Pembayaran Gas</h1>
                 <input type="text" id="namaPelanggan" value="Mas Puji" placeholder="Nama Pelanggan">
             </div>
-            <div class="date-wrapper">
-                <span class="date-display" id="dateDisplay">Memuat tanggal...</span>
-                <span class="date-icon">📅</span>
-                <input type="date" id="tanggalBerlaku">
+            
+            <div class="header-controls">
+                <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ganti Mode Gelap/Terang">
+                </button>
+
+                <div class="date-wrapper" title="Klik untuk ubah tanggal">
+                    <span class="date-icon">📅</span>
+                    <span class="date-display" id="dateDisplay">Memuat tanggal...</span>
+                    <input type="date" id="tanggalBerlaku">
+                </div>
             </div>
         </div>
 
-        <table id="gasTable">
-            <thead>
-                <tr>
-                    <th width="15%">Qty</th>
-                    <th width="20%">Jenis Gas</th>
-                    <th width="30%">Harga</th>
-                    <th width="35%" class="text-right">Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><input type="number" class="form-input w-qty" id="qty12" min="0" oninput="calculateMain()"></td>
-                    <td class="font-bold">12KG</td>
-                    <td class="text-right"><input type="number" class="form-input w-price" id="harga12" value="220000" oninput="calculateMain()"></td>
-                    <td class="text-right font-bold" id="total12">-</td>
-                </tr>
-                <tr>
-                    <td><input type="number" class="form-input w-qty" id="qty5" min="0" oninput="calculateMain()"></td>
-                    <td class="font-bold">5KG</td>
-                    <td class="text-right"><input type="number" class="form-input w-price" id="harga5" value="103000" oninput="calculateMain()"></td>
-                    <td class="text-right font-bold" id="total5">-</td>
-                </tr>
-                <tr>
-                    <td></td><td></td><td></td><td class="text-right">-</td>
-                </tr>
-                <tr class="row-total">
-                    <td class="font-bold" style="background:#fef08a;">Total Tabung</td>
-                    <td class="font-bold" id="totalTabungLabel" style="background:#fef08a;">0</td>
-                    <td class="font-bold" style="background:#fef08a;">Total</td>
-                    <td class="text-right font-bold" id="grandTotalLabel" style="background:#fef08a;">-</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table id="gasTable">
+                <thead>
+                    <tr>
+                        <th width="15%">Qty</th>
+                        <th width="20%">Jenis Gas</th>
+                        <th width="30%">Harga (Rp)</th>
+                        <th width="35%" class="text-right">Total (Rp)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="number" class="form-input w-qty" id="qty12" min="0" placeholder="0" oninput="calculateMain()"></td>
+                        <td class="font-bold">12KG</td>
+                        <td class="text-right"><input type="number" class="form-input w-price" id="harga12" value="220000" oninput="calculateMain()"></td>
+                        <td class="text-right font-bold" id="total12">-</td>
+                    </tr>
+                    <tr>
+                        <td><input type="number" class="form-input w-qty" id="qty5" min="0" placeholder="0" oninput="calculateMain()"></td>
+                        <td class="font-bold">5KG</td>
+                        <td class="text-right"><input type="number" class="form-input w-price" id="harga5" value="103000" oninput="calculateMain()"></td>
+                        <td class="text-right font-bold" id="total5">-</td>
+                    </tr>
+                    <tr>
+                        <td></td><td></td><td></td><td class="text-right">-</td>
+                    </tr>
+                    <tr class="row-total">
+                        <td class="font-bold">Total Tabung</td>
+                        <td class="font-bold" id="totalTabungLabel">0</td>
+                        <td class="font-bold">Grand Total</td>
+                        <td class="text-right font-bold" id="grandTotalLabel">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="footer-section">
             <div class="sisa-box">
-                <div class="sisa-box-title">sisa ke bon depan</div>
+                <div class="sisa-box-title">Sisa Ke Bon Depan</div>
                 <div class="sisa-content">
                     <div class="sisa-row">
-                        <span>12kg</span>
-                        <input type="number" class="form-input" id="sisa12" min="0" placeholder="..." oninput="syncQty('12')">
+                        <span>12 KG</span>
+                        <input type="number" class="form-input" id="sisa12" min="0" placeholder="0" oninput="syncQty('12')">
                     </div>
                     <div class="sisa-row">
-                        <span>5kg</span>
-                        <input type="number" class="form-input" id="sisa5" min="0" placeholder="..." oninput="syncQty('5')">
+                        <span>5 KG</span>
+                        <input type="number" class="form-input" id="sisa5" min="0" placeholder="0" oninput="syncQty('5')">
                     </div>
                 </div>
             </div>
@@ -335,39 +669,97 @@
 
         <div class="btn-group">
             <button class="btn-export" onclick="exportToExcel()">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 Simpan Excel
             </button>
             <button class="btn-print" onclick="printReceipt()">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                 Print Struk
             </button>
         </div>
     </div>
 
+    <!-- Panel Samping: Kotretan Mini dengan Collapse -->
     <div class="side-panel">
         <h3 class="kotret-title">Kalkulator Mini</h3>
-        <p class="kotret-subtitle">Area kotret otomatis (4 baris x 5 kolom)</p>
+        <p class="kotret-subtitle">Klik judul tabung untuk buka / tutup area</p>
 
-        <div class="kotret-group">
-            <div class="kotret-header">
-                <span>12KG</span>
-                <span class="kotret-sum" id="sum12Label">Total: 0</span>
+        <!-- Kotretan 12KG -->
+        <div class="kotret-group" id="group12">
+            <div class="kotret-header" onclick="toggleKotret('12')" title="Klik untuk buka / tutup Gas 12KG">
+                <div class="kotret-label">
+                    <span class="chevron-icon">▼</span>
+                    <span>🔵 Gas 12KG</span>
+                </div>
+                <div class="kotret-right">
+                    <span class="kotret-sum" id="sum12Label">Total: 0</span>
+                    <button type="button" class="btn-clear" onclick="event.stopPropagation(); clearKotret('12')" title="Kosongkan Kotretan 12KG">✕ Reset</button>
+                </div>
             </div>
-            <div class="grid-10" id="grid12"></div>
+            <div class="kotret-body">
+                <div class="grid-kotret" id="grid12"></div>
+            </div>
         </div>
 
-        <div class="kotret-group">
-            <div class="kotret-header">
-                <span>5KG</span>
-                <span class="kotret-sum" id="sum5Label">Total: 0</span>
+        <!-- Kotretan 5KG -->
+        <div class="kotret-group collapsed" id="group5">
+            <div class="kotret-header" onclick="toggleKotret('5')" title="Klik untuk buka / tutup Gas 5KG">
+                <div class="kotret-label">
+                    <span class="chevron-icon">▼</span>
+                    <span>🟢 Gas 5KG</span>
+                </div>
+                <div class="kotret-right">
+                    <span class="kotret-sum" id="sum5Label">Total: 0</span>
+                    <button type="button" class="btn-clear" onclick="event.stopPropagation(); clearKotret('5')" title="Kosongkan Kotretan 5KG">✕ Reset</button>
+                </div>
             </div>
-            <div class="grid-10" id="grid5"></div>
+            <div class="kotret-body">
+                <div class="grid-kotret" id="grid5"></div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+    /* ==========================================================
+       MANAJEMEN TEMA (DARK / LIGHT MODE) & LOCALSTORAGE
+       ========================================================== */
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    
+    const moonIcon = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>`;
+    const sunIcon = `<svg fill="none" stroke="#f59e0b" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
+
+    function applySavedTheme() {
+        const savedTheme = localStorage.getItem('themeGasApp');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeToggleBtn.innerHTML = sunIcon;
+            themeToggleBtn.title = "Ganti ke Mode Terang";
+        } else {
+            document.body.classList.remove('dark-mode');
+            themeToggleBtn.innerHTML = moonIcon;
+            themeToggleBtn.title = "Ganti ke Mode Gelap";
+        }
+    }
+
+    function toggleTheme() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        if (isDark) {
+            localStorage.setItem('themeGasApp', 'dark');
+            themeToggleBtn.innerHTML = sunIcon;
+            themeToggleBtn.title = "Ganti ke Mode Terang";
+        } else {
+            localStorage.setItem('themeGasApp', 'light');
+            themeToggleBtn.innerHTML = moonIcon;
+            themeToggleBtn.title = "Ganti ke Mode Gelap";
+        }
+    }
+
+    applySavedTheme();
+
+    /* ==========================================================
+       MANAJEMEN TANGGAL
+       ========================================================== */
     const dateInput = document.getElementById('tanggalBerlaku');
     const dateDisplay = document.getElementById('dateDisplay');
 
@@ -385,10 +777,12 @@
             dateDisplay.innerText = d.toLocaleDateString('id-ID', options);
         }
     }
-    
     dateInput.addEventListener('change', updateDateDisplay);
     updateDateDisplay();
 
+    /* ==========================================================
+       LOGIKA PERHITUNGAN TRANSAKSI
+       ========================================================== */
     function formatRibuan(angka) {
         if (!angka || angka === 0) return '-';
         return new Intl.NumberFormat('id-ID').format(angka);
@@ -409,7 +803,7 @@
         const totalTabung = qty12 + qty5;
         const grandTotal = total12 + total5;
 
-        document.getElementById('totalTabungLabel').innerText = totalTabung > 0 ? totalTabung : '';
+        document.getElementById('totalTabungLabel').innerText = totalTabung > 0 ? totalTabung : '0';
         document.getElementById('grandTotalLabel').innerText = grandTotal > 0 ? formatRibuan(grandTotal) : '-';
     }
 
@@ -418,7 +812,7 @@
         let isKotretanUsed = false;
         
         document.querySelectorAll('.k-' + tipe).forEach(el => {
-            if(el.value !== "") isKotretanUsed = true;
+            if(el.value.trim() !== "") isKotretanUsed = true;
             totalKotret += parseInt(el.value) || 0;
         });
 
@@ -426,7 +820,7 @@
 
         let sisaInput = document.getElementById('sisa' + tipe);
         let sisa = parseInt(sisaInput.value) || 0;
-        let isSisaUsed = sisaInput.value !== "";
+        let isSisaUsed = sisaInput.value.trim() !== "";
 
         if (isKotretanUsed || isSisaUsed) {
             let resultQty = totalKotret - sisa;
@@ -436,14 +830,21 @@
         }
     }
 
+    /* ==========================================================
+       KALKULATOR MINI & LOGIKA RESET LENGKAP
+       ========================================================== */
     function initKotretan() {
         const createInputs = (containerId, tipe) => {
             const container = document.getElementById(containerId);
-            for(let i=0; i<20; i++){
+            container.innerHTML = '';
+            
+            // 5 baris x 8 kolom = 40 kotak
+            for (let i = 0; i < 40; i++) {
                 let inp = document.createElement('input');
                 inp.type = 'number';
                 inp.className = `kotret-input k-${tipe}`;
                 inp.min = 0;
+                inp.placeholder = '';
                 inp.addEventListener('input', () => syncQty(tipe));
                 container.appendChild(inp);
             }
@@ -452,7 +853,34 @@
         createInputs('grid5', '5');
     }
 
-    // Export Excel Native XML (Tanpa bergantung library eksternal/CDN)
+    function toggleKotret(tipe) {
+        const group = document.getElementById('group' + tipe);
+        if (group) {
+            group.classList.toggle('collapsed');
+        }
+    }
+
+    // FUNGSI RESET: MENGOSONGKAN KOTRETAN + MERESET QTY TABEL KIRI
+    function clearKotret(tipe) {
+        // 1. Kosongkan seluruh kotak kotretan
+        document.querySelectorAll('.k-' + tipe).forEach(inp => inp.value = '');
+        
+        // 2. Kembalikan teks badge kalkulator mini menjadi 0
+        document.getElementById('sum' + tipe + 'Label').innerText = 'Total: 0';
+        
+        // 3. Kosongkan nilai QTY pada tabel transaksi utama di sebelah kiri
+        const qtyInput = document.getElementById('qty' + tipe);
+        if (qtyInput) {
+            qtyInput.value = '';
+        }
+
+        // 4. Hitung ulang total transaksi seketika
+        calculateMain();
+    }
+
+    /* ==========================================================
+       EKSPOR EXCEL & CETAK STRUK
+       ========================================================== */
     function exportToExcel() {
         const nama = document.getElementById('namaPelanggan').value || 'Tanpa Nama';
         const dateText = dateDisplay.innerText;
