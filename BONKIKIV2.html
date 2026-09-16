@@ -144,7 +144,7 @@
         .checkbox-wrapper.cb-blue input[type="checkbox"] { accent-color: var(--primary); }
         .checkbox-wrapper.cb-blue span { color: #1d4ed8; }
         [data-theme="dark"] .checkbox-wrapper.cb-blue { background: #031936; border-color: #072f61; }
-		[data-theme="dark"] .checkbox-wrapper.cb-blue span { color: #80a3cf; }
+        [data-theme="dark"] .checkbox-wrapper.cb-blue span { color: #80a3cf; }
 
         /* STICKY BOTTOM BAR */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); padding: 12px 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 40; border-radius: 20px 20px 0 0; transition: background 0.3s; }
@@ -206,7 +206,7 @@
         .struk-visual .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
         .struk-visual .flex-row { display: flex; justify-content: space-between; }
         
-        /* PREVIEW IMAGE - Hapus image-rendering kasar agar browser menghaluskan (anti-alias) gambar dengan baik */
+        /* PREVIEW IMAGE */
         #imgPreviewLaporan {
             width: 100%; 
             max-height: 50vh; 
@@ -398,25 +398,23 @@
     </button>
 </div>
 
-	<!-- MODAL: Input Item Multi Baris -->
-	<div class="modal-overlay" id="overlayInput" onclick="closeSheet('sheetInput')"></div>
-	<div class="bottom-sheet" id="sheetInput">
-		<div class="sheet-indicator"></div>
-		<h3 style="margin-bottom: 16px; font-weight: 800; font-size: 16px;" id="sheetInputTitle">Tambah Item</h3>
-		
-		<!-- Wadah untuk baris input dinamis -->
-		<div id="multiItemContainer" style="max-height: 50vh; overflow-y: auto; overflow-x: hidden; padding: 2px;">
-		</div>
-		
-		<button class="btn btn-outline" style="width: 100%; margin: 12px 0; border-style: dashed;" onclick="addInputRow()">
-			<i class="ph-bold ph-plus"></i> Tambah Baris
-		</button>
+<!-- MODAL: Input Item Multi Baris -->
+<div class="modal-overlay" id="overlayInput" onclick="closeSheet('sheetInput')"></div>
+<div class="bottom-sheet" id="sheetInput">
+    <div class="sheet-indicator"></div>
+    <h3 style="margin-bottom: 16px; font-weight: 800; font-size: 16px;" id="sheetInputTitle">Tambah Item</h3>
+    
+    <div id="multiItemContainer" style="max-height: 50vh; overflow-y: auto; overflow-x: hidden; padding: 2px;"></div>
+    
+    <button class="btn btn-outline" style="width: 100%; margin: 12px 0; border-style: dashed;" onclick="addInputRow()">
+        <i class="ph-bold ph-plus"></i> Tambah Baris
+    </button>
 
-		<div class="form-grid">
-			<button class="btn btn-outline" onclick="closeSheet('sheetInput')">Batal</button>
-			<button class="btn btn-primary" onclick="saveMultipleItems()">Simpan Barang</button>
-		</div>
-	</div>
+    <div class="form-grid">
+        <button class="btn btn-outline" onclick="closeSheet('sheetInput')">Batal</button>
+        <button class="btn btn-primary" onclick="saveMultipleItems()">Simpan Barang</button>
+    </div>
+</div>
 
 <!-- MODAL: Printer Settings -->
 <div class="modal-overlay" id="overlayPrinter" onclick="closeSheet('sheetPrinter')"></div>
@@ -436,6 +434,7 @@
     <div class="form-group" style="margin-bottom: 16px;">
         <label>Ukuran Kertas Printer</label>
         <select id="ukuranKertas" onchange="syncKertas(this.value)">
+            <option value="" disabled selected>-- PILIH UKURAN KERTAS --</option>
             <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
             <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
         </select>
@@ -455,11 +454,12 @@
     <h3 style="margin-bottom: 6px; font-weight: 800; font-size: 16px;">Pratinjau Nota</h3>
     <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Pastikan data sudah benar sebelum disimpan.</p>
     
-    <img id="imgPreviewLaporan" />
+    <img id="imgPreviewLaporan" alt="Pratinjau Nota" />
     
     <div class="form-group" style="text-align: left; margin-bottom: 16px;">
         <label>Ukuran Kertas Pencetakan</label>
         <select id="ukuranKertasPreview" onchange="syncKertas(this.value)">
+            <option value="" disabled selected>-- PILIH UKURAN KERTAS --</option>
             <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
             <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
         </select>
@@ -476,7 +476,7 @@
 <div class="struk-visual-container"><div id="areaCetakGambar" class="struk-visual"></div></div>
 
 <script>
-    // --- CUSTOM MODERN DIALOG SYSTEM ---
+    // --- DIALOG SISTEM (PENGGANTI ALERT & CONFIRM) ---
     function showCustomAlert(title, message, type = 'info') {
         document.getElementById('customDialogTitle').innerText = title;
         document.getElementById('customDialogMessage').innerHTML = message;
@@ -498,7 +498,6 @@
 
         const btnContainer = document.getElementById('customDialogButtons');
         btnContainer.innerHTML = `<button class="btn btn-primary full" style="grid-column: span 2;" onclick="closeCustomDialog()">OK</button>`;
-        
         openSheet('sheetCustomDialog');
     }
 
@@ -519,11 +518,11 @@
 
         document.getElementById('dlgBtnNo').onclick = () => {
             closeCustomDialog();
-            if(onNo) onNo();
+            if (onNo) onNo();
         };
         document.getElementById('dlgBtnYes').onclick = () => {
             closeCustomDialog();
-            if(onYes) onYes();
+            if (onYes) onYes();
         };
 
         openSheet('sheetCustomDialog');
@@ -533,7 +532,7 @@
         closeSheet('sheetCustomDialog');
     }
 
-    // --- THEME TOGGLE LOGIC ---
+    // --- TEMA APLIKASI ---
     function toggleTheme() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -558,15 +557,30 @@
     document.documentElement.setAttribute('data-theme', savedTheme);
     window.addEventListener('DOMContentLoaded', () => updateThemeIcon(savedTheme));
 
+    // --- STATE GLOBAL & KONEKSI SUPABASE ---
     let btCharacteristic = null;
     let connectedDeviceId = null; 
     let currentActionIndex = -1;
     let currentActionMode = '';
 
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let database = { harga: {}, barang: [], tipeAgen: {} };
+    let itemsKirim = []; 
+    let itemsRetur = []; 
+    let currentMode = 'Kirim'; 
+    let editIndex = -1;
+    let lastPrintText = ""; 
+    let isDeposit = false;
+    let availableItemsOptions = "";
+
     function openSheet(id) {
         document.getElementById(id).classList.add('active');
         document.getElementById('overlay' + id.replace('sheet', '')).classList.add('active');
     }
+
     function closeSheet(id) {
         document.getElementById(id).classList.remove('active');
         document.getElementById('overlay' + id.replace('sheet', '')).classList.remove('active');
@@ -581,36 +595,49 @@
         icon.className = isHidden ? 'ph ph-eye-slash' : 'ph ph-eye';
     }
 
+    // --- PENANGANAN TANGGAL SESUAI WAKTU LOKAL ---
+    function getTanggalHariIniLocal() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const date = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${date}`;
+    }
+    
     function formatTglDisplay() {
         const tglVal = document.getElementById('tglNota').value;
-        if(!tglVal) return;
-        const d = new Date(tglVal);
+        if (!tglVal) return;
+        
+        const [y, m, d] = tglVal.split('-').map(Number);
+        const dateObj = new Date(y, m - 1, d);
+        
         const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-        const dayName = days[d.getDay()];
-        const [y, m, day] = tglVal.split('-');
-        document.getElementById('tglNotaDisplay').value = `${dayName}, ${day}/${m}/${y}`;
+        const dayName = days[dateObj.getDay()];
+        
+        const dayStr = String(d).padStart(2, '0');
+        const monthStr = String(m).padStart(2, '0');
+        
+        document.getElementById('tglNotaDisplay').value = `${dayName}, ${dayStr}/${monthStr}/${y}`;
     }
 
-    
+    // --- LOGIKA ONGKIR & PEMBAYARAN ---
     function toggleOngkir() {
         const isChecked = document.getElementById('cbOngkir').checked;
         const boxOngkir = document.getElementById('boxOngkir');
         const inputOngkir = document.getElementById('inputOngkir');
-        if (isChecked) { boxOngkir.style.display = 'block'; inputOngkir.focus(); } 
-        else { boxOngkir.style.display = 'none'; inputOngkir.value = '0'; }
+        if (isChecked) { 
+            boxOngkir.style.display = 'block'; 
+            inputOngkir.focus(); 
+        } else { 
+            boxOngkir.style.display = 'none'; 
+            inputOngkir.value = '0'; 
+        }
         hitungTotal();
     }
 
-    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
-    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // --- PERUBAHAN: Menambahkan tipeAgen di database local state ---
-    let database = { harga: {}, barang: [], tipeAgen: {} };
-    let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
-    let lastPrintText = ""; let isDeposit = false;
-
-    function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
+    function clearZero(el) { 
+        if (el.value === "0" || el.value === 0) el.value = ""; 
+    }
 
     function togglePembayaran() {
         const isChecked = document.getElementById('cbTidakTitip').checked;
@@ -618,12 +645,17 @@
         const inputTrf = document.getElementById('inputTrf');
 
         if (isChecked) {
-            inputCash.value = "0"; inputTrf.value = "0";
-            inputCash.disabled = true; inputTrf.disabled = true;
-            inputCash.style.opacity = "0.5"; inputTrf.style.opacity = "0.5";
+            inputCash.value = "0"; 
+            inputTrf.value = "0";
+            inputCash.disabled = true; 
+            inputTrf.disabled = true;
+            inputCash.style.opacity = "0.5"; 
+            inputTrf.style.opacity = "0.5";
         } else {
-            inputCash.disabled = false; inputTrf.disabled = false;
-            inputCash.style.opacity = "1"; inputTrf.style.opacity = "1";
+            inputCash.disabled = false; 
+            inputTrf.disabled = false;
+            inputCash.style.opacity = "1"; 
+            inputTrf.style.opacity = "1";
         }
         hitungTotal();
     }
@@ -631,15 +663,13 @@
     function syncKertas(val) {
         document.getElementById('ukuranKertas').value = val;
         document.getElementById('ukuranKertasPreview').value = val;
-        if (connectedDeviceId) {
-            localStorage.setItem('printerSize_' + connectedDeviceId, val);
-        }
     }
 
+    // --- INISIALISASI DATA DARI DATABASE ---
     async function init() {
         try {
             const { data: agen } = await clientSupabase.from('agen').select('*');
-            if(agen) {
+            if (agen) {
                 agen.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
                 const selAgen = document.getElementById('pilihAgen');
                 selAgen.innerHTML = '<option value="">-- PILIH AGEN --</option>';
@@ -647,16 +677,14 @@
                     const labelBon = a.saldo_bon > 0 ? ` (!)` : "";
                     selAgen.options.add(new Option(a.nama_agen + labelBon, a.nama_agen));
                     database.harga[a.nama_agen] = { "bon": a.saldo_bon || 0 };
-                    
-                    // --- PERUBAHAN: Caching data tipe agen ke memory local ---
                     database.tipeAgen[a.nama_agen] = (a.type_agen || 'NORMAL').toString().toLowerCase();
                 });
             }
 
             const { data: harga } = await clientSupabase.from('harga').select('*');
-            if(harga) {
+            if (harga) {
                 harga.forEach(h => {
-                    if(!database.harga[h.nama_agen]) database.harga[h.nama_agen] = {};
+                    if (!database.harga[h.nama_agen]) database.harga[h.nama_agen] = {};
                     database.harga[h.nama_agen][`${h.nama_barang}_${h.satuan}`] = h.harga_jual;
                 });
             }
@@ -664,7 +692,7 @@
             const { data: karyawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
             const d1 = document.getElementById('driver1');
             const d2 = document.getElementById('driver2');
-            if(karyawan) {
+            if (karyawan) {
                 karyawan.sort((a, b) => a.nama_karyawan.localeCompare(b.nama_karyawan));
                 d1.innerHTML = '<option value="">-- DRIVER 1 --</option>';
                 d2.innerHTML = '<option value="">-- DRIVER 2 (OPSIONAL) --</option>';
@@ -676,19 +704,19 @@
 
             const { data: mobil } = await clientSupabase.from('kendaraan').select('*');
             const selMobil = document.getElementById('pilihMobil');
-            if(mobil) {
+            if (mobil) {
                 selMobil.innerHTML = '<option value="">-- MOBIL (OPSIONAL) --</option>';
                 mobil.forEach(m => selMobil.options.add(new Option(m.plat_nomor, m.plat_nomor)));
             }
 
             resetForm();
-        } catch(e) { 
+        } catch (e) { 
             showCustomAlert("Koneksi Database Error", e.message, "danger"); 
         }
     }
 
     function resetForm() {
-        document.getElementById('tglNota').valueAsDate = new Date();
+        document.getElementById('tglNota').value = getTanggalHariIniLocal();
         formatTglDisplay(); 
         
         document.getElementById('noNota').value = "SBR-" + Date.now().toString().slice(-6);
@@ -700,14 +728,23 @@
         document.getElementById('inputTrf').value = "0";
         document.getElementById('inputBonLama').value = "0";
         
-        document.getElementById('cbOngkir').checked = false; toggleOngkir(); 
-        document.getElementById('cbTidakTitip').checked = false; togglePembayaran();
+        // Reset pilihan kertas ke opsi awal (wajib pilih ulang)
+        document.getElementById('ukuranKertas').value = "";
+        document.getElementById('ukuranKertasPreview').value = "";
+        
+        document.getElementById('cbOngkir').checked = false; 
+        toggleOngkir(); 
+        document.getElementById('cbTidakTitip').checked = false; 
+        togglePembayaran();
         
         document.getElementById('notifBon').style.display = "none";
         document.getElementById('cardBiayaLain').style.display = "none";
         
         isDeposit = false;
-        itemsKirim = []; itemsRetur = []; render(); hitungTotal();
+        itemsKirim = []; 
+        itemsRetur = []; 
+        render(); 
+        hitungTotal();
     }
 
     function resetFormForNewNota() {
@@ -717,8 +754,13 @@
             btn.disabled = false;
             btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT';
             btn.dataset.action = '';
+            
             const btnModal = document.getElementById('btnSimpanPreview');
-            if(btnModal) { btnModal.disabled = false; btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print'; }
+            if (btnModal) { 
+                btnModal.disabled = false; 
+                btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print'; 
+            }
+            
             document.getElementById('btnReprint').disabled = true;
             lastPrintText = "";
         });
@@ -755,41 +797,122 @@
         hitungTotal();
     }
 
-    let availableItemsOptions = ""; // Menyimpan cache opsi dropdown barang
+    // --- PENGELOLAAN ITEM (BARIS BARANG) ---
+    function openItemSheet(mode) { 
+        const ag = document.getElementById('pilihAgen').value;
+        if (!ag) {
+            showCustomAlert("Perhatian", "Pilih Agen terlebih dahulu sebelum menambahkan barang!", "danger");
+            return;
+        }
+        
+        currentMode = mode; 
+        editIndex = -1; 
+        document.getElementById('sheetInputTitle').innerText = mode === 'Kirim' ? "Tambah Barang Kirim" : "Tambah Barang Retur";
+        
+        availableItemsOptions = '<option value="">-- Pilih Barang --</option>';
+        const daftarHargaAgen = database.harga[ag];
+        let listBarangTersedia = [];
+        for (let key in daftarHargaAgen) {
+            if (key !== "bon") {
+                const namaB = key.split('_')[0];
+                if (!listBarangTersedia.includes(namaB)) listBarangTersedia.push(namaB);
+            }
+        }
+        listBarangTersedia.sort().forEach(b => { 
+            availableItemsOptions += `<option value="${b}">${b}</option>`; 
+        });
+        
+        const container = document.getElementById('multiItemContainer');
+        container.innerHTML = '';
+        addInputRow();
+        addInputRow();
+        addInputRow();
 
-	function openItemSheet(mode) { 
-		const ag = document.getElementById('pilihAgen').value;
-		if(!ag) {
-			showCustomAlert("Perhatian", "Pilih Agen terlebih dahulu sebelum menambahkan barang!", "danger");
-			return;
-		}
-		
-		currentMode = mode; editIndex = -1; 
-		document.getElementById('sheetInputTitle').innerText = mode === 'Kirim' ? "Tambah Barang Kirim" : "Tambah Barang Retur";
-		
-		// Generate opsi dropdown barang berdasarkan agen
-		availableItemsOptions = '<option value="">-- Pilih Barang --</option>';
-		const daftarHargaAgen = database.harga[ag];
-		let listBarangTersedia = [];
-		for (let key in daftarHargaAgen) {
-			if (key !== "bon") {
-				const namaB = key.split('_')[0];
-				if (!listBarangTersedia.includes(namaB)) listBarangTersedia.push(namaB);
-			}
-		}
-		listBarangTersedia.sort().forEach(b => { availableItemsOptions += `<option value="${b}">${b}</option>`; });
-		
-		// Kosongkan container dan buat 3 baris default
-		const container = document.getElementById('multiItemContainer');
-		container.innerHTML = '';
-		addInputRow();
-		addInputRow();
-		addInputRow();
+        openSheet('sheetInput'); 
+    }
 
-		openSheet('sheetInput'); 
-	}
+    function addInputRow(itemVal = "", uomVal = "Ball", qtyVal = "0", ketVal = "") {
+        const container = document.getElementById('multiItemContainer');
+        const rowId = 'row_' + Math.random().toString(36).substr(2, 9);
+        const ketId = 'ket_' + rowId;
+        
+        const rowHtml = `
+            <div class="item-input-row" id="${rowId}" style="background: var(--card-bg); padding: 6px; border-radius: 6px; margin-bottom: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                <div style="display: grid; grid-template-columns: 28px 1fr 65px 50px 28px; gap: 4px; align-items: center;">
+                    <button type="button" class="icon-btn" style="width: 28px; height: 34px; border-radius: 6px; margin: 0; background: var(--bg-color); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted);" onclick="const ket = document.getElementById('${ketId}'); ket.style.display = ket.style.display === 'none' ? 'block' : 'none';" title="Catatan Barang">
+                        <i class="ph-bold ph-note-pencil"></i>
+                    </button>
+                    <select class="input-barang" style="padding: 4px; font-size: 13px; border-radius: 6px; height: 34px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-weight: 600;">
+                        ${availableItemsOptions}
+                    </select>
+                    <select class="input-satuan" style="padding: 4px 2px; font-size: 12px; border-radius: 6px; height: 34px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); text-align: center;">
+                        <option value="Ball" ${uomVal === 'Ball' ? 'selected' : ''}>Ball</option>
+                        <option value="Pack" ${uomVal === 'Pack' ? 'selected' : ''}>Pack</option>
+                        <option value="Pcs"  ${uomVal === 'Pcs' ? 'selected' : ''}>Pcs</option>
+                    </select>
+                    <input type="number" class="input-qty" placeholder="Qty" value="${qtyVal}" style="padding: 4px 2px; font-size: 14px; font-weight: 700; border-radius: 6px; height: 34px; text-align: center; border: 1px solid var(--border); background: var(--input-bg); color: var(--primary);" onfocus="clearZero(this)">
+                    <button type="button" class="icon-btn danger" style="width: 28px; height: 34px; font-size: 14px; border-radius: 6px; margin: 0; display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('${rowId}').remove()" title="Hapus Baris">
+                        <i class="ph-bold ph-trash"></i>
+                    </button>
+                </div>
+                <input type="text" id="${ketId}" class="input-ket" placeholder="Catatan/Keterangan (opsional)..." value="${ketVal}" style="padding: 6px 8px; margin-top: 4px; font-size: 11px; font-style: italic; border-radius: 6px; width: 100%; border: 1px dashed var(--border); background: transparent; display: ${ketVal ? 'block' : 'none'};">
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', rowHtml);
 
-    
+        if (itemVal) {
+            const lastRow = container.lastElementChild;
+            lastRow.querySelector('.input-barang').value = itemVal;
+        }
+    }
+
+    function saveMultipleItems() {
+        const ag = document.getElementById('pilihAgen').value;
+        const rows = document.querySelectorAll('.item-input-row');
+        
+        let tempItems = [];
+        let hasError = false;
+
+        rows.forEach(row => {
+            const b = row.querySelector('.input-barang').value;
+            const s = row.querySelector('.input-satuan').value;
+            const q = parseFloat(row.querySelector('.input-qty').value) || 0;
+            const k = row.querySelector('.input-ket').value.trim();
+
+            if (b && q > 0) {
+                const h = database.harga[ag]?.[`${b}_${s}`];
+                if (h === undefined) {
+                    showCustomAlert("Perhatian", `Satuan ${s} tidak tersedia untuk barang ${b}!`, "danger");
+                    hasError = true;
+                    return;
+                }
+                tempItems.push({ barang: b, satuan: s, qty: q, harga: h, total: q * h, keterangan: k });
+            } else if (editIndex > -1 && b && q === 0) {
+                tempItems.push({ deleteFlag: true });
+            }
+        });
+
+        if (hasError) return; 
+
+        if (editIndex > -1) {
+            if (tempItems.length > 0) {
+                const updatedItem = tempItems[0];
+                if (updatedItem.deleteFlag) {
+                    (currentMode === 'Kirim' ? itemsKirim : itemsRetur).splice(editIndex, 1);
+                } else {
+                    (currentMode === 'Kirim' ? itemsKirim : itemsRetur)[editIndex] = updatedItem;
+                }
+            }
+        } else {
+            tempItems.forEach(it => {
+                (currentMode === 'Kirim' ? itemsKirim : itemsRetur).push(it);
+            });
+        }
+        
+        render(); 
+        closeSheet('sheetInput'); 
+        hitungTotal();
+    }
 
     function openActionSheet(idx, mode) {
         currentActionIndex = idx;
@@ -806,16 +929,53 @@
 
     function doActionDelete() {
         showCustomConfirm("Hapus Barang", "Yakin ingin menghapus barang ini dari daftar?", () => {
-            if(currentActionMode === 'Kirim') itemsKirim.splice(currentActionIndex, 1);
+            if (currentActionMode === 'Kirim') itemsKirim.splice(currentActionIndex, 1);
             else itemsRetur.splice(currentActionIndex, 1);
-            render(); hitungTotal(); closeSheet('sheetAction');
+            render(); 
+            hitungTotal(); 
+            closeSheet('sheetAction');
         });
     }
 
-   
+    function editItem(idx, mode) {
+        currentMode = mode; 
+        editIndex = idx; 
+        const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
+        const ag = document.getElementById('pilihAgen').value;
+        
+        let optionsHtml = '';
+        const daftarHargaAgen = database.harga[ag];
+        let listBarangTersedia = [];
+        for (let key in daftarHargaAgen) {
+            if (key !== "bon") {
+                const namaB = key.split('_')[0];
+                if (!listBarangTersedia.includes(namaB)) listBarangTersedia.push(namaB);
+            }
+        }
+        listBarangTersedia.sort().forEach(b => { 
+            optionsHtml += `<option value="${b}">${b}</option>`; 
+        });
+        availableItemsOptions = optionsHtml;
+        
+        document.getElementById('sheetInputTitle').innerText = "Edit Item";
+        
+        const container = document.getElementById('multiItemContainer');
+        container.innerHTML = '';
+        
+        addInputRow(item.barang, item.satuan, item.qty, item.keterangan || "");
+        
+        const lastRow = container.lastElementChild;
+        lastRow.querySelector('.input-barang').disabled = true;
+        const delBtn = lastRow.querySelector('.icon-btn.danger');
+        if (delBtn) delBtn.style.display = 'none';
+
+        openSheet('sheetInput');
+    }
+
     function render() {
         const draw = (data, id, mode) => {
-            const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
+            const tb = document.getElementById(id).querySelector('tbody'); 
+            tb.innerHTML = '';
             data.forEach((it, idx) => {
                 const infoKet = it.keterangan ? `<div style="font-size:11px; color:var(--text-muted); font-style:italic; margin-top: 3px;"><i class="ph-bold ph-note-pencil"></i> ${it.keterangan}</div>` : '';
                 const r = tb.insertRow();
@@ -829,11 +989,18 @@
                     <td class="td-action"><button class="icon-btn" style="width:28px; height:28px; background:var(--input-bg);" onclick="openActionSheet(${idx},'${mode}')"><i class="ph-bold ph-pencil-simple"></i></button></td>`;
             });
         };
-        draw(itemsKirim, 'tabelKirim', 'Kirim'); draw(itemsRetur, 'tabelRetur', 'Retur');
+        draw(itemsKirim, 'tabelKirim', 'Kirim'); 
+        draw(itemsRetur, 'tabelRetur', 'Retur');
     }
 
-    function formatRupiah(el) { let v = el.value.replace(/[^0-9]/g, ''); el.value = v === "" ? "0" : Number(v).toLocaleString('id-ID'); }
-    function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
+    function formatRupiah(el) { 
+        let v = el.value.replace(/[^0-9]/g, ''); 
+        el.value = v === "" ? "0" : Number(v).toLocaleString('id-ID'); 
+    }
+
+    function getAngka(id) { 
+        return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; 
+    }
 
     function hitungTotal() {
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0); 
@@ -841,22 +1008,24 @@
         const bl_input = getAngka('inputBonLama'); 
         const bl_actual = isDeposit ? -bl_input : bl_input; 
         const ongkir = getAngka('inputOngkir');
-        const cs = getAngka('inputCash'); const tf = getAngka('inputTrf');
+        const cs = getAngka('inputCash'); 
+        const tf = getAngka('inputTrf');
         const sisa = (tk - tr - ongkir + bl_actual - cs - tf);
         
         document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
         document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         
         const elSisa = document.getElementById('txtGrand');
-        if(elSisa) {
+        if (elSisa) {
             elSisa.innerText = "Rp " + Math.abs(sisa).toLocaleString('id-ID');
             elSisa.style.color = sisa < 0 ? 'var(--success)' : (sisa > 0 ? 'var(--danger)' : 'var(--primary)');
         }
         
         const sisaLabel = document.getElementById('txtSisaLabel');
-        if(sisaLabel) sisaLabel.innerText = sisa < 0 ? "Deposit Tersisa" : "Sisa Bon Belum Lunas";
+        if (sisaLabel) sisaLabel.innerText = sisa < 0 ? "Deposit Tersisa" : "Sisa Bon Belum Lunas";
     }
 
+    // --- PENGATURAN BLUETOOTH PRINTER ---
     async function connectBT() {
         try {
             const device = await navigator.bluetooth.requestDevice({
@@ -873,13 +1042,6 @@
             document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")";
             document.getElementById('statusBT').style.color = "var(--success)";
             document.getElementById('btnPrinterIcon').classList.add('connected');
-
-            const savedSize = localStorage.getItem('printerSize_' + connectedDeviceId);
-            if (savedSize) {
-                document.getElementById('ukuranKertas').value = savedSize;
-                document.getElementById('ukuranKertasPreview').value = savedSize;
-            }
-
         } catch (e) { 
             document.getElementById('btnPrinterIcon').classList.remove('connected');
             throw e; 
@@ -896,14 +1058,14 @@
     }
 
     async function reprintLast() {
-        if(!lastPrintText) {
+        if (!lastPrintText) {
             showCustomAlert("Perhatian", "Belum ada data cetak terakhir!", "danger");
             return;
         }
-        if(!btCharacteristic) {
+        if (!btCharacteristic) {
             try {
                 await connectBT();
-            } catch(e) {
+            } catch (e) {
                 showCustomAlert("Perhatian", "Printer belum terhubung!", "danger");
                 return;
             }
@@ -913,7 +1075,7 @@
             let cetakReprint = lastPrintText.replace('[JENIS_CETAKAN]', '*** REPRINT NOTA ***');
             await printToBT(cetakReprint);
             showCustomAlert("Sukses", "Berhasil Cetak Ulang Nota!", "success");
-        } catch(e) { 
+        } catch (e) { 
             showCustomAlert("Gagal", "Cetak Ulang Gagal: " + e, "danger"); 
         }
     }
@@ -927,15 +1089,26 @@
         }
     }
 
+    // --- JUDUL NOTA & STRUK VISUAL ---
+    function ambilJudulNota(isKhususAdmin = false) {
+        if (isKhususAdmin) return "*** LEMBAR ADMIN ***";
+        
+        const isTidakTitip = document.getElementById('cbTidakTitip').checked;
+        if (isTidakTitip) return "*** NOTA TAGIHAN ***";
+        
+        return "*** NOTA PENJUALAN ***";
+    }
+
     async function buatGambarLaporan(dataStruk, isSimpan = false) {
         const area = document.getElementById('areaCetakGambar');
+        const judulHeader = dataStruk.judulNota || ambilJudulNota(false);
         
         let htmlContent = `
             <div style="text-align: center; margin-bottom: 10px;">
                 <h2 style="margin: 0; font-family: 'Courier New', Courier, monospace; font-size: 22px;">SBR PUTRA FOOD</h2>
                 <div>Lembang, Bandung Barat</div>
                 <div class="garis"></div>
-                <div style="font-weight: bold; font-size: 16px; margin: 5px 0;">*** LEMBAR ADMIN ***</div>
+                <div style="font-weight: bold; font-size: 16px; margin: 5px 0;">${judulHeader}</div>
                 <div class="garis"></div>
             </div>
             <div class="flex-row"><span>NO: ${dataStruk.noNota}</span><span>TGL: ${dataStruk.tglIndo}</span></div>
@@ -946,7 +1119,7 @@
             <div class="garis"></div>
         `;
 
-        if(dataStruk.itemsKirim.length > 0) {
+        if (dataStruk.itemsKirim.length > 0) {
             dataStruk.itemsKirim.forEach(i => {
                 const cetakKet = i.keterangan ? `<div style="font-size:12px; color:#555; font-style:italic;"> * Ket: ${i.keterangan}</div>` : '';
                 htmlContent += `
@@ -962,7 +1135,7 @@
             htmlContent += `<div class="flex-row" style="font-weight: bold;"><span>TOTAL KIRIM:</span><span>Rp ${dataStruk.tk.toLocaleString('id-ID')}</span></div>`;
         }
 
-        if(dataStruk.itemsRetur.length > 0) {
+        if (dataStruk.itemsRetur.length > 0) {
             htmlContent += `<div style="font-weight: bold; margin-top: 10px; color: #000;">BARANG RETUR:</div>`;
             dataStruk.itemsRetur.forEach(i => {
                 const cetakKet = i.keterangan ? `<div style="font-size:12px; color:#555; font-style:italic;"> * Ket: ${i.keterangan}</div>` : '';
@@ -980,7 +1153,7 @@
         }
         
         htmlContent += `<div class="garis"></div>`;
-        if(dataStruk.ongkir > 0) {
+        if (dataStruk.ongkir > 0) {
             htmlContent += `<div class="flex-row"><span>ONGKIR:</span><span>-Rp ${dataStruk.ongkir.toLocaleString('id-ID')}</span></div>`;
         }
 
@@ -1011,13 +1184,11 @@
         }
 
         htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px; color: ${colorSisa};"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
-        
         htmlContent += `<div class="garis"></div>`;
         htmlContent += `<div style="text-align: center; margin-top: 30px; font-weight: bold;">SBR PUTRA FOOD SYSTEM</div>`;
 
         area.innerHTML = htmlContent;
 
-        // Scale dikurangi menjadi 3 (tengah-tengah yang ideal, tidak pecah tapi tetap high-res untuk didownload)
         const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff", logging: false });
         const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
         
@@ -1031,7 +1202,7 @@
                     () => {
                         const downloadLink = document.createElement("a");
                         downloadLink.href = imgUrl;
-                        downloadLink.download = `Laporan_SBR_${dataStruk.noNota}.jpg`;
+                        downloadLink.download = `Nota_SBR_${dataStruk.noNota}.jpg`;
                         document.body.appendChild(downloadLink);
                         downloadLink.click();
                         document.body.removeChild(downloadLink);
@@ -1077,7 +1248,8 @@
         const mobil = document.getElementById('pilihMobil').value;
         const drv2 = document.getElementById('driver2').value;
         
-        const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
+        const cash = getAngka('inputCash'); 
+        const trf = getAngka('inputTrf');
 
         if (!ag) errorList.push("- Agen belum dipilih");
         if (!drv1) errorList.push("- Driver 1 belum ditentukan/kosong");
@@ -1094,12 +1266,12 @@
         const noNota = document.getElementById('noNota').value;
         const tglVal = document.getElementById('tglNotaDisplay').value; 
         const tglIndo = tglVal ? tglVal : document.getElementById('tglNota').value; 
-        
         const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
         
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        const bl_input = getAngka('inputBonLama'); const bl_actual = isDeposit ? -bl_input : bl_input;
+        const bl_input = getAngka('inputBonLama'); 
+        const bl_actual = isDeposit ? -bl_input : bl_input;
         const ongkir = getAngka('inputOngkir');
         
         const tagihanBersih = tk - tr - ongkir + bl_actual;
@@ -1128,7 +1300,8 @@
         const mobil = document.getElementById('pilihMobil').value;
         const drv2 = document.getElementById('driver2').value;
         
-        const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
+        const cash = getAngka('inputCash'); 
+        const trf = getAngka('inputTrf');
 
         if (!ag) errorList.push("- Agen belum dipilih");
         if (!drv1) errorList.push("- Driver 1 belum ditentukan/kosong");
@@ -1136,6 +1309,10 @@
         
         const isTidakTitip = document.getElementById('cbTidakTitip').checked;
         if (cash === 0 && trf === 0 && !isTidakTitip) errorList.push("- Pembayaran belum diisi (Pilih centang 'TIDAK TITIP UANG' jika memang Bon Full)");
+
+        // Validasi wajib pilih ukuran kertas
+        const kertasPilihan = document.getElementById('ukuranKertas').value;
+        if (!kertasPilihan) errorList.push("- Ukuran kertas pencetakan belum dipilih");
 
         if (errorList.length > 0) {
             showCustomAlert("Data Belum Lengkap", "Mohon lengkapi data berikut:<br><br>" + errorList.join("<br>"), "danger");
@@ -1146,15 +1323,19 @@
             try {
                 await connectBT();
             } catch (e) {
-                // Printer connection skipped, proceed with digital report
+                // Printer tidak terhubung, tetap lanjut menyimpan transaksi digital
             }
         }
 
         const btn = document.getElementById('btnSimpan');
         const btnModal = document.getElementById('btnSimpanPreview'); 
 
-        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> MENYIMPAN...'; btn.disabled = true;
-        if (btnModal) { btnModal.innerHTML = '<i class="ph ph-spinner ph-spin"></i> PROSES...'; btnModal.disabled = true; }
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> MENYIMPAN...'; 
+        btn.disabled = true;
+        if (btnModal) { 
+            btnModal.innerHTML = '<i class="ph ph-spinner ph-spin"></i> PROSES...'; 
+            btnModal.disabled = true; 
+        }
 
         const noNota = document.getElementById('noNota').value;
         const tglInput = document.getElementById('tglNota').value;
@@ -1163,15 +1344,20 @@
         
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        const bl_input = getAngka('inputBonLama'); const bl_actual = isDeposit ? -bl_input : bl_input;
+        const bl_input = getAngka('inputBonLama'); 
+        const bl_actual = isDeposit ? -bl_input : bl_input;
         const ongkir = getAngka('inputOngkir');
         
         const tagihanBersih = tk - tr - ongkir + bl_actual;
         const sisa = tagihanBersih - cash - trf;
-        const lebar = parseInt(document.getElementById('ukuranKertas').value); 
+        const lebar = parseInt(kertasPilihan); 
         
-        const buatBaris = (l, r) => { let space = lebar - l.length - String(r).length; return l + " ".repeat(Math.max(1, space)) + r + "\n"; };
-        const garisStrip = "-".repeat(lebar) + "\n"; const garisSamaDengan = "=".repeat(lebar) + "\n";
+        const buatBaris = (l, r) => { 
+            let space = lebar - l.length - String(r).length; 
+            return l + " ".repeat(Math.max(1, space)) + r + "\n"; 
+        };
+        const garisStrip = "-".repeat(lebar) + "\n"; 
+        const garisSamaDengan = "=".repeat(lebar) + "\n";
 
         let p = `\x1B\x40`; 
         p += `\x1B\x61\x01\x1B\x45\x01[JENIS_CETAKAN]\n\x1B\x45\x00\n`; 
@@ -1186,21 +1372,23 @@
         
         p += `\x1B\x21\x00`;
         itemsKirim.forEach(i => { 
-            p += `${i.barang}\n`; if(i.keterangan) p += `  Ket: ${i.keterangan}\n`;
+            p += `${i.barang}\n`; 
+            if (i.keterangan) p += `  Ket: ${i.keterangan}\n`;
             p += buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); 
         });
         p += garisStrip + buatBaris(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString()}`);
 
-        if(itemsRetur.length > 0) {
+        if (itemsRetur.length > 0) {
             p += `\n\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
             itemsRetur.forEach(i => { 
-                p += `[RETUR] ${i.barang}\n`; if(i.keterangan) p += `  Ket: ${i.keterangan}\n`;
+                p += `[RETUR] ${i.barang}\n`; 
+                if (i.keterangan) p += `  Ket: ${i.keterangan}\n`;
                 p += buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); 
             });
             p += garisStrip + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString()}`);
         }
         p += garisStrip;
-        if(ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString()}`);
+        if (ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString()}`);
         
         const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
         const valBonPrint = isDeposit ? `-Rp ${bl_input.toLocaleString()}` : `Rp ${bl_input.toLocaleString()}`;
@@ -1215,10 +1403,9 @@
         
         const labelSisaBluetooth = sisa < 0 ? "DEPOSIT:" : "SISA BON:";
         p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`${labelSisaBluetooth}`, `Rp ${Math.abs(sisa).toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
-        p += `\x1B\x61\x01\x1B\x21\x00` + `\n\n\n` + `( ............................ )\n` + garisStrip;
+        p += `\x1B\x61\x01\x1B\x21\x00\n\n\n( ............................ )\n` + garisStrip;
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
-        // --- PERUBAHAN: Penentuan Database Berdasarkan Tipe Agen ---
         const tipeAgen = database.tipeAgen[ag] || 'reguler';
         const tabelTransaksi = (tipeAgen === 'khusus') ? 'transaksi_dp' : 'transaksi';
         const tabelDetail = (tipeAgen === 'khusus') ? 'transaksi_detaildp' : 'transaksi_detail';
@@ -1237,26 +1424,27 @@
             ];
             await clientSupabase.from(tabelDetail).insert(details);
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
-        // --- BATAS PERUBAHAN ---
 
             if (btCharacteristic) {
-                btn.innerHTML = "MENCETAK CUSTOMER...";
-                if (btnModal) btnModal.innerHTML = "MENCETAK CUSTOMER...";
-                let cetakCustomer = p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ===');
+                btn.innerHTML = "MENCETAK NOTA...";
+                if (btnModal) btnModal.innerHTML = "MENCETAK NOTA...";
+                
+                let cetakCustomer = p.replace('[JENIS_CETAKAN]', ambilJudulNota(false));
                 await printToBT(cetakCustomer);
                 
                 await new Promise(r => setTimeout(r, 500)); 
                 
                 showCustomConfirm(
                     "Cetak Lembar Admin",
-                    "Lembar Customer telah selesai dicetak.<br><br>Apakah Anda ingin lanjut mencetak Lembar Admin?",
+                    "Nota telah selesai dicetak.<br><br>Apakah Anda ingin lanjut mencetak Lembar Admin?",
                     async () => {
                         btn.innerHTML = "MENCETAK ADMIN...";
                         if (btnModal) btnModal.innerHTML = "MENCETAK ADMIN...";
                         let cetakAdmin = p.replace('[JENIS_CETAKAN]', '=== LEMBAR ADMIN ===');
                         await printToBT(cetakAdmin);
                         
-                        lastPrintText = p; document.getElementById('btnReprint').disabled = false;
+                        lastPrintText = p; 
+                        document.getElementById('btnReprint').disabled = false;
                         btn.innerHTML = "MEMBUAT LAPORAN DIGITAL...";
                         if (btnModal) btnModal.innerHTML = "MEMBUAT LAPORAN...";
                         await buatGambarLaporan({
@@ -1266,7 +1454,8 @@
                         }, true); 
                     },
                     async () => {
-                        lastPrintText = p; document.getElementById('btnReprint').disabled = false;
+                        lastPrintText = p; 
+                        document.getElementById('btnReprint').disabled = false;
                         btn.innerHTML = "MEMBUAT LAPORAN DIGITAL...";
                         if (btnModal) btnModal.innerHTML = "MEMBUAT LAPORAN...";
                         await buatGambarLaporan({
@@ -1277,7 +1466,8 @@
                     }
                 );
             } else {
-                lastPrintText = p; document.getElementById('btnReprint').disabled = false;
+                lastPrintText = p; 
+                document.getElementById('btnReprint').disabled = false;
                 btn.innerHTML = "MEMBUAT LAPORAN DIGITAL...";
                 if (btnModal) btnModal.innerHTML = "MEMBUAT LAPORAN...";
                 await buatGambarLaporan({
@@ -1295,166 +1485,26 @@
 
         } catch (e) {
             showCustomAlert("Database Error", (e.message || e), "danger");
-            btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT'; btn.disabled = false;
-            if (btnModal) { btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print'; btnModal.disabled = false; }
+            btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> SIMPAN & PRINT'; 
+            btn.disabled = false;
+            if (btnModal) { 
+                btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print'; 
+                btnModal.disabled = false; 
+            }
         }
     }
 
     window.onload = init;
-	
 
-	function openItemSheet(mode) { 
-		const ag = document.getElementById('pilihAgen').value;
-		if(!ag) {
-			showCustomAlert("Perhatian", "Pilih Agen terlebih dahulu sebelum menambahkan barang!", "danger");
-			return;
-		}
-		
-		currentMode = mode; editIndex = -1; 
-		document.getElementById('sheetInputTitle').innerText = mode === 'Kirim' ? "Tambah Barang Kirim" : "Tambah Barang Retur";
-		
-		// Generate opsi dropdown barang berdasarkan agen
-		availableItemsOptions = '<option value="">-- Pilih Barang --</option>';
-		const daftarHargaAgen = database.harga[ag];
-		let listBarangTersedia = [];
-		for (let key in daftarHargaAgen) {
-			if (key !== "bon") {
-				const namaB = key.split('_')[0];
-				if (!listBarangTersedia.includes(namaB)) listBarangTersedia.push(namaB);
-			}
-		}
-		listBarangTersedia.sort().forEach(b => { availableItemsOptions += `<option value="${b}">${b}</option>`; });
-		
-		// Kosongkan container dan buat 3 baris default
-		const container = document.getElementById('multiItemContainer');
-		container.innerHTML = '';
-		addInputRow();
-		addInputRow();
-		addInputRow();
-
-		openSheet('sheetInput'); 
-	}
-
-	function addInputRow(itemVal = "", uomVal = "Ball", qtyVal = "0", ketVal = "") {
-		const container = document.getElementById('multiItemContainer');
-		const rowId = 'row_' + Math.random().toString(36).substr(2, 9);
-		const ketId = 'ket_' + rowId;
-		
-		// Tampilan diset ke grid 5 kolom: [Ikon] [Barang] [Satuan] [Qty] [Hapus]
-		const rowHtml = `
-			<div class="item-input-row" id="${rowId}" style="background: var(--card-bg); padding: 6px; border-radius: 6px; margin-bottom: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-				
-				<div style="display: grid; grid-template-columns: 28px 1fr 65px 50px 28px; gap: 4px; align-items: center;">
-					
-					<!-- Ikon Keterangan -->
-					<button type="button" class="icon-btn" style="width: 28px; height: 34px; border-radius: 6px; margin: 0; background: var(--bg-color); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted);" onclick="const ket = document.getElementById('${ketId}'); ket.style.display = ket.style.display === 'none' ? 'block' : 'none';" title="Catatan Barang">
-						<i class="ph-bold ph-note-pencil"></i>
-					</button>
-					
-					<select class="input-barang" style="padding: 4px; font-size: 13px; border-radius: 6px; height: 34px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-weight: 600;">
-						${availableItemsOptions}
-					</select>
-					
-					<select class="input-satuan" style="padding: 4px 2px; font-size: 12px; border-radius: 6px; height: 34px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); text-align: center;">
-						<option value="Ball" ${uomVal === 'Ball' ? 'selected' : ''}>Ball</option>
-						<option value="Pack" ${uomVal === 'Pack' ? 'selected' : ''}>Pack</option>
-						<option value="Pcs"  ${uomVal === 'Pcs' ? 'selected' : ''}>Pcs</option>
-					</select>
-					
-					<input type="number" class="input-qty" placeholder="Qty" value="${qtyVal}" style="padding: 4px 2px; font-size: 14px; font-weight: 700; border-radius: 6px; height: 34px; text-align: center; border: 1px solid var(--border); background: var(--input-bg); color: var(--primary);" onfocus="clearZero(this)">
-					
-					<button type="button" class="icon-btn danger" style="width: 28px; height: 34px; font-size: 14px; border-radius: 6px; margin: 0; display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('${rowId}').remove()" title="Hapus Baris">
-						<i class="ph-bold ph-trash"></i>
-					</button>
-					
-				</div>
-				
-				<!-- Input Keterangan disembunyikan secara ID -->
-				<input type="text" id="${ketId}" class="input-ket" placeholder="Catatan/Keterangan (opsional)..." value="${ketVal}" style="padding: 6px 8px; margin-top: 4px; font-size: 11px; font-style: italic; border-radius: 6px; width: 100%; border: 1px dashed var(--border); background: transparent; display: ${ketVal ? 'block' : 'none'};">
-				
-			</div>
-		`;
-		container.insertAdjacentHTML('beforeend', rowHtml);
-
-		// Set value barang jika mode edit
-		if (itemVal) {
-			const lastRow = container.lastElementChild;
-			lastRow.querySelector('.input-barang').value = itemVal;
-		}
-	}
-	function saveMultipleItems() {
-		const ag = document.getElementById('pilihAgen').value;
-		const rows = document.querySelectorAll('.item-input-row');
-		
-		let tempItems = [];
-		let hasError = false;
-
-		// Looping seluruh baris yang ada di modal
-		rows.forEach(row => {
-			const b = row.querySelector('.input-barang').value;
-			const s = row.querySelector('.input-satuan').value;
-			const q = parseFloat(row.querySelector('.input-qty').value) || 0;
-			const k = row.querySelector('.input-ket').value.trim();
-
-			// Hanya simpan jika barang dipilih dan Qty lebih dari 0
-			if (b && q > 0) {
-				const h = database.harga[ag]?.[`${b}_${s}`];
-				if (h === undefined) {
-					showCustomAlert("Perhatian", `Satuan ${s} tidak tersedia untuk barang ${b}!`, "danger");
-					hasError = true;
-					return;
-				}
-				tempItems.push({ barang: b, satuan: s, qty: q, harga: h, total: q * h, keterangan: k });
-			} else if (editIndex > -1 && b && q === 0) {
-				// Mode edit: Jika Qty diubah jadi 0, hapus baris
-				tempItems.push({ deleteFlag: true });
-			}
-		});
-
-		if (hasError) return; 
-
-		if (editIndex > -1) {
-			if (tempItems.length > 0) {
-				const updatedItem = tempItems[0];
-				if (updatedItem.deleteFlag) {
-					(currentMode === 'Kirim' ? itemsKirim : itemsRetur).splice(editIndex, 1);
-				} else {
-					(currentMode === 'Kirim' ? itemsKirim : itemsRetur)[editIndex] = updatedItem;
-				}
-			}
-		} else {
-			tempItems.forEach(it => {
-				(currentMode === 'Kirim' ? itemsKirim : itemsRetur).push(it);
-			});
-		}
-		
-		render(); 
-		closeSheet('sheetInput'); 
-		hitungTotal();
-	}
-
-	function editItem(idx, mode) {
-		currentMode = mode; editIndex = idx; 
-		const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
-		
-		availableItemsOptions = `<option value="${item.barang}">${item.barang}</option>`;
-		
-		document.getElementById('sheetInputTitle').innerText = "Edit Item";
-		
-		const container = document.getElementById('multiItemContainer');
-		container.innerHTML = '';
-		
-		// Render 1 baris saja dengan isi data barang yang mau diedit
-		addInputRow(item.barang, item.satuan, item.qty, item.keterangan || "");
-		
-		const lastRow = container.lastElementChild;
-		lastRow.querySelector('.input-barang').disabled = true;
-		const delBtn = lastRow.querySelector('.icon-btn.danger');
-		if(delBtn) delBtn.style.display = 'none'; // Hilangkan tombol (X) saat mode edit
-
-		openSheet('sheetInput');
-	}
-	
+    // Pembaruan tanggal otomatis saat aplikasi dibuka kembali dari background/layar mati
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            if (itemsKirim.length === 0 && itemsRetur.length === 0) {
+                document.getElementById('tglNota').value = getTanggalHariIniLocal();
+                formatTglDisplay();
+            }
+        }
+    });
 </script>
 </body>
 </html>
