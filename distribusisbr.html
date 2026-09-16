@@ -38,7 +38,6 @@
                 </div>
             </div>
             
-            <!-- Navigasi Menu Header -->
 			<div class="flex bg-gray-100 p-1.5 rounded-xl w-full md:w-auto justify-between md:justify-start gap-1">
 				<button onclick="switchTab('logistik')" id="tabBtnLogistik" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-sm font-bold bg-white text-indigo-700 shadow-sm smooth-transition flex justify-center items-center">
 					<i class="fa-solid fa-truck-fast"></i> 
@@ -68,7 +67,7 @@
         
         <!-- VIEW 1: LOGISTIK HARIAN -->
         <div id="viewLogistik" class="grid grid-cols-1 xl:grid-cols-12 gap-6 smooth-transition opacity-100">
-            <!-- Kolom Kiri: Form Input Kiriman -->
+            <!-- Form Input Kiriman -->
             <div class="xl:col-span-4">
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 sticky top-28">
                     <h2 class="text-lg font-bold mb-5 text-gray-800 dark:text-gray-100 flex items-center border-b dark:border-gray-700 pb-3">
@@ -123,7 +122,7 @@
                 </div>
             </div>
 
-            <!-- Kolom Kanan: Monitoring Logistik Sistem Akordion -->
+            <!-- Monitoring Logistik Akordion -->
             <div class="xl:col-span-8 space-y-4">
                 <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -149,14 +148,108 @@
             </div>
         </div>
 
-        <!-- VIEW 2: PENARIKAN BARANG -->
-        <div id="viewPenarikan" class="hidden opacity-0 smooth-transition">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row items-end justify-between gap-4">
+        <!-- VIEW 2: PENARIKAN BARANG (DENGAN KARTU SETOR CEPAT ALOKASI FIFO) -->
+        <div id="viewPenarikan" class="hidden opacity-0 smooth-transition space-y-6">
+            
+            <!-- KARTU FITUR BARU: SETOR BARANG CEPAT DENGAN ALOKASI FIFO WATERFALL -->
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-emerald-100">
+                <div class="flex flex-col md:flex-row md:items-center justify-between pb-3.5 border-b border-gray-100 gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-lg font-black shadow-inner">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-black text-gray-900 leading-tight">Setor Cepat Bebas Hari (Alokasi FIFO Otomatis)</h2>
+                            <p class="text-xs text-gray-400">Setoran dialokasikan otomatis untuk menutup nota kiriman terlama terlebih dahulu.</p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 font-extrabold text-xs rounded-full self-start md:self-auto">
+                        Mode Sinkron Mobile
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4">
+                    <!-- Kolom 1: Pilih Karyawan & Deteksi Sisa Bersih -->
+                    <div class="lg:col-span-4 space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                                Pilih Karyawan Packing
+                            </label>
+                            <select id="selectPekerjaSetorDesktop" onchange="onPilihPekerjaSetorDesktop()" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="">-- Pilih Pekerja --</option>
+                            </select>
+                        </div>
+
+                        <!-- Kartu Akumulasi Sisa Real-Time per Produk -->
+                        <div id="boxSisaDesktop" class="hidden p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-1.5">
+                            <div class="flex justify-between items-center text-[10px] font-black uppercase text-gray-400">
+                                <span>Akumulasi Tanggungan:</span>
+                                <span class="text-indigo-600" id="infoHariTanggunganDesktop">-</span>
+                            </div>
+                            <div id="containerChipsSisaDesktop" class="space-y-1.5"></div>
+                        </div>
+                    </div>
+
+                    <!-- Kolom 2: Pilihan Jenis Produk (Muncul jika ada > 1 jenis) -->
+                    <div class="lg:col-span-4">
+                        <div id="boxPilihanProdukDesktop" class="hidden space-y-2">
+                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider">
+                                Pilih Produk yang Disetor:
+                            </label>
+                            <div id="containerRadioProdukDesktop" class="space-y-2"></div>
+                        </div>
+                        <div id="placeholderProdukDesktop" class="p-6 text-center text-xs text-gray-400 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center h-full min-h-[110px]">
+                            <i class="fa-solid fa-boxes-stacked text-2xl text-gray-300 mb-1"></i>
+                            <span>Pilih nama pekerja di sebelah kiri untuk melihat saldo produk</span>
+                        </div>
+                    </div>
+
+                    <!-- Kolom 3: Form Input Angka Setor & Eksekusi FIFO -->
+                    <div class="lg:col-span-4">
+                        <div id="boxInputSetorDesktop" class="hidden space-y-3 p-4 bg-emerald-50/50 border-2 border-emerald-200 rounded-2xl">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-bold text-emerald-900 uppercase" id="labelSatuanDesktop">
+                                    Jumlah Disetor (Bal)
+                                </label>
+                                <span class="text-xs font-black text-red-600" id="infoSisaBersihDesktop">
+                                    Sisa: 0
+                                </span>
+                            </div>
+
+                            <input type="number" id="inputJumlahSetorDesktop" min="1" placeholder="0" oninput="hitungPrediksiDesktop()" class="w-full py-2 bg-white border-2 border-emerald-300 focus:border-emerald-500 rounded-xl text-center text-2xl font-black text-emerald-700 outline-none shadow-inner">
+
+                            <div class="text-center text-[11px] font-bold text-gray-600" id="infoPrediksiDesktop">
+                                Ketik jumlah yang diterima
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <select id="selectSesiDesktop" class="w-full px-2.5 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-bold text-gray-700 outline-none">
+                                    <option value="Pagi">Sesi Pagi</option>
+                                    <option value="Siang">Sesi Siang</option>
+                                    <option value="Sore">Sesi Sore</option>
+                                    <option value="Malam">Sesi Malam</option>
+                                </select>
+
+                                <select id="selectPenarikDesktop" class="w-full px-2.5 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-bold text-gray-700 outline-none">
+                                    <option value="">Petugas Penarik</option>
+                                </select>
+                            </div>
+
+                            <button type="button" id="btnEksekusiSetorDesktop" onclick="simpanSetorFIFODesktop()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-check-double"></i> SIMPAN SETORAN (ALOKASI FIFO)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daftar Akordion Antrean Penarikan Harian -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-end justify-between gap-4">
                 <div class="flex-1 w-full md:w-auto">
-                    <h2 class="text-lg font-extrabold text-gray-900 flex items-center">
-                        <i class="fa-solid fa-boxes-packing text-emerald-500 mr-2 text-xl"></i> Penarikan Hasil Produksi
+                    <h2 class="text-base font-extrabold text-gray-900 flex items-center">
+                        <i class="fa-solid fa-calendar-days text-indigo-500 mr-2 text-lg"></i> Antrean Penarikan per Hari
                     </h2>
-                    <p class="text-xs text-gray-500 mt-1">Daftar antrean tarik barang. Ketuk kartu tanggal untuk memproses setoran atau mengoreksi data.</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Kelola setoran manual per tanggal atau lakukan koreksi/pembatalan transaksi.</p>
                 </div>
                 <div class="flex items-center gap-2 w-full md:w-auto">
                     <button onclick="expandAllPenarikan(true)" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition">
@@ -174,7 +267,7 @@
             <div id="containerAccordionPenarikan" class="space-y-4"></div>
         </div>
 
-        <!-- VIEW 3: REKAP GAJI KARYAWAN -->
+        <!-- VIEW 3: REKAP GAJI KARYAWAN (DENGAN KALKULASI SALDO BERSIH FIFO) -->
         <div id="viewRekap" class="hidden opacity-0 smooth-transition">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row items-end gap-3">
                 <div class="w-full md:w-auto">
@@ -186,7 +279,6 @@
                     <input type="date" id="filterEnd" class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none font-medium bg-gray-50 focus:ring-2 focus:ring-emerald-500 text-sm">
                 </div>
                 
-                <!-- SATU TOMBOL EFEKTIF UNTUK TAMPILKAN DATA & SEGARKAN -->
                 <div class="flex items-center w-full md:w-auto">
                     <button type="button" id="btnFilterRekap" onclick="loadRekapGaji()" class="w-full md:w-auto bg-gray-900 hover:bg-gray-800 active:scale-95 text-white font-bold px-6 py-2 rounded-xl smooth-transition h-[42px] flex items-center justify-center text-sm shadow-sm gap-2">
                         <i class="fa-solid fa-rotate-right text-emerald-400" id="iconRefreshRekap"></i>
@@ -219,6 +311,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="px-6 py-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                     <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-money-bill-wave mr-2 text-emerald-500"></i> Rekap Gaji Belum Dibayar</h2>
+                    <span class="text-xs font-semibold text-gray-500">Gantung dihitung netto per produk</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -231,7 +324,7 @@
                                 <th class="px-4 py-4 text-center border-l border-gray-700" id="thLabelB12">Aromanis B12</th>
                                 <th class="px-4 py-4 text-center border-l border-gray-700" id="thLabelB10">Aromanis B10</th>
                                 <th class="px-4 py-4 text-center border-l border-gray-700" id="thLabelOleholeh">Oleh-oleh</th>
-                                <th class="px-4 py-4 text-center border-l border-gray-700 bg-red-900/50">Gantung (Total)</th>
+                                <th class="px-4 py-4 text-center border-l border-gray-700 bg-red-900/50">Gantung (Netto)</th>
                                 <th class="px-4 py-4 text-center border-l border-gray-700 bg-amber-900/40">Uang Makan</th>
                                 <th class="px-5 py-4 text-right border-l border-gray-700 text-emerald-400 text-sm">TOTAL GAJI</th>
                                 <th class="px-5 py-4 text-center border-l border-gray-700">Aksi</th>
@@ -415,10 +508,8 @@
         </div>
     </div>
 
-    <!-- ============================================================== -->
-    <!-- MODAL PENARIKAN (INPUT BARU & KOREKSI PER PETUGAS)             -->
-    <!-- ============================================================== -->
-    <div id="modalSetoran" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+    <!-- MODAL PENARIKAN MANUAL (DENGAN PERINGATAN FIFO) -->
+    <div id="modalSetoran" class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
         <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform scale-95 transition-all duration-300 border border-gray-100 dark:border-gray-700" id="modalContent">
             
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
@@ -436,6 +527,7 @@
                 <input type="hidden" id="setTarikLama">
                 <input type="hidden" id="setRiwayatLama">
                 <input type="hidden" id="setJenisProduk">
+                <input type="hidden" id="setKaryawanIdRow">
                 
                 <!-- Ringkasan Karyawan -->
                 <div class="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100/60">
@@ -463,7 +555,18 @@
                     </div>
                 </div>
 
-                <!-- RINCIAN SETORAN MASUK DENGAN TOMBOL EDIT & HAPUS PER KURIR -->
+                <!-- Banner Informasi Alokasi FIFO -->
+                <div id="bannerPeringatanFIFORow" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 space-y-1">
+                    <div class="font-black flex items-center gap-1.5 text-amber-800">
+                        <i class="fa-solid fa-circle-exclamation text-sm"></i>
+                        <span>Pekerja Memiliki Tanggungan Tanggal Lain!</span>
+                    </div>
+                    <p class="text-[11px] leading-relaxed text-amber-700" id="pesanPeringatanFIFORow">
+                        Disarankan menggunakan fitur <b>Setor Cepat (FIFO)</b> di atas agar setoran otomatis melunasi nota hari terlama lebih dahulu.
+                    </p>
+                </div>
+
+                <!-- Rincian Setoran Masuk -->
                 <div id="boxDaftarCicilanModal" class="space-y-2 pt-1 border-t border-gray-100">
                     <div class="flex items-center justify-between">
                         <label class="text-[11px] font-black text-gray-700 uppercase tracking-wider">
@@ -474,7 +577,7 @@
                     <div id="listCicilanDiModal" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- FORM INPUT SETORAN BARU SAAT INI -->
+                <!-- Form Input Setoran Baris Ini -->
                 <form id="formSetoran" class="space-y-3 pt-2 border-t border-gray-100">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -582,7 +685,7 @@
                     <h3 class="text-lg font-extrabold text-red-700 flex items-center">
                         <i class="fa-solid fa-triangle-exclamation text-red-500 mr-2 text-xl"></i> Rincian Tanggungan Gantung
                     </h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Catatan barang yang belum disetor penuh</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Catatan sisa tanggungan fisik yang belum disetor</p>
                 </div>
                 <button onclick="tutupModalGantung()" class="text-gray-400 hover:text-gray-700 bg-white border border-gray-200 rounded-full w-8 h-8 flex items-center justify-center smooth-transition shadow-sm">
                     <i class="fa-solid fa-xmark"></i>
@@ -592,7 +695,7 @@
             <div class="px-6 py-3 bg-red-600 text-white flex justify-between items-center">
                 <div class="font-black text-lg uppercase tracking-wide" id="infoGantungNama">-</div>
                 <div class="text-xs font-bold bg-red-800 px-3 py-1.5 rounded-lg border border-red-400">
-                    Total Kurang: <span class="font-black text-base text-yellow-300" id="infoGantungTotal">0 Ball</span>
+                    Total Kurang Netto: <span class="font-black text-base text-yellow-300" id="infoGantungTotal">0 Bal</span>
                 </div>
             </div>
 
@@ -604,7 +707,7 @@
                             <th class="px-3 py-3">Produk</th>
                             <th class="px-3 py-3 text-center text-blue-600">Target</th>
                             <th class="px-3 py-3 text-center text-emerald-600">Setor</th>
-                            <th class="px-3 py-3 text-center text-red-600">Kurang</th>
+                            <th class="px-3 py-3 text-center text-red-600">Selisih</th>
                             <th class="px-4 py-3 text-center">Tindakan</th>
                         </tr>
                     </thead>
@@ -619,7 +722,7 @@
         const supabaseUrl = 'https://uocvuddqhviorebinpva.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvY3Z1ZGRxaHZpb3JlYmlucHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2OTQ0NDAsImV4cCI6MjEwMTI3MDQ0MH0.mWGTOTfHG4Q62S3P4LQi-5bGviMPWgMzo2p2AECquL8';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-		
+
         function hitungTargetProduk(kirim, jenis) {
             const k = parseInt(kirim) || 0;
             if (jenis === 'Oleh-oleh') return k * 10;
@@ -673,7 +776,6 @@
             const dd = String(day).padStart(2, '0');
             const mm = String(month + 1).padStart(2, '0');
             const yy = String(year).slice(-2);
-            
             return `${hari}, ${dd}/${mm}/${yy}`;
         }
         
@@ -686,6 +788,10 @@
         let printCharacteristic = null;
         let slipAktif = null;
         let itemSetoranAktifDiModal = null;
+
+        // Data map penampung FIFO Desktop
+        let dataPekerjaFIFODesktopMap = {};
+        let produkTerpilihFIFODesktop = null;
 
         function showDialog({ title = "Pemberitahuan", message = "", type = "info", confirmText = "OK", cancelText = "Batal", showCancel = false }) {
             return new Promise((resolve) => {
@@ -817,6 +923,7 @@
 					viewPenarikan.classList.remove('hidden');
 					setTimeout(() => viewPenarikan.classList.remove('opacity-0'), 50);
 				}
+				loadSetorFIFODesktop();
 				loadDataPenarikan();
 			} else if (tabName === 'rekap') {
 				if (btnRekap) btnRekap.className = "flex-1 md:flex-none px-3 py-2 rounded-lg text-sm font-bold bg-white text-indigo-700 shadow-sm smooth-transition flex justify-center items-center";
@@ -871,6 +978,7 @@
         function isiDropdownPetugas() {
             const elKirim = document.getElementById('dikirimOleh');
             const elTarik = document.getElementById('setDitarikOleh');
+            const elPenarikDesktop = document.getElementById('selectPenarikDesktop');
 
             const listDistribusi = semuaKaryawanList.filter(k => {
                 const role = (k.role || '').toLowerCase().trim();
@@ -891,6 +999,7 @@
 
             if (elKirim) elKirim.innerHTML = opsiKirim;
             if (elTarik) elTarik.innerHTML = opsiTarik;
+            if (elPenarikDesktop) elPenarikDesktop.innerHTML = opsiTarik;
         }
 
         function inisialisasiFormMultiBaris() {
@@ -1181,7 +1290,301 @@
         }
 
 		// ====================================================================
-        // PENARIKAN BARANG (DENGAN TOMBOL EDIT & KOREKSI LENGKAP)
+        // SISTEM ALOKASI FIFO DESKTOP (TAB PENARIKAN VIEW 2)
+        // ====================================================================
+        async function loadSetorFIFODesktop() {
+            const select = document.getElementById('selectPekerjaSetorDesktop');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">Memuat data tanggungan...</option>';
+
+            const { data, error } = await supabaseClient
+                .from('distribusi_packing')
+                .select(`*, karyawan!karyawan_id(nama)`)
+                .eq('is_lunas', false)
+                .order('tanggal', { ascending: true })
+                .order('id', { ascending: true });
+
+            if (error) {
+                select.innerHTML = '<option value="">Gagal memuat data</option>';
+                return;
+            }
+
+            dataPekerjaFIFODesktopMap = {};
+
+            (data || []).forEach(row => {
+                const kid = row.karyawan_id;
+                const nama = row.karyawan?.nama || 'Tanpa Nama';
+                const jenis = row.jenis_produk || 'B12';
+                const target = hitungTargetProduk(row.kirim_produksi, jenis);
+                const tarik = row.tarik_jadi || 0;
+                const satuan = getSatuanTarik(jenis);
+
+                if (!dataPekerjaFIFODesktopMap[kid]) {
+                    dataPekerjaFIFODesktopMap[kid] = {
+                        id: kid,
+                        nama: nama,
+                        produkMap: {}
+                    };
+                }
+
+                if (!dataPekerjaFIFODesktopMap[kid].produkMap[jenis]) {
+                    dataPekerjaFIFODesktopMap[kid].produkMap[jenis] = {
+                        jenis: jenis,
+                        satuan: satuan,
+                        totalTarget: 0,
+                        totalTarik: 0,
+                        netSisa: 0,
+                        items: []
+                    };
+                }
+
+                dataPekerjaFIFODesktopMap[kid].produkMap[jenis].totalTarget += target;
+                dataPekerjaFIFODesktopMap[kid].produkMap[jenis].totalTarik += tarik;
+                dataPekerjaFIFODesktopMap[kid].produkMap[jenis].items.push(row);
+            });
+
+            // Hitung netSisa
+            Object.values(dataPekerjaFIFODesktopMap).forEach(pekerja => {
+                Object.values(pekerja.produkMap).forEach(prod => {
+                    prod.netSisa = prod.totalTarget - prod.totalTarik;
+                });
+            });
+
+            // Munculkan semua karyawan packing terdaftar
+            select.innerHTML = '<option value="">-- Pilih Pekerja --</option>';
+            const listSorted = [...daftarKaryawanGlobal].sort((a, b) => a.nama.localeCompare(b.nama));
+            listSorted.forEach(k => {
+                select.innerHTML += `<option value="${k.id}">${k.nama.toUpperCase()}</option>`;
+            });
+
+            resetFormSetorDesktop();
+        }
+
+        function onPilihPekerjaSetorDesktop() {
+            const kid = document.getElementById('selectPekerjaSetorDesktop').value;
+            resetFormSetorDesktop();
+
+            if (!kid) return;
+
+            const pekerjaData = dataPekerjaFIFODesktopMap[kid];
+            const boxSisa = document.getElementById('boxSisaDesktop');
+            const containerChips = document.getElementById('containerChipsSisaDesktop');
+            const infoHari = document.getElementById('infoHariTanggunganDesktop');
+            const placeholder = document.getElementById('placeholderProdukDesktop');
+
+            if (!pekerjaData || Object.keys(pekerjaData.produkMap).length === 0) {
+                if (boxSisa && containerChips) {
+                    boxSisa.classList.remove('hidden');
+                    if (infoHari) infoHari.innerText = '0 Hari';
+                    containerChips.innerHTML = `
+                        <div class="p-2.5 text-center text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl border border-emerald-200">
+                            Pekerja ini tidak memiliki kiriman aktif/tunggakan.
+                        </div>
+                    `;
+                }
+                if (placeholder) placeholder.classList.remove('hidden');
+                return;
+            }
+
+            const listProduk = Object.values(pekerjaData.produkMap);
+            const setTanggal = new Set();
+            listProduk.forEach(p => p.items.forEach(it => setTanggal.add(it.tanggal)));
+            if (infoHari) infoHari.innerText = `${setTanggal.size} Hari Terkait`;
+
+            if (boxSisa && containerChips) {
+                boxSisa.classList.remove('hidden');
+                containerChips.innerHTML = '';
+
+                listProduk.forEach(prod => {
+                    const labelNama = prod.jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${prod.jenis.replace('B','')}`;
+                    const statusWarna = prod.netSisa > 0 ? 'text-red-600' : 'text-emerald-600';
+                    const teksSisa = prod.netSisa > 0 ? `Sisa ${prod.netSisa} ${prod.satuan}` : `PAS (Lunas)`;
+
+                    containerChips.innerHTML += `
+                        <div class="p-2 bg-white rounded-xl border border-gray-200 flex justify-between items-center text-xs font-bold">
+                            <span>${labelNama}</span>
+                            <span class="${statusWarna}">${teksSisa}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            if (placeholder) placeholder.classList.add('hidden');
+
+            const boxPilihanProduk = document.getElementById('boxPilihanProdukDesktop');
+            const containerRadio = document.getElementById('containerRadioProdukDesktop');
+
+            if (listProduk.length === 1) {
+                boxPilihanProduk.classList.add('hidden');
+                aktifkanInputSetorDesktop(listProduk[0]);
+            } else {
+                boxPilihanProduk.classList.remove('hidden');
+                containerRadio.innerHTML = '';
+
+                listProduk.forEach(prod => {
+                    const labelNama = prod.jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${prod.jenis.replace('B','')}`;
+                    containerRadio.innerHTML += `
+                        <label class="flex items-center justify-between p-3 bg-gray-50 hover:bg-emerald-50 border border-gray-200 hover:border-emerald-300 rounded-xl cursor-pointer transition select-none">
+                            <div class="flex items-center gap-2.5">
+                                <input type="radio" name="pilihProdukDesktop" value="${prod.jenis}" onchange='onPilihOpsiProdukDesktop("${prod.jenis}")' class="w-4 h-4 text-emerald-600 focus:ring-0">
+                                <div>
+                                    <div class="text-xs font-black text-gray-800">${labelNama}</div>
+                                    <div class="text-[10px] text-gray-400 font-semibold">${prod.items.length} sesi transaksi terkait</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs font-black text-red-600">Sisa ${prod.netSisa} ${prod.satuan}</div>
+                                <div class="text-[9px] text-gray-400">Target: ${prod.totalTarget} • Masuk: ${prod.totalTarik}</div>
+                            </div>
+                        </label>
+                    `;
+                });
+            }
+        }
+
+        function onPilihOpsiProdukDesktop(jenis) {
+            const kid = document.getElementById('selectPekerjaSetorDesktop').value;
+            const prod = dataPekerjaFIFODesktopMap[kid]?.produkMap[jenis];
+            if (prod) aktifkanInputSetorDesktop(prod);
+        }
+
+        function aktifkanInputSetorDesktop(prod) {
+            produkTerpilihFIFODesktop = prod;
+
+            document.getElementById('labelSatuanDesktop').innerText = `Jumlah Disetor (${prod.satuan})`;
+            document.getElementById('infoSisaBersihDesktop').innerText = `Sisa Bersih: ${prod.netSisa} ${prod.satuan}`;
+
+            const input = document.getElementById('inputJumlahSetorDesktop');
+            input.value = prod.netSisa > 0 ? prod.netSisa : '';
+
+            document.getElementById('selectSesiDesktop').value = getSesiWaktuOtomatis();
+
+            document.getElementById('boxInputSetorDesktop').classList.remove('hidden');
+            hitungPrediksiDesktop();
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function hitungPrediksiDesktop() {
+            if (!produkTerpilihFIFODesktop) return;
+
+            const inputBaru = parseInt(document.getElementById('inputJumlahSetorDesktop').value) || 0;
+            const totalTarikAwal = produkTerpilihFIFODesktop.totalTarik;
+            const totalTarget = produkTerpilihFIFODesktop.totalTarget;
+            const satuan = produkTerpilihFIFODesktop.satuan;
+
+            const totalMenjadi = totalTarikAwal + inputBaru;
+            const selisih = totalMenjadi - totalTarget;
+
+            let infoText = '';
+            if (selisih === 0) {
+                infoText = `<span class="text-emerald-600 font-black">Total: ${totalMenjadi} ${satuan} (PAS LUNAS SEMUA)</span>`;
+            } else if (selisih < 0) {
+                infoText = `<span class="text-amber-600 font-black">Total: ${totalMenjadi} ${satuan} (Masih Kurang ${Math.abs(selisih)} ${satuan})</span>`;
+            } else {
+                infoText = `<span class="text-purple-600 font-black">Total: ${totalMenjadi} ${satuan} (LEBIH +${selisih} ${satuan})</span>`;
+            }
+
+            document.getElementById('infoPrediksiDesktop').innerHTML = infoText;
+        }
+
+        async function simpanSetorFIFODesktop() {
+            if (!produkTerpilihFIFODesktop) {
+                await showNotice("Pilih produk yang akan disetor!", "Peringatan", "warning");
+                return;
+            }
+
+            const inputBaru = parseInt(document.getElementById('inputJumlahSetorDesktop').value) || 0;
+            if (inputBaru <= 0) {
+                await showNotice("Masukkan jumlah setoran dengan benar!", "Periksa Jumlah", "warning");
+                return;
+            }
+
+            const penarikSelect = document.getElementById('selectPenarikDesktop');
+            const penarikId = penarikSelect.value || null;
+            const penarikNama = penarikSelect.options[penarikSelect.selectedIndex]?.text.split(' (')[0] || 'Admin';
+            const sesiWaktu = document.getElementById('selectSesiDesktop').value || getSesiWaktuOtomatis();
+
+            const btn = document.getElementById('btnEksekusiSetorDesktop');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i> Mengalokasikan FIFO...';
+
+            const kid = document.getElementById('selectPekerjaSetorDesktop').value;
+            const namaKaryawan = dataPekerjaFIFODesktopMap[kid]?.nama || 'Pekerja';
+            const satuan = produkTerpilihFIFODesktop.satuan;
+
+            // ALOKASI FIFO WATERFALL KE TRANSAKSI LAMA
+            let sisaPool = produkTerpilihFIFODesktop.totalTarik + inputBaru;
+            const updatePromises = [];
+
+            for (let i = 0; i < produkTerpilihFIFODesktop.items.length; i++) {
+                const row = produkTerpilihFIFODesktop.items[i];
+                const rowTarget = hitungTargetProduk(row.kirim_produksi, row.jenis_produk);
+                const isLastRow = (i === produkTerpilihFIFODesktop.items.length - 1);
+
+                let alokasiTarik = 0;
+                if (!isLastRow) {
+                    alokasiTarik = Math.min(rowTarget, sisaPool);
+                    sisaPool -= alokasiTarik;
+                } else {
+                    alokasiTarik = sisaPool;
+                    sisaPool = 0;
+                }
+
+                const koreksiBaru = alokasiTarik - rowTarget;
+
+                let logGabungan = row.riwayat_cicilan || '';
+                if (isLastRow) {
+                    const logBaru = `${penarikNama}: +${inputBaru} ${satuan} (${sesiWaktu})`;
+                    logGabungan = logGabungan ? `${logGabungan}, ${logBaru}` : logBaru;
+                }
+
+                updatePromises.push(
+                    supabaseClient
+                        .from('distribusi_packing')
+                        .update({
+                            tarik_jadi: alokasiTarik,
+                            koreksi: koreksiBaru,
+                            ditarik_oleh: penarikId,
+                            riwayat_cicilan: logGabungan
+                        })
+                        .eq('id', row.id)
+                );
+            }
+
+            const results = await Promise.all(updatePromises);
+            const hasError = results.some(r => r.error);
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check-double"></i> SIMPAN SETORAN (ALOKASI FIFO)';
+
+            if (hasError) {
+                await showError("Gagal menyimpan alokasi setoran FIFO.");
+            } else {
+                await showSuccess(`Setoran ${inputBaru} ${satuan} untuk ${namaKaryawan} berhasil dialokasikan secara FIFO!`);
+                await loadSetorFIFODesktop();
+                loadDataPenarikan();
+                loadDataLogistik();
+            }
+        }
+
+        function resetFormSetorDesktop() {
+            produkTerpilihFIFODesktop = null;
+            const boxSisa = document.getElementById('boxSisaDesktop');
+            if (boxSisa) boxSisa.classList.add('hidden');
+            const boxPilihanProduk = document.getElementById('boxPilihanProdukDesktop');
+            if (boxPilihanProduk) boxPilihanProduk.classList.add('hidden');
+            const boxInput = document.getElementById('boxInputSetorDesktop');
+            if (boxInput) boxInput.classList.add('hidden');
+            const placeholder = document.getElementById('placeholderProdukDesktop');
+            if (placeholder) placeholder.classList.remove('hidden');
+
+            const input = document.getElementById('inputJumlahSetorDesktop');
+            if (input) input.value = '';
+        }
+
+		// ====================================================================
+        // PENARIKAN BARANG PER HARI (AKORDION & AKSI KELOLA)
         // ====================================================================
         async function loadDataPenarikan() {
             const container = document.getElementById('containerAccordionPenarikan');
@@ -1316,12 +1719,10 @@
 
                     rowsHTML += `
                         <tr class="hover:bg-gray-50/80 border-b border-gray-100 transition last:border-0">
-                            <!-- Kolom 1: Waktu -->
                             <td class="px-4 py-3.5 whitespace-nowrap">
                                 <span class="font-bold text-gray-700 text-xs">Waktu ${row.sesi}</span>
                             </td>
 
-                            <!-- Kolom 2: Nama Karyawan, Produk, Kirim & Riwayat Petugas Penarik -->
                             <td class="px-4 py-3.5">
                                 <div class="font-black text-gray-900 uppercase text-xs tracking-wide">${row.karyawan?.nama || '-'}</div>
                                 <div class="text-[11px] font-bold text-indigo-600 mt-0.5">${labelProduk}</div>
@@ -1331,25 +1732,21 @@
                                 ${infoPenarikHTML}
                             </td>
 
-                            <!-- Kolom 3: Jenis Produk -->
                             <td class="px-3 py-3.5 text-center">
                                 <span class="text-[11px] font-bold ${jenis === 'Oleh-oleh' ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-indigo-700 bg-indigo-50 border-indigo-100'} px-2.5 py-0.5 rounded border">
                                     ${labelProduk}
                                 </span>
                             </td>
 
-                            <!-- Kolom 4: Target Produksi -->
                             <td class="px-3 py-3.5 text-center">
                                 <div class="font-black text-blue-600 text-base leading-none">${targetKirim}</div>
                                 <div class="text-[9px] text-gray-400 mt-0.5">Target: ${targetKirim}</div>
                             </td>
 
-                            <!-- Kolom 5: Hasil Setor & Status -->
                             <td class="px-3 py-3.5 text-center leading-tight">
                                 ${statusSetorUI}
                             </td>
 
-                            <!-- Kolom 6: Tombol Aksi Lengkap (Setor, Edit Kiriman, Hapus) -->
                             <td class="px-4 py-3.5 text-center space-x-1 whitespace-nowrap">
                                 <button onclick='openModal(${JSON.stringify(row)})' class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition inline-flex items-center gap-1" title="Setor / Koreksi Petugas">
                                     <i class="fa-solid fa-box-open text-xs"></i> Setor
@@ -1448,7 +1845,7 @@
         }
 
         // ====================================================================
-        // REKAP GAJI LENGKAP (TAMPILAN TERVERIFIKASI)
+        // REKAP GAJI LENGKAP DENGAN PERHITUNGAN GANTUNG NETTO (SALDO BERSIH)
         // ====================================================================
         async function loadRekapGaji() {
             const start = document.getElementById('filterStart').value;
@@ -1474,7 +1871,7 @@
                 <tr>
                     <td colspan="9" class="p-10 text-center text-gray-400">
                         <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-indigo-600"></i>
-                        <br><span class="text-xs font-bold text-gray-500">Mengkalkulasi Rekap Gaji & Gantungan...</span>
+                        <br><span class="text-xs font-bold text-gray-500">Mengkalkulasi Rekap Gaji & Saldo Gantung Bersih...</span>
                     </td>
                 </tr>
             `;
@@ -1488,6 +1885,7 @@
                 document.getElementById('thLabelB10').innerHTML = `Aromanis B10<br><span class="text-gray-400 text-[9px]">@ ${formatRp(tarif.b10)}</span>`;
                 document.getElementById('thLabelOleholeh').innerHTML = `Oleh-oleh<br><span class="text-gray-400 text-[9px]">@ ${formatRp(tarif.oleholeh)}</span>`;
 
+                // Ambil data transaksi aktif (belum lunas) dalam periode dan seluruh data gantung
                 const [resPeriode, resSemuaGantung] = await Promise.all([
                     supabaseClient
                         .from('distribusi_packing')
@@ -1509,14 +1907,14 @@
                             pengirim:karyawan!dikirim_oleh(nama),
                             penarik:karyawan!ditarik_oleh(nama)
                         `)
-                        .lt('koreksi', 0)
+                        .eq('is_lunas', false)
                         .order('tanggal', { ascending: false })
                 ]);
 
                 if (resPeriode.error) throw resPeriode.error;
 
                 const data = resPeriode.data || [];
-                const semuaGantung = resSemuaGantung.data || [];
+                const semuaAktif = resSemuaGantung.data || [];
 
                 const rekap = {};
 
@@ -1534,6 +1932,7 @@
                             totalKirimMurni: 0,
                             dapatUangMakan: false,
                             histori: [],
+                            tanggunganBersihPerProduk: {},
                             daftarGantung: []
                         };
                     }
@@ -1542,11 +1941,6 @@
                     rekap[kid].totalKirimMurni += (row.kirim_produksi || 0);
 
                     const qty = row.tarik_jadi || 0;
-                    const selisih = row.koreksi || 0;
-                    
-                    if (selisih < 0) {
-                        rekap[kid].daftarGantung.push(row);
-                    }
 
                     if (row.jenis_produk === 'B12') { 
                         rekap[kid].b12 += qty; 
@@ -1556,15 +1950,20 @@
                         rekap[kid].gajiDasar += (qty * tarif.b10); 
                     } else if (row.jenis_produk === 'Oleh-oleh') {
                         rekap[kid].oleholeh += qty;
-                        rekap[kid].gajiDasar += (qty * tarif.oleholeh);
+                        rekap[kid].gajiDasar += (qty * tarif.oleholeh); 
                     }
                 });
 
-                semuaGantung.forEach(g => {
-                    const kid = g.karyawan_id;
+                // KALKULASI GANTUNG SECARA NETTO (Kelebihan hari lain otomatis memotong kekurangan!)
+                semuaAktif.forEach(row => {
+                    const kid = row.karyawan_id;
+                    const jenis = row.jenis_produk || 'B12';
+                    const target = hitungTargetProduk(row.kirim_produksi, jenis);
+                    const tarik = row.tarik_jadi || 0;
+
                     if (!rekap[kid]) {
                         rekap[kid] = {
-                            nama: g.karyawan?.nama || 'Unknown',
+                            nama: row.karyawan?.nama || 'Unknown',
                             b12: 0, 
                             b10: 0, 
                             oleholeh: 0,
@@ -1572,12 +1971,25 @@
                             totalKirimMurni: 0,
                             dapatUangMakan: false,
                             histori: [],
+                            tanggunganBersihPerProduk: {},
                             daftarGantung: []
                         };
                     }
-                    const sudahAda = rekap[kid].daftarGantung.some(item => item.id === g.id);
-                    if (!sudahAda) {
-                        rekap[kid].daftarGantung.push(g);
+
+                    if (!rekap[kid].tanggunganBersihPerProduk[jenis]) {
+                        rekap[kid].tanggunganBersihPerProduk[jenis] = {
+                            totalTarget: 0,
+                            totalTarik: 0,
+                            satuan: getSatuanTarik(jenis)
+                        };
+                    }
+
+                    rekap[kid].tanggunganBersihPerProduk[jenis].totalTarget += target;
+                    rekap[kid].tanggunganBersihPerProduk[jenis].totalTarik += tarik;
+
+                    // Simpan row ke daftar gantung untuk pelacakan modal
+                    if (!rekap[kid].daftarGantung.some(it => it.id === row.id)) {
+                        rekap[kid].daftarGantung.push(row);
                     }
                 });
 
@@ -1614,23 +2026,34 @@
 
             keys.forEach(k => {
                 const r = globalRekapData[k];
-                const totalGantung = r.daftarGantung.reduce((acc, curr) => acc + Math.abs(curr.koreksi || 0), 0);
+                
+                // HITUNG SALDO GANTUNG BERSIH (NET DEFICIT)
+                let totalGantungNetto = 0;
+                let rincianGantungTeks = [];
+
+                Object.entries(r.tanggunganBersihPerProduk).forEach(([jenis, dataProd]) => {
+                    const selisihNetto = dataProd.totalTarget - dataProd.totalTarik;
+                    if (selisihNetto > 0) {
+                        totalGantungNetto += selisihNetto;
+                        rincianGantungTeks.push(`${jenis}: ${selisihNetto} ${dataProd.satuan}`);
+                    }
+                });
                 
                 const nominalUangMakan = r.dapatUangMakan ? (r.totalKirimMurni * tarif.makan) : 0;
                 const totalGajiAkhir = r.gajiDasar + nominalUangMakan;
                 grandTotalGaji += totalGajiAkhir;
                 
                 let gantungUI = `<span class="text-gray-400 font-bold">-</span>`;
-                if (totalGantung > 0) {
+                if (totalGantungNetto > 0) {
                     gantungUI = `
-                        <button onclick="bukaModalGantung('${k}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-extrabold text-xs transition border border-red-200 shadow-sm group">
-                            <span>${totalGantung} Bal</span>
+                        <button onclick="bukaModalGantung('${k}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-extrabold text-xs transition border border-red-200 shadow-sm group" title="${rincianGantungTeks.join(' | ')}">
+                            <span>${totalGantungNetto} Bal</span>
                             <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-red-400"></i>
                         </button>
                     `;
                 }
 
-                const warningIcon = totalGantung > 0 ? `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2" title="Ada tanggungan gantung!"></i>` : '';
+                const warningIcon = totalGantungNetto > 0 ? `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2" title="Ada sisa tanggungan bersih!"></i>` : '';
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-indigo-50/50 transition">
@@ -1648,7 +2071,7 @@
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-semibold">${r.b12 || '-'}</td>
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-semibold">${r.b10 || '-'}</td>
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-semibold text-amber-700">${r.oleholeh ? r.oleholeh + ' T' : '-'}</td>
-                        <td class="px-4 py-3 text-center border-l border-gray-100">${gantungUI}</td>
+                        <td class="px-4 py-3 text-center border-l border-gray-100 font-black text-red-600 bg-red-50/30">${gantungUI}</td>
                         <td class="px-4 py-3 text-center border-l border-gray-100">
                             <label class="inline-flex items-center gap-1.5 cursor-pointer bg-amber-50 px-2 py-1 rounded border border-amber-200">
                                 <input type="checkbox" onchange="toggleUangMakan('${k}', this.checked)" ${r.dapatUangMakan ? 'checked' : ''} class="rounded text-indigo-600 focus:ring-0">
@@ -1726,12 +2149,17 @@
                 const r = globalRekapData[kid];
                 if (!r) continue;
 
+                let totalGantungNetto = 0;
+                Object.values(r.tanggunganBersihPerProduk).forEach(dataProd => {
+                    const selisihNetto = dataProd.totalTarget - dataProd.totalTarik;
+                    if (selisihNetto > 0) totalGantungNetto += selisihNetto;
+                });
+
                 const nominalMakan = r.dapatUangMakan ? (r.totalKirimMurni * tarif.makan) : 0;
                 const totalGaji = r.gajiDasar + nominalMakan;
-                const totalGantung = r.daftarGantung.reduce((acc, curr) => acc + Math.abs(curr.koreksi || 0), 0);
 
                 const berhasil = await kirimPerintahCetakBluetooth(
-                    r.nama, r.b12, r.b10, (r.oleholeh || 0), totalGaji, totalGantung, r.totalKirimMurni, r.dapatUangMakan, start, end
+                    r.nama, r.b12, r.b10, (r.oleholeh || 0), totalGaji, totalGantungNetto, r.totalKirimMurni, r.dapatUangMakan, start, end
                 );
 
                 if (berhasil) {
@@ -1767,9 +2195,7 @@
             await prosesPelunasanDatabase(listKid);
         }
 
-        // ====================================================================
-        // MODAL RINCIAN KIRIM-TARIK: TANGGAL TERLAMA DI ATAS & SETOR KLIK
-        // ====================================================================
+        // MODAL RINCIAN: TANGGAL LAMA DI ATAS & SETOR BISA DIKLIK
         function bukaModalRincian(karyawanId) {
             const data = globalRekapData[karyawanId];
             if (!data) return;
@@ -1790,7 +2216,6 @@
             let grandTarget = 0;
             let grandSetor = 0;
 
-            // URUTKAN DARI TANGGAL TERLAMA KE TERBARU (ASCENDING)
             const listHistori = [...(data.histori || [])].sort((a, b) => {
                 if (a.tanggal !== b.tanggal) {
                     return a.tanggal.localeCompare(b.tanggal);
@@ -1821,7 +2246,6 @@
                     statusUI = `<span class="text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">Lebih +${selisih} ${satuan}</span>`;
                 }
 
-                // ANGKA SETOR INTERAKTIF (BISA DIKLIK)
                 const tombolSetorInteraktif = setor > 0
                     ? `
                         <button type="button" onclick="lihatRincianPenarikBarang('${row.id}')" class="group inline-flex flex-col items-center justify-center px-2.5 py-1 rounded-xl hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition cursor-pointer" title="Klik untuk melihat siapa yang menarik barang ini">
@@ -1872,7 +2296,6 @@
             document.getElementById('modalContentRincian').classList.remove('scale-95');
         }
 
-        // POPUP DETAIL PETUGAS PENARIK BARANG SAAT ANGKA SETOR DIKLIK
         function lihatRincianPenarikBarang(rowId) {
             const data = globalRekapData[currentRincianKaryawanId];
             if (!data || !data.histori) return;
@@ -1948,7 +2371,12 @@
                 end = document.getElementById('filterEnd').value;
                 const nominalMakan = r.dapatUangMakan ? (r.totalKirimMurni * tarif.makan) : 0;
                 const totalGaji = r.gajiDasar + nominalMakan;
-                const totalGantung = r.daftarGantung.reduce((acc, curr) => acc + Math.abs(curr.koreksi || 0), 0);
+
+                let totalGantungNetto = 0;
+                Object.values(r.tanggunganBersihPerProduk).forEach(dataProd => {
+                    const selisihNetto = dataProd.totalTarget - dataProd.totalTarik;
+                    if (selisihNetto > 0) totalGantungNetto += selisihNetto;
+                });
 
                 slipAktif = {
                     karyawanId,
@@ -1958,7 +2386,7 @@
                     oleholeh: r.oleholeh || 0,
                     nominalMakan,
                     totalGaji,
-                    totalGantung,
+                    totalGantung: totalGantungNetto,
                     totalKirimMurni: r.totalKirimMurni,
                     dapatUangMakan: r.dapatUangMakan,
                     start,
@@ -2239,7 +2667,7 @@
             tutupPratinjau();
         }
 
-        function bukaModalGantung(karyawanId) {
+		function bukaModalGantung(karyawanId) {
             const data = globalRekapData[karyawanId];
             if (!data) return;
 
@@ -2247,14 +2675,30 @@
             const tbody = document.getElementById('tableBodyGantung');
             tbody.innerHTML = '';
 
-            let totalBall = 0;
+            let totalBallNetto = 0;
 
-            (data.daftarGantung || []).forEach(row => {
+            Object.entries(data.tanggunganBersihPerProduk).forEach(([jenis, dataProd]) => {
+                const selisihNetto = dataProd.totalTarget - dataProd.totalTarik;
+                if (selisihNetto > 0) totalBallNetto += selisihNetto;
+            });
+
+            // 1. URUTKAN DARI TANGGAL TERLAMA KE TERBARU (ASCENDING)
+            const listGantung = [...(data.daftarGantung || [])].sort((a, b) => {
+                if (a.tanggal !== b.tanggal) {
+                    return a.tanggal.localeCompare(b.tanggal);
+                }
+                return (a.sesi === 'Pagi') ? -1 : 1;
+            });
+
+            // 2. TAMPILKAN KE BARIS TABEL
+            listGantung.forEach(row => {
                 const jenis = row.jenis_produk || 'B12';
                 const targetKirim = hitungTargetProduk(row.kirim_produksi, jenis);
                 const kekurangan = Math.abs(row.koreksi || 0);
                 const satuan = getSatuanTarik(jenis);
-                totalBall += kekurangan;
+                const statusTeks = (row.koreksi || 0) < 0 
+                    ? `Kurang ${kekurangan} ${satuan}` 
+                    : ((row.koreksi || 0) > 0 ? `Lebih +${row.koreksi} ${satuan}` : 'Pas');
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-red-50/50 border-b border-gray-100">
@@ -2267,8 +2711,8 @@
                         </td>
                         <td class="px-3 py-3 text-center font-bold text-blue-600">${targetKirim}</td>
                         <td class="px-3 py-3 text-center font-bold text-emerald-600">${row.tarik_jadi || 0}</td>
-                        <td class="px-3 py-3 text-center font-black text-red-600 bg-red-50/60">
-                            Kurang ${kekurangan} ${satuan}
+                        <td class="px-3 py-3 text-center font-black ${(row.koreksi || 0) < 0 ? 'text-red-600 bg-red-50/60' : 'text-purple-600'}">
+                            ${statusTeks}
                         </td>
                         <td class="px-4 py-3 text-center whitespace-nowrap">
                             <button onclick='openModal(${JSON.stringify(row)})' class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5 mx-auto">
@@ -2279,7 +2723,7 @@
                 `;
             });
 
-            document.getElementById('infoGantungTotal').innerText = `${totalBall} Bal`;
+            document.getElementById('infoGantungTotal').innerText = `${totalBallNetto} Bal`;
 
             const modal = document.getElementById('modalGantung');
             modal.classList.remove('opacity-0', 'pointer-events-none');
@@ -2588,6 +3032,7 @@
 
                     loadDataLogistik();
                     loadDataPenarikan();
+                    loadSetorFIFODesktop();
                 } catch (err) {
                     await showError("Terjadi kesalahan:\n" + err.message);
                 } finally {
@@ -2635,6 +3080,7 @@
             if (!error) {
                 loadDataLogistik();
                 loadDataPenarikan();
+                loadSetorFIFODesktop();
             }
         }
 
@@ -2656,6 +3102,7 @@
             document.getElementById('setTarikLama').value = tarikLama;
             document.getElementById('setRiwayatLama').value = data.riwayat_cicilan || '';
             document.getElementById('setJenisProduk').value = jenis;
+            document.getElementById('setKaryawanIdRow').value = data.karyawan_id;
 
             document.getElementById('setInfoTanggal').innerText = `${formatTglIndo(data.tanggal)} • Waktu ${data.sesi}`;
             document.getElementById('setKaryawanNama').innerText = data.karyawan ? data.karyawan.nama : '-';
@@ -2674,6 +3121,17 @@
             hitungPrediksiTotal();
 
             renderDaftarCicilanModalUtama(data);
+
+            // Periksa apakah pekerja ini punya nota lain yang belum beres
+            const pekerjaData = dataPekerjaFIFODesktopMap[data.karyawan_id];
+            const bannerFIFO = document.getElementById('bannerPeringatanFIFORow');
+            if (bannerFIFO) {
+                if (pekerjaData && pekerjaData.produkMap[jenis] && pekerjaData.produkMap[jenis].items.length > 1) {
+                    bannerFIFO.classList.remove('hidden');
+                } else {
+                    bannerFIFO.classList.add('hidden');
+                }
+            }
 
             const modal = document.getElementById('modalSetoran');
             modal.classList.remove('opacity-0', 'pointer-events-none');
@@ -2809,6 +3267,7 @@
                 openModal(itemSetoranAktifDiModal);
                 loadDataLogistik();
                 loadDataPenarikan();
+                loadSetorFIFODesktop();
             } else {
                 await showError("Gagal menyimpan perubahan: " + error.message);
             }
@@ -2844,7 +3303,7 @@
             inputTarikBaruEl.addEventListener('input', hitungPrediksiTotal);
         }
 
-        // SIMPAN TARIKAN
+        // SIMPAN TARIKAN TUNGGAL
         const formSetoranEl = document.getElementById('formSetoran');
         if (formSetoranEl) {
             formSetoranEl.addEventListener('submit', async (e) => {
@@ -2863,7 +3322,7 @@
                 const satuan = getSatuanTarik(jenis);
 
                 const penarikSelect = document.getElementById('setDitarikOleh');
-                const penarikId = penarikSelect.value || null; // PENGAMAN NILAI UUID
+                const penarikId = penarikSelect.value || null;
                 const penarikNama = penarikSelect.options[penarikSelect.selectedIndex]?.text.split(' (')[0] || 'Petugas';
                 const sesiWaktu = document.getElementById('setSesiWaktu').value || getSesiWaktuOtomatis();
 
@@ -2899,6 +3358,7 @@
                     closeModal();
                     loadDataLogistik();
                     loadDataPenarikan();
+                    loadSetorFIFODesktop();
                 }
 
                 btn.innerHTML = teksAsli;
@@ -2956,6 +3416,7 @@
                 await showSuccess("Seluruh isi tabel distribusi berhasil dibersihkan!");
                 loadDataLogistik();
                 loadDataPenarikan();
+                loadSetorFIFODesktop();
             } catch (err) {
                 await showError("Gagal menghapus data:\n" + err.message);
             } finally {
