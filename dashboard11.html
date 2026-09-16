@@ -2,17 +2,25 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport dioptimalkan untuk mobile browser Android -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBR System - Dashboard Utama</title>
     
-    <!-- Font Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icon -->
+    <!-- Meta Tag PWA & Mobile Browser -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SBR Dashboard">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/32a7da9a4f0b96178d09bf6d69258055cd0c63e3/icon-192.png">
+    
+    <!-- Manifest Dinamis untuk Instalasi PWA -->
+    <link id="manifestPlaceholder" rel="manifest">
+
+    <!-- Font Google & FontAwesome Icon -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* Variabel Warna & Properti Global */
         :root {
             --bg-color: #f8fafc;
             --text-color: #0f172a;
@@ -24,10 +32,11 @@
             --accent-light: #eff6ff;
             --subtitle-color: #64748b;
             --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            --transition: all 0.25s ease;
-            --header-blur-bg: rgba(255, 255, 255, 0.85);
+            --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 12px 25px rgba(0, 0, 0, 0.12);
+            --header-blur-bg: rgba(255, 255, 255, 0.88);
+            --online-color: #10b981;
+            --offline-color: #94a3b8;
         }
 
         [data-theme="dark"] {
@@ -40,45 +49,41 @@
             --accent-color: #3b82f6;
             --accent-light: rgba(59, 130, 246, 0.15);
             --subtitle-color: #94a3b8;
-            --header-blur-bg: rgba(19, 27, 46, 0.85);
+            --header-blur-bg: rgba(19, 27, 46, 0.88);
         }
 
-        /* Reset Dasar & Pengoptimalan Mobile */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            -webkit-tap-highlight-color: transparent; /* Hilangkan kotak biru bawaan Android saat tombol ditekan */
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: background-color 0.25s ease, color 0.25s ease;
             overflow-x: hidden;
+            padding-bottom: 2rem;
         }
 
-        /* Layout Utama */
         .app-layout {
             display: flex;
             min-height: 100vh;
             position: relative;
         }
 
-        /* Overlay Gelap untuk Sidebar di Mobile */
+        /* Backdrop Gelap untuk Sidebar di Layar HP */
         .sidebar-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(3px);
-            z-index: 45;
+            backdrop-filter: blur(4px);
+            z-index: 90;
             opacity: 0;
             visibility: hidden;
-            transition: var(--transition);
+            transition: all 0.25s ease;
         }
 
         .sidebar-overlay.active {
@@ -86,7 +91,7 @@
             visibility: visible;
         }
 
-        /* Sidebar Navigation */
+        /* Desain Sidebar */
         .sidebar {
             width: 270px;
             background-color: var(--sidebar-bg);
@@ -94,15 +99,13 @@
             display: flex;
             flex-direction: column;
             position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 50;
+            top: 0; bottom: 0; left: 0;
+            z-index: 100;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .sidebar-header {
-            padding: 1.25rem 1.5rem;
+            padding: 1.2rem 1.4rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -110,29 +113,26 @@
         }
 
         .sidebar-header h2 {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: var(--accent-color);
-            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .close-sidebar {
             display: none;
             background: none;
             border: none;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--subtitle-color);
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             border-radius: 8px;
+            cursor: pointer;
             align-items: center;
             justify-content: center;
-        }
-
-        .close-sidebar:active {
-            background-color: var(--hover-bg);
-            color: var(--text-color);
         }
 
         .sidebar-menu {
@@ -144,17 +144,14 @@
             gap: 0.25rem;
         }
 
-        .sidebar-menu::-webkit-scrollbar { width: 4px; }
-        .sidebar-menu::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-
         .menu-section {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 700;
             color: var(--subtitle-color);
             text-transform: uppercase;
             letter-spacing: 0.8px;
             margin-top: 1.25rem;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
             padding-left: 0.75rem;
         }
 
@@ -162,13 +159,13 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.75rem 0.85rem;
+            padding: 0.7rem 0.85rem;
             border-radius: 10px;
             color: var(--text-color);
             text-decoration: none;
             font-size: 0.85rem;
             font-weight: 500;
-            transition: var(--transition);
+            transition: 0.2s;
         }
 
         .menu-item i {
@@ -178,22 +175,12 @@
             color: var(--subtitle-color);
         }
 
-        .menu-item:hover {
-            background-color: var(--hover-bg);
-            color: var(--accent-color);
-        }
-
-        .menu-item:hover i {
-            color: var(--accent-color);
-        }
-
-        .menu-item.active {
+        .menu-item:hover, .menu-item.active {
             background-color: var(--accent-light);
             color: var(--accent-color);
-            font-weight: 600;
         }
 
-        .menu-item.active i {
+        .menu-item:hover i, .menu-item.active i {
             color: var(--accent-color);
         }
 
@@ -207,7 +194,7 @@
             color: var(--subtitle-color);
         }
 
-        /* Konten Utama */
+        /* Area Konten */
         .main-content {
             flex: 1;
             margin-left: 270px;
@@ -227,19 +214,19 @@
             width: 100%;
         }
 
-        /* Top Header dengan Efek Blur Modern */
+        /* Top Header Sticky */
         .top-header {
             background-color: var(--header-blur-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-color);
-            padding: 0.85rem 1.5rem;
+            padding: 0.75rem 1.25rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
-            z-index: 40;
+            z-index: 80;
         }
 
         .header-left {
@@ -248,104 +235,171 @@
             gap: 0.75rem;
         }
 
-        .sidebar-toggle-btn {
-            background: none;
-            border: none;
-            font-size: 1.15rem;
-            color: var(--text-color);
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-        }
-
-        .sidebar-toggle-btn:hover {
-            background-color: var(--hover-bg);
-        }
-
-        .page-title h1 {
-            font-size: 1.15rem;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
-
-        .page-title p {
-            font-size: 0.75rem;
-            color: var(--subtitle-color);
-        }
-
-        .theme-toggle {
+        .icon-btn {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             color: var(--text-color);
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             border-radius: 10px;
             cursor: pointer;
             display: flex;
-            justify-content: center;
             align-items: center;
-            font-size: 1rem;
-            transition: var(--transition);
+            justify-content: center;
+            font-size: 0.95rem;
+            transition: all 0.2s;
             box-shadow: var(--shadow-sm);
         }
 
-        .theme-toggle:active {
+        .icon-btn:active {
             transform: scale(0.92);
         }
 
-        /* Area Konten */
-        .content-area {
-            padding: 1.5rem;
-            flex: 1;
-            max-width: 1400px;
-            width: 100%;
-            margin: 0 auto;
+        .page-title {
+            display: flex;
+            flex-direction: column;
         }
 
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 1rem;
-        }
-
-        .section-title {
-            grid-column: 1 / -1;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--subtitle-color);
-            margin-top: 1.25rem;
-            padding-bottom: 0.4rem;
-            border-bottom: 1px solid var(--border-color);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
+        .title-row {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        .section-title:first-child {
-            margin-top: 0.25rem;
+        .page-title h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
         }
 
-        /* Card Menu */
+        /* Indikator Online / Offline */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--online-color);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        .status-badge.offline {
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--offline-color);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--online-color);
+            box-shadow: 0 0 6px var(--online-color);
+            animation: pulse-dot 2s infinite ease-in-out;
+        }
+
+        .status-badge.offline .status-dot {
+            background-color: var(--offline-color);
+            box-shadow: none;
+            animation: none;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-area {
+            padding: 1.25rem;
+            flex: 1;
+            max-width: 1300px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Search Bar Cepat */
+        .search-container {
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.7rem 1rem 0.7rem 2.6rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: var(--text-color);
+            outline: none;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.95rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--subtitle-color);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 0.85rem;
+        }
+
+        .section-title {
+            grid-column: 1 / -1;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--subtitle-color);
+            margin-top: 1.2rem;
+            padding-bottom: 0.35rem;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        /* Kartu Menu */
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 14px;
             padding: 0.85rem 1rem;
             display: flex;
-            flex-direction: row;
             align-items: center;
-            gap: 0.9rem;
+            gap: 0.85rem;
             text-decoration: none;
             color: var(--text-color);
             box-shadow: var(--shadow-sm);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            position: relative;
         }
 
         .card:hover {
@@ -354,21 +408,18 @@
             border-color: var(--accent-color);
         }
 
-        /* Efek sentuh khas Android */
         .card:active {
             transform: scale(0.98);
-            background-color: var(--hover-bg);
         }
 
         .icon-wrapper {
             width: 42px;
             height: 42px;
-            border-radius: 10px;
+            border-radius: 11px;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-shrink: 0;
-            transition: var(--transition);
         }
 
         .icon-wrapper i {
@@ -379,10 +430,11 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            flex: 1;
         }
 
         .card-text h3 {
-            font-size: 0.88rem;
+            font-size: 0.86rem;
             font-weight: 600;
             margin-bottom: 0.15rem;
             white-space: nowrap;
@@ -393,121 +445,65 @@
         .card-text p {
             font-size: 0.72rem;
             color: var(--subtitle-color);
-            line-height: 1.35;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            line-height: 1.3;
         }
 
-        /* Warna Tag Ikon */
+        .custom-tag {
+            position: absolute;
+            top: 0.4rem;
+            right: 0.5rem;
+            font-size: 0.55rem;
+            background: var(--accent-light);
+            color: var(--accent-color);
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        /* Warna Ikon */
         .icon-green { background-color: #ecfdf5; color: #10b981; }
-        .icon-green i { color: #10b981; }
-
         .icon-blue { background-color: #eff6ff; color: #3b82f6; }
-        .icon-blue i { color: #3b82f6; }
-
         .icon-orange { background-color: #fffbeb; color: #f59e0b; }
-        .icon-orange i { color: #f59e0b; }
-
         .icon-red { background-color: #fef2f2; color: #ef4444; }
-        .icon-red i { color: #ef4444; }
+        .icon-purple { background-color: #faf5ff; color: #8b5cf6; }
 
-        /* Dark Mode Colors */
         [data-theme="dark"] .icon-green { background-color: rgba(16, 185, 129, 0.15); }
         [data-theme="dark"] .icon-blue { background-color: rgba(59, 130, 246, 0.15); }
         [data-theme="dark"] .icon-orange { background-color: rgba(245, 158, 11, 0.15); }
         [data-theme="dark"] .icon-red { background-color: rgba(239, 68, 68, 0.15); }
+        [data-theme="dark"] .icon-purple { background-color: rgba(139, 92, 246, 0.15); }
 
-        /* ==============================================================
-           PENGATURAN KHUSUS MOBILE DEVICE (SMARTPHONE ANDROID)
-           ============================================================== */
+        /* Khusus Mobile */
         @media (max-width: 768px) {
-            /* Sidebar tersembunyi secara default ke kiri */
-            .sidebar {
-                transform: translateX(-100%);
-                box-shadow: none;
-            }
-
+            .sidebar { transform: translateX(-100%); }
             .sidebar.active {
                 transform: translateX(0);
-                box-shadow: 10px 0 25px rgba(0, 0, 0, 0.2);
+                box-shadow: 10px 0 25px rgba(0, 0, 0, 0.25);
             }
-
-            /* Tombol silang tutup sidebar diaktifkan untuk mobile */
-            .close-sidebar {
-                display: flex;
-            }
-
-            /* Konten utama mengambil 100% layar mobile tanpa margin kiri */
+            .close-sidebar { display: flex; }
             .main-content {
                 margin-left: 0 !important;
                 width: 100% !important;
             }
-
-            /* Header lebih ringkas */
-            .top-header {
-                padding: 0.75rem 1rem;
-            }
-
-            .page-title h1 {
-                font-size: 1.05rem;
-            }
-
-            .page-title p {
-                display: none; /* Disembunyikan agar header bersih di layar kecil */
-            }
-
-            /* Area konten dengan padding yang pas di tepi layar HP */
-            .content-area {
-                padding: 1rem 0.85rem;
-            }
-
-            /* Grid kartu di mobile: 1 kolom lega dan mudah ditekan */
+            .top-header { padding: 0.7rem 0.9rem; }
+            .content-area { padding: 0.9rem 0.8rem; }
             .dashboard-grid {
                 grid-template-columns: 1fr;
-                gap: 0.65rem;
+                gap: 0.6rem;
             }
-
-            /* Card disesuaikan agar proporsional dan nyaman di jari */
-            .card {
-                padding: 0.85rem 0.95rem;
-                border-radius: 12px;
-                gap: 0.85rem;
-            }
-
-            .icon-wrapper {
-                width: 40px;
-                height: 40px;
-            }
-
-            .icon-wrapper i {
-                font-size: 1.05rem;
-            }
-
-            .card-text h3 {
-                font-size: 0.88rem;
-            }
-
-            /* Teks penjelasan tidak terpotong agar mudah dibaca di layar vertikal HP */
-            .card-text p {
-                font-size: 0.72rem;
-                white-space: normal;
-            }
-
-            .section-title {
-                font-size: 0.75rem;
-                margin-top: 1rem;
-                padding-bottom: 0.35rem;
-            }
+            .card-text p { white-space: normal; }
         }
 
-        /* ---------------- MODAL PIN OTORISASI ---------------- */
+        /* Modal Global */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            inset: 0;
             background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-            z-index: 100;
+            backdrop-filter: blur(6px);
+            z-index: 150;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -525,12 +521,14 @@
         .modal-box {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.5rem;
+            border-radius: 18px;
+            padding: 1.4rem;
             width: 100%;
-            max-width: 320px;
+            max-width: 440px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: var(--shadow-lg);
-            transform: scale(0.95) translateY(10px);
+            transform: scale(0.95) translateY(12px);
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -538,97 +536,213 @@
             transform: scale(1) translateY(0);
         }
 
-        .modal-title { 
-            font-size: 1.1rem;
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.65rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.05rem;
             font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.35rem; 
         }
 
-        .modal-desc { 
-            font-size: 0.8rem;
+        .modal-close-btn {
+            background: none;
+            border: none;
             color: var(--subtitle-color);
-            margin-bottom: 1.25rem;
-            line-height: 1.4;
+            font-size: 1.1rem;
+            cursor: pointer;
         }
 
-        .modal-input {
+        .form-group {
+            margin-bottom: 0.95rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--subtitle-color);
+            margin-bottom: 0.35rem;
+        }
+
+        .form-input, .form-select {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.65rem 0.85rem;
             background-color: var(--bg-color);
-            border: 1.5px solid var(--border-color);
+            border: 1px solid var(--border-color);
             color: var(--text-color);
             border-radius: 10px;
-            font-size: 1.35rem;
-            text-align: center;
-            letter-spacing: 0.5rem;
-            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
             outline: none;
-            transition: border-color 0.2s;
         }
 
-        .modal-input:focus {
+        .form-input:focus, .form-select:focus {
             border-color: var(--accent-color);
         }
 
-        .modal-error {
-            color: #ef4444;
-            font-size: 0.75rem;
-            margin-bottom: 1rem;
-            display: none;
-            text-align: center;
-            font-weight: 500;
-        }
-
-        .modal-actions {
+        .icon-preview-box {
             display: flex;
+            align-items: center;
             gap: 0.75rem;
-            justify-content: flex-end;
-            margin-top: 0.5rem;
+            padding: 0.6rem 0.8rem;
+            background: var(--hover-bg);
+            border-radius: 10px;
+            margin-top: 0.3rem;
         }
 
-        .btn-cancel, .btn-submit {
-            padding: 0.65rem 1.1rem;
+        .btn-primary {
+            width: 100%;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
             border-radius: 10px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:active { opacity: 0.85; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .settings-nav {
+            display: flex;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .settings-tab-btn {
+            background: none;
             border: none;
-            transition: var(--transition);
-        }
-
-        .btn-cancel {
-            background-color: transparent;
             color: var(--subtitle-color);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.4rem 0.65rem;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
         }
 
-        .btn-cancel:active {
-            background-color: var(--hover-bg);
+        .settings-tab-btn.active {
+            background: var(--accent-light);
+            color: var(--accent-color);
         }
 
-        .btn-submit {
-            background-color: var(--accent-color);
-            color: #ffffff;
+        .custom-menu-list {
+            margin-top: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 180px;
+            overflow-y: auto;
         }
 
-        .btn-submit:active {
-            opacity: 0.85;
-            transform: scale(0.97);
+        .custom-item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.7rem;
+            background: var(--hover-bg);
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+
+        .btn-del-menu {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            padding: 0.2rem 0.4rem;
+        }
+
+        /* Banner Pop-up Modern PWA */
+        .pwa-banner {
+            position: fixed;
+            bottom: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 2rem);
+            max-width: 440px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 1rem 1.15rem;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .pwa-banner.show {
+            bottom: 1.25rem;
+        }
+
+        .pwa-banner img {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .pwa-content { flex: 1; }
+        .pwa-content h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.15rem; }
+        .pwa-content p { font-size: 0.7rem; color: var(--subtitle-color); }
+
+        .pwa-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .btn-pwa-install {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-pwa-dismiss {
+            background: transparent;
+            border: none;
+            color: var(--subtitle-color);
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
     <div class="app-layout">
-        <!-- Backdrop Gelap di Belakang Sidebar Mobile -->
+        <!-- Overlay Gelap Mobile Drawer -->
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <!-- SIDEBAR DRAWER -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2>SBR System</h2>
+                <h2><i class="fa-solid fa-cube"></i> SBR System</h2>
                 <button class="close-sidebar" id="closeSidebar" aria-label="Tutup Menu">
-                    <i class="fa-solid fa-times"></i>
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
             
@@ -640,56 +754,73 @@
                 <div class="menu-section">Modul Eksternal</div>
                 <a href="https://sbrputrafood-sys.github.io/payress/" class="menu-item" target="_blank">
                     <i class="fa-solid fa-receipt"></i> SBR Reseller
-                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.55rem;"></i></span>
+                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
                 </a>
                 <a href="GAJIAN.html" class="menu-item">
                     <i class="fa-solid fa-money-check-dollar"></i> Payroll
-                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.55rem;"></i></span>
+                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
                 </a>
                 <a href="distribusisbr.html" class="menu-item">
                     <i class="fa-solid fa-truck-ramp-box"></i> Distribusi & Packing
-                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.55rem;"></i></span>
+                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
                 </a>
                 <a href="distribusisbr_mobile.html" class="menu-item">
                     <i class="fa-solid fa-mobile-screen"></i> App Distribusi Karyawan
-                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.55rem;"></i></span>
+                    <span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
                 </a>
                 <a href="#" class="menu-item" id="menuKkurnia">
                     <i class="fa-solid fa-triangle-exclamation"></i> kkurnia Rand
-                    <span class="external-badge"><i class="fa-solid fa-lock" style="font-size:0.6rem;"></i></span>
+                    <span class="external-badge"><i class="fa-solid fa-lock"></i></span>
                 </a>
             </nav>
         </aside>
 
         <!-- KONTEN UTAMA -->
         <main class="main-content">
-            <!-- Top App Bar Sticky -->
+            <!-- App Bar Header -->
             <header class="top-header">
                 <div class="header-left">
-                    <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Buka Menu Navigasi">
+                    <button class="icon-btn" id="sidebarToggle" aria-label="Buka Menu">
                         <i class="fa-solid fa-bars"></i>
                     </button>
                     <div class="page-title">
-                        <h1>SBR Dashboard</h1>
-                        <p>Sistem Manajemen SBR Putra Food</p>
+                        <div class="title-row">
+                            <h1>SBR Dashboard</h1>
+                            <!-- Badge Status Jaringan -->
+                            <div class="status-badge" id="networkBadge">
+                                <span class="status-dot"></span>
+                                <span id="networkText">Online</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <button class="theme-toggle" id="themeToggle" aria-label="Ganti Mode Gelap/Terang">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
+                <div class="header-actions">
+                    <button class="icon-btn" id="openSettingsBtn" title="Pengaturan Dashboard">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                    <button class="icon-btn" id="themeToggle" title="Ganti Mode Tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
             </header>
 
-            <!-- Grid Konten Menu -->
             <div class="content-area">
-                <div class="dashboard-grid">
+                <!-- Search Bar Cepat -->
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="menuSearchInput" class="search-input" placeholder="Cari menu, transaksi, nota, laporan...">
+                </div>
+
+                <!-- Grid Kartu Menu Dashboard -->
+                <div class="dashboard-grid" id="dashboardGrid">
                     
                     <!-- KELOMPOK 1 -->
                     <div class="section-title">
-                        <i class="fa-solid fa-receipt"></i> Transaksi & Piutang Agen
+                        <span><i class="fa-solid fa-receipt"></i> Transaksi & Piutang Agen</span>
                     </div>
                     
-                    <a href="BONKIKIV2.html" class="card">
+                    <a href="BONKIKIV2.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-green">
                             <i class="fa-solid fa-file-invoice"></i>
                         </div>
@@ -699,7 +830,7 @@
                         </div>
                     </a>
 
-                    <a href="REKAPNOTAJAMBI.html" class="card">
+                    <a href="REKAPNOTAJAMBI.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-green">
                             <i class="fa-solid fa-folder-open"></i>
                         </div>
@@ -709,7 +840,7 @@
                         </div>
                     </a>
 
-                    <a href="bayar_bonkiki.html" class="card">
+                    <a href="bayar_bonkiki.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-green">
                             <i class="fa-solid fa-file-invoice-dollar"></i>
                         </div>
@@ -719,7 +850,7 @@
                         </div>
                     </a>
 
-                    <a href="bayar_bon2.html" class="card">
+                    <a href="bayar_bon2.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-green">
                             <i class="fa-solid fa-circle-dollar-to-slot"></i>
                         </div>
@@ -731,10 +862,10 @@
 
                     <!-- KELOMPOK 2 -->
                     <div class="section-title">
-                        <i class="fa-solid fa-truck"></i> Operasional & Logistik
+                        <span><i class="fa-solid fa-truck"></i> Operasional & Logistik</span>
                     </div>
 
-                    <a href="rekapnotaharian.html" class="card">
+                    <a href="rekapnotaharian.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-blue">
                             <i class="fa-solid fa-receipt"></i>
                         </div>
@@ -744,7 +875,7 @@
                         </div>
                     </a>
 
-                    <a href="LAPDRIVERv3.html" class="card">
+                    <a href="LAPDRIVERv3.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-blue">
                             <i class="fa-solid fa-truck-fast"></i>
                         </div>
@@ -756,10 +887,10 @@
 
                     <!-- KELOMPOK 3 -->
                     <div class="section-title">
-                        <i class="fa-solid fa-industry"></i> Pembayaran / Lainnya
+                        <span><i class="fa-solid fa-industry"></i> Pembayaran / Lainnya</span>
                     </div>
 
-                    <a href="INVENDOR.html" class="card">
+                    <a href="INVENDOR.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-orange">
                             <i class="fa-solid fa-boxes-packing"></i>
                         </div>
@@ -769,7 +900,7 @@
                         </div>
                     </a>
 
-                    <a href="bayargas.html" class="card">
+                    <a href="bayargas.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-orange">
                             <i class="fa-solid fa-fire-flame-simple"></i>
                         </div>
@@ -781,10 +912,10 @@
 
                     <!-- KELOMPOK 4 -->
                     <div class="section-title">
-                        <i class="fa-solid fa-database"></i> Data Master & Sistem
+                        <span><i class="fa-solid fa-database"></i> Data Master & Sistem</span>
                     </div>
 
-                    <a href="harga_agensbr.html" class="card">
+                    <a href="harga_agensbr.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-comments-dollar"></i>
                         </div>
@@ -794,7 +925,7 @@
                         </div>
                     </a>
 
-                    <a href="agensbr.html" class="card">
+                    <a href="agensbr.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-users"></i>
                         </div>
@@ -804,7 +935,7 @@
                         </div>
                     </a>
 
-                    <a href="barang.html" class="card">
+                    <a href="barang.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-tags"></i>
                         </div>
@@ -814,7 +945,7 @@
                         </div>
                     </a>
 
-                    <a href="testanalisa.html" class="card">
+                    <a href="testanalisa.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-chart-pie"></i>
                         </div>
@@ -824,7 +955,7 @@
                         </div>
                     </a>
 
-                    <a href="bekapsbrv2.html" class="card">
+                    <a href="bekapsbrv2.html" class="card menu-card-target">
                         <div class="icon-wrapper icon-red">
                             <i class="fa-solid fa-file-shield"></i>
                         </div>
@@ -834,94 +965,682 @@
                         </div>
                     </a>
 
+                    <!-- Wadah Menu Baru Ditambahkan -->
+                    <div class="section-title" id="customMenuHeader" style="display:none;">
+                        <span><i class="fa-solid fa-folder-plus"></i> Menu Kustom Anda</span>
+                    </div>
+                    <div id="customMenuContainer" style="display:contents;"></div>
+
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Modal PIN Verifikasi -->
-    <div id="pinModal" class="modal-overlay">
+    <!-- ================= MODAL SETTINGS & TAMBAH MENU ================= -->
+    <div id="settingsModal" class="modal-overlay">
         <div class="modal-box">
-            <h3 class="modal-title">Keamanan Sistem</h3>
-            <p class="modal-desc">Masukkan 6 digit PIN otoritas untuk mengakses kkurnia Rand.</p>
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-sliders"></i> Pengaturan Dashboard</h3>
+                <button class="modal-close-btn" id="closeSettingsModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Tab Tombol -->
+            <div class="settings-nav">
+                <button class="settings-tab-btn active" id="tabAddMenuBtn">Tambah Menu</button>
+                <button class="settings-tab-btn" id="tabGithubBtn">Koneksi GitHub</button>
+                <button class="settings-tab-btn" id="tabManageMenuBtn">Kelola Menu</button>
+                <button class="settings-tab-btn" id="tabAppInfoBtn">Aplikasi PWA</button>
+            </div>
+
+            <!-- TAB 1: Tambah Menu -->
+            <div id="tabAddMenuContent">
+                <form id="addMenuForm">
+                    <div class="form-group">
+                        <label>Nama Menu</label>
+                        <input type="text" id="newMenuName" class="form-input" placeholder="Contoh: Laporan Penjualan" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Deskripsi Singkat</label>
+                        <input type="text" id="newMenuDesc" class="form-input" placeholder="Contoh: Rekap nota omset harian" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Metode Penambahan</label>
+                        <select id="sourceTypeSelect" class="form-select">
+                            <option value="github_upload">Upload File HTML ke GitHub (Online)</option>
+                            <option value="local_upload">Simpan File di HP Saja (Offline)</option>
+                            <option value="url">Tautan / URL Web Langsung</option>
+                        </select>
+                    </div>
+
+                    <!-- Input File -->
+                    <div class="form-group" id="fileUploadContainer">
+                        <label>Pilih File HTML</label>
+                        <input type="file" id="newMenuFile" class="form-input" accept=".html,.htm">
+                        <small id="uploadHint" style="font-size:0.7rem; color:var(--subtitle-color); display:block; margin-top:0.25rem;">
+                            File akan otomatis di-commit ke repositori GitHub Anda.
+                        </small>
+                    </div>
+
+                    <!-- Input URL -->
+                    <div class="form-group" id="urlInputContainer" style="display:none;">
+                        <label>Alamat Link / Nama File</label>
+                        <input type="text" id="newMenuUrl" class="form-input" placeholder="Contoh: https://... atau laporan.html">
+                    </div>
+
+                    <!-- Preview Ikon Otomatis -->
+                    <div class="form-group">
+                        <label>Ikon Otomatis (Dikenali dari Nama Menu)</label>
+                        <div class="icon-preview-box">
+                            <div class="icon-wrapper icon-blue" id="previewIconWrapper">
+                                <i class="fa-solid fa-cube" id="previewIconElement"></i>
+                            </div>
+                            <span id="previewIconName" style="font-size:0.8rem; color:var(--subtitle-color);">Ikon Otomatis</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btnSubmitNewMenu" class="btn-primary" style="margin-top: 1rem;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Pasang & Upload Menu
+                    </button>
+                </form>
+            </div>
+
+            <!-- TAB 2: Pengaturan Akun GitHub -->
+            <div id="tabGithubContent" style="display: none;">
+                <div class="form-group">
+                    <label>Username GitHub</label>
+                    <input type="text" id="ghUsername" class="form-input" value="kkurnia-sudo">
+                </div>
+                <div class="form-group">
+                    <label>Nama Repositori</label>
+                    <input type="text" id="ghRepo" class="form-input" value="systemapps">
+                </div>
+                <div class="form-group">
+                    <label>Branch Target</label>
+                    <input type="text" id="ghBranch" class="form-input" value="main">
+                </div>
+                <div class="form-group">
+                    <label>GitHub Personal Access Token (PAT)</label>
+                    <input type="password" id="ghToken" class="form-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                    <small style="font-size: 0.7rem; color: var(--subtitle-color); display:block; margin-top:0.25rem;">
+                        Token disimpan di browser Anda sendiri untuk mengunggah file secara aman.
+                    </small>
+                </div>
+                <button type="button" class="btn-primary" id="btnSaveGhConfig">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan GitHub
+                </button>
+            </div>
+
+            <!-- TAB 3: Kelola Menu Kustom -->
+            <div id="tabManageMenuContent" style="display: none;">
+                <p style="font-size: 0.75rem; color: var(--subtitle-color);">Daftar menu tambahan yang tersimpan:</p>
+                <div class="custom-menu-list" id="customMenuList"></div>
+            </div>
+
+            <!-- TAB 4: Info PWA & Instalasi -->
+            <div id="tabAppInfoContent" style="display: none;">
+                <div style="text-align: center; padding: 0.5rem 0;">
+                    <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/32a7da9a4f0b96178d09bf6d69258055cd0c63e3/icon-192.png" style="width: 64px; height: 64px; border-radius: 14px; margin-bottom: 0.5rem;" alt="App Icon">
+                    <h4 style="font-size: 0.95rem;">SBR Putra Food Dashboard</h4>
+                    <p style="font-size: 0.75rem; color: var(--subtitle-color); margin-bottom: 1rem;">Progressive Web App (PWA)</p>
+                    <button class="btn-primary" id="btnManualInstallPWA">
+                        <i class="fa-solid fa-download"></i> Pasang Ke Layar Utama
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL PIN KKURNIA ================= -->
+    <div id="pinModal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 320px; text-align: center;">
+            <h3 style="font-size: 1.1rem; font-weight:700; margin-bottom:0.25rem;">Keamanan Sistem</h3>
+            <p style="font-size: 0.78rem; color: var(--subtitle-color); margin-bottom: 1.25rem;">Masukkan 6 digit PIN otoritas.</p>
             
-            <!-- Tambahan inputmode="numeric" untuk memicu keypad angka di Android -->
             <input 
                 type="password" 
                 id="pinInput" 
-                class="modal-input" 
+                style="width:100%; padding:0.75rem; background:var(--bg-color); border:1.5px solid var(--border-color); color:var(--text-color); border-radius:10px; font-size:1.35rem; text-align:center; letter-spacing:0.5rem; outline:none; margin-bottom:0.5rem;"
                 placeholder="••••••" 
                 maxlength="6" 
                 inputmode="numeric" 
                 pattern="[0-9]*" 
                 autocomplete="off">
             
-            <p id="pinError" class="modal-error">PIN yang Anda masukkan salah!</p>
+            <p id="pinError" style="color: #ef4444; font-size: 0.75rem; display: none; margin-bottom: 1rem;">PIN yang dimasukkan salah!</p>
             
-            <div class="modal-actions">
-                <button id="btnCancelPin" class="btn-cancel">Batal</button>
-                <button id="btnSubmitPin" class="btn-submit">Verifikasi</button>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                <button id="btnCancelPin" class="icon-btn" style="width:auto; padding:0.5rem 1rem;">Batal</button>
+                <button id="btnSubmitPin" class="btn-primary" style="width:auto; padding:0.5rem 1.2rem;">Buka</button>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript Interaktif -->
-    <script>
-        // --- 1. Mode Gelap & Terang ---
-        const toggleBtn = document.getElementById('themeToggle');
-        const toggleIcon = toggleBtn.querySelector('i');
-        const htmlElement = document.documentElement;
+    <!-- ================= POP-UP INSTALL PWA MODERN ================= -->
+    <div id="pwaBanner" class="pwa-banner">
+        <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/32a7da9a4f0b96178d09bf6d69258055cd0c63e3/icon-192.png" alt="SBR Icon">
+        <div class="pwa-content">
+            <h4>Pasang Aplikasi SBR</h4>
+            <p>Buka dashboard langsung dari layar utama HP tanpa peramban browser.</p>
+        </div>
+        <div class="pwa-actions">
+            <button id="btnAcceptInstall" class="btn-pwa-install">Install</button>
+            <button id="btnDismissInstall" class="btn-pwa-dismiss">Nanti</button>
+        </div>
+    </div>
 
-        const savedTheme = localStorage.getItem('sbr-theme');
-        if (savedTheme) { 
-            htmlElement.setAttribute('data-theme', savedTheme); 
-            updateIcon(savedTheme); 
+    <!-- ================= SKRIP JAVASCRIPT ================= -->
+    <script>
+        // -------------------------------------------------------------
+        // 1. MANIFEST DINAMIS & SERVICE WORKER PWA
+        // -------------------------------------------------------------
+        const dynamicManifest = {
+            "name": "SBR System Dashboard",
+            "short_name": "SBR Dashboard",
+            "start_url": window.location.href,
+            "display": "standalone",
+            "background_color": "#0b0f19",
+            "theme_color": "#2563eb",
+            "icons": [
+                {
+                    "src": "https://raw.githubusercontent.com/kkurnia-sudo/systemapps/32a7da9a4f0b96178d09bf6d69258055cd0c63e3/icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png",
+                    "purpose": "any maskable"
+                },
+                {
+                    "src": "https://raw.githubusercontent.com/kkurnia-sudo/systemapps/32a7da9a4f0b96178d09bf6d69258055cd0c63e3/icon-512.png",
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "any maskable"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(dynamicManifest)], { type: 'application/json' });
+        document.getElementById('manifestPlaceholder').setAttribute('href', URL.createObjectURL(manifestBlob));
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+                    });
+                `;
+                const swBlob = new Blob([swCode], { type: 'application/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+            });
         }
 
-        toggleBtn.addEventListener('click', () => {
-            const currentTheme = htmlElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            htmlElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('sbr-theme', newTheme);
-            updateIcon(newTheme);
+        let deferredPrompt = null;
+        const pwaBanner = document.getElementById('pwaBanner');
+        const btnAcceptInstall = document.getElementById('btnAcceptInstall');
+        const btnDismissInstall = document.getElementById('btnDismissInstall');
+        const btnManualInstallPWA = document.getElementById('btnManualInstallPWA');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (!sessionStorage.getItem('pwa-dismissed')) {
+                setTimeout(() => pwaBanner.classList.add('show'), 1500);
+            }
         });
 
-        function updateIcon(theme) {
-            toggleIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        if (btnAcceptInstall) {
+            btnAcceptInstall.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                    pwaBanner.classList.remove('show');
+                }
+            });
         }
 
-        // --- 2. Logika Sidebar (Mobile Drawer & Desktop Toggle) ---
+        if (btnDismissInstall) {
+            btnDismissInstall.addEventListener('click', () => {
+                pwaBanner.classList.remove('show');
+                sessionStorage.setItem('pwa-dismissed', 'true');
+            });
+        }
+
+        if (btnManualInstallPWA) {
+            btnManualInstallPWA.addEventListener('click', () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                } else {
+                    alert('Gunakan menu titik tiga (⋮) di browser Anda lalu pilih "Tambahkan ke Layar Utama / Install Aplikasi".');
+                }
+            });
+        }
+
+        // -------------------------------------------------------------
+        // 2. STATUS JARINGAN ONLINE / OFFLINE
+        // -------------------------------------------------------------
+        const networkBadge = document.getElementById('networkBadge');
+        const networkText = document.getElementById('networkText');
+
+        function updateNetworkStatus() {
+            if (navigator.onLine) {
+                networkBadge.className = 'status-badge';
+                networkText.textContent = 'Online';
+            } else {
+                networkBadge.className = 'status-badge offline';
+                networkText.textContent = 'Offline';
+            }
+        }
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+        updateNetworkStatus();
+
+        // -------------------------------------------------------------
+        // 3. TEMA GELAP & TERANG
+        // -------------------------------------------------------------
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = themeToggle.querySelector('i');
+        const rootElement = document.documentElement;
+
+        const savedTheme = localStorage.getItem('sbr-theme') || 'light';
+        rootElement.setAttribute('data-theme', savedTheme);
+        themeIcon.className = savedTheme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+
+        themeToggle.addEventListener('click', () => {
+            const nextTheme = rootElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            rootElement.setAttribute('data-theme', nextTheme);
+            localStorage.setItem('sbr-theme', nextTheme);
+            themeIcon.className = nextTheme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        });
+
+        // -------------------------------------------------------------
+        // 4. SIDEBAR LOGIC (DRAWER MOBILE)
+        // -------------------------------------------------------------
         const sidebar = document.getElementById('sidebar');
-        const closeBtn = document.getElementById('closeSidebar');
-        const overlay = document.getElementById('sidebarOverlay');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const mainContent = document.querySelector('.main-content');
 
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', () => {
                 if (window.innerWidth <= 768) {
-                    // Tampilan Mobile: Buka sebagai drawer samping
                     sidebar.classList.add('active');
-                    overlay.classList.add('active');
-                    document.body.style.overflow = 'hidden'; // Kunci scroll layar saat menu terbuka
+                    sidebarOverlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
                 } else {
-                    // Tampilan Desktop: Sembunyikan sidebar ke kiri
                     sidebar.classList.toggle('hidden');
                     mainContent.classList.toggle('expanded');
                 }
             });
         }
 
-        function closeMobileSidebar() {
+        function hideSidebar() {
             sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-            document.body.style.overflow = ''; // Kembalikan scroll layar
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = '';
         }
 
-        if (closeBtn) closeBtn.addEventListener('click', closeMobileSidebar);
-        if (overlay) overlay.addEventListener('click', closeMobileSidebar);
+        if (closeSidebar) closeSidebar.addEventListener('click', hideSidebar);
+        if (sidebarOverlay) sidebarOverlay.addEventListener('click', hideSidebar);
 
-        // --- 3. Logika Modal PIN ---
+        // -------------------------------------------------------------
+        // 5. PENCARIAN CEPAT MENU
+        // -------------------------------------------------------------
+        const menuSearchInput = document.getElementById('menuSearchInput');
+        menuSearchInput.addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.menu-card-target');
+            const sectionTitles = document.querySelectorAll('.section-title');
+
+            cards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                const desc = card.querySelector('p').textContent.toLowerCase();
+                if (title.includes(query) || desc.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            sectionTitles.forEach(title => {
+                title.style.display = query === '' ? 'flex' : 'none';
+            });
+        });
+
+        // -------------------------------------------------------------
+        // 6. DETEKSI IKON OTOMATIS BERDASARKAN NAMA MENU
+        // -------------------------------------------------------------
+        function detectIconFromText(title) {
+            const t = title.toLowerCase();
+            if (t.includes('nota') || t.includes('bon') || t.includes('faktur') || t.includes('invoice')) {
+                return { icon: 'fa-file-invoice-dollar', colorClass: 'icon-green', name: 'Invoice / Nota' };
+            }
+            if (t.includes('uang') || t.includes('bayar') || t.includes('gaji') || t.includes('kas') || t.includes('rekening')) {
+                return { icon: 'fa-money-bill-wave', colorClass: 'icon-green', name: 'Keuangan / Bayar' };
+            }
+            if (t.includes('kirim') || t.includes('driver') || t.includes('mobil') || t.includes('truk') || t.includes('distribusi')) {
+                return { icon: 'fa-truck-fast', colorClass: 'icon-blue', name: 'Armada / Logistik' };
+            }
+            if (t.includes('barang') || t.includes('produk') || t.includes('stok') || t.includes('agen')) {
+                return { icon: 'fa-boxes-stacked', colorClass: 'icon-red', name: 'Master Barang / Agen' };
+            }
+            if (t.includes('lapor') || t.includes('analisa') || t.includes('rekap') || t.includes('grafik')) {
+                return { icon: 'fa-chart-pie', colorClass: 'icon-purple', name: 'Laporan / Analisa' };
+            }
+            if (t.includes('gas') || t.includes('produksi') || t.includes('pabrik')) {
+                return { icon: 'fa-fire-flame-simple', colorClass: 'icon-orange', name: 'Produksi' };
+            }
+            return { icon: 'fa-cube', colorClass: 'icon-blue', name: 'Modul Standar' };
+        }
+
+        const newMenuNameInput = document.getElementById('newMenuName');
+        const previewIconWrapper = document.getElementById('previewIconWrapper');
+        const previewIconElement = document.getElementById('previewIconElement');
+        const previewIconName = document.getElementById('previewIconName');
+
+        newMenuNameInput.addEventListener('input', () => {
+            const detected = detectIconFromText(newMenuNameInput.value);
+            previewIconWrapper.className = `icon-wrapper ${detected.colorClass}`;
+            previewIconElement.className = `fa-solid ${detected.icon}`;
+            previewIconName.textContent = detected.name;
+        });
+
+        // -------------------------------------------------------------
+        // 7. PENGATURAN GITHUB & REST API UPLOAD
+        // -------------------------------------------------------------
+        const ghUsernameInput = document.getElementById('ghUsername');
+        const ghRepoInput = document.getElementById('ghRepo');
+        const ghBranchInput = document.getElementById('ghBranch');
+        const ghTokenInput = document.getElementById('ghToken');
+        const btnSaveGhConfig = document.getElementById('btnSaveGhConfig');
+
+        // Muat pengaturan GitHub dari memori lokal
+        function loadGitHubConfig() {
+            ghUsernameInput.value = localStorage.getItem('gh_username') || 'kkurnia-sudo';
+            ghRepoInput.value = localStorage.getItem('gh_repo') || 'systemapps';
+            ghBranchInput.value = localStorage.getItem('gh_branch') || 'main';
+            ghTokenInput.value = localStorage.getItem('gh_token') || '';
+        }
+        loadGitHubConfig();
+
+        btnSaveGhConfig.addEventListener('click', () => {
+            localStorage.setItem('gh_username', ghUsernameInput.value.trim());
+            localStorage.setItem('gh_repo', ghRepoInput.value.trim());
+            localStorage.setItem('gh_branch', ghBranchInput.value.trim());
+            localStorage.setItem('gh_token', ghTokenInput.value.trim());
+            alert('Pengaturan GitHub berhasil disimpan!');
+        });
+
+        // Fungsi mengunggah file langsung ke GitHub REST API
+        async function uploadFileToGitHub(file, fileName) {
+            const username = ghUsernameInput.value.trim();
+            const repo = ghRepoInput.value.trim();
+            const branch = ghBranchInput.value.trim();
+            const token = ghTokenInput.value.trim();
+
+            if (!token) {
+                throw new Error('Token GitHub (PAT) belum diisi. Buka tab "Koneksi GitHub" untuk mengisinya.');
+            }
+
+            // Baca berkas ke Base64 murni
+            const base64Content = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = err => reject(err);
+                reader.readAsDataURL(file);
+            });
+
+            const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/${fileName}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                    message: `Tambah menu: ${fileName} via SBR Dashboard`,
+                    content: base64Content,
+                    branch: branch
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Gagal mengirim file ke GitHub.');
+            }
+
+            // Kembalikan URL publik GitHub Pages
+            return `https://${username}.github.io/${repo}/${fileName}`;
+        }
+
+        // -------------------------------------------------------------
+        // 8. LOGIKA MODAL SETTINGS & PENAMBAHAN MENU
+        // -------------------------------------------------------------
+        const settingsModal = document.getElementById('settingsModal');
+        const openSettingsBtn = document.getElementById('openSettingsBtn');
+        const closeSettingsModal = document.getElementById('closeSettingsModal');
+
+        const tabAddMenuBtn = document.getElementById('tabAddMenuBtn');
+        const tabGithubBtn = document.getElementById('tabGithubBtn');
+        const tabManageMenuBtn = document.getElementById('tabManageMenuBtn');
+        const tabAppInfoBtn = document.getElementById('tabAppInfoBtn');
+
+        const tabAddMenuContent = document.getElementById('tabAddMenuContent');
+        const tabGithubContent = document.getElementById('tabGithubContent');
+        const tabManageMenuContent = document.getElementById('tabManageMenuContent');
+        const tabAppInfoContent = document.getElementById('tabAppInfoContent');
+
+        function switchSettingsTab(activeBtn, activeContent) {
+            [tabAddMenuBtn, tabGithubBtn, tabManageMenuBtn, tabAppInfoBtn].forEach(b => b.classList.remove('active'));
+            [tabAddMenuContent, tabGithubContent, tabManageMenuContent, tabAppInfoContent].forEach(c => c.style.display = 'none');
+            activeBtn.classList.add('active');
+            activeContent.style.display = 'block';
+        }
+
+        tabAddMenuBtn.addEventListener('click', () => switchSettingsTab(tabAddMenuBtn, tabAddMenuContent));
+        tabGithubBtn.addEventListener('click', () => switchSettingsTab(tabGithubBtn, tabGithubContent));
+        tabManageMenuBtn.addEventListener('click', () => {
+            switchSettingsTab(tabManageMenuBtn, tabManageMenuContent);
+            renderCustomMenuList();
+        });
+        tabAppInfoBtn.addEventListener('click', () => switchSettingsTab(tabAppInfoBtn, tabAppInfoContent));
+
+        openSettingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
+        closeSettingsModal.addEventListener('click', () => settingsModal.classList.remove('active'));
+
+        const sourceTypeSelect = document.getElementById('sourceTypeSelect');
+        const fileUploadContainer = document.getElementById('fileUploadContainer');
+        const urlInputContainer = document.getElementById('urlInputContainer');
+        const uploadHint = document.getElementById('uploadHint');
+
+        sourceTypeSelect.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val === 'github_upload') {
+                fileUploadContainer.style.display = 'block';
+                urlInputContainer.style.display = 'none';
+                uploadHint.textContent = 'File akan diunggah langsung ke repositori GitHub Anda.';
+            } else if (val === 'local_upload') {
+                fileUploadContainer.style.display = 'block';
+                urlInputContainer.style.display = 'none';
+                uploadHint.textContent = 'File akan disimpan di memori lokal browser HP Anda.';
+            } else {
+                fileUploadContainer.style.display = 'none';
+                urlInputContainer.style.display = 'block';
+            }
+        });
+
+        // Form Submit Penambahan Menu
+        const addMenuForm = document.getElementById('addMenuForm');
+        const btnSubmitNewMenu = document.getElementById('btnSubmitNewMenu');
+
+        addMenuForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const title = newMenuNameInput.value.trim();
+            const desc = document.getElementById('newMenuDesc').value.trim();
+            const detected = detectIconFromText(title);
+            const sourceType = sourceTypeSelect.value;
+            const fileInput = document.getElementById('newMenuFile');
+
+            btnSubmitNewMenu.disabled = true;
+
+            try {
+                if (sourceType === 'github_upload') {
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        alert('Silakan pilih file HTML terlebih dahulu!');
+                        btnSubmitNewMenu.disabled = false;
+                        return;
+                    }
+                    const file = fileInput.files[0];
+                    btnSubmitNewMenu.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah ke GitHub...';
+
+                    const cleanFileName = file.name.replace(/\s+/g, '_');
+                    const onlineUrl = await uploadFileToGitHub(file, cleanFileName);
+
+                    saveAndAppendMenu({
+                        id: 'custom_' + Date.now(),
+                        title,
+                        desc,
+                        url: onlineUrl,
+                        icon: detected.icon,
+                        colorClass: detected.colorClass
+                    });
+
+                } else if (sourceType === 'local_upload') {
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        alert('Silakan pilih file HTML terlebih dahulu!');
+                        btnSubmitNewMenu.disabled = false;
+                        return;
+                    }
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        saveAndAppendMenu({
+                            id: 'custom_' + Date.now(),
+                            title,
+                            desc,
+                            url: evt.target.result,
+                            icon: detected.icon,
+                            colorClass: detected.colorClass
+                        });
+                    };
+                    reader.readAsDataURL(file);
+
+                } else {
+                    const url = document.getElementById('newMenuUrl').value.trim();
+                    if (!url) {
+                        alert('Silakan isi tautan URL!');
+                        btnSubmitNewMenu.disabled = false;
+                        return;
+                    }
+                    saveAndAppendMenu({
+                        id: 'custom_' + Date.now(),
+                        title,
+                        desc,
+                        url,
+                        icon: detected.icon,
+                        colorClass: detected.colorClass
+                    });
+                }
+            } catch (err) {
+                alert('Gagal: ' + err.message);
+            } finally {
+                btnSubmitNewMenu.disabled = false;
+                btnSubmitNewMenu.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Pasang & Upload Menu';
+            }
+        });
+
+        function getCustomMenus() {
+            return JSON.parse(localStorage.getItem('sbr_custom_menus') || '[]');
+        }
+
+        function saveAndAppendMenu(menuObj) {
+            const list = getCustomMenus();
+            list.push(menuObj);
+            try {
+                localStorage.setItem('sbr_custom_menus', JSON.stringify(list));
+            } catch (e) {
+                alert('Memori penyimpanan lokal penuh. Disarankan menggunakan metode GitHub Upload atau URL.');
+                return;
+            }
+
+            renderAllCustomMenus();
+            addMenuForm.reset();
+            settingsModal.classList.remove('active');
+            alert(`Menu "${menuObj.title}" berhasil ditambahkan!`);
+        }
+
+        function renderAllCustomMenus() {
+            const list = getCustomMenus();
+            const container = document.getElementById('customMenuContainer');
+            const header = document.getElementById('customMenuHeader');
+
+            container.innerHTML = '';
+            if (list.length === 0) {
+                header.style.display = 'none';
+                return;
+            }
+
+            header.style.display = 'flex';
+            list.forEach(item => {
+                const card = document.createElement('a');
+                card.href = item.url;
+                card.className = 'card menu-card-target';
+                card.innerHTML = `
+                    <span class="custom-tag">Kustom</span>
+                    <div class="icon-wrapper ${item.colorClass}">
+                        <i class="fa-solid ${item.icon}"></i>
+                    </div>
+                    <div class="card-text">
+                        <h3>${item.title}</h3>
+                        <p>${item.desc}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderCustomMenuList() {
+            const list = getCustomMenus();
+            const container = document.getElementById('customMenuList');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = '<p style="font-size:0.75rem; color:var(--subtitle-color); text-align:center; padding:1rem;">Belum ada menu kustom.</p>';
+                return;
+            }
+
+            list.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'custom-item-row';
+                row.innerHTML = `
+                    <span><b>${item.title}</b></span>
+                    <button class="btn-del-menu" onclick="deleteCustomMenu('${item.id}')" title="Hapus">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        window.deleteCustomMenu = function(id) {
+            if (confirm('Hapus menu ini dari dashboard?')) {
+                let list = getCustomMenus();
+                list = list.filter(m => m.id !== id);
+                localStorage.setItem('sbr_custom_menus', JSON.stringify(list));
+                renderAllCustomMenus();
+                renderCustomMenuList();
+            }
+        };
+
+        renderAllCustomMenus();
+
+        // -------------------------------------------------------------
+        // 9. VERIFIKASI PIN KKURNIA
+        // -------------------------------------------------------------
         const menuKkurnia = document.getElementById('menuKkurnia');
         const pinModal = document.getElementById('pinModal');
         const pinInput = document.getElementById('pinInput');
@@ -932,21 +1651,21 @@
         if (menuKkurnia) {
             menuKkurnia.addEventListener('click', function(e) {
                 e.preventDefault();
-                closeMobileSidebar(); // Tutup sidebar dulu jika dibuka dari menu HP
+                hideSidebar();
                 pinModal.classList.add('active');
                 pinInput.value = '';
                 pinError.style.display = 'none';
-                setTimeout(() => pinInput.focus(), 300);
+                setTimeout(() => pinInput.focus(), 250);
             });
         }
 
-        function closePinModal() {
+        function closePin() {
             pinModal.classList.remove('active');
         }
 
         function verifyPin() {
             if (pinInput.value === "942715") {
-                closePinModal();
+                closePin();
                 window.open("https://kkurnia-sudo.github.io/systemapps/dashboard.html", "_blank");
             } else {
                 pinError.style.display = 'block';
@@ -955,14 +1674,11 @@
             }
         }
 
-        if (btnCancelPin) btnCancelPin.addEventListener('click', closePinModal);
+        if (btnCancelPin) btnCancelPin.addEventListener('click', closePin);
         if (btnSubmitPin) btnSubmitPin.addEventListener('click', verifyPin);
-
         if (pinInput) {
-            pinInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    verifyPin();
-                }
+            pinInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') verifyPin();
             });
         }
     </script>
