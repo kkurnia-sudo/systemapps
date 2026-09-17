@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Input Produksi SBR</title>
+
+    <!-- Konfigurasi PWA Mobile -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/8144f096f039abe5a7e58d40eb4c1a06c627a445/icon-512.png">
+
+    <!-- Tailwind CSS & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        .mobile-card {
+            background: white;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f1f5f9;
+        }
+    </style>
+
+  <!-- PWA MANIFEST INLINE (Auto-Generated) -->
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22S%20B%20R%20-%20App%22%2C%22short_name%22%3A%22S%20B%20R%20-%20App%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0e17%22%2C%22theme_color%22%3A%22%2300f2fe%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D'http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg'%2520viewBox%253D'0%25200%2520100%2520100'%253E%253Ctext%2520y%253D'.9em'%2520font-size%253D'90'%253E%25F0%259F%2592%25A0%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22192x192%20512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%2C%7B%22src%22%3A%22icon-192.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%2C%7B%22src%22%3A%22icon-512.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+  <meta name="theme-color" content="#00f2fe">
+
+</head>
+<body class="flex flex-col min-h-screen text-slate-700 pb-28">
+
+    <!-- HEADER APLIKASI -->
+    <header class="bg-white border-b border-slate-100 sticky top-0 z-30 px-4 py-3 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <img 
+                src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/8144f096f039abe5a7e58d40eb4c1a06c627a445/icon-512.png" 
+                alt="Logo SBR" 
+                class="w-10 h-10 object-contain rounded-xl shadow-sm"
+                onerror="this.src='https://placehold.co/100x100?text=SBR'"
+            >
+            <div>
+                <h1 class="text-base font-extrabold text-slate-800 leading-tight">Input Produksi</h1>
+                <p class="text-[11px] font-semibold text-blue-600">SBR Systems Mobile</p>
+            </div>
+        </div>
+        <div id="badge-status" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span id="text-status">Menghubungkan</span>
+        </div>
+    </header>
+
+    <!-- FILTER ATAS (TANGGAL & DIVISI) -->
+    <div class="p-4 space-y-3 max-w-lg mx-auto w-full">
+        <div class="mobile-card p-4 space-y-3">
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tanggal Produksi</label>
+                <div class="flex gap-2">
+                    <input type="date" id="tgl-harian" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition" onchange="renderDaftarKaryawan()">
+                    <button onclick="setHariIni()" class="bg-blue-50 text-blue-600 px-3 py-2.5 rounded-xl text-xs font-bold shrink-0 hover:bg-blue-100 active:scale-95 transition">Hari Ini</button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pilih Divisi Usaha</label>
+                <select id="select-divisi" onchange="renderDaftarKaryawan()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition">
+                    <option value="">-- Pilih Divisi --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- DAFTAR KARYAWAN -->
+        <div id="container-karyawan" class="space-y-3">
+            <div class="text-center py-12 text-slate-400 text-sm font-medium">
+                Pilih divisi untuk menampilkan daftar karyawan.
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM BAR: GRAND TOTAL & SIMPAN -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 z-40">
+        <div class="max-w-lg mx-auto flex items-center justify-between gap-4">
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Hasil Hari Ini</p>
+                <p class="text-2xl font-black text-slate-800"><span id="lbl-grand-total" class="text-blue-600">0</span> <span class="text-xs font-bold text-slate-400">Pcs</span></p>
+            </div>
+            <button onclick="simpanProduksiMobile()" id="btn-simpan" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-6 py-3.5 rounded-2xl shadow-lg shadow-blue-500/30 flex items-center gap-2 text-sm transition">
+                <span>💾</span> Simpan Data
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL KHUSUS AROMANIS -->
+    <div id="modal-aromanis" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-all">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="text-center">
+                <h3 class="text-lg font-bold text-slate-800">Rincian Aromanis</h3>
+                <p id="aro-nama-karyawan" class="text-xs font-semibold text-blue-600">-</p>
+                <input type="hidden" id="aro-id-kar">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pagi (Kg)</label>
+                    <input type="number" inputmode="numeric" id="aro-pagi" oninput="kalkulasiAromanisModal()" class="w-full bg-white border border-slate-200 text-center text-xl font-bold py-2 rounded-xl text-blue-600 outline-none" placeholder="0">
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Siang (Kg)</label>
+                    <input type="number" inputmode="numeric" id="aro-siang" oninput="kalkulasiAromanisModal()" class="w-full bg-white border border-slate-200 text-center text-xl font-bold py-2 rounded-xl text-orange-600 outline-none" placeholder="0">
+                </div>
+            </div>
+
+            <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-2xl text-center">
+                <span class="text-[10px] font-bold text-emerald-700 uppercase">Total Akumulasi</span>
+                <div id="aro-total-preview" class="text-3xl font-black text-emerald-600 mt-0.5">0</div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="tutupModalAromanis()" class="w-1/3 py-3 text-slate-500 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition">Batal</button>
+                <button onclick="terapkanAromanisModal()" class="w-2/3 py-3 bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md hover:bg-blue-700 active:scale-95 transition">Gunakan Total</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const SUPABASE_URL = 'https://ephcczlqvtihmbowqxdt.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwaGNjemxxdnRpaG1ib3dxeGR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwOTgxNTMsImV4cCI6MjA5OTY3NDE1M30.Ky9XSDmsqVBrOrWOMJaMY6gzE8Z32eXxZ6cqdACp_2M';
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let dataDivisi = [];
+        let dataKaryawan = [];
+        let dataProduksi = [];
+
+        function getTglHariIni() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function setHariIni() {
+            document.getElementById('tgl-harian').value = getTglHariIni();
+            renderDaftarKaryawan();
+        }
+
+        async function initApp() {
+            document.getElementById('tgl-harian').value = getTglHariIni();
+            
+            // Flatpickr tanggal
+            flatpickr('#tgl-harian', {
+                locale: 'id',
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd/m/Y',
+                disableMobile: true,
+                onChange: () => renderDaftarKaryawan()
+            });
+
+            await muatDataMaster();
+            daftarkanPWA();
+        }
+
+        async function muatDataMaster() {
+            try {
+                // 1. Ambil Divisi
+                let { data: divRes, error: errDiv } = await _supabase.from('divisi').select('*').order('nama');
+                if (errDiv) throw errDiv;
+                dataDivisi = divRes || [];
+
+                let selDiv = document.getElementById('select-divisi');
+                selDiv.innerHTML = `<option value="">-- Pilih Divisi --</option>` + 
+                    dataDivisi.map(d => `<option value="${d.id}">${d.nama}</option>`).join('');
+
+                // 2. Ambil Karyawan
+                let { data: karRes, error: errKar } = await _supabase.from('karyawan').select('*').order('nama');
+                if (errKar) throw errKar;
+                dataKaryawan = (karRes || []).map(k => ({
+                    id: k.id,
+                    div_id: k.div_id,
+                    nama: k.nama,
+                    tarifLem2: k.tarif_lem_2 || 0,
+                    tarifLem3: k.tarif_lem_3 || 0
+                }));
+
+                // Update Status Online
+                const badge = document.getElementById('badge-status');
+                badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Online`;
+
+            } catch (err) {
+                console.error("Gagal inisialisasi:", err);
+                const badge = document.getElementById('badge-status');
+                badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-bold";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Terputus`;
+            }
+        }
+
+        async function renderDaftarKaryawan() {
+            const divId = document.getElementById('select-divisi').value;
+            const tgl = document.getElementById('tgl-harian').value;
+            const container = document.getElementById('container-karyawan');
+
+            if (!divId) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm font-medium">Pilih divisi untuk menampilkan daftar karyawan.</div>`;
+                hitungGrandTotal();
+                return;
+            }
+
+            if (!tgl) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm font-medium">Pilih tanggal produksi.</div>`;
+                hitungGrandTotal();
+                return;
+            }
+
+            container.innerHTML = `<div class="text-center py-12 text-blue-500 font-bold animate-pulse text-sm">Memuat data produksi...</div>`;
+
+            // Ambil data produksi tanggal ini dari Supabase langsung
+            const karyawanDiDivisi = dataKaryawan.filter(k => k.div_id == divId);
+            const idKaryawans = karyawanDiDivisi.map(k => k.id);
+
+            let prodData = [];
+            if (idKaryawans.length > 0) {
+                let { data: resProd } = await _supabase
+                    .from('produksi')
+                    .select('*')
+                    .eq('tgl', tgl)
+                    .in('id_kar', idKaryawans);
+                prodData = resProd || [];
+            }
+
+            const divObj = dataDivisi.find(d => d.id == divId);
+            const isAromanis = divObj && divObj.nama.toLowerCase().includes('aromanis');
+
+            if (karyawanDiDivisi.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm font-medium">Tidak ada karyawan terdaftar di divisi ini.</div>`;
+                hitungGrandTotal();
+                return;
+            }
+
+            container.innerHTML = karyawanDiDivisi.map(k => {
+                let p = prodData.find(x => x.id_kar === k.id);
+                let regVal = (p && p.reg > 0) ? p.reg : '';
+                let lemVal = (p && p.lem > 0) ? p.lem : '';
+                let lem2Val = (p && p.lem_2 > 0) ? p.lem_2 : '';
+                let lem3Val = (p && p.lem_3 > 0) ? p.lem_3 : '';
+
+                let regInput = isAromanis
+                    ? `<input type="number" id="inp-reg-${k.id}" value="${regVal}" readonly onclick="bukaModalAromanis(${k.id}, '${k.nama}')" placeholder="Tap..." class="inp-reg w-full bg-blue-50/80 border border-blue-200 text-blue-700 font-black text-center py-2 rounded-xl text-base cursor-pointer">`
+                    : `<input type="number" inputmode="numeric" id="inp-reg-${k.id}" value="${regVal}" oninput="hitungSubtotal(${k.id})" placeholder="0" class="inp-reg w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold text-center py-2 rounded-xl text-base focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">`;
+
+                let showLem2 = k.tarifLem2 > 0;
+                let showLem3 = k.tarifLem3 > 0;
+
+                return `
+                <div class="mobile-card p-4 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span class="font-extrabold text-slate-800 text-sm tracking-wide uppercase">${k.nama}</span>
+                        <div class="text-right">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Subtotal</span>
+                            <span id="subtot-${k.id}" class="ml-1 text-sm font-black text-blue-600">0</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Reguler</label>
+                            ${regInput}
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-orange-500 uppercase mb-1">Lembur 1</label>
+                            <input type="number" inputmode="numeric" id="inp-lem-${k.id}" value="${lemVal}" oninput="hitungSubtotal(${k.id})" placeholder="0" class="inp-lem w-full bg-orange-50/60 border border-orange-200 text-orange-700 font-bold text-center py-2 rounded-xl text-base focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none">
+                        </div>
+                    </div>
+
+                    ${(showLem2 || showLem3) ? `
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        ${showLem2 ? `
+                        <div>
+                            <label class="block text-[10px] font-bold text-amber-500 uppercase mb-1">Lem 2</label>
+                            <input type="number" inputmode="numeric" id="inp-lem2-${k.id}" value="${lem2Val}" oninput="hitungSubtotal(${k.id})" placeholder="0" class="inp-lem2 w-full bg-amber-50/60 border border-amber-200 text-amber-700 font-bold text-center py-2 rounded-xl text-base focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none">
+                        </div>` : '<div></div>'}
+
+                        ${showLem3 ? `
+                        <div>
+                            <label class="block text-[10px] font-bold text-pink-500 uppercase mb-1">Lem 3</label>
+                            <input type="number" inputmode="numeric" id="inp-lem3-${k.id}" value="${lem3Val}" oninput="hitungSubtotal(${k.id})" placeholder="0" class="inp-lem3 w-full bg-pink-50/60 border border-pink-200 text-pink-700 font-bold text-center py-2 rounded-xl text-base focus:bg-white focus:ring-2 focus:ring-pink-500 outline-none">
+                        </div>` : '<div></div>'}
+                    </div>` : ''}
+                </div>`;
+            }).join('');
+
+            karyawanDiDivisi.forEach(k => hitungSubtotal(k.id));
+        }
+
+        function hitungSubtotal(id) {
+            let r = parseInt(document.getElementById(`inp-reg-${id}`)?.value) || 0;
+            let l = parseInt(document.getElementById(`inp-lem-${id}`)?.value) || 0;
+            let l2 = parseInt(document.getElementById(`inp-lem2-${id}`)?.value) || 0;
+            let l3 = parseInt(document.getElementById(`inp-lem3-${id}`)?.value) || 0;
+            let tot = r + l + l2 + l3;
+
+            let elSub = document.getElementById(`subtot-${id}`);
+            if (elSub) elSub.innerText = tot;
+            hitungGrandTotal();
+        }
+
+        function hitungGrandTotal() {
+            let total = 0;
+            document.querySelectorAll('.inp-reg').forEach(inp => {
+                let id = inp.id.replace('inp-reg-', '');
+                let r = parseInt(inp.value) || 0;
+                let l = parseInt(document.getElementById(`inp-lem-${id}`)?.value) || 0;
+                let l2 = parseInt(document.getElementById(`inp-lem2-${id}`)?.value) || 0;
+                let l3 = parseInt(document.getElementById(`inp-lem3-${id}`)?.value) || 0;
+                total += (r + l + l2 + l3);
+            });
+            document.getElementById('lbl-grand-total').innerText = total;
+        }
+
+        // --- POPUP AROMANIS ---
+        function bukaModalAromanis(id, nama) {
+            document.getElementById('aro-id-kar').value = id;
+            document.getElementById('aro-nama-karyawan').innerText = nama;
+            document.getElementById('aro-pagi').value = '';
+            document.getElementById('aro-siang').value = '';
+            document.getElementById('aro-total-preview').innerText = '0';
+            document.getElementById('modal-aromanis').classList.replace('hidden', 'flex');
+        }
+
+        function tutupModalAromanis() {
+            document.getElementById('modal-aromanis').classList.replace('flex', 'hidden');
+        }
+
+        function kalkulasiAromanisModal() {
+            let p = parseInt(document.getElementById('aro-pagi').value) || 0;
+            let s = parseInt(document.getElementById('aro-siang').value) || 0;
+            document.getElementById('aro-total-preview').innerText = p + s;
+        }
+
+        function terapkanAromanisModal() {
+            let id = document.getElementById('aro-id-kar').value;
+            let p = parseInt(document.getElementById('aro-pagi').value) || 0;
+            let s = parseInt(document.getElementById('aro-siang').value) || 0;
+            let total = p + s;
+
+            let inpReg = document.getElementById(`inp-reg-${id}`);
+            if (inpReg) {
+                inpReg.value = total > 0 ? total : '';
+                hitungSubtotal(id);
+            }
+            tutupModalAromanis();
+        }
+
+        // --- PENYIMPANAN DATA DENGAN PENCEGAHAN ERROR DATABASE ---
+        async function simpanProduksiMobile() {
+            const tgl = document.getElementById('tgl-harian').value;
+            const btn = document.getElementById('btn-simpan');
+            if (!tgl) return alert('Silakan pilih tanggal terlebih dahulu!');
+
+            let batchData = [];
+            document.querySelectorAll('.inp-reg').forEach(inp => {
+                let id = parseInt(inp.id.replace('inp-reg-', ''));
+                let r = parseInt(inp.value) || 0;
+                let l = parseInt(document.getElementById(`inp-lem-${id}`)?.value) || 0;
+                let l2 = parseInt(document.getElementById(`inp-lem2-${id}`)?.value) || 0;
+                let l3 = parseInt(document.getElementById(`inp-lem3-${id}`)?.value) || 0;
+
+                if (r > 0 || l > 0 || l2 > 0 || l3 > 0) {
+                    batchData.push({ id_kar: id, tgl, reg: r, lem: l, lem2: l2, lem3: l3 });
+                }
+            });
+
+            if (batchData.length === 0) {
+                return alert('Isi minimal satu produksi karyawan sebelum menyimpan.');
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span>⏳</span> Menyimpan...`;
+            btn.classList.add('opacity-50');
+
+            try {
+                for (let idx = 0; idx < batchData.length; idx++) {
+                    let item = batchData[idx];
+
+                    // Cek apakah rekaman tanggal ini sudah ada
+                    let { data: exist, error: errCek } = await _supabase
+                        .from('produksi')
+                        .select('id_prod')
+                        .eq('id_kar', item.id_kar)
+                        .eq('tgl', item.tgl)
+                        .maybeSingle();
+
+                    if (errCek) throw errCek;
+
+                    if (exist && exist.id_prod) {
+                        let { error: errUpd } = await _supabase
+                            .from('produksi')
+                            .update({
+                                reg: item.reg,
+                                lem: item.lem,
+                                lem_2: item.lem2,
+                                lem_3: item.lem3
+                            })
+                            .eq('id_prod', exist.id_prod);
+                        if (errUpd) throw errUpd;
+                    } else {
+                        let payload = {
+                            id_kar: item.id_kar,
+                            tgl: item.tgl,
+                            reg: item.reg,
+                            lem: item.lem,
+                            lem_2: item.lem2,
+                            lem_3: item.lem3,
+                            // Gunakan timestamp detik + index urut agar unik dan aman dalam batas INT4
+                            id_prod: Math.floor(Date.now() / 1000) + idx
+                        };
+
+                        let { error: errIns } = await _supabase
+                            .from('produksi')
+                            .insert([payload]);
+                        if (errIns) throw errIns;
+                    }
+                }
+
+                alert('✅ Data produksi berhasil disimpan ke Supabase!');
+                await renderDaftarKaryawan();
+            } catch (err) {
+                console.error("Gagal simpan:", err);
+                alert('❌ Terjadi kesalahan: ' + (err.message || 'Gagal menyimpan ke server'));
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>💾</span> Simpan Data`;
+                btn.classList.remove('opacity-50');
+            }
+        }
+
+        // --- PENDAFTARAN OTOMATIS FITUR PWA (MANIFEST & OFFLINE SHELL) ---
+        function daftarkanPWA() {
+            // 1. Injeksi Manifest otomatis via Blob
+            const manifestObj = {
+                "name": "SBR Input Produksi",
+                "short_name": "Input SBR",
+                "start_url": window.location.href,
+                "display": "standalone",
+                "background_color": "#ffffff",
+                "theme_color": "#2563eb",
+                "icons": [
+                    {
+                        "src": "https://raw.githubusercontent.com/kkurnia-sudo/systemapps/8144f096f039abe5a7e58d40eb4c1a06c627a445/icon-512.png",
+                        "sizes": "512x512",
+                        "type": "image/png"
+                    }
+                ]
+            };
+            const stringManifest = JSON.stringify(manifestObj);
+            const blob = new Blob([stringManifest], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(blob);
+            const linkTag = document.createElement('link');
+            linkTag.rel = 'manifest';
+            linkTag.href = manifestURL;
+            document.head.appendChild(linkTag);
+
+            // 2. Registrasi Service Worker dasar jika browser mendukung
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('activate', e => clients.claim());
+                    self.addEventListener('fetch', e => {});
+                `;
+                const swBlob = new Blob([swCode], {type: 'application/javascript'});
+                navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+            }
+        }
+
+        window.onload = initApp;
+    </script>
+
+<!-- === START PWA BOTTOM SHEET (MODERN SIMPLE) === -->
+<style>
+  .custom-pwa-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.95);
+    border-top: 1px solid rgba(0, 242, 254, 0.5);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -10px 30px rgba(0, 242, 254, 0.2);
+    padding: 16px 20px 24px 20px;
+    box-sizing: border-box;
+    z-index: 999999;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.1, 0.9, 0.2, 1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    backdrop-filter: blur(12px);
+  }
+  .custom-pwa-sheet.active {
+    transform: translateY(0);
+  }
+  .custom-pwa-notch {
+    width: 40px;
+    height: 4px;
+    background: #334155;
+    border-radius: 2px;
+    margin: 0 auto 14px auto;
+  }
+  .custom-pwa-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .custom-pwa-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(0, 242, 254, 0.1);
+    border: 1px solid #00f2fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .custom-pwa-btn-group {
+    display: flex;
+    gap: 10px;
+  }
+  .custom-pwa-install {
+    flex: 2;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #00f2fe, #38bdf8);
+    color: #020617;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .custom-pwa-dismiss {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    background: transparent;
+    color: #94a3b8;
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
+
+<div id="dynamicPwaSheet" class="custom-pwa-sheet">
+  <div class="custom-pwa-notch"></div>
+  <div class="custom-pwa-row">
+    <div class="custom-pwa-icon">💠</div>
+    <div>
+      <h4 style="margin: 0; font-size: 1rem; color: #ffffff;">S B R - App</h4>
+      <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #94a3b8;">Akses instan langsung dari layar utama.</p>
+    </div>
+  </div>
+  <div class="custom-pwa-btn-group">
+    <button id="pwaBtnDismiss" class="custom-pwa-dismiss">Nanti</button>
+    <button id="pwaBtnInstall" class="custom-pwa-install">Pasang</button>
+  </div>
+</div>
+
+<script>
+  (function() {
+    let pwaPrompt = null;
+    const sheet = document.getElementById('dynamicPwaSheet');
+    const bInstall = document.getElementById('pwaBtnInstall');
+    const bDismiss = document.getElementById('pwaBtnDismiss');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      pwaPrompt = e;
+      if (!sessionStorage.getItem('pwa_prompt_dismissed')) {
+        sheet.classList.add('active');
+      }
+    });
+
+    bInstall.addEventListener('click', async () => {
+      if (pwaPrompt) {
+        pwaPrompt.prompt();
+        await pwaPrompt.userChoice;
+        pwaPrompt = null;
+        sheet.classList.remove('active');
+      }
+    });
+
+    bDismiss.addEventListener('click', () => {
+      sheet.classList.remove('active');
+      sessionStorage.setItem('pwa_prompt_dismissed', '1');
+    });
+
+    // Registrasi Service Worker di Latar Belakang
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+      });
+    }
+  })();
+<\/script>
+<!-- === END PWA BOTTOM SHEET === -->
+
+</body>
+</html>
