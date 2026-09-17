@@ -90,9 +90,20 @@
 
     <!-- SIDEBAR -->
     <aside class="w-64 bg-gray-900 text-white flex flex-col z-20 rounded-r-3xl my-2 ml-2 shadow-2xl transition-colors duration-300 shrink-0">
-        <div class="h-20 flex items-center px-6 mt-2">
-			<img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/7e0c9040e42b1f8f0c88e4563f72247f419d97c4/sbr_logo.png" alt="SBR Logo" class="w-9 h-9 object-contain mr-3 filter drop-shadow-md">
-			<h1 class="text-xl font-bold text-blue-400 leading-tight">SBR Systems<br><span class="text-[10px] font-medium text-gray-400 uppercase tracking-widest">payroll</span></h1>
+        <!-- AREA LOGO HEADER SIDEBAR -->
+		<div class="h-20 flex items-center px-6 mt-2">
+			<!-- Gambar Logo Menggunakan Direct Raw Link -->
+			<img 
+				src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/8144f096f039abe5a7e58d40eb4c1a06c627a445/icon-512.png" 
+				alt="SBR Logo" 
+				class="w-12 h-12 object-contain mr-3 filter drop-shadow-md rounded-lg"
+				loading="lazy"
+				onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=SBR';"
+			>
+			<h1 class="text-xl font-bold text-blue-400 leading-tight">
+				SBR Systems<br>
+				<span class="text-[10px] font-medium text-gray-400 uppercase tracking-widest">payroll</span>
+			</h1>
 		</div>
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto mt-4" id="sidebar-menu">
             <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Operasional</p>
@@ -1042,11 +1053,7 @@
         function toggleTheme() { document.documentElement.classList.toggle('dark'); }
 
         function formatRibuanStr(angka) { return new Intl.NumberFormat('id-ID').format(angka); }
-        function unformatRibuan(str) { 
-			if (!str) return 0;
-			const cleaned = str.toString().replace(/[^0-9\-]/g, '');
-			return parseInt(cleaned, 10) || 0; 
-		}
+        function unformatRibuan(str) { return parseInt(str.toString().replace(/[^0-9\-]/g, '')) || 0; }
         function formatRibuan(input) { let val = input.value.replace(/[^0-9]/g, ''); input.value = val === '' ? '' : new Intl.NumberFormat('id-ID').format(parseInt(val)); }
         function formatTanggal(dateStr) { if(!dateStr) return '-'; const [y, m, d] = dateStr.split('-'); return `${d}-${m}-${y}`; }
         function getTglHariIni() { return new Date().toISOString().split('T')[0]; }
@@ -1141,7 +1148,12 @@
                     saldo_kasbon: k.saldo_kasbon || 0
                 })).sort((a, b) => a.nama.localeCompare(b.nama));
 
-                let { data: prodRes } = await _supabase.from('produksi').select('*');
+                // Mengambil hingga 10.000 data produksi terakhir untuk keperluan visual rekap & dashboard
+				let { data: prodRes } = await _supabase
+					.from('produksi')
+					.select('*')
+					.order('tgl', { ascending: false })
+					.limit(10000);
                 dbProduksi = (prodRes || []).map(p => ({
                     id_prod: p.id_prod, id_kar: p.id_kar, tgl: p.tgl, 
                     reg: p.reg, lem: p.lem, lem2: p.lem_2 || 0, lem3: p.lem_3 || 0
@@ -1194,7 +1206,12 @@
                     if(document.getElementById('menu-tabungan').classList.contains('block')) renderTabBukuSaldo();
                 }
 
-                let { data: prodRes } = await _supabase.from('produksi').select('*');
+                // KODE BARU:
+				let { data: prodRes } = await _supabase
+					.from('produksi')
+					.select('*')
+					.order('tgl', { ascending: false })
+					.limit(10000);
                 if(prodRes) {
                     dbProduksi = prodRes.map(p => ({
                         id_prod: p.id_prod, id_kar: p.id_kar, tgl: p.tgl, 
@@ -1226,19 +1243,12 @@
             } catch (e) { console.error(e); }
         }
 
-        let realtimeDebounceTimer = null;
-
-		function initRealtimeSubscription() {
-			_supabase.channel('public-db-changes')
-				.on('postgres_changes', { event: '*', schema: 'public' }, () => {
-					// Batalkan pemanggilan sebelumnya jika ada data baru masuk dalam interval 600ms
-					clearTimeout(realtimeDebounceTimer);
-					realtimeDebounceTimer = setTimeout(() => {
-						fetchAllDataSilent();
-					}, 600);
-				})
-				.subscribe();
-		}
+        function initRealtimeSubscription() {
+            _supabase.channel('public-db-changes')
+                .on('postgres_changes', { event: '*', schema: 'public' }, payload => {
+                    fetchAllDataSilent();
+                }).subscribe();
+        }
 
         function refreshUI() {
             renderSelectDivisi();
@@ -1344,28 +1354,22 @@
         }
 
         function initApp() {
-			document.getElementById('cg-mulai').value = ""; 
-			document.getElementById('cg-akhir').value = "";
-			document.getElementById('tgl-harian').value = getTglHariIni();
-			
-			let semingguLalu = new Date(); 
-			semingguLalu.setDate(semingguLalu.getDate() - 6);
-			let tglMulaiStr = semingguLalu.toISOString().split('T')[0];
-			let tglAkhirStr = getTglHariIni();
+            document.getElementById('cg-mulai').value = ""; document.getElementById('cg-akhir').value = "";
+            document.getElementById('tgl-harian').value = getTglHariIni();
+            
+            let semingguLalu = new Date(); semingguLalu.setDate(semingguLalu.getDate() - 6);
+            let tglMulaiStr = semingguLalu.toISOString().split('T')[0];
+            let tglAkhirStr = getTglHariIni();
 
-			document.getElementById('rp-mulai').value = tglMulaiStr; 
-			document.getElementById('rp-akhir').value = tglAkhirStr;
-			document.getElementById('top-mulai').value = tglMulaiStr;
-			document.getElementById('top-akhir').value = tglAkhirStr;
-			
-			// Inisialisasi tanggal untuk grafik Dashboard agar tidak kosong
-			document.getElementById('chart-mulai').value = tglMulaiStr;
-			document.getElementById('chart-akhir').value = tglAkhirStr;
-			
-			initFlatpickr();
-			fetchAllData();
-			initRealtimeSubscription();
-		}
+            document.getElementById('rp-mulai').value = tglMulaiStr; 
+            document.getElementById('rp-akhir').value = tglAkhirStr;
+            document.getElementById('top-mulai').value = tglMulaiStr;
+            document.getElementById('top-akhir').value = tglAkhirStr;
+            
+            initFlatpickr();
+            fetchAllData();
+            initRealtimeSubscription();
+        }
 
         function resetArsipPreview() {
             document.getElementById('judul-detail-arsip').innerText = "Pratinjau Struk";
@@ -1375,48 +1379,38 @@
         }
 
         function bukaMenu(menuId) {
-			// 1. Sembunyikan semua tampilan menu
 			document.querySelectorAll('.menu-view').forEach(el => el.classList.add('hidden'));
-			
-			// 2. Tampilkan menu target
-			const targetMenu = document.getElementById(menuId);
-			if (targetMenu) targetMenu.classList.remove('hidden');
+			document.getElementById(menuId).classList.remove('hidden');
 
-			// 3. Update styling tombol navigasi sidebar secara aman
-			document.querySelectorAll('#sidebar-menu .nav-btn').forEach(btn => {
-				const isTarget = btn.getAttribute('onclick')?.includes(`'${menuId}'`);
-				if (isTarget) {
-					btn.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
-					btn.classList.remove('text-gray-300');
-				} else {
-					btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg');
-					btn.classList.add('text-gray-300');
-				}
+			document.querySelectorAll('.nav-btn').forEach(btn => { 
+				btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg'); 
+				btn.classList.add('text-gray-300'); 
 			});
 
-			// 4. Update judul header
+			// Pengaman jika event ada
+			if (window.event && window.event.currentTarget && window.event.currentTarget.classList) {
+				const btnAktif = window.event.currentTarget;
+				btnAktif.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
+				btnAktif.classList.remove('text-gray-300');
+			}
+
 			const titles = {
-				'menu-dashboard': 'Dashboard',
-				'menu-input-harian': 'Input Produksi Harian',
-				'menu-rekap-produksi': 'Rekap Produksi Terpadu',
-				'menu-rekap-gaji': 'Kalkulasi & Cetak Gaji',
-				'menu-tabungan': 'Buku Saldo Perusahaan & Karyawan',
-				'menu-arsip': 'Arsip & Riwayat Penggajian',
+				'menu-dashboard': 'Dashboard', 
+				'menu-input-harian': 'Input Produksi Harian', 
+				'menu-rekap-produksi': 'Rekap Produksi Terpadu', 
+				'menu-rekap-gaji': 'Kalkulasi & Cetak Gaji', 
+				'menu-tabungan': 'Buku Saldo Perusahaan & Karyawan', 
+				'menu-arsip': 'Arsip & Riwayat Penggajian', 
 				'menu-pengaturan': 'Pengaturan Sistem'
 			};
 			document.getElementById('judul-halaman').innerText = titles[menuId] || 'Dashboard';
 
-			// 5. Render ulang komponen relevan
-			if (menuId === 'menu-tabungan') renderTabBukuSaldo();
-			if (menuId === 'menu-dashboard') renderDashboard();
-			if (menuId === 'menu-rekap-produksi') renderRekapProduksiHorizontal();
-			if (menuId === 'menu-pengaturan') renderTableKaryawan();
-			if (menuId === 'menu-arsip') { 
-				arsipAktifTerpilih = null; 
-				resetArsipPreview(); 
-				renderArsipPembayaran(); 
-			}
-	}
+			if(menuId === 'menu-tabungan') renderTabBukuSaldo();
+			if(menuId === 'menu-dashboard') renderDashboard();
+			if(menuId === 'menu-rekap-produksi') renderRekapProduksiHorizontal();
+			if(menuId === 'menu-pengaturan') renderTableKaryawan();
+			if(menuId === 'menu-arsip') { arsipAktifTerpilih = null; resetArsipPreview(); renderArsipPembayaran(); }
+		}
 
         function tutupModal(id) { document.getElementById(id).classList.replace('flex','hidden'); }
 
@@ -1676,74 +1670,88 @@
             document.getElementById('foot-grand-tot').innerText = grandTot;
         }
 
-        async function simpanDataHarian() { 
-		const btnSimpan = document.getElementById('btn-simpan-harian'); 
-		const originalText = btnSimpan.innerText;
-		const tgl = document.getElementById('tgl-harian').value; 
-		
-		// 1. Validasi: Pastikan tanggal sudah dipilih
-		if(!tgl) return alert('Pilih tanggal produksi terlebih dahulu!');
-		
-		// 2. Kumpulkan data dari semua input karyawan yang nilainya lebih dari 0
-		let batchData = [];
-		document.querySelectorAll('.inp-reg').forEach(inp => {
-			const id = parseInt(inp.id.split('-')[1], 10);
-			let r = parseInt(inp.value, 10) || 0; 
-			let l = parseInt(document.getElementById(`hl-${id}`)?.value, 10) || 0; 
-			let l2 = parseInt(document.getElementById(`hl2-${id}`)?.value, 10) || 0; 
-			let l3 = parseInt(document.getElementById(`hl3-${id}`)?.value, 10) || 0;
-			
-			if(r > 0 || l > 0 || l2 > 0 || l3 > 0) {
-				batchData.push({ 
-					id_kar: id, 
-					tgl: tgl, 
-					reg: r, 
-					lem: l, 
-					lem_2: l2, 
-					lem_3: l3 
-				}); 
-			}
-		});
-		
-		// 3. Validasi: Pastikan ada minimal satu baris yang diisi
-		if(batchData.length === 0) return alert('Isi minimal 1 data produksi karyawan.');
-		
-		// 4. Ubah status tombol agar tidak bisa diklik dua kali saat proses kirim
-		btnSimpan.disabled = true; 
-		btnSimpan.innerText = 'Menyimpan...'; 
-		btnSimpan.classList.add('opacity-50', 'cursor-not-allowed');
+	async function simpanDataHarian() { 
+        const btnSimpan = document.getElementById('btn-simpan-harian'); 
+        const originalText = btnSimpan.innerText;
+        const tgl = document.getElementById('tgl-harian').value; 
+        
+        if(!tgl) return alert('Pilih tanggal produksi terlebih dahulu!');
+        
+        let batchData = [];
+        document.querySelectorAll('.inp-reg').forEach(inp => {
+            const id = parseInt(inp.id.split('-')[1]);
+            let r = parseInt(inp.value) || 0; 
+            let l = parseInt(document.getElementById(`hl-${id}`)?.value) || 0; 
+            let l2 = parseInt(document.getElementById(`hl2-${id}`)?.value) || 0; 
+            let l3 = parseInt(document.getElementById(`hl3-${id}`)?.value) || 0;
+            
+            if(r > 0 || l > 0 || l2 > 0 || l3 > 0) {
+                batchData.push({ id_kar: id, tgl: tgl, reg: r, lem: l, lem2: l2, lem3: l3 }); 
+            }
+        });
+        
+        if(batchData.length === 0) return alert('Isi minimal 1 data karyawan.');
+        
+        btnSimpan.disabled = true; 
+        btnSimpan.innerText = 'Menyimpan...'; 
+        btnSimpan.classList.add('opacity-50', 'cursor-not-allowed');
 
-		try {
-			// 5. EKSEKUSI UPSERT KE SUPABASE:
-			// onConflict: 'id_kar, tgl' memberitahu database:
-			// "Jika kombinasi id_kar dan tgl sudah ada, perbarui nilainya. Jika belum ada, buat baris baru."
-			const { error } = await _supabase
-				.from('produksi')
-				.upsert(batchData, { onConflict: 'id_kar, tgl' });
+        try {
+            // Perulangan menggunakan indeks (idx) agar pembuatan id_prod aman
+            for (let idx = 0; idx < batchData.length; idx++) {
+                let item = batchData[idx];
 
-			if (error) throw error;
+                let { data: existingData, error: errCek } = await _supabase
+                    .from('produksi')
+                    .select('id_prod')
+                    .eq('id_kar', item.id_kar)
+                    .eq('tgl', item.tgl)
+                    .maybeSingle();
 
-			alert('Berhasil menyimpan data produksi!'); 
+                if (errCek) throw errCek;
 
-			// Kosongkan form tanggal & reset tabel input
-			if (document.getElementById('tgl-harian')._flatpickr) {
-				document.getElementById('tgl-harian')._flatpickr.clear(); 
-			}
-			renderTabelHarian(); // Membersihkan input form setelah disimpan
+                if(existingData && existingData.id_prod) {
+                    let { error: errUpd } = await _supabase
+                        .from('produksi')
+                        .update({ 
+                            reg: item.reg, 
+                            lem: item.lem, 
+                            lem_2: item.lem2, 
+                            lem_3: item.lem3 
+                        })
+                        .eq('id_prod', existingData.id_prod);
 
-			fetchAllData();
+                    if (errUpd) throw errUpd;
+                } else {
+                    let payload = {
+                        id_kar: item.id_kar,
+                        tgl: item.tgl,
+                        reg: item.reg,
+                        lem: item.lem,
+                        lem_2: item.lem2,
+                        lem_3: item.lem3,
+                        id_prod: Math.floor(Date.now() / 1000) + idx
+                    };
 
-		} catch (err) { 
-			console.error("Gagal simpan harian:", err); 
-			alert("Terjadi kesalahan saat menyimpan data ke database: " + err.message); 
-		} finally { 
-			// 6. Kembalikan tombol ke keadaan semula
-			btnSimpan.disabled = false; 
-			btnSimpan.innerText = originalText; 
-			btnSimpan.classList.remove('opacity-50', 'cursor-not-allowed'); 
-		}
-	}
-	
+                    let { error: errIns } = await _supabase.from('produksi').insert([payload]);
+                    if (errIns) throw errIns;
+                }
+            }
+
+            alert('Berhasil menyimpan data produksi!'); 
+            if (document.getElementById('tgl-harian')._flatpickr) {
+                document.getElementById('tgl-harian')._flatpickr.clear();
+            }
+            await fetchAllData(); 
+        } catch (err) { 
+            console.error("Detail error simpan produksi:", err); 
+            alert("Terjadi kesalahan saat menyimpan data ke database: " + (err.message || JSON.stringify(err))); 
+        } finally { 
+            btnSimpan.disabled = false; 
+            btnSimpan.innerText = originalText; 
+            btnSimpan.classList.remove('opacity-50', 'cursor-not-allowed'); 
+        }
+    }
 
         function formatTanggalPendek(dateStr) { if(!dateStr) return '-'; const [y, m, d] = dateStr.split('-'); return `${d}/${m}`; }
         function getDatesBetween(startDate, endDate) { const dates = []; let currentDate = new Date(startDate); const stopDate = new Date(endDate); while (currentDate <= stopDate) { dates.push(new Date(currentDate).toISOString().split('T')[0]); currentDate.setDate(currentDate.getDate() + 1); } return dates; }
@@ -1803,59 +1811,54 @@
         }
 
         async function simpanEditProduksi() {
-			let id_kar = parseInt(document.getElementById('ep-id-kar').value, 10); 
-			let tgl = document.getElementById('ep-tgl').value; 
-			let nReg = parseInt(document.getElementById('ep-reg').value, 10) || 0; 
-			let nLem = parseInt(document.getElementById('ep-lem').value, 10) || 0; 
-			let nLem2 = parseInt(document.getElementById('ep-lem2').value, 10) || 0; 
-			let nLem3 = parseInt(document.getElementById('ep-lem3').value, 10) || 0;
+    let id_kar = parseInt(document.getElementById('ep-id-kar').value); 
+    let tgl = document.getElementById('ep-tgl').value; 
+    let nReg = parseInt(document.getElementById('ep-reg').value) || 0; 
+    let nLem = parseInt(document.getElementById('ep-lem').value) || 0; 
+    let nLem2 = parseInt(document.getElementById('ep-lem2').value) || 0; 
+    let nLem3 = parseInt(document.getElementById('ep-lem3').value) || 0;
 
-			let existingIndex = dbProduksi.findIndex(p => p.id_kar === id_kar && p.tgl === tgl);
+    try {
+        let { data: existingData } = await _supabase
+            .from('produksi')
+            .select('id_prod')
+            .eq('id_kar', id_kar)
+            .eq('tgl', tgl)
+            .maybeSingle();
 
-			try {
-				// Jika seluruh input diisi 0, hapus baris dari database
-				if(nReg === 0 && nLem === 0 && nLem2 === 0 && nLem3 === 0) {
-					if(existingIndex !== -1) {
-						let existingProd = dbProduksi[existingIndex];
-						const { error } = await _supabase.from('produksi').delete().eq('id_prod', existingProd.id_prod);
-						if(error) throw error;
-						dbProduksi.splice(existingIndex, 1);
-					}
-				} else {
-					// Gunakan upsert dengan onConflict id_kar, tgl
-					const { data, error } = await _supabase.from('produksi').upsert([{
-						id_kar: id_kar,
-						tgl: tgl,
-						reg: nReg,
-						lem: nLem,
-						lem_2: nLem2,
-						lem_3: nLem3
-					}], { onConflict: 'id_kar, tgl' }).select();
+        if (existingData && existingData.id_prod) {
+            if(nReg === 0 && nLem === 0 && nLem2 === 0 && nLem3 === 0) {
+                await _supabase.from('produksi').delete().eq('id_prod', existingData.id_prod);
+            } else {
+                await _supabase.from('produksi').update({ 
+                    reg: nReg, 
+                    lem: nLem, 
+                    lem_2: nLem2, 
+                    lem_3: nLem3 
+                }).eq('id_prod', existingData.id_prod);
+            }
+        } else if (nReg > 0 || nLem > 0 || nLem2 > 0 || nLem3 > 0) {
+            let idProdBaru = Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 1000);
+            await _supabase.from('produksi').insert([{ 
+                id_prod: idProdBaru, 
+                id_kar, 
+                tgl, 
+                reg: nReg, 
+                lem: nLem, 
+                lem_2: nLem2, 
+                lem_3: nLem3 
+            }]);
+        }
 
-					if (error) throw error;
-
-					if (data && data.length > 0) {
-						let updatedItem = { 
-							id_prod: data[0].id_prod, 
-							id_kar, tgl, reg: nReg, lem: nLem, lem2: nLem2, lem3: nLem3 
-						};
-						if(existingIndex !== -1) {
-							dbProduksi[existingIndex] = updatedItem;
-						} else {
-							dbProduksi.push(updatedItem);
-						}
-					}
-				}
-
-				renderRekapProduksiHorizontal(); 
-				if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); 
-				tutupModal('modal-edit-produksi');
-
-			} catch (err) {
-				console.error("Gagal edit produksi:", err);
-				alert("Gagal menyimpan perubahan: " + err.message);
-			}
-		}
+        await fetchAllData();
+        renderRekapProduksiHorizontal(); 
+        if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); 
+        tutupModal('modal-edit-produksi');
+    } catch (err) {
+        console.error(err);
+        alert("Gagal memperbarui data: " + (err.message || "Error tidak diketahui"));
+    }
+}
 
         function bukaModalExportRekap() {
             const div = document.getElementById('rp-divisi').value; if(!div) return alert("Pilih divisi terlebih dahulu untuk melakukan ekspor.");
@@ -1970,67 +1973,145 @@
             const textEl = document.getElementById('cg-grand-total'); if(textEl) textEl.innerText = 'Rp ' + formatRibuanStr(total);
         }
 
-        function tarikDataCetakGaji() {
-            const divId = document.getElementById('cg-divisi').value; const mulai = document.getElementById('cg-mulai').value; const akhir = document.getElementById('cg-akhir').value;
-            const tbody = document.getElementById('tbody-cetak-gaji');
-            if(!divId || !mulai || !akhir) return tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-gray-400">Lengkapi periode & divisi.</td></tr>`;
+async function tarikDataCetakGaji() {
+    const divId = document.getElementById('cg-divisi').value;
+    const mulai = document.getElementById('cg-mulai').value;
+    const akhir = document.getElementById('cg-akhir').value;
+    const tbody = document.getElementById('tbody-cetak-gaji');
 
-            dataRekapAktif = []; const arrDates = getDatesBetween(mulai, akhir);
-            const divNama = dbDivisi.find(d => d.id == divId)?.nama || "Divisi";
-            let periodKey = `${divNama} | ${formatTanggal(mulai)} - ${formatTanggal(akhir)}`;
-            let existingArchive = logGajiTerproses.find(log => log.label === periodKey);
+    if (!divId || !mulai || !akhir) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-gray-400">Lengkapi periode & divisi terlebih dahulu.</td></tr>`;
+        return;
+    }
 
-            dbKaryawan.filter(k => k.div_id == divId).forEach(k => {
-                let tReg = 0, tLem = 0, tLem2 = 0, tLem3 = 0;
-                arrDates.forEach(d => { let prod = dbProduksi.find(p => p.id_kar === k.id && p.tgl === d); if(prod) { tReg += prod.reg; tLem += prod.lem; tLem2 += prod.lem2; tLem3 += prod.lem3; } });
-                
-                let ex = null; if(existingArchive && existingArchive.data) ex = existingArchive.data.find(r => r.id === k.id);
-                if (tReg === 0 && tLem === 0 && tLem2 === 0 && tLem3 === 0 && !ex) return;
+    if (mulai > akhir) {
+        alert("Tanggal periode awal tidak boleh lebih besar dari tanggal akhir!");
+        return;
+    }
 
-                let nomKas = k.potKas ? dbSettings.tarifKas : 0; let nomListrik = k.potListrik ? dbSettings.tarifListrik : 0;
-                let kotor = (tReg * k.tarifReg) + (tLem * k.tarifLem) + (tLem2 * k.tarifLem2) + (tLem3 * k.tarifLem3);
-                
-                dataRekapAktif.push({ 
-                    id: k.id, nama: k.nama, tReg, tLem, tLem2, tLem3, upahKotor: kotor, potRutin: nomKas + nomListrik, nomKas, nomListrik, 
-                    bonus: ex ? ex.bonus : 0, catatanBonus: ex ? (ex.catatanBonus || '') : '', kasbon: ex ? ex.kasbon : 0, tabungan: ex ? ex.tabungan : 0, 
-                    potLain: ex ? ex.potLain : 0, catatanPotLain: ex ? (ex.catatanPotLain || '') : '', selected: true, 
-                    ketLem1: ex ? (ex.ketLem1 || '') : '', ketLem2: ex ? (ex.ketLem2 || '') : '', ketLem3: ex ? (ex.ketLem3 || '') : '', 
-                    nomLem4: ex ? (ex.nomLem4 || 0) : 0, ketLem4: ex ? (ex.ketLem4 || '') : '', sisaKasbon: k.saldo_kasbon || 0
-                });
+    tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-blue-500 font-bold animate-pulse">Sedang mengambil data produksi dari database...</td></tr>`;
+
+    dataRekapAktif = [];
+    const divNama = dbDivisi.find(d => d.id == divId)?.nama || "Divisi";
+    let periodKey = `${divNama} | ${formatTanggal(mulai)} - ${formatTanggal(akhir)}`;
+    let existingArchive = logGajiTerproses.find(log => log.label === periodKey);
+
+    // Ambil daftar karyawan di divisi yang dipilih
+    const karyawanDivisi = dbKaryawan.filter(k => k.div_id == divId);
+    if (karyawanDivisi.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-gray-400">Tidak ada karyawan di divisi ini.</td></tr>`;
+        kalkulasiGrandTotalGaji();
+        return;
+    }
+
+    const arrIdKar = karyawanDivisi.map(k => k.id);
+
+    try {
+        // SOLUSI LIMIT SUPABASE:
+        // Tarik data produksi langsung dari server yang HANYA berada pada rentang tanggal & divisi ini
+        const { data: prodFiltered, error: errProd } = await _supabase
+            .from('produksi')
+            .select('id_kar, tgl, reg, lem, lem_2, lem_3')
+            .in('id_kar', arrIdKar)
+            .gte('tgl', mulai)
+            .lte('tgl', akhir)
+            .limit(10000); // Melewati limit default 1000 baris
+
+        if (errProd) throw errProd;
+
+        karyawanDivisi.forEach(k => {
+            let tReg = 0, tLem = 0, tLem2 = 0, tLem3 = 0;
+
+            // Hitung akumulasi produksi untuk masing-masing karyawan
+            (prodFiltered || []).filter(p => p.id_kar === k.id).forEach(prod => {
+                tReg += Number(prod.reg) || 0;
+                tLem += Number(prod.lem) || 0;
+                tLem2 += Number(prod.lem_2) || 0;
+                tLem3 += Number(prod.lem_3) || 0;
             });
-            
-            if(dataRekapAktif.length === 0) { tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-gray-400">Tidak ada karyawan yang masuk/memiliki produksi pada periode ini.</td></tr>`; kalkulasiGrandTotalGaji(); return; }
 
-            document.getElementById('chk-all-gaji').checked = true;
-            document.getElementById('tbody-cetak-gaji').innerHTML = dataRekapAktif.map(r => {
-                let bersih = r.upahKotor + (r.nomLem4 || 0) + r.bonus - r.potRutin - r.kasbon - r.tabungan - r.potLain;
-                let infoLem = `R: ${r.tReg} | L1: ${r.tLem}`; if(r.tLem2 > 0) infoLem += ` | L2: ${r.tLem2}`; if(r.tLem3 > 0) infoLem += ` | L3: ${r.tLem3}`;
-                let clsBonus = r.catatanBonus ? 'active' : ''; let clsPot = r.catatanPotLain ? 'active' : '';
-                
-                let indikatorKasbon = r.sisaKasbon > 0 ? `<button onclick="bukaModalRincianKasbon(${r.id})" class="shrink-0 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-xs dark:bg-red-900/50 hover:bg-red-200 transition animate-pulse shadow-md" title="Lihat Riwayat Kasbon">⚠️</button>` : ``;
-                let textSisaKasbon = r.sisaKasbon > 0 ? `<div id="ui-sisa-kasbon-${r.id}" class="text-[9px] font-bold text-red-500 mt-1 uppercase tracking-wider">Sisa Utang: Rp ${formatRibuanStr(r.sisaKasbon)}</div>` : ``;
+            let ex = null;
+            if (existingArchive && existingArchive.data) {
+                ex = existingArchive.data.find(r => r.id === k.id);
+            }
 
-                return `<tr>
-                    <td class="text-center align-top pt-4 border-r border-gray-100 dark:border-gray-700"><input type="checkbox" class="chk-gaji-row chk-potongan w-4 h-4" value="${r.id}" ${r.selected ? 'checked' : ''} onchange="toggleRowGaji(${r.id}, this)"></td>
-                    <td class="font-bold text-gray-800 align-top pt-4 pl-3">${r.nama}<div class="text-[11px] text-gray-400 mt-0.5">${infoLem}</div></td>
-                    <td class="text-right font-medium align-top pt-4">
-                        <div class="flex justify-end items-center gap-1 relative group"><span>${formatRibuanStr(r.upahKotor)}</span><button onclick="document.getElementById('lem-notes-${r.id}').classList.toggle('hidden')" class="shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] text-blue-600 hover:bg-blue-200 transition" title="Catatan Lembur">💬</button></div>
-                        <div id="lem-notes-${r.id}" class="hidden flex-col gap-1 mt-2 p-2 bg-blue-50/50 dark:bg-gray-900 border border-blue-100 dark:border-gray-700 rounded-lg min-w-[160px] text-left"><span class="text-[9px] font-bold text-gray-500 uppercase">Ket Lembur</span>${r.tLem > 0 ? `<input type="text" placeholder="Lembur 1..." oninput="updateGajiData(${r.id}, 'ketLem1', this.value)" class="note-input active !bg-white" value="${r.ketLem1}">` : ''}${r.tLem2 > 0 ? `<input type="text" placeholder="Lembur 2..." oninput="updateGajiData(${r.id}, 'ketLem2', this.value)" class="note-input active !bg-white" value="${r.ketLem2}">` : ''}${r.tLem3 > 0 ? `<input type="text" placeholder="Lembur 3..." oninput="updateGajiData(${r.id}, 'ketLem3', this.value)" class="note-input active !bg-white" value="${r.ketLem3}">` : ''}</div>
-                    </td>
-                    <td class="text-center align-top pt-3 relative"><div class="flex justify-center items-center gap-1"><input type="text" oninput="updateGaji(${r.id}, 'bonus', this)" style="width: 8ch;" class="modern-input min-w-[70px] max-w-[200px] text-center text-blue-600 font-bold bg-blue-50/50 dark:bg-gray-800 px-2 transition-all duration-200" placeholder="0" value="${r.bonus ? formatRibuanStr(r.bonus) : ''}"><button onclick="document.getElementById('note-${r.id}').classList.toggle('active')" class="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs dark:bg-blue-900/50">💬</button></div><input type="text" id="note-${r.id}" oninput="dataRekapAktif.find(x=>x.id===${r.id}).catatanBonus=this.value" class="note-input ${clsBonus}" placeholder="Ket bonus..." value="${r.catatanBonus}"></td>
-                    <td class="text-center font-medium text-gray-500 align-top pt-4">${formatRibuanStr(r.potRutin)}</td>
-                    <td class="text-center align-top pt-3 relative">
-                        <div class="flex justify-center items-center gap-1"><input type="text" oninput="updateGaji(${r.id}, 'kasbon', this)" style="width: 8ch;" class="modern-input min-w-[70px] max-w-[200px] text-center text-red-600 font-bold bg-red-50/50 dark:bg-gray-800 px-2 transition-all duration-200" placeholder="0" value="${r.kasbon ? formatRibuanStr(r.kasbon) : ''}">${indikatorKasbon}</div>
-                        ${textSisaKasbon}
-                    </td>
-                    <td class="text-center align-top pt-3"><input type="text" oninput="updateGaji(${r.id}, 'tabungan', this)" style="width: 8ch;" class="modern-input min-w-[70px] max-w-[200px] text-center text-green-600 font-bold bg-green-50/50 dark:bg-gray-800 px-2 transition-all duration-200" placeholder="0" value="${r.tabungan ? formatRibuanStr(r.tabungan) : ''}"></td>
-                    <td class="text-center align-top pt-3 relative"><div class="flex justify-center items-center gap-1"><input type="text" oninput="updateGaji(${r.id}, 'potLain', this)" style="width: 8ch;" class="modern-input min-w-[70px] max-w-[200px] text-center text-orange-600 font-bold bg-orange-50/50 dark:bg-gray-800 px-2 transition-all duration-200" placeholder="0" value="${r.potLain ? formatRibuanStr(r.potLain) : ''}"><button onclick="document.getElementById('notepot-${r.id}').classList.toggle('active')" class="shrink-0 w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-xs dark:bg-orange-900/50">💬</button></div><input type="text" id="notepot-${r.id}" oninput="dataRekapAktif.find(x=>x.id===${r.id}).catatanPotLain=this.value" class="note-input ${clsPot}" style="border-color:#fdba74; background:#fff7ed;" placeholder="Ket pot lain..." value="${r.catatanPotLain}"></td>
-                    <td class="text-right font-bold text-blue-600 text-lg align-top pt-4" id="cg-bersih-${r.id}">${formatRibuanStr(bersih)}</td>
-                </tr>`;
-            }).join('');
-            
-            kalkulasiGrandTotalGaji(); 
+            // Jika tidak ada hasil produksi dan belum pernah diarsipkan, lewati
+            if (tReg === 0 && tLem === 0 && tLem2 === 0 && tLem3 === 0 && !ex) return;
+
+            let nomKas = k.potKas ? dbSettings.tarifKas : 0;
+            let nomListrik = k.potListrik ? dbSettings.tarifListrik : 0;
+            let kotor = (tReg * (k.tarifReg || 0)) + 
+                        (tLem * (k.tarifLem || 0)) + 
+                        (tLem2 * (k.tarifLem2 || 0)) + 
+                        (tLem3 * (k.tarifLem3 || 0));
+
+            dataRekapAktif.push({
+                id: k.id,
+                nama: k.nama,
+                tReg, tLem, tLem2, tLem3,
+                upahKotor: kotor,
+                potRutin: nomKas + nomListrik,
+                nomKas, nomListrik,
+                bonus: ex ? ex.bonus : 0,
+                catatanBonus: ex ? (ex.catatanBonus || '') : '',
+                kasbon: ex ? ex.kasbon : 0,
+                tabungan: ex ? ex.tabungan : 0,
+                potLain: ex ? ex.potLain : 0,
+                catatanPotLain: ex ? (ex.catatanPotLain || '') : '',
+                selected: true,
+                ketLem1: ex ? (ex.ketLem1 || '') : '',
+                ketLem2: ex ? (ex.ketLem2 || '') : '',
+                ketLem3: ex ? (ex.ketLem3 || '') : '',
+                nomLem4: ex ? (ex.nomLem4 || 0) : 0,
+                ketLem4: ex ? (ex.ketLem4 || '') : '',
+                sisaKasbon: k.saldo_kasbon || 0
+            });
+        });
+
+        if (dataRekapAktif.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-gray-400">Tidak ada data kerja/produksi pada periode tanggal ini.</td></tr>`;
+            kalkulasiGrandTotalGaji();
+            return;
         }
+
+        document.getElementById('chk-all-gaji').checked = true;
+        tbody.innerHTML = dataRekapAktif.map(r => {
+            let bersih = r.upahKotor + (r.nomLem4 || 0) + r.bonus - r.potRutin - r.kasbon - r.tabungan - r.potLain;
+            let infoLem = `R: ${r.tReg} | L1: ${r.tLem}`;
+            if (r.tLem2 > 0) infoLem += ` | L2: ${r.tLem2}`;
+            if (r.tLem3 > 0) infoLem += ` | L3: ${r.tLem3}`;
+
+            let clsBonus = r.catatanBonus ? 'active' : '';
+            let clsPot = r.catatanPotLain ? 'active' : '';
+
+            let indikatorKasbon = r.sisaKasbon > 0 ? `<button onclick="bukaModalRincianKasbon(${r.id})" class="shrink-0 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-xs dark:bg-red-900/50 hover:bg-red-200 transition animate-pulse shadow-md" title="Lihat Riwayat Kasbon">⚠️</button>` : ``;
+            let textSisaKasbon = r.sisaKasbon > 0 ? `<div id="ui-sisa-kasbon-${r.id}" class="text-[9px] font-bold text-red-500 mt-1 uppercase tracking-wider">Sisa Utang: Rp ${formatRibuanStr(r.sisaKasbon)}</div>` : ``;
+
+            return `<tr>
+                <td class="text-center align-top pt-4 border-r border-gray-100 dark:border-gray-700"><input type="checkbox" class="chk-gaji-row chk-potongan w-4 h-4" value="${r.id}" ${r.selected ? 'checked' : ''} onchange="toggleRowGaji(${r.id}, this)"></td>
+                <td class="font-bold text-gray-800 align-top pt-4 pl-3">${r.nama}<div class="text-[11px] text-gray-400 mt-0.5">${infoLem}</div></td>
+                <td class="text-right font-medium align-top pt-4">
+                    <div class="flex justify-end items-center gap-1 relative group"><span>${formatRibuanStr(r.upahKotor)}</span><button onclick="document.getElementById('lem-notes-${r.id}').classList.toggle('hidden')" class="shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] text-blue-600 hover:bg-blue-200 transition" title="Catatan Lembur">💬</button></div>
+                    <div id="lem-notes-${r.id}" class="hidden flex-col gap-1 mt-2 p-2 bg-blue-50/50 dark:bg-gray-900 border border-blue-100 dark:border-gray-700 rounded-lg min-w-[160px] text-left"><span class="text-[9px] font-bold text-gray-500 uppercase">Ket Lembur</span>${r.tLem > 0 ? `<input type="text" placeholder="Lembur 1..." oninput="updateGajiData(${r.id}, 'ketLem1', this.value)" class="note-input active !bg-white" value="${r.ketLem1}">` : ''}${r.tLem2 > 0 ? `<input type="text" placeholder="Lembur 2..." oninput="updateGajiData(${r.id}, 'ketLem2', this.value)" class="note-input active !bg-white" value="${r.ketLem2}">` : ''}${r.tLem3 > 0 ? `<input type="text" placeholder="Lembur 3..." oninput="updateGajiData(${r.id}, 'ketLem3', this.value)" class="note-input active !bg-white" value="${r.ketLem3}">` : ''}</div>
+                </td>
+                <td class="text-center align-top pt-3 relative"><div class="flex justify-center items-center gap-1"><input type="text" oninput="updateGaji(${r.id}, 'bonus', this)" style="width: 8ch;" class="modern-input min-w-[70px] max-w-[200px] text-center text-blue-600 font-bold bg-blue-50/50 dark:bg-gray-800 px-2 transition-all duration-200" placeholder="0" value="${r.bonus ? formatRibuanStr(r.bonus) : ''}"><button onclick="document.getElementById('note-${r.id}').classList.toggle('active')" class="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs dark:bg-blue-900/50">💬</button></div><input type="text" id="note-${r.id}" oninput="dataRekapAktif.find(x=>x.id===${r.id}).catatanBonus=this.value" class="note-input ${clsBonus}" placeholder="Ket bonus..." value="${r.catatanBonus}"></td>
+                <td class="text-center font-medium text-gray-500 align-top pt-4">${formatRibuanStr(r.potRutin)}</td>
+                <td class="text-center align-top pt-3 relative">
+                    <div class="flex justify-center items-center gap-1"><input type="text" oninput="updateGaji(${r.id}, 'kasbon', this)" style="width: 8ch;" class="modern-input min-w-[70px] max-w-[200px] text-center text-red-600 font-bold bg-red-50/50 dark:bg-gray-800 px-2 transition-all duration-200" placeholder="0" value="${r.kasbon ? formatRibuanStr(r.kasbon) : ''}">${indikatorKasbon}</div>
+                    ${textSisaKasbon}
+                </td>
+                <td class="text-center align-top pt-3"><input type="text" oninput="updateGaji(${r.id}, 'tabungan', this)" style="width: 8ch;" class="modern-input min-w-[70px] max-w-[200px] text-center text-green-600 font-bold bg-green-50/50 dark:bg-gray-800 px-2 transition-all duration-200" placeholder="0" value="${r.tabungan ? formatRibuanStr(r.tabungan) : ''}"></td>
+                <td class="text-center align-top pt-3 relative"><div class="flex justify-center items-center gap-1"><input type="text" oninput="updateGaji(${r.id}, 'potLain', this)" style="width: 8ch;" class="modern-input min-w-[70px] max-w-[200px] text-center text-orange-600 font-bold bg-orange-50/50 dark:bg-gray-800 px-2 transition-all duration-200" placeholder="0" value="${r.potLain ? formatRibuanStr(r.potLain) : ''}"><button onclick="document.getElementById('notepot-${r.id}').classList.toggle('active')" class="shrink-0 w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-xs dark:bg-orange-900/50">💬</button></div><input type="text" id="notepot-${r.id}" oninput="dataRekapAktif.find(x=>x.id===${r.id}).catatanPotLain=this.value" class="note-input ${clsPot}" style="border-color:#fdba74; background:#fff7ed;" placeholder="Ket pot lain..." value="${r.catatanPotLain}"></td>
+                <td class="text-right font-bold text-blue-600 text-lg align-top pt-4" id="cg-bersih-${r.id}">${formatRibuanStr(bersih)}</td>
+            </tr>`;
+        }).join('');
+
+        kalkulasiGrandTotalGaji();
+    } catch (err) {
+        console.error("Gagal menarik data cetak gaji:", err);
+        tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-red-500">Terjadi kesalahan: ${err.message || 'Gagal terhubung'}</td></tr>`;
+    }
+}
 
         function generateStrukText(r, w) {
             const tglMulai = document.getElementById('cg-mulai').value; const tglAkhir = document.getElementById('cg-akhir').value;
@@ -2204,23 +2285,40 @@
         }
 
         async function cetakUlangArsip(metode) {
-            if(!arsipAktifTerpilih) return; let ukuranStr = document.getElementById('arsip-ukuran').value; let w = ukuranStr === '80' ? 48 : 32;
-            const riwayat = logGajiTerproses.find(x => x.id === arsipAktifTerpilih); if(!riwayat) return;
-            let selectedIndexes = Array.from(document.querySelectorAll('.chk-arsip-print:checked')).map(cb => parseInt(cb.value));
-            if (selectedIndexes.length === 0) return alert("Pilih minimal satu karyawan untuk dicetak ulang!");
+        if(!arsipAktifTerpilih) return; 
+        let ukuranStr = document.getElementById('arsip-ukuran').value; 
+        let w = ukuranStr === '80' ? 48 : 32;
+        
+        const riwayat = logGajiTerproses.find(x => x.id === arsipAktifTerpilih); 
+        if(!riwayat) return;
+        
+        let selectedIndexes = Array.from(document.querySelectorAll('.chk-arsip-print:checked')).map(cb => parseInt(cb.value));
+        if (selectedIndexes.length === 0) return alert("Pilih minimal satu karyawan untuk dicetak ulang!");
 
-            if (metode === 'usb') {
-                let allText = ""; selectedIndexes.forEach(i => { let strukText = generateStrukTextRiwayat(riwayat.data[i], w, riwayat.label); allText += tambahkanMarginKanan(strukText, w) + "\n\n"; });
-                let fFamily = dbSettings.printFontFamily; let fSize = dbSettings.printFontSize; let fWeight = dbSettings.printFontWeight;
-                let htmlText = allText.replace(/TERIMA BERSIH.*/g, match => `<span style="font-size: 1.3em; font-weight: bold; display: block; margin: 4px 0;">${match}</span>`);
-                document.getElementById('print-area').innerHTML = `<div style="font-family: ${fFamily}; font-size: ${fSize}; font-weight: ${fWeight}; margin: 0; padding: 0; white-space: pre-wrap;">${htmlText}</div>`;
-                window.print();
-            } else if (metode === 'bt') {
-                const connected = await initBluetooth(); if(!connected) return;
-                for (let idx of selectedIndexes) { let strukText = generateStrukTextRiwayat(riwayat.data[idx], w, riwayat.label); strukText = tambahkanMarginKanan(strukText, w); await printBT(strukText); await new Promise(res => setTimeout(res, 1200)); }
-                alert("Cetak Ulang Arsip via Bluetooth selesai!");
+        if (metode === 'usb') {
+            let allText = ""; 
+            selectedIndexes.forEach(i => { 
+                let strukText = generateStrukTextRiwayat(riwayat.data[i], w, riwayat.label); 
+                allText += tambahkanMarginKanan(strukText, w) + "\n\n"; 
+            });
+            let fFamily = dbSettings.printFontFamily; 
+            let fSize = dbSettings.printFontSize; 
+            let fWeight = dbSettings.printFontWeight;
+            let htmlText = allText.replace(/TERIMA BERSIH.*/g, match => `<span style="font-size: 1.3em; font-weight: bold; display: block; margin: 4px 0;">${match}</span>`);
+            document.getElementById('print-area').innerHTML = `<div style="font-family: ${fFamily}; font-size: ${fSize}; font-weight: ${fWeight}; margin: 0; padding: 0; white-space: pre-wrap;">${htmlText}</div>`;
+            window.print();
+        } else if (metode === 'bt') {
+            const connected = await initBluetooth(); 
+            if(!connected) return;
+            for (let idx of selectedIndexes) { 
+                let strukText = generateStrukTextRiwayat(riwayat.data[idx], w, riwayat.label); 
+                strukText = tambahkanMarginKanan(strukText, w); 
+                await printBT(strukText); 
+                await new Promise(res => setTimeout(res, 1200)); 
             }
+            alert("Cetak Ulang Arsip via Bluetooth selesai!");
         }
+    }
 
         function generateStrukTextRiwayat(r, w, labelPeriode) {
             let perSplit = labelPeriode.split(' | ')[1] || "-"; let kTarget = dbKaryawan.find(k => k.id === r.id) || {tarifReg: 0, tarifLem: 0, tarifLem2: 0, tarifLem3: 0, div_id: null};
@@ -2296,41 +2394,6 @@
             else { tbody.innerHTML = riwayat.map(r => { let d = new Date(r.tgl); let tglStr = `${("0"+d.getDate()).slice(-2)}/${("0"+(d.getMonth()+1)).slice(-2)}/${d.getFullYear()} ${("0"+d.getHours()).slice(-2)}:${("0"+d.getMinutes()).slice(-2)}`; let rMasuk = r.jenis === 'masuk' ? formatRibuanStr(r.nominal) : '-'; let rKeluar = r.jenis === 'keluar' ? formatRibuanStr(r.nominal) : '-'; return `<tr><td class="pl-4 border-b border-gray-100 dark:border-gray-700 py-3 text-sm">${tglStr}</td><td class="border-b border-gray-100 dark:border-gray-700 py-3 font-medium">${r.keterangan || '-'}</td><td class="text-right border-b border-gray-100 dark:border-gray-700 py-3 font-bold text-green-600 dark:text-green-400">${rMasuk}</td><td class="text-right border-b border-gray-100 dark:border-gray-700 py-3 font-bold text-red-500 dark:text-red-400">${rKeluar}</td></tr>`; }).join(''); }
             document.getElementById('modal-rincian-tabungan').classList.replace('hidden', 'flex');
         }
-		
-		// FUNGSI UNTUK MELIHAT MUTASI / HISTORI KASBON KARYAWAN
-		function bukaModalRincianKasbon(idKar) {
-			const k = dbKaryawan.find(x => x.id === idKar); 
-			if(!k) return;
-
-			document.getElementById('rk-nama-karyawan').innerText = `Nama: ${k.nama}`; 
-			document.getElementById('rk-saldo-akhir').innerText = `Rp ${formatRibuanStr(k.saldo_kasbon)}`;
-
-			// Ambil histori kasbon karyawan tersebut, urutkan dari yang paling baru
-			const riwayat = dbRiwayatKasbon
-				.filter(r => r.id_kar === idKar)
-				.sort((a, b) => new Date(b.tgl) - new Date(a.tgl));
-
-			const tbody = document.getElementById('tbody-rincian-kasbon');
-			if(riwayat.length === 0) { 
-				tbody.innerHTML = `<tr><td colspan="4" class="py-10 text-center text-gray-400">Belum ada riwayat transaksi kasbon.</td></tr>`; 
-			} else { 
-				tbody.innerHTML = riwayat.map(r => { 
-					let d = new Date(r.tgl); 
-					let tglStr = `${("0"+d.getDate()).slice(-2)}/${("0"+(d.getMonth()+1)).slice(-2)}/${d.getFullYear()} ${("0"+d.getHours()).slice(-2)}:${("0"+d.getMinutes()).slice(-2)}`; 
-					let rPinjam = r.jenis === 'pinjam' ? formatRibuanStr(r.nominal) : '-'; 
-					let rBayar = r.jenis === 'bayar' ? formatRibuanStr(r.nominal) : '-'; 
-					
-					return `<tr>
-						<td class="pl-4 border-b border-gray-100 dark:border-gray-700 py-3 text-sm">${tglStr}</td>
-						<td class="border-b border-gray-100 dark:border-gray-700 py-3 font-medium">${r.keterangan || '-'}</td>
-						<td class="text-right border-b border-gray-100 dark:border-gray-700 py-3 font-bold text-red-500 dark:text-red-400">${rPinjam}</td>
-						<td class="text-right border-b border-gray-100 dark:border-gray-700 py-3 font-bold text-green-600 dark:text-green-400">${rBayar}</td>
-					</tr>`; 
-				}).join(''); 
-			}
-			
-			document.getElementById('modal-rincian-kasbon').classList.replace('hidden', 'flex');
-		}
 
         function renderLedgerPerusahaan() {
             // 1. Ambil nilai filter bulan (format outputnya YYYY-MM)
@@ -2593,21 +2656,10 @@
         }
 
         async function hapusDivisi(id) {
-			if(!confirm('Yakin ingin menghapus divisi ini? Pastikan tidak ada karyawan yang terikat pada divisi ini.')) return;
-			try { 
-				const { error } = await _supabase.from('divisi').delete().eq('id', id); 
-				if (error) throw error;
-
-				dbDivisi = dbDivisi.filter(x => x.id != id); 
-				renderTableDivisi(); 
-				renderSelectDivisi(); 
-				if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); 
-				alert('Divisi berhasil dihapus.');
-			} catch (e) { 
-				console.error("Gagal hapus divisi:", e); 
-				alert('Gagal menghapus divisi: ' + (e.message || 'Masih ada karyawan yang terdaftar di divisi ini.')); 
-			}
-		}
+            if(!confirm('Yakin ingin menghapus divisi ini? Pastikan tidak ada karyawan yang terikat pada divisi ini.')) return;
+            try { await _supabase.from('divisi').delete().eq('id', id); dbDivisi = dbDivisi.filter(x => x.id != id); renderTableDivisi(); renderSelectDivisi(); if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); } 
+            catch (e) { console.error(e); alert('Gagal menghapus divisi.'); }
+        }
 
         function renderTableKaryawan() {
             const fNama = document.getElementById('filter-nama').value.toLowerCase(); const fDiv = document.getElementById('filter-divisi').value;
@@ -2659,20 +2711,10 @@
         }
 
         async function hapusKaryawan(id) {
-			if(!confirm('Yakin ingin menghapus karyawan ini secara permanen? Seluruh data produksi yang terkait mungkin akan ikut terhapus atau error.')) return;
-			try { 
-				const { error } = await _supabase.from('karyawan').delete().eq('id', id); 
-				if (error) throw error;
-
-				dbKaryawan = dbKaryawan.filter(x => x.id != id); 
-				renderTableKaryawan(); 
-				if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); 
-				alert('Karyawan berhasil dihapus.');
-			} catch (e) { 
-				console.error("Gagal hapus karyawan:", e); 
-				alert('Gagal menghapus karyawan: ' + (e.message || 'Pastikan tidak ada data produksi atau kasbon yang masih terikat.')); 
-			}
-		}
+            if(!confirm('Yakin ingin menghapus karyawan ini secara permanen? Seluruh data produksi yang terkait mungkin akan ikut terhapus atau error.')) return;
+            try { await _supabase.from('karyawan').delete().eq('id', id); dbKaryawan = dbKaryawan.filter(x => x.id != id); renderTableKaryawan(); if(document.getElementById('menu-dashboard').classList.contains('block')) renderDashboard(); } 
+            catch (e) { console.error(e); alert('Gagal menghapus karyawan.'); }
+        }
 
         // Jalankan Inisialisasi Saat Halaman Selesai Dimuat
         window.onload = initApp;
