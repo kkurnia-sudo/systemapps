@@ -6,17 +6,18 @@
     <title>SBR Putra - Invoice & Payment</title>
     <script src="https://cdn.tailwindcss.com"></script>
 	<script>
-		// Mengaktifkan mode kelas dark pada Tailwind
+		// Konfigurasi dark mode Tailwind
 		tailwind.config = {
 			darkMode: 'class',
 		}
 	</script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-		/* Menghapus spinner pada input angka */
+		.font-mono-num { font-family: 'JetBrains Mono', monospace; }
+		/* Menghilangkan spinner angka bawaan */
 		input[type="number"]::-webkit-inner-spin-button,
 		input[type="number"]::-webkit-outer-spin-button {
 			-webkit-appearance: none;
@@ -25,60 +26,70 @@
 		input[type="number"] {
 			-moz-appearance: textfield;
 		}
+		/* Efek Stempel Lunas */
+		.stamp-paid {
+			border: 2px dashed #059669;
+			color: #059669;
+			transform: rotate(-7deg);
+			border-radius: 8px;
+			padding: 4px 12px;
+			font-weight: 800;
+			letter-spacing: 2px;
+			text-transform: uppercase;
+		}
     </style>
 </head>
 <body class="text-gray-800 bg-slate-50 dark:bg-gray-950 dark:text-gray-100 transition-colors">
 
     <div class="max-w-6xl mx-auto p-6">
-        <!-- Header -->
+        <!-- Header Aplikasi -->
         <header class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-emerald-500">SBR Putra Food</h1>
                 <p class="text-sm text-gray-500">Manajemen Invoice & Pembayaran</p>
             </div>
             <div class="flex items-center gap-2.5">
-				<!-- Tombol Toggle Dark/Light Mode -->
+				<!-- Toggle Dark/Light Mode -->
 				<button onclick="toggleDarkMode()" class="w-10 h-10 bg-gray-500/30 hover:bg-gray-500 dark:bg-gray-800 dark:hover:bg-gray-400 text-black dark:text-yellow-500 rounded-full transition-all shadow-sm flex items-center justify-center" title="Ubah Mode Tampilan">
 					<svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-						<!-- Ikon default (Bulan) -->
 						<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
 					</svg>
 				</button>
-                <!-- Tombol Manajemen Data (Emas Bulat) -->
+
+                <!-- Tombol Manajemen Data -->
                 <button onclick="openDataModal()" class="w-10 h-10 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full transition-all shadow-sm flex items-center justify-center" title="Manajemen Data">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
 					  <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
 					</svg>
                 </button>
 
-                <!-- Tombol Bayar Multi-Invoice (Border Bulat Hijau Interaktif) -->
+                <!-- Tombol Bayar Multi-Invoice -->
                 <button onclick="toggleModal('bulkPaymentModal')" class="w-10 h-10 rounded-full bg-emerald-500 text-white hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center group" title="Bayar Multi-Invoice">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                 </button>
 
-                <!-- Tombol Tambah Invoice (Bulat Hitam Minimalis) -->
+                <!-- Tombol Tambah Invoice Baru -->
                 <button onclick="openInvoiceModal()" class="w-10 h-10 rounded-full bg-black/75 hover:bg-emerald-500 text-white dark:bg-white dark:text-black dark:hover:bg-emerald-500 transition-all shadow-sm flex items-center justify-center" title="Tambah Invoice Baru">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
                 </button>
             </div>
         </header>
 
-        <!-- Layout Utama: Kiri (Widget Memanjang) & Kanan (Tabel) -->
+        <!-- Layout Utama -->
         <div class="flex flex-col lg:flex-row gap-6 mb-8">
             
             <!-- WIDGET KIRI (Sidebar) -->
             <div class="w-full lg:w-1/3 xl:w-1/4 flex flex-col gap-4">
                 
-                <!-- Kartu Utama: Total Keseluruhan -->
+                <!-- Total Piutang Keseluruhan -->
                 <div class="bg-emerald-600 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
                     <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-5 blur-2xl"></div>
                     <p class="text-[14px] text-gray-800/80 uppercase tracking-wider font-bold mb-1">Total Piutang</p>
                     <h2 class="text-3xl font-bold tracking-tight mb-2" id="totalUnpaid">Rp 0</h2>
-                    <div class="flex items-center gap-2 mt-4 text-[11px] font-Normal font text-emerald-400 bg-gray-800/80 w-fit px-3 py-1.5 rounded-full border border-gray-700">
+                    <div class="flex items-center gap-2 mt-4 text-[11px] font-normal text-emerald-400 bg-gray-800/80 w-fit px-3 py-1.5 rounded-full border border-gray-700">
                         <span id="totalInvoicesBadge">0 Nota Belum Lunas</span>
                     </div>
                 </div>
@@ -86,8 +97,7 @@
                 <!-- Kartu Rincian per Kategori -->
                 <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-2 flex flex-col gap-1">
                     
-                    <!-- Bahan Baku -->
-                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-orange-50 transition-colors group">
+                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-orange-50 dark:hover:bg-gray-800 transition-colors group">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
@@ -99,8 +109,7 @@
                         </div>
                     </div>
                     
-                    <!-- Plastik -->
-                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-blue-50 transition-colors group">
+                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors group">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
@@ -112,8 +121,7 @@
                         </div>
                     </div>
 
-                    <!-- Dus -->
-                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-amber-50 transition-colors group">
+                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-amber-50 dark:hover:bg-gray-800 transition-colors group">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
@@ -125,8 +133,7 @@
                         </div>
                     </div>
 
-                    <!-- Lainnya -->
-                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-purple-50 transition-colors group">
+                    <div class="flex items-center justify-between p-3 rounded-xl hover:bg-purple-50 dark:hover:bg-gray-800 transition-colors group">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
@@ -141,78 +148,69 @@
                 </div>
             </div>
 
-            <!-- AREA KANAN (Tabel Invoice) -->
+            <!-- AREA KANAN (Tabel Daftar Invoice) -->
             <div class="w-full lg:w-2/3 xl:w-3/4">
                 <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden h-full flex flex-col">
-                    <!-- HEADER DAFTAR TAGIHAN & TOOLBAR FILTER (VERSI RAPI & TERPADU) -->
-			<div class="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col gap-3">
-				
-				<!-- BARIS 1: Judul, Badge Peringatan, & Setelan Batas Tempo -->
-				<div class="flex items-center justify-between flex-wrap gap-2">
-					<div class="flex items-center gap-2.5">
-						<h2 class="font-bold text-gray-800 dark:text-white text-base tracking-tight">Daftar Tagihan Berjalan</h2>
-						
-						<!-- Badge Peringatan: Dibuat sebagai tombol interaktif (Bisa diklik untuk filter cepat) -->
-						<button type="button" id="overdueBadgeNotice" onclick="toggleOverdueFilter()" title="Klik untuk langsung menampilkan nota yang lewat batas hari" class="hidden items-center gap-1.5 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:hover:bg-amber-950/60 dark:text-amber-400 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800 transition-all cursor-pointer shadow-sm">
-							<span class="relative flex h-2 w-2">
-								<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-								<span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-							</span>
-							<span id="overdueBadgeText">0 Nota > 10 Hari</span>
-						</button>
-					</div>
+                    
+					<!-- Toolbar Filter & Pencarian -->
+					<div class="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col gap-3">
+						<div class="flex items-center justify-between flex-wrap gap-2">
+							<div class="flex items-center gap-2.5">
+								<h2 class="font-bold text-gray-800 dark:text-white text-base tracking-tight">Daftar Tagihan Berjalan</h2>
+								
+								<button type="button" id="overdueBadgeNotice" onclick="toggleOverdueFilter()" title="Klik untuk filter nota lewat tempo" class="hidden items-center gap-1.5 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:hover:bg-amber-950/60 dark:text-amber-400 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800 transition-all cursor-pointer shadow-sm">
+									<span class="relative flex h-2 w-2">
+										<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+										<span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+									</span>
+									<span id="overdueBadgeText">0 Nota > 10 Hari</span>
+								</button>
+							</div>
 
-					<!-- Pengaturan Batas Hari (Diletakkan manis & kompak di pojok kanan atas) -->
-					<div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1 shadow-sm">
-						<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-						</svg>
-						<span class="font-medium">Batas Tempo:</span>
-						<input type="number" id="reminderDaysInput" min="1" max="999" value="10" oninput="handleReminderDaysChange()" class="w-10 text-center font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-amber-500">
-						<span class="text-[11px]">Hari</span>
-					</div>
-				</div>
+							<div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1 shadow-sm">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+								</svg>
+								<span class="font-medium">Batas Tempo:</span>
+								<input type="number" id="reminderDaysInput" min="1" max="999" value="10" oninput="handleReminderDaysChange()" class="w-10 text-center font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-amber-500">
+								<span class="text-[11px]">Hari</span>
+							</div>
+						</div>
 
-				<!-- BARIS 2: Toolbar Pencarian & Dropdown Filter (Sejajar Sempurna) -->
-				<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
-					
-					<!-- Input Cari (Mengambil 6 dari 12 kolom = 50% lebar) -->
-					<div class="relative sm:col-span-6">
-						<input type="text" id="filterKeyword" oninput="renderUI()" placeholder="Cari nomor nota, supplier, keterangan..." class="w-full text-xs pl-8 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm transition-all">
-						<svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-						</svg>
-					</div>
+						<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
+							<div class="relative sm:col-span-6">
+								<input type="text" id="filterKeyword" oninput="renderUI()" placeholder="Cari nomor nota, supplier, keterangan..." class="w-full text-xs pl-8 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm transition-all">
+								<svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+								</svg>
+							</div>
 
-					<!-- Filter Kategori (Mengambil 3 dari 12 kolom = 25% lebar) -->
-					<div class="sm:col-span-3">
-						<select id="filterCategory" onchange="renderUI()" class="w-full text-xs px-2.5 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm cursor-pointer transition-all">
-							<option value="">Semua Kategori</option>
-							<option value="Bahan Baku">Bahan Baku</option>
-							<option value="Plastik">Plastik</option>
-							<option value="Dus">Dus</option>
-							<option value="Lainnya">Lainnya</option>
-						</select>
-					</div>
+							<div class="sm:col-span-3">
+								<select id="filterCategory" onchange="renderUI()" class="w-full text-xs px-2.5 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm cursor-pointer transition-all">
+									<option value="">Semua Kategori</option>
+									<option value="Bahan Baku">Bahan Baku</option>
+									<option value="Plastik">Plastik</option>
+									<option value="Dus">Dus</option>
+									<option value="Lainnya">Lainnya</option>
+								</select>
+							</div>
 
-					<!-- Filter Status (Mengambil 3 dari 12 kolom = 25% lebar) -->
-					<div class="sm:col-span-3">
-						<select id="filterStatus" onchange="renderUI()" class="w-full text-xs px-2.5 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm cursor-pointer transition-all">
-							<option value="">Semua Status</option>
-							<option value="overdue">⚠️ Lewat Tempo</option>
-							<option value="unpaid">Belum Bayar</option>
-							<option value="partial">Sebagian</option>
-							<option value="sj">Menunggu Invoice</option>
-						</select>
+							<div class="sm:col-span-3">
+								<select id="filterStatus" onchange="renderUI()" class="w-full text-xs px-2.5 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm cursor-pointer transition-all">
+									<option value="">Semua Status</option>
+									<option value="overdue">⚠️ Lewat Tempo</option>
+									<option value="unpaid">Belum Bayar</option>
+									<option value="partial">Sebagian</option>
+									<option value="sj">Menunggu Invoice</option>
+								</select>
+							</div>
+						</div>
 					</div>
-
-				</div>
-			</div>
                     
                     <div class="overflow-x-auto flex-1">
                         <table class="w-full text-left border-collapse">
                             <thead>
-								<tr class="bg-white dark:bg-emerald-500 dark:text-white border-b border-gray-300 text-[11px] uppercase tracking-wider text-gray-400">
+								<tr class="bg-white dark:bg-emerald-600 dark:text-white border-b border-gray-300 dark:border-gray-700 text-[11px] uppercase tracking-wider text-gray-400">
 									<th class="p-4 font-semibold w-[25%]">No. Invoice & Tgl</th>
 									<th class="p-4 font-semibold w-[20%]">Supplier & Kategori</th>
 									<th class="p-4 font-semibold w-[20%]">Total Tagihan</th>
@@ -220,8 +218,8 @@
 									<th class="p-4 font-semibold text-right w-[5%] pr-6">Aksi</th>
 								</tr>
 							</thead>
-                            <tbody id="invoiceTableBody" class="text-sm divide-y divide-gray-50">
-                                <!-- Data akan dirender oleh JS -->
+                            <tbody id="invoiceTableBody" class="text-sm divide-y divide-gray-50 dark:divide-gray-800">
+                                <!-- Baris tabel dirender otomatis oleh JS -->
                             </tbody>
                         </table>
                     </div>
@@ -230,33 +228,31 @@
             
         </div>
 
-    <!-- Modal Tambah Invoice -->
+    <!-- Modal 1: Tambah Invoice Baru -->
     <div id="invoiceModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center">
         <div class="bg-white dark:bg-gray-900 dark:text-gray-100 w-full max-w-md rounded-2xl shadow-xl border border-transparent dark:border-gray-800 p-6 transform transition-all">
             <div class="flex justify-between items-center mb-5">
                 <h3 class="text-lg font-bold">Catat Invoice Baru</h3>
-				<button type="button" onclick="toggleModal('invoiceModal')" class="w-8 h-8 flex items-center justify-center text-3xl text-red-500 hover:text-yellow-700">&times;</button>
+				<button type="button" onclick="toggleModal('invoiceModal')" class="w-8 h-8 flex items-center justify-center text-3xl text-red-500 hover:text-red-700">&times;</button>
 			</div>
 			<div class="flex items-center mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-				<input type="checkbox" id="isSuratJalan" onchange="toggleSuratJalan()" class="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-white-300 rounded dark:bg-gray-800 focus:ring-black">
+				<input type="checkbox" id="isSuratJalan" onchange="toggleSuratJalan()" class="w-4 h-4 text-black dark:text-white border-gray-300 rounded focus:ring-black">
 				<label for="isSuratJalan" class="ml-2 text-sm font-bold text-red-500">Hanya Surat Jalan (Invoice Menyusul)</label>
 			</div>
             <form id="formInvoice" onsubmit="saveInvoice(event)">
                 <div class="space-y-4">				
-					<!-- Baris Side-to-Side: Nomor Invoice & Tanggal -->
-						<div class="grid grid-cols-2 gap-4">
-							<div>
-								<label id="labelNomor" class="block text-xs font-medium text-gray-500 mb-1">Nomor Invoice</label>
-								<input type="text" id="invNumber" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white">
-							</div>
-							<div>
-								<label class="block text-xs font-medium text-gray-500 dark:text-black-500 mb-1">Tanggal</label>
-								<input type="date" id="invDate" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white dark:[color-scheme:dark]">
-							</div>
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label id="labelNomor" class="block text-xs font-medium text-gray-500 mb-1">Nomor Invoice</label>
+							<input type="text" id="invNumber" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white">
 						</div>
+						<div>
+							<label class="block text-xs font-medium text-gray-500 mb-1">Tanggal</label>
+							<input type="date" id="invDate" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white dark:[color-scheme:dark]">
+						</div>
+					</div>
 					<div>
 						<label class="block text-xs font-medium text-gray-500 mb-1">Nama Supplier</label>
-						<!-- Diubah menjadi select dropdown agar stabil dan tidak hilang-hilang -->
 						<select id="invSupplier" onchange="autoSelectCategory()" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white">
 							<option value="">-- Pilih Supplier --</option>
 							<option value="Kop Bumi">Kop Bumi</option>
@@ -273,117 +269,128 @@
 							<option value="Dus">Dus</option>
 							<option value="Lainnya">Lainnya</option>
 						</select>
-						<div>
-							<label class="block text-xs font-medium text-gray-500 mb-1">Keterangan (Opsional)</label>
-							<input type="text" id="invKeterangan" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white" placeholder="Contoh Plastik Opp 16 Karung @20kg">
-						</div>
+					</div>
+					<div>
+						<label class="block text-xs font-medium text-gray-500 mb-1">Keterangan (Opsional)</label>
+						<input type="text" id="invKeterangan" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white" placeholder="Contoh: Plastik Opp 16 Karung @20kg">
 					</div>
 					<div>
 						<label class="block text-xs font-medium text-gray-500 mb-1">Total Nominal (Rp)</label>
-						<!-- Input nominal dengan format ribuan otomatis -->
 						<input type="text" id="invTotal" onkeyup="formatRupiahInput(this)" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white" placeholder="Contoh: 150.000">
 					</div>
 				</div>
                 <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" onclick="toggleModal('invoiceModal')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">Batal</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-lg hover:bg-gray-800">Simpan Invoice</button>
+                    <button type="button" onclick="toggleModal('invoiceModal')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 rounded-lg">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200">Simpan Invoice</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Pembayaran Satuan -->
+    <!-- Modal 2: Pembayaran Satuan -->
     <div id="paymentModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center">
         <div class="bg-white dark:bg-gray-900 dark:text-gray-100 dark:border dark:border-gray-800 w-full max-w-sm rounded-2xl shadow-xl p-6 transform transition-all">
             <div class="flex justify-between items-center mb-5">
                 <h3 class="text-lg font-bold">Input Pembayaran</h3>
-                <button onclick="toggleModal('paymentModal')" class="text-gray-400 hover:text-gray-600">&times;</button>
+                <button onclick="toggleModal('paymentModal')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
             <form id="formPayment" onsubmit="processPayment(event)">
                 <input type="hidden" id="payInvId">
                 <div class="mb-4">
                     <p class="text-xs text-gray-500 mb-1">Sisa Tagihan:</p>
-                    <p class="text-lg font-bold text-gray-900" id="payRemaining">Rp 0</p>
+                    <p class="text-lg font-bold text-gray-900 dark:text-white font-mono-num" id="payRemaining">Rp 0</p>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Nominal Bayar (Rp)</label>
-                    <input type="text" id="payAmount" onkeyup="formatRupiahInput(this)" required class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black" placeholder="Contoh: 1.500.000">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Metode</label>
+                        <select id="singlePayMethod" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none">
+                            <option value="Transfer">Transfer</option>
+                            <option value="Cash">Cash</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Nominal Bayar (Rp)</label>
+                        <input type="text" id="payAmount" onkeyup="formatRupiahInput(this)" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black bg-white dark:bg-gray-800 dark:text-white" placeholder="Contoh: 1.500.000">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Keterangan / Via (Opsional)</label>
+                        <input type="text" id="singlePayNote" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black bg-white dark:bg-gray-800 dark:text-white" placeholder="Contoh: BCA / Dari Laci">
+                    </div>
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" onclick="toggleModal('paymentModal')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">Batal</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-lg hover:bg-gray-800">Bayar</button>
+                    <button type="button" onclick="toggleModal('paymentModal')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 rounded-lg">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200">Bayar</button>
                 </div>
             </form>
         </div>
     </div>
     
-    <!-- Modal Bulk Payment -->
+    <!-- Modal 3: Bayar Beberapa Invoice (SPLIT PAYMENT) -->
 	<div id="bulkPaymentModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center">
-		<div class="bg-white dark:bg-gray-900 dark:text-gray-100 dark:border dark:border-gray-800 w-full max-w-lg rounded-2xl shadow-xl p-6 transform transition-all">
-			<div class="flex justify-between items-center mb-5">
+		<div class="bg-white dark:bg-gray-900 dark:text-gray-100 dark:border dark:border-gray-800 w-full max-w-lg rounded-2xl shadow-xl p-6 transform transition-all max-h-[90vh] flex flex-col">
+			<div class="flex justify-between items-center mb-4">
 				<h3 class="text-lg font-bold">Bayar Beberapa Invoice</h3>
-				<button onclick="toggleModal('bulkPaymentModal')" class="text-gray-400 hover:text-gray-600">&times;</button>
+				<button type="button" onclick="toggleModal('bulkPaymentModal')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
 			</div>
 			
-			<form id="formBulkPayment">
-				<div class="space-y-4">
-					<!-- Pilih Kategori -->
+			<form id="formBulkPayment" class="space-y-4 overflow-y-auto flex-1 pr-1">
+				<div>
+					<label class="block text-xs font-medium text-gray-500 mb-1">Pilih Kategori</label>
+					<select id="bulkCategory" onchange="loadCategoryInvoices(this.value)" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white">
+						<option value="">-- Pilih Kategori --</option>
+						<option value="Bahan Baku">Bahan Baku</option>
+						<option value="Plastik">Plastik</option>
+						<option value="Dus">Dus</option>
+						<option value="Lainnya">Lainnya</option>
+					</select>
+				</div>
+
+				<div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 hidden" id="bulkInvoiceListContainer">
+					<p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Pilih Invoice yang akan dibayar:</p>
+					<div class="space-y-2 max-h-44 overflow-y-auto pr-1" id="bulkInvoiceList"></div>
+				</div>
+
+				<div class="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800 p-3.5 rounded-xl items-center justify-between hidden" id="bulkWidgetContainer">
 					<div>
-						<label class="block text-xs font-medium text-gray-500 mb-1">Pilih Kategori</label>
-						<select id="bulkCategory" onchange="loadCategoryInvoices(this.value)" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white">
-							<option value="">-- Pilih Kategori --</option>
-							<option value="Bahan Baku">Bahan Baku</option>
-							<option value="Plastik">Plastik</option>
-							<option value="Dus">Dus</option>
-							<option value="Lainnya">Lainnya</option>
-						</select>
+						<p class="text-xs font-medium text-blue-600 dark:text-blue-400 mb-0.5">Total Tagihan Terpilih</p>
+						<h3 class="text-xl font-bold text-blue-900 dark:text-blue-200 font-mono-num" id="widgetTotalTerpilih">Rp 0</h3>
+					</div>
+				</div>
+
+				<!-- AREA SPLIT PAYMENT -->
+				<div class="space-y-2.5 pt-2 border-t border-gray-100 dark:border-gray-800">
+					<div class="flex justify-between items-center">
+						<label class="block text-xs font-bold text-gray-700 dark:text-gray-300">
+							Rincian Pembayaran (Split Payment)
+						</label>
+						<button type="button" id="btnAddSplit" onclick="addSplitRow()" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+							</svg>
+							Tambah Split (Maks 3)
+						</button>
 					</div>
 
-					<!-- List Invoice Checkbox -->
-					<div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 hidden" id="bulkInvoiceListContainer">
-						<p class="text-xs font-semibold text-gray-700 mb-3">Pilih Invoice yang akan dibayar:</p>
-						<div class="space-y-2 max-h-48 overflow-y-auto pr-2" id="bulkInvoiceList">
-							<!-- Data checkbox akan muncul di sini via JS -->
-						</div>
-					</div>
+					<div id="splitPaymentContainer" class="space-y-2"></div>
 
-					<!-- WIDGET: Total Tagihan Terpilih -->
-					<div class="bg-blue-50 border border-blue-100 p-4 rounded-xl items-center justify-between hidden" id="bulkWidgetContainer">
-						<div>
-							<p class="text-xs font-medium text-blue-600 mb-1">Total Tagihan Terpilih</p>
-							<h3 class="text-xl font-bold text-blue-900" id="widgetTotalTerpilih">Rp 0</h3>
-						</div>
-						<!-- Nominal akan terisi otomatis ke bawah, tapi ini sekadar display info -->
-					</div>
-
-					<div class="grid grid-cols-2 gap-4">
-						<!-- Nominal Pembayaran -->
-						<div>
-							<label class="block text-xs font-medium text-gray-500 mb-1">Nominal Dibayar (Rp)</label>
-							<input type="text" id="bulkPayAmount" onkeyup="formatRupiahInput(this)" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white" placeholder="Cth: 20.000">
-						</div>
-						<!-- Catatan / Via Pembayaran -->
-						<div>
-							<label class="block text-xs font-medium text-gray-500 mb-1">Via / Catatan</label>
-							<input type="text" id="bulkPayMethod" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white" placeholder="Cth: Trf BCA / Tunai">
-						</div>
+					<div class="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-lg border border-gray-200 dark:border-gray-700 text-xs">
+						<span class="text-gray-500 dark:text-gray-400">Total Nominal Pembayaran:</span>
+						<span class="font-bold text-gray-900 dark:text-white text-sm font-mono-num" id="splitTotalSummary">Rp 0</span>
 					</div>
 				</div>
 				
-				<!-- Ubah tombol di bagian bawah modal bulkPaymentModal -->
-				<div class="mt-6 flex justify-end gap-3">
-					<button type="button" onclick="toggleModal('bulkPaymentModal')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">Batal</button>
-					<button type="button" onclick="previewInvoice(event)" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-lg hover:bg-gray-800">Cetak Invoice</button>
+				<div class="pt-3 flex justify-end gap-3 border-t border-gray-100 dark:border-gray-800">
+					<button type="button" onclick="toggleModal('bulkPaymentModal')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 rounded-lg">Batal</button>
+					<button type="button" onclick="previewInvoice(event)" class="px-4 py-2 text-sm font-medium bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200">Cetak Invoice</button>
 				</div>
 			</form>
 		</div>
 	</div>
 
-	<!-- Modal Manajemen Data (Sudah Dioptimalkan untuk Dark Mode) -->
+	<!-- Modal 4: Manajemen Data (Riwayat) -->
 	<div id="dataModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center">
 		<div class="bg-white dark:bg-gray-900 dark:text-gray-100 border border-gray-100 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl transform transition-all flex flex-col h-[80vh]">
 			
-			<!-- Header & Tabs -->
 			<div class="border-b border-gray-100 dark:border-gray-800 p-6 pb-0">
 				<div class="flex justify-between items-center mb-6">
 					<h3 class="text-xl font-bold flex items-center gap-2">
@@ -395,14 +402,12 @@
 					<button onclick="toggleModal('dataModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl leading-none">&times;</button>
 				</div>
 				
-				<!-- Menggunakan Aksen Emerald pada Tab Aktif agar Senada dengan Tema Aplikasi -->
 				<div class="flex gap-6 text-sm font-medium">
 					<button id="tabRiwayat" onclick="switchTab('riwayat')" class="pb-3 border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400 font-semibold transition-colors">Riwayat Nota (Lunas)</button>
 					<button id="tabLainnya" onclick="switchTab('lainnya')" class="pb-3 border-b-2 border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Lainnya</button>
 				</div>
 			</div>
 
-			<!-- Konten Tab Riwayat Nota -->
 			<div id="contentRiwayat" class="p-6 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-950">
 				<div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
 					<table class="w-full text-left border-collapse">
@@ -415,12 +420,9 @@
 								<th class="p-4 font-medium text-right">Aksi</th>
 							</tr>
 						</thead>
-						<tbody id="historyTableBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-800">
-							<!-- Data nota lunas dirender oleh JS -->
-						</tbody>
+						<tbody id="historyTableBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-800"></tbody>
 					</table>
 
-					<!-- Kontrol Pagination Riwayat -->
 					<div id="historyPagination" class="p-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50 mt-auto hidden">
 						<button id="btnPrevHistory" onclick="prevPageHistory()" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
 							&larr; Sebelumnya
@@ -433,7 +435,6 @@
 				</div>
 			</div>
 
-			<!-- Konten Tab Lainnya -->
 			<div id="contentLainnya" class="p-6 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-950 hidden">
 				<div class="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
@@ -444,102 +445,118 @@
 		</div>
 	</div>
 
-	
-	<!-- Modal Preview Invoice Profesional -->
-	<div id="invoicePreviewModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center">
-		<div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl p-6 transform transition-all flex flex-col max-h-[90vh]">
-			<div class="flex justify-between items-center mb-4">
-				<h3 class="text-lg font-bold">Preview Cetak Invoice</h3>
-				<button onclick="toggleModal('invoicePreviewModal')" class="text-gray-400 hover:text-gray-600">&times;</button>
+	<!-- Modal 5: PREVIEW & CETAK BUKTI PEMBAYARAN (DESAIN MODERN BARU) -->
+	<div id="invoicePreviewModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+		<div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 transform transition-all flex flex-col max-h-[92vh]">
+			<div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+				<div class="flex items-center gap-2">
+					<div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+					<h3 class="text-base font-bold text-gray-900">Voucher & Bukti Pembayaran Digital</h3>
+				</div>
+				<button onclick="toggleModal('invoicePreviewModal')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
 			</div>
 			
-			<!-- Area Kertas Invoice yang akan diexport ke PNG -->
-			<div id="printableInvoice" class="bg-white border border-gray-200 p-8 rounded-xl overflow-y-auto space-y-6 text-gray-800 shadow-sm">
-				<div class="flex justify-between items-start border-b pb-4">
+			<!-- AREA KERTAS CETAK (DIOPTIMALKAN SUPAYA MODERN SAAT DISIMPAN KE GAMBAR PNG) -->
+			<div id="printableInvoice" class="bg-white border border-slate-200 p-7 rounded-2xl overflow-y-auto space-y-5 text-slate-800 shadow-sm relative">
+				
+				<!-- Header Modern dengan Aksen & Tanggal -->
+				<div class="flex justify-between items-start pb-5 border-b border-slate-100">
 					<div>
-						<h2 class="text-xl font-bold text-gray-900">SBR Putra Food</h2>
-						<p class="text-xs text-gray-500">Bukti Pembayaran & Catatan Tagihan</p>
+						<div class="flex items-center gap-2 mb-1">
+							<span class="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md tracking-wider">Invoices</span>
+							<span class="text-[10px] text-slate-400 font-mono-num" id="previewTrxId">#SBR-PAY-2026</span>
+						</div>
+						<h2 class="text-2xl font-black tracking-tight text-slate-900">SBR Putra Food</h2>
+						<p class="text-xs text-slate-500">Sistem Manajemen Kas & Operasional Supplier</p>
 					</div>
 					<div class="text-right">
-						<p class="text-xs text-gray-500">Tanggal:</p>
-						<p class="text-sm font-semibold" id="previewDate">-</p>
+						<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Tanggal Cetak</span>
+						<p class="text-sm font-bold text-slate-800 font-mono-num" id="previewDate">-</p>
 					</div>
 				</div>
 				
-				<!-- Di bayarkan Kepada -->
-				<div class="text-sm">
-					<p class="text-xs text-gray-500">Di bayarkan Kepada:</p>
-					<p class="font-bold text-gray-900 text-base" id="previewSupplier">-</p>
+				<!-- Kartu Penerima Pembayaran -->
+				<div class="bg-slate-50 border border-slate-100 p-4 rounded-xl flex items-center justify-between">
+					<div>
+						<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Dibayarkan Kepada Rekanan:</p>
+						<p class="font-extrabold text-slate-900 text-lg" id="previewSupplier">-</p>
+					</div>
+					<div class="text-right">
+						<span class="stamp-paid inline-block text-xs">LUNAS</span>
+					</div>
 				</div>
 
-				<!-- Tabel Rincian Invoice (Kolom Supplier Dihapus) -->
-				<table class="w-full text-left border-collapse text-sm">
-					<thead>
-						<tr class="border-b border-gray-200 text-xs text-gray-500 uppercase">
-							<th class="py-2">No. Invoice & Tgl</th>
-							<th class="py-2 text-right">Nominal</th>
-						</tr>
-					</thead>
-					<tbody id="previewInvoiceTable" class="divide-y divide-gray-100">
-						<!-- Diisi via JS -->
-					</tbody>
-				</table>
+				<!-- Tabel Rincian Nota yang Dibayar -->
+				<div class="overflow-hidden rounded-xl border border-slate-100">
+					<table class="w-full text-left border-collapse text-sm">
+						<thead>
+							<tr class="bg-slate-100/80 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+								<th class="py-2.5 px-4">No. Invoice & Tanggal</th>
+								<th class="py-2.5 px-4 text-right">Alokasi Bayar</th>
+							</tr>
+						</thead>
+						<tbody id="previewInvoiceTable" class="divide-y divide-slate-100 bg-white">
+							<!-- Diisi via JS -->
+						</tbody>
+					</table>
+				</div>
 
-				<!-- Total Dibayar & Metode di Bawahnya -->
-				<div class="border-t pt-4 space-y-3">
-					<div class="flex justify-between items-center font-bold text-base">
-						<span>Total Dibayar:</span>
-						<span id="previewTotalAmount" class="text-lg text-black">Rp 0</span>
+				<!-- Total Dibayar & Rincian Metode Split -->
+				<div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-sm">
+					<div class="flex justify-between items-center mb-3">
+						<span class="text-xs font-medium text-slate-300 uppercase tracking-wider">Total Pembayaran:</span>
+						<span id="previewTotalAmount" class="text-2xl font-black text-emerald-400 font-mono-num">Rp 0</span>
 					</div>
 					
-					<!-- Metode / Catatan Dipindah ke Bawah -->
-					<div class="flex justify-between items-center text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
-						<span class="text-xs text-gray-500 font-medium">Metode / Catatan:</span>
-						<span class="font-semibold text-gray-900" id="previewMethod">-</span>
+					<!-- Container Rincian Metode Split (Modern Pills) -->
+					<div class="pt-3 border-t border-slate-700/60">
+						<p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Metode Penyaluran Dana:</p>
+						<div class="flex flex-wrap gap-2" id="previewSplitPillsContainer">
+							<!-- Pills Split Payment akan muncul di sini via JS -->
+						</div>
 					</div>
 				</div>
 
-				<div class="text-center pt-6 text-xs text-gray-400 border-t">
-					<p>Terima kasih atas kerja samanya.</p>
-					<p>SBR Putra Food - Sistem Manajemen Keuangan</p>
+				<!-- Footer Lembar Invoice -->
+				<div class="text-center pt-3 text-[11px] text-slate-400 border-t border-dashed border-slate-200">
+					<p class="font-medium text-slate-600">Dokumen transaksi ini diterbitkan otomatis dan sah tanpa tanda tangan basah.</p>
+					<p class="text-[10px] text-slate-400 mt-0.5">SBR Putra Food &copy; 2026 - Financial Operations Management</p>
 				</div>
 			</div>
 
-			<!-- Tombol Bawah (Kembali, Simpan PNG, Proses Pembayaran) -->
-			<div class="mt-6 flex justify-between items-center">
+			<!-- Tombol Bawah Preview -->
+			<div class="mt-5 flex justify-between items-center pt-2">
 				<button type="button" onclick="backToBulkModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">Kembali</button>
 				<div class="flex gap-3">
-					<button type="button" onclick="downloadInvoicePNG()" class="px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg flex items-center gap-2">
-						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+					<button type="button" onclick="downloadInvoicePNG()" class="px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg flex items-center gap-2 shadow-sm">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
 						Simpan PNG
 					</button>
-					<button type="button" onclick="processBulkPayment(event)" class="px-4 py-2 text-sm font-medium bg-black text-white rounded-lg hover:bg-gray-800">Proses Pembayaran</button>
+					<button type="button" onclick="processBulkPayment(event)" class="px-5 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-md">Proses Pembayaran</button>
 				</div>
 			</div>
 		</div>
 	</div>
 	
-	
-	<!-- Modal Koreksi / Edit Invoice -->
+	<!-- Modal 6: Koreksi / Edit Invoice -->
 	<div id="editInvoiceModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center">
 		<div class="bg-white dark:bg-gray-900 dark:text-gray-100 dark:border dark:border-gray-800 w-full max-w-lg rounded-2xl shadow-xl p-6 transform transition-all">
 			<div class="flex justify-between items-center mb-5">
 				<h3 class="text-lg font-bold">Koreksi Rincian Invoice</h3>
-				<button type="button" onclick="toggleModal('editInvoiceModal')" class="text-gray-400 hover:text-gray-600">&times;</button>
+				<button type="button" onclick="toggleModal('editInvoiceModal')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
 			</div>
 			
 			<form id="formEditInvoice" onsubmit="saveEditedInvoice(event)">
 				<input type="hidden" id="editInvId">
 				<div class="space-y-4">                
-					<!-- Baris Side-to-Side: Nomor Invoice & Tanggal -->
 					<div class="grid grid-cols-2 gap-4">
 						<div>
 							<label class="block text-xs font-medium text-gray-500 mb-1">Nomor Invoice</label>
-							<input type="text" id="editInvNumber" required class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black">
+							<input type="text" id="editInvNumber" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white">
 						</div>
 						<div>
 							<label class="block text-xs font-medium text-gray-500 mb-1">Tanggal</label>
-							<input type="date" id="editInvDate" required class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black">
+							<input type="date" id="editInvDate" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white dark:[color-scheme:dark]">
 						</div>
 					</div>
 
@@ -562,65 +579,214 @@
 							<option value="Dus">Dus</option>
 							<option value="Lainnya">Lainnya</option>
 						</select>
-						<div>
-							<label class="block text-xs font-medium text-gray-500 mb-1">Keterangan (Opsional)</label>
-							<input type="text" id="invKeterangan" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white" placeholder="Contoh Plastik Opp 16 Karung @20kg">
-						</div>
+					</div>
+
+					<div>
+						<label class="block text-xs font-medium text-gray-500 mb-1">Keterangan (Opsional)</label>
+						<input type="text" id="editInvKeterangan" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white" placeholder="Contoh: Plastik Opp 16 Karung @20kg">
 					</div>
 
 					<div>
 						<label class="block text-xs font-medium text-gray-500 mb-1">Total Nominal (Rp)</label>
-						<input type="text" id="editInvTotal" onkeyup="formatRupiahInput(this)" required class="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black" placeholder="Contoh: 150.000">
+						<input type="text" id="editInvTotal" onkeyup="formatRupiahInput(this)" required class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black dark:focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-white" placeholder="Contoh: 150.000">
 					</div>
 				</div>
 
 				<div class="mt-6 flex justify-between items-center">
-					<!-- Tombol Hapus Invoice (Warna Merah) -->
-					<button type="button" onclick="deleteInvoice()" class="px-4 py-2 text-sm font-medium bg-red-100 text-red-500 hover:bg-red-600/50 dark:hover:bg-red-950/50 rounded-lg transition-all">
+					<button type="button" onclick="deleteInvoice()" class="px-4 py-2 text-sm font-medium bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950/70 rounded-lg transition-all">
 						Hapus Invoice
 					</button>
 					
 					<div class="flex gap-3">
-						<button type="button" onclick="toggleModal('editInvoiceModal')" class="px-4 py-2 text-sm font-medium text-black bg-gray-300/35 hover:bg-gray-300 dark:text-gray-300 dark:hover:bg-gray-800 rounded-lg">Batal</button>
-						<button type="submit" class="px-4 py-2 text-sm font-medium bg-black/80 text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-500 dark:hover:bg-gray-200">Simpan Koreksi</button>
+						<button type="button" onclick="toggleModal('editInvoiceModal')" class="px-4 py-2 text-sm font-medium text-black bg-gray-200 hover:bg-gray-300 dark:text-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg">Batal</button>
+						<button type="submit" class="px-4 py-2 text-sm font-medium bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200">Simpan Koreksi</button>
 					</div>
 				</div>
 			</form>
 		</div>
 	</div>
+
+	<!-- ============================================================== -->
+	<!-- 7. ELEMEN POP-UP MODERN BAWAH (TOAST NOTIFIKASI & KONFIRMASI) -->
+	<!-- ============================================================== -->
 	
+	<!-- Toast Notification Meluncur dari Bawah Layar -->
+	<div id="modernBottomToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md max-w-md w-[90%] sm:w-auto">
+		<div id="toastIconContainer" class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center">
+			<!-- Ikon diisi dinamis oleh JS -->
+		</div>
+		<div class="flex-1 pr-2">
+			<p id="toastTitle" class="text-xs font-bold uppercase tracking-wider text-gray-400"></p>
+			<p id="toastMessage" class="text-sm font-semibold text-gray-900 dark:text-white leading-snug"></p>
+		</div>
+		<button onclick="hideModernToast()" class="pointer-events-auto text-gray-400 hover:text-gray-600 dark:hover:text-white p-1">
+			<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+		</button>
+	</div>
+
+	<!-- Modern Bottom Sheet Confirmation Modal (Pengganti dialog 'confirm()' browser) -->
+	<div id="modernConfirmModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[110] hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
+		<div class="bg-white dark:bg-gray-900 dark:text-gray-100 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-gray-100 dark:border-gray-800 transform transition-transform duration-300 translate-y-full sm:translate-y-0" id="confirmBox">
+			<div class="flex items-center gap-3.5 mb-3">
+				<div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+					</svg>
+				</div>
+				<div>
+					<h4 class="font-bold text-base text-gray-900 dark:text-white" id="confirmModalTitle">Konfirmasi Tindakan</h4>
+					<p class="text-xs text-gray-500 dark:text-gray-400">Peringatan sistem keuangan SBR Putra</p>
+				</div>
+			</div>
+			
+			<p class="text-sm text-gray-600 dark:text-gray-300 mb-6 pl-1" id="confirmModalMessage">
+				Apakah Anda yakin ingin melakukan tindakan ini?
+			</p>
+
+			<div class="grid grid-cols-2 gap-3">
+				<button type="button" id="btnCancelConfirm" class="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-semibold transition-all">
+					Batal
+				</button>
+				<button type="button" id="btnOkConfirm" class="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md">
+					Ya, Lanjutkan
+				</button>
+			</div>
+		</div>
+	</div>
 
     <script>
-    // 1. Inisialisasi Supabase
+    // -------------------------------------------------------------
+    // 1. Inisialisasi Supabase Client
+    // -------------------------------------------------------------
     const { createClient } = supabase;
     const supabaseUrl = 'https://uocvuddqhviorebinpva.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvY3Z1ZGRxaHZpb3JlYmlucHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2OTQ0NDAsImV4cCI6MjEwMTI3MDQ0MH0.mWGTOTfHG4Q62S3P4LQi-5bGviMPWgMzo2p2AECquL8';
     
-	// Fungsi untuk mengubah mode gelap/terang
+    const db = createClient(supabaseUrl, supabaseKey, {
+        auth: { persistSession: false }
+    });
+
+    let invoices = [];
+	let pendingBulkData = null;
+
+    // State Split Payment (Maksimal 3 metode)
+    let splitPayments = [
+        { method: 'Transfer', amount: 0, note: '' }
+    ];
+
+	// -------------------------------------------------------------
+	// 2. SISTEM POP-UP MODERN BAWAH (Menggantikan alert() dan confirm())
+	// -------------------------------------------------------------
+	let toastTimeout = null;
+
+	function showToast(message, type = 'success') {
+		const toast = document.getElementById('modernBottomToast');
+		const iconContainer = document.getElementById('toastIconContainer');
+		const titleEl = document.getElementById('toastTitle');
+		const messageEl = document.getElementById('toastMessage');
+
+		if (!toast) return;
+
+		clearTimeout(toastTimeout);
+
+		// Styling berdasarkan jenis notifikasi
+		if (type === 'success') {
+			toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md max-w-md w-[90%] sm:w-auto bg-white/95 dark:bg-gray-900/95 border-emerald-500/40 text-gray-900 dark:text-white transition-all duration-300 transform translate-y-0 opacity-100 pointer-events-auto";
+			iconContainer.className = "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400";
+			iconContainer.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>';
+			titleEl.innerText = "Sukses";
+			titleEl.className = "text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400";
+		} else if (type === 'error') {
+			toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md max-w-md w-[90%] sm:w-auto bg-white/95 dark:bg-gray-900/95 border-rose-500/40 text-gray-900 dark:text-white transition-all duration-300 transform translate-y-0 opacity-100 pointer-events-auto";
+			iconContainer.className = "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400";
+			iconContainer.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>';
+			titleEl.innerText = "Terjadi Kesalahan";
+			titleEl.className = "text-[10px] font-extrabold uppercase tracking-wider text-rose-600 dark:text-rose-400";
+		} else if (type === 'warning') {
+			toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md max-w-md w-[90%] sm:w-auto bg-white/95 dark:bg-gray-900/95 border-amber-500/40 text-gray-900 dark:text-white transition-all duration-300 transform translate-y-0 opacity-100 pointer-events-auto";
+			iconContainer.className = "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400";
+			iconContainer.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+			titleEl.innerText = "Perhatian";
+			titleEl.className = "text-[10px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400";
+		}
+
+		messageEl.innerText = message;
+
+		// Otomatis tutup dalam 3.5 detik
+		toastTimeout = setTimeout(() => {
+			hideModernToast();
+		}, 3500);
+	}
+
+	function hideModernToast() {
+		const toast = document.getElementById('modernBottomToast');
+		if (!toast) return;
+		toast.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+		toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+	}
+
+	// Modern Konfirmasi Pengganti confirm() bawaan browser
+	function showModernConfirm(message, title = "Konfirmasi Tindakan") {
+		return new Promise((resolve) => {
+			const modal = document.getElementById('modernConfirmModal');
+			const box = document.getElementById('confirmBox');
+			const titleEl = document.getElementById('confirmModalTitle');
+			const msgEl = document.getElementById('confirmModalMessage');
+			const btnOk = document.getElementById('btnOkConfirm');
+			const btnCancel = document.getElementById('btnCancelConfirm');
+
+			titleEl.innerText = title;
+			msgEl.innerText = message;
+
+			modal.classList.remove('hidden');
+			modal.classList.add('flex');
+
+			setTimeout(() => {
+				box.classList.remove('translate-y-full');
+				box.classList.add('translate-y-0');
+			}, 10);
+
+			const cleanup = () => {
+				box.classList.remove('translate-y-0');
+				box.classList.add('translate-y-full');
+				setTimeout(() => {
+					modal.classList.add('hidden');
+					modal.classList.remove('flex');
+				}, 200);
+			};
+
+			btnOk.onclick = () => {
+				cleanup();
+				resolve(true);
+			};
+
+			btnCancel.onclick = () => {
+				cleanup();
+				resolve(false);
+			};
+		});
+	}
+
+	// -------------------------------------------------------------
+	// 3. Fitur Dark / Light Mode
+	// -------------------------------------------------------------
 	function toggleDarkMode() {
 		const html = document.documentElement;
 		const isDark = html.classList.toggle('dark');
-		
-		// Simpan pilihan terakhir ke localStorage
 		localStorage.setItem('theme', isDark ? 'dark' : 'light');
 		updateThemeIcon(isDark);
 	}
 
-	// Fungsi untuk mengganti ikon tombol (Matahari / Bulan)
 	function updateThemeIcon(isDark) {
 		const icon = document.getElementById('themeIcon');
 		if (!icon) return;
-		
 		if (isDark) {
-			// Ikon Matahari (untuk kembali ke mode terang)
 			icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />';
 		} else {
-			// Ikon Bulan (untuk beralih ke mode gelap)
 			icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />';
 		}
 	}
 
-	// Inisialisasi otomatis saat halaman pertama kali dimuat berdasarkan localStorage
 	(function() {
 		const savedTheme = localStorage.getItem('theme');
 		if (savedTheme === 'dark') {
@@ -632,21 +798,13 @@
 		}
 	})();
 
-    // PERBAIKAN 1: Opsi auth dimasukkan ke dalam parameter createClient
-    const db = createClient(supabaseUrl, supabaseKey, {
-        auth: {
-            persistSession: false 
-        }
-    });
-
-    // State lokal untuk menampung data
-    let invoices = [];
-
-    // 2. Fungsi Mengambil Data (Bypass Supabase 1000 Limit)
+    // -------------------------------------------------------------
+    // 4. Tarik Data Invoices
+    // -------------------------------------------------------------
     async function fetchInvoices() {
         let allData = [];
         let from = 0;
-        const step = 1000; // Tarik per 1000 baris
+        const step = 1000;
 
         while(true) {
             const { data, error } = await db
@@ -661,14 +819,10 @@
             }
 
             allData = allData.concat(data);
-            
-            // Jika data yang ditarik kurang dari 1000, berarti sudah habis
             if (data.length < step) break;
-            
             from += step;
         }
 		
-		// TAMBAHKAN BLOK KODE INI UNTUK MENGURUTKAN DARI YANG TERLAMA
 		allData.sort((a, b) => {
 			const parseDate = (dateStr) => {
 				if (!dateStr) return 0;
@@ -685,154 +839,194 @@
         invoices = allData;
         renderUI(); 
     }
-	
-	function openHistoryPreview(id) {
-		const inv = invoices.find(i => i.id == id);
-		if (!inv) return;
 
-		const lastPayment = inv.history.length > 0 ? inv.history[inv.history.length - 1] : {};
+	// -------------------------------------------------------------
+	// 5. Antarmuka Split Payment (Dinamis 1 - 3 Metode)
+	// -------------------------------------------------------------
+    function renderSplitRows() {
+        const container = document.getElementById('splitPaymentContainer');
+        const btnAdd = document.getElementById('btnAddSplit');
+        if (!container) return;
 
-		// 1. Masukkan data ke elemen pratinjau invoice
-		document.getElementById('previewDate').innerText = lastPayment.date || inv.date;
-		document.getElementById('previewSupplier').innerText = inv.supplier;
-		document.getElementById('previewMethod').innerText = lastPayment.via || 'Tunai/Transfer';
-		document.getElementById('previewTotalAmount').innerText = formatRp(inv.total);
+        container.innerHTML = '';
 
-		const tbody = document.getElementById('previewInvoiceTable');
-		tbody.innerHTML = `
-			<tr>
-				<td class="py-2">
-					<p class="font-medium text-gray-900">${inv.number}</p>
-					<p class="text-xs text-gray-500">${inv.date}</p>
-				</td>
-				<td class="py-2 text-right font-medium text-gray-900">${formatRp(inv.total)}</td>
-			</tr>
-		`;
+        splitPayments.forEach((split, index) => {
+            const row = document.createElement('div');
+            row.className = "flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800/80 rounded-lg border border-gray-200 dark:border-gray-700";
 
-		// 2. Sembunyikan tombol "Proses Pembayaran" karena nota ini sudah lunas, 
-		// dan ubah fungsi tombol "Kembali" agar mengarah kembali ke Modal Manajemen Data
-		const submitBtn = document.querySelector('#invoicePreviewModal button.bg-black');
-		if (submitBtn) submitBtn.style.display = 'none';
+            row.innerHTML = `
+                <select onchange="updateSplitMethod(${index}, this.value)" class="w-24 text-xs font-semibold border border-gray-300 dark:border-gray-600 rounded-md px-2 py-2 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-emerald-500">
+                    <option value="Transfer" ${split.method === 'Transfer' ? 'selected' : ''}>Transfer</option>
+                    <option value="Cash" ${split.method === 'Cash' ? 'selected' : ''}>Cash</option>
+                </select>
 
-		// 3. Tutup Modal Manajemen Data, lalu buka Modal Pratinjau Invoice
-		toggleModal('dataModal');
-		toggleModal('invoicePreviewModal');
-	}
-	
+                <input type="text" value="${split.amount ? split.amount.toLocaleString('id-ID') : ''}" 
+                    placeholder="Nominal (Rp)" 
+                    onkeyup="handleSplitAmountInput(${index}, this)" 
+                    class="w-32 flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-2 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-emerald-500 font-mono-num font-semibold">
 
-    // 3. Fungsi Simpan Invoice (Create)
-	async function saveInvoice(e) {
-		e.preventDefault();
-		
-		const btnSubmit = document.querySelector('#formInvoice button[type="submit"]');
-		btnSubmit.innerText = "Menyimpan...";
-		btnSubmit.disabled = true;
+                <input type="text" value="${split.note || ''}" 
+                    placeholder="Ket (Opsional: BCA, Laci)" 
+                    oninput="updateSplitNote(${index}, this.value)" 
+                    class="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-2 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-emerald-500">
 
-		// Ambil nilai tanggal dari input date picker lalu format ke dd/mmm/yy
-		const rawDate = document.getElementById('invDate').value;
-		const formattedDate = formatDateID(rawDate);
+                ${splitPayments.length > 1 ? `
+                    <button type="button" onclick="removeSplitRow(${index})" class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-gray-700 rounded-md transition-all" title="Hapus baris metode ini">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                ` : ''}
+            `;
 
-		const newInvoice = {
-			number: document.getElementById('invNumber').value,
-			date: formattedDate, // Format tersimpan dd/mmm/yy
-			supplier: document.getElementById('invSupplier').value,
-			category: document.getElementById('invCategory').value,
-			total: parseRupiah(document.getElementById('invTotal').value), // Angka murni
-			paid: 0,
-			history: [], 
-			keterangan: document.getElementById('invKeterangan').value,
-		};
-		
-		const { error } = await db
-			.from('invoices')
-			.insert([newInvoice]);
+            container.appendChild(row);
+        });
 
-		if (error) {
-			alert('Gagal menyimpan invoice!');
-			console.error(error);
-		} else {
-			toggleModal('invoiceModal');
-			document.getElementById('formInvoice').reset();
-			fetchInvoices(); 
-		}
-		
-		btnSubmit.innerText = "Simpan Invoice";
-		btnSubmit.disabled = false;
-	}
-	
-	
-	// Fungsi untuk memunculkan daftar invoice berdasarkan KATEGORI
-	function loadCategoryInvoices(categoryName) {
-    const container = document.getElementById('bulkInvoiceListContainer');
-    const listElement = document.getElementById('bulkInvoiceList');
-    
-    // PERBAIKAN: Definisikan amountInput di sini, dan hapus baris parseRupiah yang error
-    const amountInput = document.getElementById('bulkPayAmount');
+        if (btnAdd) {
+            btnAdd.style.display = splitPayments.length >= 3 ? 'none' : 'flex';
+        }
 
-    // Reset area
-    listElement.innerHTML = ''; 
-    amountInput.value = ''; 
-    
-    if (!categoryName) {
-        container.classList.add('hidden');
-        return;
+        calculateSplitTotal();
     }
 
-    // Filter invoice yang belum lunas sesuai kategori
-    const unpaidInvoices = invoices.filter(inv => inv.category === categoryName && (inv.total - inv.paid) > 0);
+    function addSplitRow() {
+        if (splitPayments.length < 3) {
+            splitPayments.push({ method: 'Cash', amount: 0, note: '' });
+            renderSplitRows();
+        }
+    }
 
+    function removeSplitRow(index) {
+        if (splitPayments.length > 1) {
+            splitPayments.splice(index, 1);
+            renderSplitRows();
+        }
+    }
+
+    function updateSplitMethod(index, value) {
+        splitPayments[index].method = value;
+    }
+
+    function updateSplitNote(index, value) {
+        splitPayments[index].note = value;
+    }
+
+    function handleSplitAmountInput(index, input) {
+        formatRupiahInput(input);
+        splitPayments[index].amount = parseRupiah(input.value);
+        calculateSplitTotal();
+    }
+
+    function calculateSplitTotal() {
+        const total = splitPayments.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        const summaryDisplay = document.getElementById('splitTotalSummary');
+        if (summaryDisplay) {
+            summaryDisplay.innerText = formatRp(total);
+        }
+        return total;
+    }
+
+	// -------------------------------------------------------------
+	// 6. Bulk Payment Logic
+	// -------------------------------------------------------------
+	function loadCategoryInvoices(categoryName) {
+		const container = document.getElementById('bulkInvoiceListContainer');
+		const listElement = document.getElementById('bulkInvoiceList');
+		
+		listElement.innerHTML = ''; 
+		splitPayments = [{ method: 'Transfer', amount: 0, note: '' }];
+		renderSplitRows();
+
+		if (!categoryName) {
+			container.classList.add('hidden');
+			return;
+		}
+
+		const unpaidInvoices = invoices.filter(inv => inv.category === categoryName && (inv.total - inv.paid) > 0);
 
 		if (unpaidInvoices.length === 0) {
 			listElement.innerHTML = `<p class="text-sm text-gray-500 italic">Semua invoice untuk kategori ${categoryName} sudah lunas.</p>`;
 		} else {
-			// Buat checkbox untuk setiap invoice
 			unpaidInvoices.forEach(inv => {
 				const sisa = inv.total - inv.paid;
 				const div = document.createElement('div');
 				div.innerHTML = `
-				<label class="flex items-center justify-between cursor-pointer p-2 hover:bg-white dark:hover:bg-gray-700 rounded border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-all">
+				<label class="flex items-center justify-between cursor-pointer p-2.5 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-all">
 					<div class="flex items-center gap-3 w-full">
-						<input type="checkbox" value="${inv.id}" data-sisa="${sisa}" onchange="calculateBulkTotal()" class="bulk-inv-checkbox w-4 h-4 text-black border-gray-300 rounded focus:ring-black">
+						<input type="checkbox" value="${inv.id}" data-sisa="${sisa}" onchange="calculateBulkTotal()" class="bulk-inv-checkbox w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
 						<div class="flex justify-between w-full items-center">
 							<div>
 								<p class="text-sm font-bold text-gray-900 dark:text-white">${inv.number} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">(${inv.supplier})</span></p>
 								<p class="text-[11px] text-gray-500 dark:text-gray-400">${inv.date}</p>
 							</div>
-							<p class="text-sm font-medium text-red-600 dark:text-red-400">${formatRp(sisa)}</p>
+							<p class="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono-num">${formatRp(sisa)}</p>
 						</div>
 					</div>
 				</label>
-			`;
+				`;
 				listElement.appendChild(div);
 			});
 		}
 		
 		container.classList.remove('hidden');
 	}
-	
-	// Global variabel sementara untuk menyimpan data pembayaran sebelum diproses ke database
-	let pendingBulkData = null;
 
-	// 1. Fungsi saat tombol "Cetak Invoice" ditekan (Validasi & Buka Preview)
+	function calculateBulkTotal() {
+		const checkboxes = document.querySelectorAll('.bulk-inv-checkbox:checked');
+		let total = 0;
+		checkboxes.forEach(cb => total += parseFloat(cb.getAttribute('data-sisa')));
+		
+		const widgetContainer = document.getElementById('bulkWidgetContainer');
+		const widgetTotal = document.getElementById('widgetTotalTerpilih');
+		
+		widgetTotal.innerText = formatRp(total);
+
+		if (total > 0) {
+			widgetContainer.classList.remove('hidden');
+			widgetContainer.classList.add('flex');
+			
+			if (splitPayments.length === 1 && (splitPayments[0].amount === 0 || splitPayments[0].amount === total)) {
+				splitPayments[0].amount = total;
+				renderSplitRows();
+			}
+		} else {
+			widgetContainer.classList.add('hidden');
+			widgetContainer.classList.remove('flex');
+		}
+	}
+
+	// -------------------------------------------------------------
+	// 7. PRATINJAU INVOICE DENGAN TAMPILAN MODERN TERBARU
+	// -------------------------------------------------------------
 	function previewInvoice(e) {
 		if (e) e.preventDefault();
 
 		const checkedBoxes = document.querySelectorAll('.bulk-inv-checkbox:checked');
-		let totalPaymentAmount = parseRupiah(document.getElementById('bulkPayAmount').value);
-		const payMethod = document.getElementById('bulkPayMethod').value;
+		const totalPaymentAmount = calculateSplitTotal();
 
 		if (checkedBoxes.length === 0) {
-			alert("Pilih minimal satu invoice untuk dibayar.");
+			showToast("Pilih minimal satu invoice untuk dibayar.", "warning");
 			return;
 		}
-		if (isNaN(totalPaymentAmount) || totalPaymentAmount <= 0) {
-			alert("Masukkan nominal pembayaran yang valid.");
+		if (totalPaymentAmount <= 0) {
+			showToast("Masukkan nominal pembayaran split yang valid.", "warning");
 			return;
 		}
-		if (payMethod.trim() === '') {
-			alert("Catatan/Via tidak boleh kosong.");
+
+		// Ambil rincian split yang terisi
+		const activeSplits = splitPayments.filter(item => item.amount > 0);
+
+		if (activeSplits.length === 0) {
+			showToast("Isi nominal pada minimal satu metode pembayaran.", "warning");
 			return;
 		}
+
+		// Rangkai teks riwayat database
+		const methodDescriptions = activeSplits.map(item => {
+			const noteText = item.note.trim() ? ` ${item.note.trim()}` : '';
+			return `${item.method}${noteText} (${formatRp(item.amount)})`;
+		});
+		const combinedMethod = methodDescriptions.join(' + ');
 
 		let remaining = totalPaymentAmount;
 		let allocatedList = [];
@@ -857,52 +1051,68 @@
 			}
 		}
 
-		// Ambil nama supplier unik (jika memilih lebih dari 1, digabung dengan koma)
 		const uniqueSuppliers = [...new Set(allocatedList.map(item => item.supplier))].join(', ');
 
-		// Simpan data sementara
 		pendingBulkData = {
 			supplier: uniqueSuppliers,
-			method: payMethod,
+			method: combinedMethod,
 			totalAmount: totalPaymentAmount,
+			splits: activeSplits,
 			items: allocatedList
 		};
 
-		// Render ke dalam Tampilan Kertas Preview
-		document.getElementById('previewDate').innerText = new Date().toLocaleDateString('id-ID');
+		// 1. Data Header Invoice Kertas
+		const todayDateStr = new Date().toLocaleDateString('id-ID');
+		document.getElementById('previewDate').innerText = todayDateStr;
 		document.getElementById('previewSupplier').innerText = uniqueSuppliers;
-		document.getElementById('previewMethod').innerText = payMethod;
+		document.getElementById('previewTrxId').innerText = `#SBR-${Date.now().toString().slice(-6)}`;
 		document.getElementById('previewTotalAmount').innerText = formatRp(totalPaymentAmount);
 
+		// 2. Render Rincian Baris Invoice
 		const tbody = document.getElementById('previewInvoiceTable');
 		tbody.innerHTML = '';
 		pendingBulkData.items.forEach(item => {
 			tbody.innerHTML += `
-				<tr>
-					<td class="py-2">
-						<p class="font-medium text-gray-900">${item.number}</p>
-						<p class="text-xs text-gray-500">${item.date}</p>
+				<tr class="hover:bg-slate-50/50">
+					<td class="py-2.5 px-4">
+						<p class="font-bold text-slate-800 font-mono-num">${item.number}</p>
+						<p class="text-[11px] text-slate-400">Tgl Nota: ${item.date}</p>
 					</td>
-					<td class="py-2 text-right font-medium text-gray-900">${formatRp(item.amount)}</td>
+					<td class="py-2.5 px-4 text-right font-extrabold text-slate-900 font-mono-num">${formatRp(item.amount)}</td>
 				</tr>
 			`;
 		});
 
-		// Tutup modal bulk payment, buka modal preview
+		// 3. Render Desain Modern Split Pills (Bebas dari kesan jadul)
+		const pillsContainer = document.getElementById('previewSplitPillsContainer');
+		pillsContainer.innerHTML = '';
+
+		pendingBulkData.splits.forEach(s => {
+			const pill = document.createElement('div');
+			pill.className = "flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 px-3 py-1.5 rounded-xl text-xs";
+			
+			const badgeColor = s.method === 'Transfer' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+			
+			pill.innerHTML = `
+				<span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${s.method}</span>
+				<span class="font-bold text-white font-mono-num">${formatRp(s.amount)}</span>
+				${s.note.trim() ? `<span class="text-slate-400 text-[11px] italic">(${s.note.trim()})</span>` : ''}
+			`;
+			pillsContainer.appendChild(pill);
+		});
+
+		const submitBtn = document.querySelector('#invoicePreviewModal button.bg-emerald-600');
+		if (submitBtn) submitBtn.style.display = 'block';
+
 		toggleModal('bulkPaymentModal');
 		toggleModal('invoicePreviewModal');
 	}
 
-	// 2. Tombol Kembali dari Preview ke Form Bulk Payment
 	function backToBulkModal() {
 		toggleModal('invoicePreviewModal');
-		
-		// Munculkan kembali tombol proses pembayaran jika tadi disembunyikan dari riwayat
-		const submitBtn = document.querySelector('#invoicePreviewModal button.bg-black');
+		const submitBtn = document.querySelector('#invoicePreviewModal button.bg-emerald-600');
 		if (submitBtn) submitBtn.style.display = 'block';
 
-		// Cek apakah kita berasal dari menu riwayat atau bayar multi
-		// Jika data pending kosong, berarti dari riwayat -> buka kembali dataModal
 		if (!pendingBulkData) {
 			toggleModal('dataModal');
 		} else {
@@ -910,166 +1120,30 @@
 		}
 	}
 
-	// 3. Fungsi Simpan ke PNG (Langsung Unduh File Gambar Bersih)
 	function downloadInvoicePNG() {
 		const invoiceElement = document.getElementById('printableInvoice');
-		
-		html2canvas(invoiceElement, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+		html2canvas(invoiceElement, { scale: 2.5, backgroundColor: '#ffffff' }).then(canvas => {
 			const link = document.createElement('a');
-			link.download = `Invoice_SBR_${new Date().toISOString().slice(0,10)}.png`;
+			link.download = `Bukti_Bayar_SBR_${new Date().toISOString().slice(0,10)}.png`;
 			link.href = canvas.toDataURL('image/png');
 			link.click();
+			showToast("Bukti pembayaran berhasil diunduh!", "success");
 		});
 	}
 
-	// 4. Eksekusi Pembayaran ke Database Supabase (Ditekan dari Modal Preview)
-	async function processBulkPayment() {
-		if (!pendingBulkData) return;
-
-		try {
-			const updatePromises = [];
-			const today = new Date().toLocaleDateString('id-ID');
-
-			for (const item of pendingBulkData.items) {
-				const inv = invoices.find(i => i.id == item.id);
-				if (inv) {
-					const newPaid = inv.paid + item.amount;
-					const newHistory = [...inv.history, {
-						date: today,
-						amount: item.amount,
-						via: pendingBulkData.method
-					}];
-
-					const updatePromise = db
-						.from('invoices')
-						.update({
-							paid: newPaid,
-							history: newHistory
-						})
-						.eq('id', item.id);
-
-					updatePromises.push(updatePromise);
-				}
-			}
-
-			const results = await Promise.all(updatePromises);
-			const hasError = results.some(res => res.error !== null);
-			
-			if (hasError) {
-				alert("Beberapa invoice gagal diperbarui.");
-			} else {
-				// Tutup modal preview, reset form asal
-				toggleModal('invoicePreviewModal');
-				document.getElementById('formBulkPayment').reset();
-				document.getElementById('bulkInvoiceListContainer').classList.add('hidden');
-				const widgetContainer = document.getElementById('bulkWidgetContainer');
-				widgetContainer.classList.add('hidden');
-				widgetContainer.classList.remove('flex');
-				
-				alert("Pembayaran berhasil diproses dan disimpan!");
-			}
-
-			fetchInvoices();
-		} catch (error) {
-			console.error("Terjadi kesalahan sistem:", error);
-			alert("Gagal memproses pembayaran.");
-		} finally {
-			pendingBulkData = null;
-		}
-	}
-	
-
-    // 4. Fungsi Pembayaran (Update)
-	async function processPayment(e) {
-		e.preventDefault();
-		const btnSubmit = document.querySelector('#formPayment button[type="submit"]');
-		btnSubmit.innerText = "Memproses...";
-		btnSubmit.disabled = true;
-
-		const id = document.getElementById('payInvId').value;
-		
-		// PERBAIKAN: Tambahkan "const amount =" untuk menangkap nilai input
-		const amount = parseRupiah(document.getElementById('payAmount').value);
-		
-		// PERBAIKAN: Gunakan == agar ID terbaca dengan benar
-		const inv = invoices.find(i => i.id == id);
-		
-		if(inv) {
-			const newPaid = inv.paid + amount;
-			const newHistory = [...inv.history, {
-				date: new Date().toLocaleDateString('id-ID'),
-				amount: amount
-			}];
-
-			const { error } = await db
-				.from('invoices')
-				.update({ 
-					paid: newPaid,
-					history: newHistory
-				})
-				.eq('id', id);
-
-			if (error) {
-				alert('Gagal memproses pembayaran!');
-				console.error(error);
-			} else {
-				toggleModal('paymentModal');
-				fetchInvoices(); 
-			}
-		}
-		btnSubmit.innerText = "Bayar";
-		btnSubmit.disabled = false;
-	}
-    
-    // Fungsi untuk memunculkan dan menghitung widget secara realtime
-	function calculateBulkTotal() {
-		const checkboxes = document.querySelectorAll('.bulk-inv-checkbox:checked');
-		let total = 0;
-		
-		checkboxes.forEach(cb => {
-			total += parseFloat(cb.getAttribute('data-sisa'));
-		});
-		
-		const widgetContainer = document.getElementById('bulkWidgetContainer');
-		const widgetTotal = document.getElementById('widgetTotalTerpilih');
-		
-		// PERBAIKAN: Definisikan amountInput di sini
-		const amountInput = document.getElementById('bulkPayAmount');		
-		
-		// Tampilkan format Rupiah di Widget
-		widgetTotal.innerText = formatRp(total);
-
-		if (total > 0) {
-			widgetContainer.classList.remove('hidden');
-			widgetContainer.classList.add('flex');
-			
-			// Otomatis isi kolom Nominal Dibayar dan langsung format ke ribuan
-			amountInput.value = total;
-			formatRupiahInput(amountInput); 
-		} else {
-			widgetContainer.classList.add('hidden');
-			widgetContainer.classList.remove('flex');
-			amountInput.value = '';
-		}
-	}
-
-	// Fungsi untuk mengeksekusi pembayaran ke database
 	async function processBulkPayment(e) {
-		if (e && typeof e.preventDefault === 'function') {
-			e.preventDefault();
-		}
+		if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
-		// Cari tombol secara aman jika event tidak terbawa
-		const btnSubmit = (e && e.target) ? e.target : document.querySelector('#invoicePreviewModal button.bg-black');
+		const btnSubmit = (e && e.target) ? e.target : document.querySelector('#invoicePreviewModal button.bg-emerald-600');
 		const originalText = btnSubmit ? btnSubmit.innerText : "Proses Pembayaran";
 
 		if (!pendingBulkData) {
-			alert("Data pembayaran tidak ditemukan. Silakan ulangi proses.");
+			showToast("Data pembayaran tidak ditemukan. Silakan ulangi proses.", "error");
 			return;
 		}
 
 		if (btnSubmit) {
-			btnSubmit.innerText = "Memproses...";
+			btnSubmit.innerText = "Menyimpan...";
 			btnSubmit.disabled = true;
 		}
 
@@ -1081,7 +1155,7 @@
 				const inv = invoices.find(i => i.id == item.id);
 				if (inv) {
 					const newPaid = inv.paid + item.amount;
-					const newHistory = [...inv.history, {
+					const newHistory = [...(inv.history || []), {
 						date: today,
 						amount: item.amount,
 						via: pendingBulkData.method
@@ -1103,14 +1177,11 @@
 			const hasError = results.some(res => res.error !== null);
 			
 			if (hasError) {
-				console.error("Error pada batch update:", results);
-				alert("Beberapa invoice gagal diperbarui.");
+				showToast("Beberapa invoice gagal diperbarui.", "error");
 			} else {
-				// Tutup modal preview, reset form asal
 				toggleModal('invoicePreviewModal');
 				document.getElementById('formBulkPayment').reset();
 				
-				// Sembunyikan elemen sisa
 				const listContainer = document.getElementById('bulkInvoiceListContainer');
 				if (listContainer) listContainer.classList.add('hidden');
 				
@@ -1120,13 +1191,14 @@
 					widgetContainer.classList.remove('flex');
 				}
 				
-				alert("Pembayaran berhasil diproses dan disimpan!");
+				// Munculkan toast modern di bawah layar
+				showToast("Pembayaran berhasil diproses dan disimpan!", "success");
 			}
 
 			fetchInvoices();
 		} catch (error) {
 			console.error("Terjadi kesalahan sistem:", error);
-			alert("Gagal memproses pembayaran. Periksa koneksi Anda.");
+			showToast("Gagal memproses pembayaran. Periksa koneksi internet.", "error");
 		} finally {
 			if (btnSubmit) {
 				btnSubmit.innerText = originalText;
@@ -1136,44 +1208,208 @@
 		}
 	}
 
-    // Utilities
-    const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-    
-    const toggleModal = (id) => {
-        const modal = document.getElementById(id);
-        modal.classList.toggle('hidden');
-        modal.classList.toggle('flex');
-    };
-
-    // Fungsi Pembantu untuk Membuka Modal Pembayaran Single
+    // -------------------------------------------------------------
+    // 8. Pembayaran Satuan
+    // -------------------------------------------------------------
 	function openPayment(id) {
-		// PERBAIKAN: Gunakan == agar angka dan teks tetap cocok
 		const inv = invoices.find(i => i.id == id); 
-		
-		if (!inv) return; // Mencegah error jika data tidak ditemukan
+		if (!inv) return;
 		
 		const sisa = inv.total - inv.paid;
-		
 		document.getElementById('payInvId').value = inv.id;
 		document.getElementById('payRemaining').innerText = formatRp(sisa);
-		
-		// PERBAIKAN: Kosongkan form input setiap kali pop-up dibuka
 		document.getElementById('payAmount').value = ''; 
+		document.getElementById('singlePayNote').value = '';
 		
 		toggleModal('paymentModal');
 	}
-	
-	
-	// Data bawaan (default) sesuai permintaan Anda
-	const defaultVendors = {
-		"Kop Bumi": "Bahan Baku",
-		"Surya Abadi": "Plastik",
-		"Opp / Lainnya": "Plastik",
-		"Kimu": "Dus"
-	};
 
-	
-	// Mapping otomatis Supplier ke Kategori sesuai permintaan Anda
+	async function processPayment(e) {
+		e.preventDefault();
+		const btnSubmit = document.querySelector('#formPayment button[type="submit"]');
+		btnSubmit.innerText = "Memproses...";
+		btnSubmit.disabled = true;
+
+		const id = document.getElementById('payInvId').value;
+		const amount = parseRupiah(document.getElementById('payAmount').value);
+		const method = document.getElementById('singlePayMethod').value;
+		const note = document.getElementById('singlePayNote').value.trim();
+		const viaText = note ? `${method} (${note})` : method;
+
+		const inv = invoices.find(i => i.id == id);
+		
+		if(inv) {
+			const newPaid = inv.paid + amount;
+			const newHistory = [...(inv.history || []), {
+				date: new Date().toLocaleDateString('id-ID'),
+				amount: amount,
+				via: viaText
+			}];
+
+			const { error } = await db
+				.from('invoices')
+				.update({ 
+					paid: newPaid,
+					history: newHistory
+				})
+				.eq('id', id);
+
+			if (error) {
+				showToast('Gagal memproses pembayaran!', 'error');
+				console.error(error);
+			} else {
+				toggleModal('paymentModal');
+				showToast('Pembayaran invoice berhasil dicatat!', 'success');
+				fetchInvoices(); 
+			}
+		}
+		btnSubmit.innerText = "Bayar";
+		btnSubmit.disabled = false;
+	}
+
+    // -------------------------------------------------------------
+    // 9. Tambah, Edit & Hapus Invoice
+    // -------------------------------------------------------------
+	async function saveInvoice(e) {
+		e.preventDefault();
+		const btnSubmit = document.querySelector('#formInvoice button[type="submit"]');
+		btnSubmit.innerText = "Menyimpan...";
+		btnSubmit.disabled = true;
+
+		const rawDate = document.getElementById('invDate').value;
+		const formattedDate = formatDateID(rawDate);
+
+		const newInvoice = {
+			number: document.getElementById('invNumber').value,
+			date: formattedDate,
+			supplier: document.getElementById('invSupplier').value,
+			category: document.getElementById('invCategory').value,
+			total: parseRupiah(document.getElementById('invTotal').value),
+			paid: 0,
+			history: [], 
+			keterangan: document.getElementById('invKeterangan').value,
+		};
+		
+		const { error } = await db.from('invoices').insert([newInvoice]);
+
+		if (error) {
+			showToast('Gagal menyimpan invoice baru!', 'error');
+			console.error(error);
+		} else {
+			toggleModal('invoiceModal');
+			document.getElementById('formInvoice').reset();
+			showToast('Invoice baru berhasil disimpan!', 'success');
+			fetchInvoices(); 
+		}
+		
+		btnSubmit.innerText = "Simpan Invoice";
+		btnSubmit.disabled = false;
+	}
+
+	function openInvoiceModal() {
+		toggleModal('invoiceModal');
+		const today = new Date().toISOString().split('T')[0];
+		const dateInput = document.getElementById('invDate');
+		if (dateInput) dateInput.value = today;
+	}
+
+	function openEditInvoice(id) {
+		const inv = invoices.find(i => i.id == id);
+		if (!inv) return;
+
+		document.getElementById('editInvId').value = inv.id;
+		document.getElementById('editInvNumber').value = inv.number || '';
+		document.getElementById('editInvDate').value = parseDateForInput(inv.date);
+		document.getElementById('editInvSupplier').value = inv.supplier || '';
+		document.getElementById('editInvCategory').value = inv.category || 'Lainnya';
+		document.getElementById('editInvKeterangan').value = inv.keterangan || '';
+		document.getElementById('editInvTotal').value = inv.total ? inv.total.toLocaleString('id-ID') : '';
+
+		toggleModal('editInvoiceModal');
+	}
+
+	async function saveEditedInvoice(e) {
+		e.preventDefault();
+		const btnSubmit = document.querySelector('#formEditInvoice button[type="submit"]');
+		btnSubmit.innerText = "Menyimpan...";
+		btnSubmit.disabled = true;
+
+		const id = document.getElementById('editInvId').value;
+		const rawDate = document.getElementById('editInvDate').value;
+		const formattedDate = formatDateID(rawDate);
+
+		const updatedData = {
+			number: document.getElementById('editInvNumber').value,
+			date: formattedDate,
+			supplier: document.getElementById('editInvSupplier').value,
+			category: document.getElementById('editInvCategory').value,
+			total: parseRupiah(document.getElementById('editInvTotal').value),
+			keterangan: document.getElementById('editInvKeterangan').value,
+		};
+
+		const { error } = await db.from('invoices').update(updatedData).eq('id', id);
+
+		if (error) {
+			showToast('Gagal mengoreksi invoice!', 'error');
+			console.error(error);
+		} else {
+			toggleModal('editInvoiceModal');
+			showToast('Perubahan invoice berhasil disimpan!', 'success');
+			fetchInvoices();
+		}
+
+		btnSubmit.innerText = "Simpan Koreksi";
+		btnSubmit.disabled = false;
+	}
+
+	// Menghapus Invoice dengan Modern Confirm Bottom Sheet
+	async function deleteInvoice() {
+		const id = document.getElementById('editInvId').value;
+		if (!id) return;
+
+		// Panggil modern bottom sheet confirm (bukan confirm() browser lagi!)
+		const yakin = await showModernConfirm(
+			"Apakah Anda yakin ingin menghapus invoice / surat jalan ini secara permanen? Data yang dihapus tidak dapat dipulihkan.",
+			"Hapus Data Invoice"
+		);
+
+		if (!yakin) return;
+
+		const { error } = await db.from('invoices').delete().eq('id', id);
+
+		if (error) {
+			showToast('Gagal menghapus invoice!', 'error');
+			console.error(error);
+		} else {
+			toggleModal('editInvoiceModal');
+			showToast('Invoice berhasil dihapus dari sistem!', 'success');
+			fetchInvoices();
+		}
+	}
+
+	function toggleSuratJalan() {
+		const isSJ = document.getElementById('isSuratJalan').checked;
+		const invTotal = document.getElementById('invTotal');
+		const labelNo = document.getElementById('labelNomor'); 
+
+		if (isSJ) {
+			if (labelNo) labelNo.innerText = "Nomor Surat Jalan";
+			invTotal.value = "0";
+			invTotal.readOnly = true;
+			invTotal.classList.add('bg-gray-100', 'dark:bg-gray-800');
+			invTotal.removeAttribute('required');
+		} else {
+			if (labelNo) labelNo.innerText = "Nomor Invoice";
+			invTotal.value = "";
+			invTotal.readOnly = false;
+			invTotal.classList.remove('bg-gray-100', 'dark:bg-gray-800');
+			invTotal.setAttribute('required', 'true');
+		}
+	}
+
+	// -------------------------------------------------------------
+	// 10. Helper & Pemetaan Supplier
+	// -------------------------------------------------------------
 	const vendorCategories = {
 		"Kop Bumi": "Bahan Baku",
 		"Surya Abadi": "Plastik",
@@ -1181,20 +1417,18 @@
 		"Kimu": "Dus"
 	};
 
-	// Fungsi otomatis mengubah Kategori saat Supplier dipilih
 	function autoSelectCategory() {
 		const selectedSupplier = document.getElementById('invSupplier').value;
 		const categorySelect = document.getElementById('invCategory');
-		
-		if (vendorCategories[selectedSupplier]) {
-			categorySelect.value = vendorCategories[selectedSupplier];
-		} else {
-			categorySelect.value = "Lainnya"; // Sisa nya otomatis ke Lainnya
-		}
+		categorySelect.value = vendorCategories[selectedSupplier] || "Lainnya";
 	}
-	
-	
-	// Menghitung selisih hari dari format dd/Mmm/yy ke tanggal sekarang
+
+	function autoSelectEditCategory() {
+		const selectedSupplier = document.getElementById('editInvSupplier').value;
+		const categorySelect = document.getElementById('editInvCategory');
+		categorySelect.value = vendorCategories[selectedSupplier] || "Lainnya";
+	}
+
 	function calculateDaysElapsed(dateStr) {
 		if (!dateStr) return 0;
 		const parts = dateStr.split('/');
@@ -1209,8 +1443,6 @@
 
 			const invDate = new Date(year, month, day);
 			const today = new Date();
-			
-			// Samakan jam ke 00:00 agar murni menghitung selisih hari kalender
 			today.setHours(0, 0, 0, 0);
 			invDate.setHours(0, 0, 0, 0);
 
@@ -1219,285 +1451,222 @@
 		}
 		return 0;
 	}
-	
-	
-	// 1. Fungsi mengambil batas hari yang tersimpan di memori browser (default: 10 hari)
+
 	function getReminderDays() {
 		const savedDays = localStorage.getItem('sbr_reminder_days');
 		const parsed = parseInt(savedDays, 10);
 		return (!isNaN(parsed) && parsed > 0) ? parsed : 10;
 	}
 
-	// 2. Fungsi yang dipanggil saat Anda mengetik angka baru di kotak input
 	function handleReminderDaysChange() {
 		const input = document.getElementById('reminderDaysInput');
 		let days = parseInt(input.value, 10);
-		
-		// Jika input kosong atau tidak valid, jangan crash, gunakan default minimum 1
-		if (isNaN(days) || days < 1) {
-			days = 1;
-		}
-		
-		// Simpan ke memori browser agar tidak hilang saat reload
+		if (isNaN(days) || days < 1) days = 1;
 		localStorage.setItem('sbr_reminder_days', days);
-		
-		// Render ulang tabel secara otomatis dengan batas hari baru
 		renderUI();
 	}
-	
-	// Fungsi filter cepat saat badge kuning di samping judul diklik
+
 	function toggleOverdueFilter() {
 		const statusSelect = document.getElementById('filterStatus');
 		if (!statusSelect) return;
-
-		// Jika sedang dalam mode 'overdue', kembalikan ke 'Semua Status'
-		if (statusSelect.value === 'overdue') {
-			statusSelect.value = '';
-		} else {
-			// Jika belum, aktifkan filter 'overdue'
-			statusSelect.value = 'overdue';
-		}
-		
-		// Perbarui tabel langsung
+		statusSelect.value = (statusSelect.value === 'overdue') ? '' : 'overdue';
 		renderUI();
 	}
-	
 
-	// 3. Menghitung selisih hari kalender dari tanggal nota (dd/Mmm/yy) ke hari ini
-	function calculateDaysElapsed(dateStr) {
-		if (!dateStr) return 0;
-		const parts = dateStr.split('/');
-		if (parts.length === 3) {
-			const monthMap = { 
-				'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'Mei': 4, 'Jun': 5, 
-				'Jul': 6, 'Agu': 7, 'Sep': 8, 'Okt': 9, 'Nov': 10, 'Des': 11 
-			};
-			const year = 2000 + parseInt(parts[2], 10);
-			const month = monthMap[parts[1]] !== undefined ? monthMap[parts[1]] : 0;
-			const day = parseInt(parts[0], 10);
-
-			const invDate = new Date(year, month, day);
-			const today = new Date();
-			
-			// Samakan jam ke 00:00:00 agar murni menghitung selisih pergantian hari kalender
-			today.setHours(0, 0, 0, 0);
-			invDate.setHours(0, 0, 0, 0);
-
-			const diffInMs = today - invDate;
-			return Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-		}
-		return 0;
-	}
-	
+    // -------------------------------------------------------------
+    // 11. Render UI Tabel
+    // -------------------------------------------------------------
     function renderUI() {
-    const tbody = document.getElementById('invoiceTableBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    
-    // Ambil batas hari yang sedang aktif
-    const thresholdDays = getReminderDays();
+		const tbody = document.getElementById('invoiceTableBody');
+		if (!tbody) return;
+		tbody.innerHTML = '';
+		
+		const thresholdDays = getReminderDays();
+		const reminderInput = document.getElementById('reminderDaysInput');
+		if (reminderInput && document.activeElement !== reminderInput) {
+			reminderInput.value = thresholdDays;
+		}
 
-    // Pastikan input di layar menampilkan angka yang aktif
-    const reminderInput = document.getElementById('reminderDaysInput');
-    if (reminderInput && document.activeElement !== reminderInput) {
-        reminderInput.value = thresholdDays;
-    }
+		const keyword = (document.getElementById('filterKeyword')?.value || '').toLowerCase().trim();
+		const selectedCategory = document.getElementById('filterCategory')?.value || '';
+		const selectedStatus = document.getElementById('filterStatus')?.value || '';
 
-    // Ambil nilai filter pencarian
-    const keyword = (document.getElementById('filterKeyword')?.value || '').toLowerCase().trim();
-    const selectedCategory = document.getElementById('filterCategory')?.value || '';
-    const selectedStatus = document.getElementById('filterStatus')?.value || '';
+		let totalUnpaid = 0;
+		let totalUnpaidCount = 0;
+		let overdueCount = 0;
+		
+		let hutangBahanBaku = 0;
+		let hutangPlastik = 0;
+		let hutangDus = 0;
+		let hutangLainnya = 0;
 
-    let totalUnpaid = 0;
-    let totalUnpaidCount = 0;
-    let overdueCount = 0;
-    
-    let hutangBahanBaku = 0;
-    let hutangPlastik = 0;
-    let hutangDus = 0;
-    let hutangLainnya = 0;
+		const activeInvoices = invoices.filter(inv => {
+			const sisa = inv.total - inv.paid;
+			return sisa > 0 || inv.total === 0;
+		});
 
-    // 1. Saring nota yang masih berjalan (belum lunas atau surat jalan nol rupiah)
-    const activeInvoices = invoices.filter(inv => {
-        const sisa = inv.total - inv.paid;
-        return sisa > 0 || inv.total === 0;
-    });
+		activeInvoices.forEach(inv => {
+			const sisa = inv.total - inv.paid;
+			totalUnpaid += sisa;
+			totalUnpaidCount++;
 
-    // 2. Akumulasi data widget samping (dihitung dari seluruh data berjalan)
-    activeInvoices.forEach(inv => {
-        const sisa = inv.total - inv.paid;
-        totalUnpaid += sisa;
-        totalUnpaidCount++;
+			if (inv.category === 'Bahan Baku') hutangBahanBaku += sisa;
+			else if (inv.category === 'Plastik') hutangPlastik += sisa;
+			else if (inv.category === 'Dus') hutangDus += sisa;
+			else hutangLainnya += sisa;
 
-        if (inv.category === 'Bahan Baku') hutangBahanBaku += sisa;
-        else if (inv.category === 'Plastik') hutangPlastik += sisa;
-        else if (inv.category === 'Dus') hutangDus += sisa;
-        else hutangLainnya += sisa;
+			const days = calculateDaysElapsed(inv.date);
+			if (days > thresholdDays && inv.total > 0 && sisa > 0) {
+				overdueCount++;
+			}
+		});
 
-        // Cek apakah nota ini melebihi batas hari yang disetel pengguna
-        const days = calculateDaysElapsed(inv.date);
-        if (days > thresholdDays && inv.total > 0 && sisa > 0) {
-            overdueCount++;
-        }
-    });
+		const overdueNotice = document.getElementById('overdueBadgeNotice');
+		const overdueText = document.getElementById('overdueBadgeText');
+		if (overdueNotice && overdueText) {
+			if (overdueCount > 0) {
+				overdueNotice.classList.remove('hidden');
+				overdueNotice.classList.add('flex');
+				overdueText.innerText = `${overdueCount} Nota > ${thresholdDays} Hari`;
+			} else {
+				overdueNotice.classList.add('hidden');
+				overdueNotice.classList.remove('flex');
+			}
+		}
 
-    // 3. Perbarui Badge Peringatan di Atas Tabel
-    const overdueNotice = document.getElementById('overdueBadgeNotice');
-    const overdueText = document.getElementById('overdueBadgeText');
-    if (overdueNotice && overdueText) {
-        if (overdueCount > 0) {
-            overdueNotice.classList.remove('hidden');
-            overdueNotice.classList.add('flex');
-            overdueText.innerText = `${overdueCount} Nota > ${thresholdDays} Hari`;
-        } else {
-            overdueNotice.classList.add('hidden');
-            overdueNotice.classList.remove('flex');
-        }
-    }
+		const filteredInvoices = activeInvoices.filter(inv => {
+			const sisa = inv.total - inv.paid;
+			const days = calculateDaysElapsed(inv.date);
 
-    // 4. Terapkan Filter yang Dipilih Pengguna
-    const filteredInvoices = activeInvoices.filter(inv => {
-        const sisa = inv.total - inv.paid;
-        const days = calculateDaysElapsed(inv.date);
+			const matchKeyword = !keyword || 
+				(inv.number && inv.number.toLowerCase().includes(keyword)) ||
+				(inv.supplier && inv.supplier.toLowerCase().includes(keyword)) ||
+				(inv.keterangan && inv.keterangan.toLowerCase().includes(keyword));
 
-        // Filter kata kunci pencarian
-        const matchKeyword = !keyword || 
-            (inv.number && inv.number.toLowerCase().includes(keyword)) ||
-            (inv.supplier && inv.supplier.toLowerCase().includes(keyword)) ||
-            (inv.keterangan && inv.keterangan.toLowerCase().includes(keyword));
+			const matchCategory = !selectedCategory || inv.category === selectedCategory;
 
-        // Filter kategori
-        const matchCategory = !selectedCategory || inv.category === selectedCategory;
+			let matchStatus = true;
+			if (selectedStatus === 'overdue') {
+				matchStatus = (days > thresholdDays && sisa > 0 && inv.total > 0);
+			} else if (selectedStatus === 'unpaid') {
+				matchStatus = (inv.paid === 0 && inv.total > 0);
+			} else if (selectedStatus === 'partial') {
+				matchStatus = (inv.paid > 0 && sisa > 0);
+			} else if (selectedStatus === 'sj') {
+				matchStatus = (inv.total === 0);
+			}
 
-        // Filter status / usia tagihan
-        let matchStatus = true;
-        if (selectedStatus === 'overdue') {
-            matchStatus = (days > thresholdDays && sisa > 0 && inv.total > 0);
-        } else if (selectedStatus === 'unpaid') {
-            matchStatus = (inv.paid === 0 && inv.total > 0);
-        } else if (selectedStatus === 'partial') {
-            matchStatus = (inv.paid > 0 && sisa > 0);
-        } else if (selectedStatus === 'sj') {
-            matchStatus = (inv.total === 0);
-        }
+			return matchKeyword && matchCategory && matchStatus;
+		});
 
-        return matchKeyword && matchCategory && matchStatus;
-    });
+		if (filteredInvoices.length === 0) {
+			tbody.innerHTML = `
+				<tr>
+					<td colspan="5" class="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">
+						Tidak ada tagihan yang cocok dengan filter atau pencarian Anda.
+					</td>
+				</tr>`;
+		} else {
+			filteredInvoices.forEach(inv => {
+				const sisa = inv.total - inv.paid;
+				const days = calculateDaysElapsed(inv.date);
+				const isOverdue = days > thresholdDays && inv.total > 0 && sisa > 0;
 
-    // 5. Tampilkan Baris Tabel
-    if (filteredInvoices.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="p-8 text-center text-gray-400 dark:text-gray-500 text-xs">
-                    Tidak ada tagihan yang cocok dengan filter atau pencarian Anda.
-                </td>
-            </tr>`;
-    } else {
-        filteredInvoices.forEach(inv => {
-            const sisa = inv.total - inv.paid;
-            const days = calculateDaysElapsed(inv.date);
-            const isOverdue = days > thresholdDays && inv.total > 0 && sisa > 0;
+				let statusBadge = '';
+				if (inv.total === 0) {
+					statusBadge = '<span class="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-md text-[11px] font-semibold border border-gray-300 dark:border-gray-700">Menunggu Invoice</span>';
+				} else if (inv.paid > 0) {
+					statusBadge = '<span class="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-md text-[11px] font-semibold border border-amber-200/60 dark:border-amber-800/60">Sebagian</span>';
+				} else {
+					statusBadge = '<span class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-md text-[11px] font-semibold border border-rose-200/60 dark:border-rose-800/60">Belum Bayar</span>';
+				}
 
-            // Penentuan lencana status
-            let statusBadge = '';
-            if (inv.total === 0) {
-                statusBadge = '<span class="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-md text-[11px] font-semibold border border-gray-300 dark:border-gray-700">Menunggu Invoice</span>';
-            } else if (inv.paid > 0) {
-                statusBadge = '<span class="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-md text-[11px] font-semibold border border-amber-200/60 dark:border-amber-800/60">Sebagian</span>';
-            } else {
-                statusBadge = '<span class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-md text-[11px] font-semibold border border-rose-200/60 dark:border-rose-800/60">Belum Bayar</span>';
-            }
+				const overdueDot = isOverdue ? `
+					<span class="relative flex h-2.5 w-2.5 mr-1" title="Tagihan ini sudah berumur ${days} hari">
+						<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+						<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+					</span>` : '';
 
-            // Indikator Kelap-Kelip Oranye (Animasi Ping)
-            const overdueDot = isOverdue ? `
-                <span class="relative flex h-2.5 w-2.5 mr-1" title="Tagihan ini sudah berumur ${days} hari (melebihi batas ${thresholdDays} hari)">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                </span>` : '';
+				const overdueDaysText = isOverdue ? `
+					<span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+						${days} hari
+					</span>` : '';
 
-            // Badge umur hari nota
-            const overdueDaysText = isOverdue ? `
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
-                    ${days} hari
-                </span>` : '';
+				const rowClass = isOverdue 
+					? "bg-amber-50/20 dark:bg-amber-950/15 border-l-4 border-amber-500 hover:bg-amber-50/40 dark:hover:bg-amber-950/30 transition-colors group" 
+					: "hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors group";
 
-            // Warna baris: Jika lewat batas hari, beri aksen garis oranye tebal di kiri (border-l-4)
-            const rowClass = isOverdue 
-                ? "bg-amber-50/20 dark:bg-amber-950/15 border-l-4 border-amber-500 hover:bg-amber-50/40 dark:hover:bg-amber-950/30 transition-colors group" 
-                : "hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors group";
+				const tr = document.createElement('tr');
+				tr.className = rowClass;
+				tr.innerHTML = `
+					<td class="p-4 border-b border-gray-50 dark:border-gray-800">
+						<div class="flex items-center gap-1.5">
+							${overdueDot}
+							<div class="font-bold text-gray-900 dark:text-gray-100 font-mono-num">${inv.number}</div>
+						</div>
+						<div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-400 mt-1">
+							<span>${inv.date}</span>
+							${overdueDaysText}
+						</div>
+					</td>
+					<td class="p-4 border-b border-gray-50 dark:border-gray-800">
+						<div class="font-medium text-gray-800 dark:text-gray-100">${inv.supplier}</div>
+						<div class="text-xs text-gray-500 dark:text-gray-400 italic mt-0.5">${inv.keterangan || ''}</div>
+						<div class="mt-1.5">
+							<span class="inline-block px-2 py-0.5 rounded font-semibold text-[10px] tracking-wide ${getCategoryBadgeStyle(inv.category)}">
+								${inv.category}
+							</span>
+						</div>
+					</td>
+					<td class="p-4 border-b border-gray-50 dark:border-gray-800 font-bold text-gray-900 dark:text-white font-mono-num">
+						${formatRp(inv.total)}
+					</td>
+					<td class="p-4 border-b border-gray-50 dark:border-gray-800">${statusBadge}</td>
+					<td class="p-4 border-b border-gray-50 dark:border-gray-800">
+						<div class="flex items-center justify-end gap-1">
+							<button onclick="openPayment('${inv.id}')" title="Bayar Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-gray-800 rounded-lg transition-all focus:outline-none">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+								</svg>
+							</button>
+							<button onclick="openEditInvoice('${inv.id}')" title="Koreksi Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-lg transition-all focus:outline-none">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+								</svg>
+							</button>
+						</div>
+					</td>
+				`;
+				tbody.appendChild(tr);
+			});
+		}
 
-            const tr = document.createElement('tr');
-            tr.className = rowClass;
-            tr.innerHTML = `
-                <td class="p-4 border-b border-gray-50 dark:border-gray-800">
-                    <div class="flex items-center gap-1.5">
-                        ${overdueDot}
-                        <div class="font-bold text-gray-900 dark:text-gray-100">${inv.number}</div>
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-400 mt-1">
-                        <span>${inv.date}</span>
-                        ${overdueDaysText}
-                    </div>
-                </td>
-                <td class="p-4 border-b border-gray-50 dark:border-gray-800">
-                    <div class="font-medium text-gray-800 dark:text-gray-100">${inv.supplier}</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 italic mt-0.5">${inv.keterangan || ''}</div>
-                    <div class="mt-1.5">
-                        <span class="inline-block px-2 py-0.5 rounded font-semibold text-[10px] tracking-wide ${getCategoryBadgeStyle(inv.category)}">
-                            ${inv.category}
-                        </span>
-                    </div>
-                </td>
-                <td class="p-4 border-b border-gray-50 dark:border-gray-800 font-bold text-gray-900 dark:text-white">
-                    ${formatRp(inv.total)}
-                </td>
-                <td class="p-4 border-b border-gray-50 dark:border-gray-800">${statusBadge}</td>
-                <td class="p-4 border-b border-gray-50 dark:border-gray-800">
-                    <div class="flex items-center justify-end gap-1">
-                        <button onclick="openPayment('${inv.id}')" title="Bayar Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-gray-800 rounded-lg transition-all focus:outline-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </button>
-                        <button onclick="openEditInvoice('${inv.id}')" title="Koreksi Invoice" class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-lg transition-all focus:outline-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                        </button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
+		document.getElementById('totalUnpaid').innerText = formatRp(totalUnpaid);
+		document.getElementById('totalInvoicesBadge').innerText = totalUnpaidCount + ' Nota Belum Lunas';
+		document.getElementById('widgetBahanBaku').innerText = formatRp(hutangBahanBaku);
+		document.getElementById('widgetPlastik').innerText = formatRp(hutangPlastik);
+		document.getElementById('widgetDus').innerText = formatRp(hutangDus);
+		document.getElementById('widgetLainnya').innerText = formatRp(hutangLainnya);
+	}
 
-    // Perbarui Teks Total di Widget Kiri
-    document.getElementById('totalUnpaid').innerText = formatRp(totalUnpaid);
-    document.getElementById('totalInvoicesBadge').innerText = totalUnpaidCount + ' Nota Belum Lunas';
-    document.getElementById('widgetBahanBaku').innerText = formatRp(hutangBahanBaku);
-    document.getElementById('widgetPlastik').innerText = formatRp(hutangPlastik);
-    document.getElementById('widgetDus').innerText = formatRp(hutangDus);
-    document.getElementById('widgetLainnya').innerText = formatRp(hutangLainnya);
-}
-
-    // Fungsi Bantuan untuk Warna Badge Kategori di Tabel
     function getCategoryBadgeStyle(category) {
-        if (category === 'Bahan Baku') return 'bg-orange-100 text-orange-700';
-        if (category === 'Plastik') return 'bg-blue-100 text-blue-700';
-        if (category === 'Dus') return 'bg-amber-100 text-amber-700';
-        return 'bg-purple-100 text-purple-700'; // Untuk Lainnya
+        if (category === 'Bahan Baku') return 'bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300';
+        if (category === 'Plastik') return 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300';
+        if (category === 'Dus') return 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300';
+        return 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300';
     }
 
-    // Fungsi membuka Data Modal dan load Riwayat
+    // -------------------------------------------------------------
+    // 12. Modal Riwayat
+    // -------------------------------------------------------------
     async function openDataModal() {
 		toggleModal('dataModal');
-		await fetchInvoices(); // Tarik data terbaru dari Supabase terlebih dahulu
+		await fetchInvoices();
 		renderHistoryTable();
 	}
 
-    // Variabel Global untuk Pagination
     let currentPageHistory = 1;
-    const itemsPerPageHistory = 8; // Tampilkan 8 baris per halaman
+    const itemsPerPageHistory = 8;
     let cachedTransactions = [];
 
     function renderHistoryTable() {
@@ -1507,7 +1676,6 @@
 
 		let transactionMap = {};
 
-		// Kelompokkan riwayat pembayaran berdasarkan Tanggal + Via + Supplier
 		invoices.forEach(inv => {
 			if (inv.history && inv.history.length > 0) {
 				inv.history.forEach(h => {
@@ -1529,7 +1697,6 @@
 
 		cachedTransactions = Object.values(transactionMap);
 
-		// Jika Riwayat Kosong
 		if (cachedTransactions.length === 0) {
 			tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400 dark:text-gray-500">Belum ada riwayat pembayaran</td></tr>';
 			paginationContainer.classList.add('hidden');
@@ -1538,7 +1705,6 @@
 
 		paginationContainer.classList.remove('hidden');
 
-		// Logika Pagination
 		const totalPages = Math.ceil(cachedTransactions.length / itemsPerPageHistory) || 1;
 		if (currentPageHistory > totalPages) currentPageHistory = totalPages;
 		
@@ -1546,7 +1712,6 @@
 		const endIndex = startIndex + itemsPerPageHistory;
 		const paginatedTrx = cachedTransactions.slice(startIndex, endIndex);
 
-		// Render baris dengan dukungan penuh Dark Mode
 		paginatedTrx.forEach((trx) => {
 			const originalIndex = cachedTransactions.indexOf(trx);
 			const totalTrxAmount = trx.invoices.reduce((sum, i) => sum + i.amount, 0);
@@ -1556,14 +1721,14 @@
 			tr.className = "hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors";
 			tr.innerHTML = `
 				<td class="p-4">
-					<div class="font-medium text-gray-900 dark:text-gray-100">${invNumbers}</div>
+					<div class="font-medium text-gray-900 dark:text-gray-100 font-mono-num">${invNumbers}</div>
 					<div class="text-xs text-gray-500 dark:text-gray-400">${trx.date}</div>
 				</td>
 				<td class="p-4">
 					<div class="font-medium text-gray-900 dark:text-gray-100">${trx.supplier}</div>
 					<div class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-400 tracking-wider">${trx.category || '-'}</div>
 				</td>
-				<td class="p-4 font-bold text-gray-900 dark:text-gray-100">${formatRp(totalTrxAmount)}</td>
+				<td class="p-4 font-bold text-gray-900 dark:text-gray-100 font-mono-num">${formatRp(totalTrxAmount)}</td>
 				<td class="p-4">
 					<div class="font-medium text-emerald-600 dark:text-emerald-400">${trx.date}</div>
 					<div class="text-[10px] font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 inline-block px-2 py-0.5 rounded mt-1 border border-gray-200 dark:border-gray-700">${trx.via}</div>
@@ -1575,13 +1740,11 @@
 			tbody.appendChild(tr);
 		});
 
-		// Update Label & Tombol Pagination
 		document.getElementById('historyPageInfo').innerText = `Halaman ${currentPageHistory} dari ${totalPages}`;
 		document.getElementById('btnPrevHistory').disabled = currentPageHistory === 1;
 		document.getElementById('btnNextHistory').disabled = currentPageHistory === totalPages;
 	}
 
-    // Fungsi Pindah Halaman
     function prevPageHistory() {
         if (currentPageHistory > 1) {
             currentPageHistory--;
@@ -1597,7 +1760,6 @@
         }
     }
 
-	// Fungsi untuk membuka pratinjau gabungan saat "Lihat Nota" diklik
 	function openBatchHistoryPreview(index) {
 		const trx = cachedTransactions[index];
 		if (!trx) return;
@@ -1606,39 +1768,43 @@
 
 		document.getElementById('previewDate').innerText = trx.date;
 		document.getElementById('previewSupplier').innerText = trx.supplier;
-		document.getElementById('previewMethod').innerText = trx.via || 'Tunai/Transfer';
+		document.getElementById('previewTrxId').innerText = `#SBR-${Date.now().toString().slice(-6)}`;
 		document.getElementById('previewTotalAmount').innerText = formatRp(totalTrxAmount);
 
 		const tbody = document.getElementById('previewInvoiceTable');
 		tbody.innerHTML = '';
-		
-		// Tampilkan semua nomor invoice yang ada dalam 1 pembayaran tersebut
 		trx.invoices.forEach(item => {
 			tbody.innerHTML += `
-				<tr>
-					<td class="py-2">
-						<p class="font-medium text-gray-900">${item.number}</p>
-						<p class="text-xs text-gray-500">${item.date}</p>
+				<tr class="hover:bg-slate-50/50">
+					<td class="py-2.5 px-4">
+						<p class="font-bold text-slate-800 font-mono-num">${item.number}</p>
+						<p class="text-[11px] text-slate-400">Tgl: ${item.date}</p>
 					</td>
-					<td class="py-2 text-right font-medium text-gray-900">${formatRp(item.amount)}</td>
+					<td class="py-2.5 px-4 text-right font-extrabold text-slate-900 font-mono-num">${formatRp(item.amount)}</td>
 				</tr>
 			`;
 		});
 
-		const submitBtn = document.querySelector('#invoicePreviewModal button.bg-black');
+		const pillsContainer = document.getElementById('previewSplitPillsContainer');
+		pillsContainer.innerHTML = `
+			<div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl text-xs text-white">
+				<span class="font-bold text-emerald-400">${trx.via || 'Tunai/Transfer'}</span>
+			</div>
+		`;
+
+		const submitBtn = document.querySelector('#invoicePreviewModal button.bg-emerald-600');
 		if (submitBtn) submitBtn.style.display = 'none';
 
 		toggleModal('dataModal');
 		toggleModal('invoicePreviewModal');
 	}
-    // Fungsi Switch Tab pada Modal Data yang Mendukung Dark Mode
+
 	function switchTab(tab) {
 		const tabRiwayat = document.getElementById('tabRiwayat');
 		const tabLainnya = document.getElementById('tabLainnya');
 		const contentRiwayat = document.getElementById('contentRiwayat');
 		const contentLainnya = document.getElementById('contentLainnya');
 
-		// Kelas seragam dengan aksen warna emerald
 		const activeClass = "pb-3 border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400 font-semibold transition-colors";
 		const inactiveClass = "pb-3 border-b-2 border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors";
 
@@ -1654,8 +1820,18 @@
 			contentRiwayat.classList.add('hidden');
 		}
 	}
-		
-		// Helper Format Tanggal ke dd/mmm/yy (Contoh: 09/Sep/26)
+
+	// -------------------------------------------------------------
+	// 13. Utilitas Format Angka & Tanggal
+	// -------------------------------------------------------------
+	const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+    
+    const toggleModal = (id) => {
+        const modal = document.getElementById(id);
+        modal.classList.toggle('hidden');
+        modal.classList.toggle('flex');
+    };
+
 	function formatDateID(dateInput) {
 		if (!dateInput) return '-';
 		let d;
@@ -1671,11 +1847,23 @@
 		const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 		const month = monthNames[d.getMonth()];
 		const year = String(d.getFullYear()).slice(-2);
-		
 		return `${day}/${month}/${year}`;
 	}
 
-	// Helper Format Input Rupiah Ribuan Otomatis
+	function parseDateForInput(dateStr) {
+		if (!dateStr) return new Date().toISOString().split('T')[0];
+		const parts = dateStr.split('/');
+		if (parts.length === 3) {
+			const day = parts[0];
+			const monthMap = { 'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'Mei': '05', 'Jun': '06', 'Jul': '07', 'Agu': '08', 'Sep': '09', 'Okt': '10', 'Nov': '11', 'Des': '12' };
+			const month = monthMap[parts[1]] || '01';
+			let year = parts[2];
+			if (year.length === 2) year = '20' + year;
+			return `${year}-${month}-${day}`;
+		}
+		return new Date().toISOString().split('T')[0];
+	}
+
 	function formatRupiahInput(input) {
 		let value = input.value.replace(/[^,\d]/g, '').toString();
 		let split = value.split(',');
@@ -1692,156 +1880,12 @@
 		input.value = rupiah;
 	}
 
-	// Helper Parse Rupiah kembali ke Angka Murni untuk Database
 	function parseRupiah(str) {
 		if (!str) return 0;
 		return parseFloat(str.toString().replace(/\./g, '').replace(',', '.')) || 0;
 	}
 
-	// Otomatis set tanggal hari ini saat modal tambah invoice dibuka
-	function openInvoiceModal() {
-    toggleModal('invoiceModal');
-    const today = new Date().toISOString().split('T')[0];
-    const dateInput = document.getElementById('invDate');
-    if (dateInput) dateInput.value = today;
-	}
-	
-	// Membuka modal koreksi dan mengisi data yang sudah ada
-	function openEditInvoice(id) {
-		const inv = invoices.find(i => i.id == id);
-		if (!inv) return;
-
-		document.getElementById('editInvId').value = inv.id;
-		document.getElementById('editInvNumber').value = inv.number || '';
-		document.getElementById('editInvDate').value = parseDateForInput(inv.date);
-		document.getElementById('editInvSupplier').value = inv.supplier || '';
-		document.getElementById('editInvCategory').value = inv.category || 'Lainnya';
-		document.getElementById('editInvTotal').value = inv.total ? inv.total.toLocaleString('id-ID') : '';
-
-		toggleModal('editInvoiceModal');
-	}
-
-	// Helper untuk menerjemahkan format tanggal dd/mmm/yy kembali ke YYYY-MM-DD untuk input date picker
-	function parseDateForInput(dateStr) {
-		if (!dateStr) return new Date().toISOString().split('T')[0];
-		const parts = dateStr.split('/');
-		if (parts.length === 3) {
-			const day = parts[0];
-			const monthMap = { 'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'Mei': '05', 'Jun': '06', 'Jul': '07', 'Agu': '08', 'Sep': '09', 'Okt': '10', 'Nov': '11', 'Des': '12' };
-			const month = monthMap[parts[1]] || '01';
-			let year = parts[2];
-			if (year.length === 2) year = '20' + year;
-			return `${year}-${month}-${day}`;
-		}
-		return new Date().toISOString().split('T')[0];
-	}
-
-	// Otomatis mengubah kategori pada form edit saat supplier diubah
-	function autoSelectEditCategory() {
-		const selectedSupplier = document.getElementById('editInvSupplier').value;
-		const categorySelect = document.getElementById('editInvCategory');
-		if (vendorCategories[selectedSupplier]) {
-			categorySelect.value = vendorCategories[selectedSupplier];
-		} else {
-			categorySelect.value = "Lainnya";
-		}
-	}
-	
-	function toggleSuratJalan() {
-		const isSJ = document.getElementById('isSuratJalan').checked;
-		const invTotal = document.getElementById('invTotal');
-		const labelNo = document.getElementById('labelNomor'); 
-
-		if (isSJ) {
-			// Ubah Label
-			if (labelNo) labelNo.innerText = "Nomor Surat Jalan";
-			
-			// Kunci & Set 0
-			invTotal.value = "0";
-			invTotal.readOnly = true;
-			invTotal.classList.add('bg-gray-100'); // Efek abu-abu
-			
-			// Matikan fungsi 'wajib diisi' agar browser tidak protes
-			invTotal.removeAttribute('required');
-		} else {
-			// Kembalikan ke Normal
-			if (labelNo) labelNo.innerText = "Nomor Invoice";
-			
-			invTotal.value = "";
-			invTotal.readOnly = false;
-			invTotal.classList.remove('bg-gray-100');
-			
-			// Nyalakan kembali fungsi 'wajib diisi'
-			invTotal.setAttribute('required', 'true');
-		}
-	}
-	
-
-	// Menyimpan hasil koreksi ke database Supabase
-	async function saveEditedInvoice(e) {
-		e.preventDefault();
-		const btnSubmit = document.querySelector('#formEditInvoice button[type="submit"]');
-		btnSubmit.innerText = "Menyimpan...";
-		btnSubmit.disabled = true;
-
-		const id = document.getElementById('editInvId').value;
-		const rawDate = document.getElementById('editInvDate').value;
-		const formattedDate = formatDateID(rawDate);
-
-		const updatedData = {
-			number: document.getElementById('editInvNumber').value,
-			date: formattedDate,
-			supplier: document.getElementById('editInvSupplier').value,
-			category: document.getElementById('editInvCategory').value,
-			total: parseRupiah(document.getElementById('editInvTotal').value),
-			keterangan: document.getElementById('invKeterangan').value,
-		};
-
-		const { error } = await db
-			.from('invoices')
-			.update(updatedData)
-			.eq('id', id);
-
-		if (error) {
-			alert('Gagal mengoreksi invoice!');
-			console.error(error);
-		} else {
-			toggleModal('editInvoiceModal');
-			fetchInvoices();
-		}
-
-		btnSubmit.innerText = "Simpan Koreksi";
-		btnSubmit.disabled = false;
-	}
-	
-	// Fungsi untuk menghapus invoice atau surat jalan berdasarkan ID
-	async function deleteInvoice() {
-		const id = document.getElementById('editInvId').value;
-		if (!id) return;
-
-		// Konfirmasi keamanan sebelum menghapus data
-		if (!confirm("Apakah Anda yakin ingin menghapus invoice/surat jalan ini secara permanen?")) {
-			return;
-		}
-
-		// Eksekusi hapus data dari database Supabase
-		const { error } = await db
-			.from('invoices')
-			.delete()
-			.eq('id', id);
-
-		if (error) {
-			alert('Gagal menghapus invoice!');
-			console.error(error);
-		} else {
-			// Tutup modal koreksi dan perbarui data tabel di layar
-			toggleModal('editInvoiceModal');
-			fetchInvoices();
-		}
-	}
-	
-	
-    // Panggil saat pertama kali dimuat
+    // Eksekusi data awal
     fetchInvoices();
 </script>
 </body>
