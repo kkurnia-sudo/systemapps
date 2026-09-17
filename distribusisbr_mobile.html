@@ -288,12 +288,31 @@
                     </div>
                 </div>
 
-                <div class="p-4 bg-indigo-50/70 rounded-2xl border border-indigo-100 text-center space-y-2">
-                    <div class="text-xs font-bold text-indigo-950">Yakin sudah beres tarik barangnya?</div>
-                    <button type="button" onclick="bukaModalLaporWACepat()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
-                        <i class="fa-brands fa-whatsapp text-base"></i> BAGIKAN LAPORAN KE GRUP
-                    </button>
-                </div>
+                <!-- REMINDER LAPORAN WA (DESAIN LAPISAN GANDA & EYE-CATCHING) -->
+				<div class="relative p-0.5 rounded-3xl bg-gradient-to-r from-emerald-500 via-indigo-500 to-emerald-500 shadow-md shadow-emerald-500/10 transition-all duration-300">
+					<div class="bg-white dark:bg-slate-800 p-4 rounded-[22px] text-center space-y-3 relative z-10">
+						
+						<!-- Header Judul + Ikon Lonceng -->
+						<div class="flex items-center justify-center gap-2">
+							<div class="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs animate-bounce shadow-2xs">
+								<i class="fa-solid fa-bell"></i>
+							</div>
+							<span class="text-sm font-black text-slate-900 dark:text-white tracking-tight">
+								Yakin sudah beres tarik barangnya?
+							</span>
+						</div>
+
+						<!-- Teks Petunjuk Singkat -->
+						<p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">
+							Bagikan rincian muatan terbaru hari ini langsung ke grup WhatsApp.
+						</p>
+
+						<!-- Tombol Laporan WA Utama -->
+						<button type="button" onclick="bukaModalLaporWACepat()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-2xl shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+							<i class="fa-brands fa-whatsapp text-lg"></i> BAGIKAN LAPORAN KE GRUP
+						</button>
+					</div>
+				</div>
             </div>
 
             <!-- TAB 3: MONITORING -->
@@ -315,7 +334,27 @@
                             <i class="fa-solid fa-rotate-right"></i> Segarkan
                         </button>
                     </div>
-
+					<!-- FILTER BAR MINIMALIS ANTREAN -->
+					<div class="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200/90 dark:border-slate-700 shadow-2xs space-y-2">
+						<div class="grid grid-cols-2 gap-2">
+							<div>
+								<input type="text" id="filterNamaAntrean" oninput="terapkanFilterAntrean()" placeholder="🔍 Cari nama..." class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-indigo-500 transition">
+							</div>
+							<div>
+								<select id="filterStatusAntrean" onchange="terapkanFilterAntrean()" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-indigo-500 transition">
+									<option value="semua">Semua Status</option>
+									<option value="belum">Belum Beres</option>
+									<option value="selesai">Selesai (PAS / Lebih)</option>
+								</select>
+							</div>
+						</div>
+						<div class="flex items-center justify-between text-[10px] font-bold text-slate-400 px-1 pt-0.5">
+							<span id="labelInfoFilter">Menampilkan semua data</span>
+							<button type="button" onclick="resetFilterAntrean()" class="text-[11px] font-extrabold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 flex items-center gap-1 transition active:scale-95">
+								<i class="fa-solid fa-rotate-left text-[10px]"></i> Reset Filter
+							</button>
+						</div>
+					</div>
                     <div id="containerAntreanTarik" class="space-y-3.5"></div>
 
                     <div id="sectionSelesaiTarik" class="hidden pt-2">
@@ -668,7 +707,8 @@
         const supabaseUrl = 'https://uocvuddqhviorebinpva.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvY3Z1ZGRxaHZpb3JlYmlucHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2OTQ0NDAsImV4cCI6MjEwMTI3MDQ0MH0.mWGTOTfHG4Q62S3P4LQi-5bGviMPWgMzo2p2AECquL8';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
+		
+		let antreanDataGlobal = [];
         let userKurirAktif = null;
         let daftarPackingGlobal = [];
         let semuaKaryawanAdmin = [];
@@ -1864,279 +1904,327 @@
         // ==============================================================
         // ANTREAN TARIK
         // ==============================================================
-        async function loadAntreanTarik() {
-            const containerBelum = document.getElementById('containerAntreanTarik');
-            const sectionSelesai = document.getElementById('sectionSelesaiTarik');
-            const containerSelesai = document.getElementById('containerSudahSelesai');
-            const labelJumlahSelesai = document.getElementById('labelJumlahSelesai');
 
-            if (!containerBelum) return;
+		async function loadAntreanTarik() {
+			const containerBelum = document.getElementById('containerAntreanTarik');
+			const sectionSelesai = document.getElementById('sectionSelesaiTarik');
 
-            containerBelum.innerHTML = `
-                <div class="p-8 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-3">
-                    <div class="w-10 h-10 mx-auto bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-lg shadow-inner">
-                        <i class="fa-solid fa-circle-notch fa-spin"></i>
-                    </div>
-                    <div class="text-xs font-bold text-slate-600 dark:text-slate-300">Memuat antrean barang...</div>
-                </div>
-            `;
-            if (sectionSelesai) sectionSelesai.classList.add('hidden');
+			if (!containerBelum) return;
 
-            const { data, error } = await supabaseClient
-                .from('distribusi_packing')
-                .select(`
-                    *,
-                    karyawan!karyawan_id(nama),
-                    pengirim:karyawan!dikirim_oleh(nama)
-                `)
-                .order('tanggal', { ascending: false });
+			containerBelum.innerHTML = `
+				<div class="p-8 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-3">
+					<div class="w-10 h-10 mx-auto bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-lg shadow-inner">
+						<i class="fa-solid fa-circle-notch fa-spin"></i>
+					</div>
+					<div class="text-xs font-bold text-slate-600 dark:text-slate-300">Memuat antrean barang...</div>
+				</div>
+			`;
+			if (sectionSelesai) sectionSelesai.classList.add('hidden');
 
-            if (error) {
-                containerBelum.innerHTML = `<div class="p-4 text-center text-xs text-red-500 font-bold bg-white dark:bg-slate-800 rounded-2xl border border-red-200 dark:border-red-900">Error: ${error.message}</div>`;
-                return;
-            }
+			const { data, error } = await supabaseClient
+				.from('distribusi_packing')
+				.select(`
+					*,
+					karyawan!karyawan_id(nama),
+					pengirim:karyawan!dikirim_oleh(nama)
+				`)
+				.order('tanggal', { ascending: false });
 
-            if (!data || data.length === 0) {
-                containerBelum.innerHTML = `
-                    <div class="p-8 text-center text-xs text-slate-400 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-1">
-                        <i class="fa-solid fa-circle-check text-3xl text-emerald-400 mb-1"></i>
-                        <div class="font-bold text-slate-700 dark:text-slate-200 text-sm">Semua Antrean Kosong</div>
-                        <div>Belum ada data barang aktif yang perlu ditarik.</div>
-                    </div>
-                `;
-                return;
-            }
+			if (error) {
+				containerBelum.innerHTML = `<div class="p-4 text-center text-xs text-red-500 font-bold bg-white dark:bg-slate-800 rounded-2xl border border-red-200 dark:border-red-900">Error: ${error.message}</div>`;
+				return;
+			}
 
-            const grouped = {};
-            data.forEach(item => {
-                const tgl = item.tanggal;
-                if (!grouped[tgl]) grouped[tgl] = [];
-                grouped[tgl].push(item);
-            });
+			// Simpan data mentah ke variabel global
+			antreanDataGlobal = data || [];
+			renderAntreanTarik(antreanDataGlobal);
+		}
 
-            containerBelum.innerHTML = '';
-            if (containerSelesai) containerSelesai.innerHTML = '';
+		// Fungsi utama render antrean yang mendukung filter
+		function renderAntreanTarik(data) {
+			const containerBelum = document.getElementById('containerAntreanTarik');
+			const sectionSelesai = document.getElementById('sectionSelesaiTarik');
+			const containerSelesai = document.getElementById('containerSudahSelesai');
+			const labelJumlahSelesai = document.getElementById('labelJumlahSelesai');
 
-            const tglKeys = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
-            let totalHariSelesai = 0;
-            let totalHariAktif = 0;
+			if (!containerBelum) return;
 
-            tglKeys.forEach((tgl) => {
-                const items = grouped[tgl];
-                const totalItem = items.length;
+			if (!data || data.length === 0) {
+				containerBelum.innerHTML = `
+					<div class="p-8 text-center text-xs text-slate-400 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-1">
+						<i class="fa-solid fa-circle-check text-3xl text-emerald-400 mb-1"></i>
+						<div class="font-bold text-slate-700 dark:text-slate-200 text-sm">Tidak Ada Data Antrean</div>
+						<div>Tidak ditemukan data yang sesuai dengan pencarian/filter.</div>
+					</div>
+				`;
+				if (sectionSelesai) sectionSelesai.classList.add('hidden');
+				return;
+			}
 
-                let targetB12 = 0;
-                let targetB10 = 0;
-                let targetOleholeh = 0;
-                let totalTarget = 0;
-                let totalRealTarik = 0;
+			const grouped = {};
+			data.forEach(item => {
+				const tgl = item.tanggal;
+				if (!grouped[tgl]) grouped[tgl] = [];
+				grouped[tgl].push(item);
+			});
 
-                items.forEach(row => {
-                    const target = hitungTargetProduk(row.kirim_produksi, row.jenis_produk);
-                    const tarik = row.tarik_jadi || 0;
-                    totalTarget += target;
-                    totalRealTarik += tarik;
+			containerBelum.innerHTML = '';
+			if (containerSelesai) containerSelesai.innerHTML = '';
 
-                    if (row.jenis_produk === 'Oleh-oleh') targetOleholeh += target;
-                    else if (row.jenis_produk === 'B10') targetB10 += target;
-                    else targetB12 += target;
-                });
+			const tglKeys = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+			let totalHariSelesai = 0;
+			let totalHariAktif = 0;
 
-                const listBelumBeres = [];
-                const listSudahBeres = [];
+			tglKeys.forEach((tgl) => {
+				const items = grouped[tgl];
+				const totalItem = items.length;
 
-                items.forEach(item => {
-                    const target = hitungTargetProduk(item.kirim_produksi, item.jenis_produk);
-                    const tarik = item.tarik_jadi || 0;
-                    if (tarik >= target && target > 0) listSudahBeres.push(item);
-                    else listBelumBeres.push(item);
-                });
+				let targetB12 = 0;
+				let targetB10 = 0;
+				let targetOleholeh = 0;
+				let totalTarget = 0;
+				let totalRealTarik = 0;
 
-                const belumBeresCount = listBelumBeres.length;
-                const hariSudahBeresPenuh = (belumBeresCount === 0);
+				items.forEach(row => {
+					const target = hitungTargetProduk(row.kirim_produksi, row.jenis_produk);
+					const tarik = row.tarik_jadi || 0;
+					totalTarget += target;
+					totalRealTarik += tarik;
 
-                function renderBarisKaryawan(item) {
-                    const target = hitungTargetProduk(item.kirim_produksi, item.jenis_produk);
-                    const tarik = item.tarik_jadi || 0;
-                    const selisih = item.koreksi || (tarik - target);
-                    const belumTarik = (tarik === 0);
-                    const satuan = getSatuanTarik(item.jenis_produk);
+					if (row.jenis_produk === 'Oleh-oleh') targetOleholeh += target;
+					else if (row.jenis_produk === 'B10') targetB10 += target;
+					else targetB12 += target;
+				});
 
-                    let badgeStatus = '';
-                    let accentBorderClass = '';
+				const listBelumBeres = [];
+				const listSudahBeres = [];
 
-                    if (belumTarik) {
-                        badgeStatus = `<span class="text-[9px] font-extrabold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md">Belum Tarik</span>`;
-                        accentBorderClass = 'border-l-4 border-l-amber-500';
-                    } else if (selisih === 0) {
-                        badgeStatus = `<span class="text-[9px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-md">PAS (${tarik} ${satuan})</span>`;
-                        accentBorderClass = 'border-l-4 border-l-emerald-500';
-                    } else if (selisih < 0) {
-                        badgeStatus = `<span class="text-[9px] font-extrabold bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/60 px-2 py-0.5 rounded-md">Kurang ${Math.abs(selisih)} ${satuan}</span>`;
-                        accentBorderClass = 'border-l-4 border-l-red-500';
-                    } else {
-                        badgeStatus = `<span class="text-[9px] font-extrabold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 px-2 py-0.5 rounded-md">Lebih +${selisih} ${satuan}</span>`;
-                        accentBorderClass = 'border-l-4 border-l-purple-500';
-                    }
+				items.forEach(item => {
+					const target = hitungTargetProduk(item.kirim_produksi, item.jenis_produk);
+					const tarik = item.tarik_jadi || 0;
+					if (tarik >= target && target > 0) listSudahBeres.push(item);
+					else listBelumBeres.push(item);
+				});
 
-                    const infoPenarik = item.riwayat_cicilan
-                        ? `<div class="text-[10px] text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/90 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 mt-1 font-semibold flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-[9px] text-indigo-500"></i> ${item.riwayat_cicilan}</div>`
-                        : '';
+				const belumBeresCount = listBelumBeres.length;
+				const hariSudahBeresPenuh = (belumBeresCount === 0);
 
-                    const tombolPensilHTML = punyaAksesRevisi() ? `
-                        <button type="button" onclick='bukaModalRevisiKirim(${JSON.stringify(item)})' class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-amber-100 hover:text-amber-700 active:scale-90 text-slate-500 dark:text-slate-300 flex items-center justify-center text-xs transition border border-slate-200 dark:border-slate-600 shadow-sm" title="Revisi Kirim & Tarikan">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                    ` : '';
+				function renderBarisKaryawan(item) {
+					const target = hitungTargetProduk(item.kirim_produksi, item.jenis_produk);
+					const tarik = item.tarik_jadi || 0;
+					const selisih = item.koreksi || (tarik - target);
+					const belumTarik = (tarik === 0);
+					const satuan = getSatuanTarik(item.jenis_produk);
 
-                    const namaProdukFix = item.jenis_produk === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${(item.jenis_produk || 'B12').replace('B','')}`;
+					let badgeStatus = '';
+					let accentBorderClass = '';
 
-                    return `
-                        <div class="p-3 bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 rounded-2xl flex items-center justify-between gap-2.5 shadow-2xs transition ${accentBorderClass}">
-                            <div class="space-y-0.5">
-                                <div class="text-[10px] font-bold text-slate-400">Waktu: ${item.sesi}</div>
-                                <div class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight">${item.karyawan?.nama || '-'}</div>
-                                <div class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                                    ${namaProdukFix} 
-                                    <span class="text-slate-400 font-normal">(Tgt: <b>${target}</b> | Masuk: <b>${tarik}</b>)</span>
-                                </div>
-                                <div class="pt-0.5">${badgeStatus}</div>
-                                ${infoPenarik}
-                            </div>
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                ${tombolPensilHTML}
-                                <button onclick='bukaModalTarikKurirMulti(${JSON.stringify(item)}, ${target})' class="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition whitespace-nowrap flex items-center gap-1">
-                                    <i class="fa-solid fa-box-open text-xs"></i> Tarik
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }
+					if (belumTarik) {
+						badgeStatus = `<span class="text-[9px] font-extrabold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md">Belum Tarik</span>`;
+						accentBorderClass = 'border-l-4 border-l-amber-500';
+					} else if (selisih === 0) {
+						badgeStatus = `<span class="text-[9px] font-extrabold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-md">PAS (${tarik} ${satuan})</span>`;
+						accentBorderClass = 'border-l-4 border-l-emerald-500';
+					} else if (selisih < 0) {
+						badgeStatus = `<span class="text-[9px] font-extrabold bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/60 px-2 py-0.5 rounded-md">Kurang ${Math.abs(selisih)} ${satuan}</span>`;
+						accentBorderClass = 'border-l-4 border-l-red-500';
+					} else {
+						badgeStatus = `<span class="text-[9px] font-extrabold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 px-2 py-0.5 rounded-md">Lebih +${selisih} ${satuan}</span>`;
+						accentBorderClass = 'border-l-4 border-l-purple-500';
+					}
 
-                let htmlBelum = listBelumBeres.map(it => renderBarisKaryawan(it)).join('');
-                let htmlSudah = listSudahBeres.map(it => renderBarisKaryawan(it)).join('');
+					const infoPenarik = item.riwayat_cicilan
+						? `<div class="text-[10px] text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/90 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 mt-1 font-semibold flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-[9px] text-indigo-500"></i> ${item.riwayat_cicilan}</div>`
+						: '';
 
-                let toggleSudahHTML = '';
-                if (listSudahBeres.length > 0 && !hariSudahBeresPenuh) {
-                    toggleSudahHTML = `
-                        <div class="pt-2 border-t-2 border-dashed border-slate-200/90 dark:border-slate-700/80 mt-2">
-                            <button type="button" onclick="togglePekerjaSelesai('${tgl}')" class="w-full py-2.5 px-3 bg-emerald-50/90 dark:bg-emerald-950/50 hover:bg-emerald-100/80 border border-emerald-200 dark:border-emerald-800/70 text-emerald-800 dark:text-emerald-300 font-bold text-[10px] rounded-xl flex items-center justify-between transition active:scale-98">
-                                <span class="flex items-center gap-1.5">
-                                    <i class="fa-solid fa-circle-check text-emerald-600"></i>
-                                    <span>${listSudahBeres.length} Pekerja Selesai (Pas / Lebih)</span>
-                                </span>
-                                <span class="text-emerald-700 dark:text-emerald-400 font-extrabold flex items-center gap-1">
-                                    <span id="txtTogglePekerja-${tgl}">Tampilkan</span>
-                                    <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" id="iconTogglePekerja-${tgl}"></i>
-                                </span>
-                            </button>
-                            <div id="boxPekerjaSelesai-${tgl}" class="hidden space-y-2 mt-2.5 pt-1">
-                                ${htmlSudah}
-                            </div>
-                        </div>
-                    `;
-                } else if (hariSudahBeresPenuh) {
-                    htmlBelum = htmlSudah;
-                }
+					const tombolPensilHTML = punyaAksesRevisi() ? `
+						<button type="button" onclick='bukaModalRevisiKirim(${JSON.stringify(item)})' class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-amber-100 hover:text-amber-700 active:scale-90 text-slate-500 dark:text-slate-300 flex items-center justify-center text-xs transition border border-slate-200 dark:border-slate-600 shadow-sm" title="Revisi Kirim & Tarikan">
+							<i class="fa-solid fa-pen-to-square"></i>
+						</button>
+					` : '';
 
-                let chipsHTML = '';
-                if (targetB12 > 0) chipsHTML += `<span class="bg-indigo-50 dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-slate-700 text-[10px]">B12: ${targetB12} Bal</span>`;
-                if (targetB10 > 0) chipsHTML += `<span class="bg-indigo-50 dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-slate-700 text-[10px]">B10: ${targetB10} Bal</span>`;
-                if (targetOleholeh > 0) chipsHTML += `<span class="bg-amber-50 dark:bg-slate-900 text-amber-700 dark:text-amber-300 font-bold px-2 py-0.5 rounded-lg border border-amber-200 dark:border-slate-700 text-[10px]">Oleh-oleh: ${targetOleholeh} Toros</span>`;
-                chipsHTML += `
-                    <span class="bg-blue-50 dark:bg-slate-900 text-blue-700 dark:text-blue-300 font-bold px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-slate-700 text-[10px]">
-                        Tarik: <b class="${totalRealTarik >= totalTarget ? 'text-emerald-600' : 'text-blue-900 dark:text-blue-200'}">${totalRealTarik}</b>/${totalTarget}
-                    </span>
-                `;
+					const namaProdukFix = item.jenis_produk === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${(item.jenis_produk || 'B12').replace('B','')}`;
 
-                let badgeHeader = belumBeresCount > 0
-                    ? `<span class="text-[10px] font-black bg-red-50 dark:bg-red-950/70 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60 px-2.5 py-0.5 rounded-full whitespace-nowrap">${belumBeresCount} Belum Beres</span>`
-                    : `<span class="text-[10px] font-black bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 px-2.5 py-0.5 rounded-full whitespace-nowrap"><i class="fa-solid fa-check mr-1"></i>Selesai Penuh</span>`;
+					return `
+						<div class="p-3 bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 rounded-2xl flex items-center justify-between gap-2.5 shadow-2xs transition ${accentBorderClass}">
+							<div class="space-y-0.5">
+								<div class="text-[10px] font-bold text-slate-400">Waktu: ${item.sesi}</div>
+								<div class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight">${item.karyawan?.nama || '-'}</div>
+								<div class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+									${namaProdukFix} 
+									<span class="text-slate-400 font-normal">(Tgt: <b>${target}</b> | Masuk: <b>${tarik}</b>)</span>
+								</div>
+								<div class="pt-0.5">${badgeStatus}</div>
+								${infoPenarik}
+							</div>
+							<div class="flex items-center gap-1.5 shrink-0">
+								${tombolPensilHTML}
+								<button onclick='bukaModalTarikKurirMulti(${JSON.stringify(item)}, ${target})' class="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition whitespace-nowrap flex items-center gap-1">
+									<i class="fa-solid fa-box-open text-xs"></i> Tarik
+								</button>
+							</div>
+						</div>
+					`;
+				}
 
-                const parts = tgl.split('-');
-                const dObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                const namaHariBesar = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][dObj.getDay()].toUpperCase();
-                const tglFormatText = `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}`;
+				let htmlBelum = listBelumBeres.map(it => renderBarisKaryawan(it)).join('');
+				let htmlSudah = listSudahBeres.map(it => renderBarisKaryawan(it)).join('');
 
-                const kartuHTML = `
-                    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border-2 border-slate-200/90 dark:border-slate-700 overflow-hidden transition" id="cardTarik-${tgl}">
-                        <button type="button" onclick="toggleAkordionKurir('${tgl}')" class="w-full p-4 text-left hover:bg-slate-50/70 dark:hover:bg-slate-700/50 transition select-none flex flex-col gap-2.5">
-                            <div class="flex items-center justify-between w-full">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">
-                                        <i class="fa-solid fa-calendar-day"></i>
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="px-2.5 py-0.5 bg-indigo-600 text-white rounded-lg text-xs font-black tracking-wider uppercase shadow-sm">
-                                                ${namaHariBesar}
-                                            </span>
-                                            <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100">
-                                                ${tglFormatText}
-                                            </span>
-                                        </div>
-                                        <div class="text-[10px] text-slate-400 font-semibold mt-0.5">${totalItem} Antrean</div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    ${badgeHeader}
-                                    <span class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-300 border border-slate-200/80 dark:border-slate-600 flex items-center gap-1">
-                                        <span id="txtAkordion-${tgl}">Buka</span>
-                                        <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300" id="iconAkordion-${tgl}"></i>
-                                    </span>
-                                </div>
-                            </div>
+				let toggleSudahHTML = '';
+				if (listSudahBeres.length > 0 && !hariSudahBeresPenuh) {
+					toggleSudahHTML = `
+						<div class="pt-2 border-t-2 border-dashed border-slate-200/90 dark:border-slate-700/80 mt-2">
+							<button type="button" onclick="togglePekerjaSelesai('${tgl}')" class="w-full py-2.5 px-3 bg-emerald-50/90 dark:bg-emerald-950/50 hover:bg-emerald-100/80 border border-emerald-200 dark:border-emerald-800/70 text-emerald-800 dark:text-emerald-300 font-bold text-[10px] rounded-xl flex items-center justify-between transition active:scale-98">
+								<span class="flex items-center gap-1.5">
+									<i class="fa-solid fa-circle-check text-emerald-600"></i>
+									<span>${listSudahBeres.length} Pekerja Selesai (Pas / Lebih)</span>
+								</span>
+								<span class="text-emerald-700 dark:text-emerald-400 font-extrabold flex items-center gap-1">
+									<span id="txtTogglePekerja-${tgl}">Tampilkan</span>
+									<i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" id="iconTogglePekerja-${tgl}"></i>
+								</span>
+							</button>
+							<div id="boxPekerjaSelesai-${tgl}" class="hidden space-y-2 mt-2.5 pt-1">
+								${htmlSudah}
+							</div>
+						</div>
+					`;
+				} else if (hariSudahBeresPenuh) {
+					htmlBelum = htmlSudah;
+				}
 
-                            <div class="flex items-center justify-between gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-700 w-full">
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    ${chipsHTML}
-                                </div>
-                                <button type="button" onclick="event.stopPropagation(); kirimLaporanWATarikan('${tgl}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-[10px] rounded-lg shadow-sm transition flex items-center gap-1 shrink-0">
-                                    <i class="fa-brands fa-whatsapp text-xs"></i> Lapor WA
-                                </button>
-                            </div>
-                        </button>
+				let chipsHTML = '';
+				if (targetB12 > 0) chipsHTML += `<span class="bg-indigo-50 dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-slate-700 text-[10px]">B12: ${targetB12} Bal</span>`;
+				if (targetB10 > 0) chipsHTML += `<span class="bg-indigo-50 dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-slate-700 text-[10px]">B10: ${targetB10} Bal</span>`;
+				if (targetOleholeh > 0) chipsHTML += `<span class="bg-amber-50 dark:bg-slate-900 text-amber-700 dark:text-amber-300 font-bold px-2 py-0.5 rounded-lg border border-amber-200 dark:border-slate-700 text-[10px]">Oleh-oleh: ${targetOleholeh} Toros</span>`;
+				chipsHTML += `
+					<span class="bg-blue-50 dark:bg-slate-900 text-blue-700 dark:text-blue-300 font-bold px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-slate-700 text-[10px]">
+						Tarik: <b class="${totalRealTarik >= totalTarget ? 'text-emerald-600' : 'text-blue-900 dark:text-blue-200'}">${totalRealTarik}</b>/${totalTarget}
+					</span>
+				`;
 
-                        <div class="hidden p-3.5 pt-2.5 border-t-2 border-slate-200/80 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-900/95 space-y-2.5" id="bodyAkordion-${tgl}">
-                            <div class="flex items-center gap-1.5 px-1 text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                                <i class="fa-solid fa-layer-group text-indigo-600 dark:text-indigo-400"></i>
-                                <span>Rincian Pekerja:</span>
-                            </div>
-                            
-                            ${htmlBelum}
-                            ${toggleSudahHTML}
-                        </div>
-                    </div>
-                `;
+				let badgeHeader = belumBeresCount > 0
+					? `<span class="text-[10px] font-black bg-red-50 dark:bg-red-950/70 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60 px-2.5 py-0.5 rounded-full whitespace-nowrap">${belumBeresCount} Belum Beres</span>`
+					: `<span class="text-[10px] font-black bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 px-2.5 py-0.5 rounded-full whitespace-nowrap"><i class="fa-solid fa-check mr-1"></i>Selesai Penuh</span>`;
 
-                if (!hariSudahBeresPenuh) {
-                    containerBelum.innerHTML += kartuHTML;
-                    totalHariAktif++;
-                } else {
-                    if (containerSelesai) containerSelesai.innerHTML += kartuHTML;
-                    totalHariSelesai++;
-                }
-            });
+				const parts = tgl.split('-');
+				const dObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+				const namaHariBesar = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][dObj.getDay()].toUpperCase();
+				const tglFormatText = `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}`;
 
-            if (sectionSelesai) {
-                if (totalHariSelesai > 0) {
-                    sectionSelesai.classList.remove('hidden');
-                    if (labelJumlahSelesai) labelJumlahSelesai.innerText = `Sudah Selesai (${totalHariSelesai} Hari)`;
-                } else {
-                    sectionSelesai.classList.add('hidden');
-                }
-            }
+				const kartuHTML = `
+					<div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border-2 border-slate-200/90 dark:border-slate-700 overflow-hidden transition" id="cardTarik-${tgl}">
+						<button type="button" onclick="toggleAkordionKurir('${tgl}')" class="w-full p-4 text-left hover:bg-slate-50/70 dark:hover:bg-slate-700/50 transition select-none flex flex-col gap-2.5">
+							<div class="flex items-center justify-between w-full">
+								<div class="flex items-center gap-2.5">
+									<div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">
+										<i class="fa-solid fa-calendar-day"></i>
+									</div>
+									<div>
+										<div class="flex items-center gap-2">
+											<span class="px-2.5 py-0.5 bg-indigo-600 text-white rounded-lg text-xs font-black tracking-wider uppercase shadow-sm">
+												${namaHariBesar}
+											</span>
+											<span class="text-xs font-extrabold text-slate-800 dark:text-slate-100">
+												${tglFormatText}
+											</span>
+										</div>
+										<div class="text-[10px] text-slate-400 font-semibold mt-0.5">${totalItem} Antrean</div>
+									</div>
+								</div>
+								<div class="flex items-center gap-2">
+									${badgeHeader}
+									<span class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-300 border border-slate-200/80 dark:border-slate-600 flex items-center gap-1">
+										<span id="txtAkordion-${tgl}">Buka</span>
+										<i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300" id="iconAkordion-${tgl}"></i>
+									</span>
+								</div>
+							</div>
 
-            if (totalHariAktif === 0 && totalHariSelesai > 0) {
-                containerBelum.innerHTML = `
-                    <div class="p-6 text-center text-xs text-slate-500 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-1">
-                        <i class="fa-solid fa-circle-check text-3xl text-emerald-500 mb-1"></i>
-                        <div class="font-extrabold text-slate-800 dark:text-slate-200 text-sm">Semua Antrean Hari Ini Sudah Beres!</div>
-                        <div>Semua tarikan telah tuntas. Cek folder di bawah untuk melihat arsip.</div>
-                    </div>
-                `;
-            }
-        }
+							<div class="flex items-center justify-between gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-700 w-full">
+								<div class="flex items-center gap-1.5 flex-wrap">
+									${chipsHTML}
+								</div>
+								<button type="button" onclick="event.stopPropagation(); kirimLaporanWATarikan('${tgl}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-[10px] rounded-lg shadow-sm transition flex items-center gap-1 shrink-0">
+									<i class="fa-brands fa-whatsapp text-xs"></i> Lapor WA
+								</button>
+							</div>
+						</button>
+
+						<div class="hidden p-3.5 pt-2.5 border-t-2 border-slate-200/80 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-900/95 space-y-2.5" id="bodyAkordion-${tgl}">
+							<div class="flex items-center gap-1.5 px-1 text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+								<i class="fa-solid fa-layer-group text-indigo-600 dark:text-indigo-400"></i>
+								<span>Rincian Pekerja:</span>
+							</div>
+							
+							${htmlBelum}
+							${toggleSudahHTML}
+						</div>
+					</div>
+				`;
+
+				if (!hariSudahBeresPenuh) {
+					containerBelum.innerHTML += kartuHTML;
+					totalHariAktif++;
+				} else {
+					if (containerSelesai) containerSelesai.innerHTML += kartuHTML;
+					totalHariSelesai++;
+				}
+			});
+
+			if (sectionSelesai) {
+				if (totalHariSelesai > 0) {
+					sectionSelesai.classList.remove('hidden');
+					if (labelJumlahSelesai) labelJumlahSelesai.innerText = `Sudah Selesai (${totalHariSelesai} Hari)`;
+				} else {
+					sectionSelesai.classList.add('hidden');
+				}
+			}
+		}
+
+		// Logika Filter & Reset
+		function terapkanFilterAntrean() {
+			const inputNama = (document.getElementById('filterNamaAntrean')?.value || '').toLowerCase().trim();
+			const statusVal = document.getElementById('filterStatusAntrean')?.value || 'semua';
+			const labelInfo = document.getElementById('labelInfoFilter');
+
+			let dataHasil = antreanDataGlobal.filter(item => {
+				const namaPekerja = (item.karyawan?.nama || '').toLowerCase();
+				const cocokNama = !inputNama || namaPekerja.includes(inputNama);
+
+				const target = hitungTargetProduk(item.kirim_produksi, item.jenis_produk);
+				const tarik = item.tarik_jadi || 0;
+				const statusLunas = tarik >= target && target > 0;
+
+				let cocokStatus = true;
+				if (statusVal === 'belum') cocokStatus = !statusLunas;
+				else if (statusVal === 'selesai') cocokStatus = statusLunas;
+
+				return cocokNama && cocokStatus;
+			});
+
+			if (labelInfo) {
+				if (!inputNama && statusVal === 'semua') {
+					labelInfo.innerText = "Menampilkan semua data";
+				} else {
+					labelInfo.innerText = `Ditemukan ${dataHasil.length} data cocok`;
+				}
+			}
+
+			renderAntreanTarik(dataHasil);
+		}
+
+		function resetFilterAntrean() {
+			const elNama = document.getElementById('filterNamaAntrean');
+			const elStatus = document.getElementById('filterStatusAntrean');
+			const labelInfo = document.getElementById('labelInfoFilter');
+
+			if (elNama) elNama.value = '';
+			if (elStatus) elStatus.value = 'semua';
+			if (labelInfo) labelInfo.innerText = "Menampilkan semua data";
+
+			renderAntreanTarik(antreanDataGlobal);
+		}
 
         function togglePekerjaSelesai(tgl) {
             const box = document.getElementById(`boxPekerjaSelesai-${tgl}`);
