@@ -1699,97 +1699,105 @@
         // ==============================================================
         // LAPORAN WA
         // ==============================================================
-        async function kirimLaporanWATarikan(tgl, isModeCepat = false) {
-            const elTglAktif = document.getElementById('kloterTanggalAktif');
-            if (elTglAktif) elTglAktif.value = tgl;
+async function kirimLaporanWATarikan(tgl, isModeCepat = false) {
+    const elTglAktif = document.getElementById('kloterTanggalAktif');
+    if (elTglAktif) elTglAktif.value = tgl;
 
-            let itemsKloter = getDaftarMuatanKloterAktif();
+    let itemsKloter = getDaftarMuatanKloterAktif();
 
-            if (itemsKloter.length === 0) {
-                const { data: dataDb, error } = await supabaseClient
-                    .from('distribusi_packing')
-                    .select(`*, karyawan!karyawan_id(nama)`)
-                    .eq('ditarik_oleh', userKurirAktif.id)
-                    .order('id', { ascending: false });
+    // Jika kloter lokal kosong, ambil data dari database Supabase
+    if (itemsKloter.length === 0) {
+        // PERBAIKAN 1: Cari semua nota aktif yang belum lunas
+        const { data: dataDb, error } = await supabaseClient
+            .from('distribusi_packing')
+            .select(`*, karyawan!karyawan_id(nama)`)
+            .eq('is_lunas', false)
+            .order('id', { ascending: false });
 
-                if (!error && dataDb && dataDb.length > 0) {
-                    const fallbackList = [];
-                    dataDb.forEach(row => {
-                        const jenis = row.jenis_produk || 'B12';
-                        const cicilanList = parseRiwayatCicilan(row.riwayat_cicilan);
-                        const cicilanKurirIni = cicilanList.filter(c => c.nama.toLowerCase().includes(userKurirAktif.nama.toLowerCase()));
-                        const qtyTarikKurir = cicilanKurirIni.reduce((acc, curr) => acc + curr.qty, 0);
+        if (!error && dataDb && dataDb.length > 0) {
+            const fallbackList = [];
+            dataDb.forEach(row => {
+                if (!row.riwayat_cicilan) return;
 
-                        if (qtyTarikKurir > 0) {
-                            fallbackList.push({
-                                id: 'db_' + row.id,
-                                karyawanId: row.karyawan_id,
-                                nama: (row.karyawan?.nama || 'PACKING').toUpperCase(),
-                                jenis: jenis,
-                                satuan: getSatuanTarik(jenis),
-                                qty: qtyTarikKurir,
-                                sesiList: [row.sesi || 'Sesi'],
-                                sudahLapor: true
-                            });
-                        }
-                    });
-                    itemsKloter = fallbackList;
-                }
-            }
-
-            if (itemsKloter.length === 0) {
-                await showNotice("Belum ada catatan tarikan barang apa pun hari ini.", "Data Tarikan Kosong");
-                return;
-            }
-
-            dataTarikanGroupedGlobal = itemsKloter;
-
-            const container = document.getElementById('containerListChecklistKloter');
-            if (container) {
-                container.innerHTML = '';
+                const jenis = row.jenis_produk || 'B12';
+                const cicilanList = parseRiwayatCicilan(row.riwayat_cicilan);
                 
-                dataTarikanGroupedGlobal.forEach(grup => {
-                    const namaProduk = grup.jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${grup.jenis.replace('B','')}`;
-                    const infoSesi = grup.sesiList.join(', ');
-                    const isLapor = grup.sudahLapor === true;
+                // Filter cicilan berdasarkan nama kurir aktif (misal: "Aceng")
+                const cicilanKurirIni = cicilanList.filter(c => 
+                    c.nama && c.nama.toLowerCase().includes(userKurirAktif.nama.toLowerCase())
+                );
+                const qtyTarikKurir = cicilanKurirIni.reduce((acc, curr) => acc + (parseInt(curr.qty) || 0), 0);
 
-                    const isChecked = !isLapor ? 'checked' : '';
-                    const isDisabled = isLapor ? 'disabled' : '';
-                    const containerStyle = isLapor 
-                        ? 'opacity-50 bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 cursor-not-allowed' 
-                        : 'bg-emerald-50/40 dark:bg-slate-900 border-emerald-200 dark:border-slate-700 cursor-pointer shadow-2xs';
-
-                    const statusBadge = isLapor
-                        ? `<span class="text-[9px] text-slate-400 font-bold flex items-center gap-1 justify-end"><i class="fa-solid fa-circle-check text-slate-400"></i> Terlapor</span>`
-                        : `<span class="text-[9px] text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 justify-end"><i class="fa-solid fa-clock"></i> Siap Lapor</span>`;
-
-                    container.innerHTML += `
-                        <label class="flex items-center justify-between p-2.5 rounded-xl border transition select-none ${containerStyle}">
-                            <div class="flex items-center gap-2.5">
-                                <input type="checkbox" value="${grup.id}" ${isChecked} ${isDisabled} class="check-item-kloter w-4 h-4 rounded text-emerald-600 focus:ring-0 cursor-pointer disabled:cursor-not-allowed">
-                                <div>
-                                    <div class="text-xs font-black uppercase ${isLapor ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-100'}">${grup.nama}</div>
-                                    <div class="text-[10px] text-slate-400 font-semibold">
-                                        ${namaProduk} • <span class="${isLapor ? 'text-slate-400' : 'text-indigo-600 dark:text-indigo-400'} font-bold">${infoSesi}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-xs font-black ${isLapor ? 'text-slate-400 line-through' : 'text-emerald-600 dark:text-emerald-400'}">${grup.qty} ${grup.satuan}</div>
-                                ${statusBadge}
-                            </div>
-                        </label>
-                    `;
-                });
-            }
-
-            const modal = document.getElementById('modalKloterWA');
-            const content = document.getElementById('contentKloterWA');
-            if (modal && content) {
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('translate-y-full');
-            }
+                if (qtyTarikKurir > 0) {
+                    fallbackList.push({
+                        id: 'db_' + row.id,
+                        karyawanId: row.karyawan_id,
+                        nama: (row.karyawan?.nama || 'PACKING').toUpperCase(),
+                        jenis: jenis,
+                        satuan: getSatuanTarik(jenis),
+                        qty: qtyTarikKurir,
+                        sesiList: [row.sesi || 'Sesi'],
+                        sudahLapor: false // PERBAIKAN 2: Ubah jadi false agar statusnya "Siap Lapor" & bisa dicentang!
+                    });
+                }
+            });
+            itemsKloter = fallbackList;
         }
+    }
+
+    if (itemsKloter.length === 0) {
+        await showNotice("Belum ada catatan tarikan barang apa pun hari ini.", "Data Tarikan Kosong");
+        return;
+    }
+
+    dataTarikanGroupedGlobal = itemsKloter;
+
+    const container = document.getElementById('containerListChecklistKloter');
+    if (container) {
+        container.innerHTML = '';
+        
+        dataTarikanGroupedGlobal.forEach(grup => {
+            const namaProduk = grup.jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${grup.jenis.replace('B','')}`;
+            const infoSesi = grup.sesiList.join(', ');
+            const isLapor = grup.sudahLapor === true;
+
+            const isChecked = !isLapor ? 'checked' : '';
+            const isDisabled = isLapor ? 'disabled' : '';
+            const containerStyle = isLapor 
+                ? 'opacity-50 bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 cursor-not-allowed' 
+                : 'bg-emerald-50/40 dark:bg-slate-900 border-emerald-200 dark:border-slate-700 cursor-pointer shadow-2xs';
+
+            const statusBadge = isLapor
+                ? `<span class="text-[9px] text-slate-400 font-bold flex items-center gap-1 justify-end"><i class="fa-solid fa-circle-check text-slate-400"></i> Terlapor</span>`
+                : `<span class="text-[9px] text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 justify-end"><i class="fa-solid fa-clock"></i> Siap Lapor</span>`;
+
+            container.innerHTML += `
+                <label class="flex items-center justify-between p-2.5 rounded-xl border transition select-none ${containerStyle}">
+                    <div class="flex items-center gap-2.5">
+                        <input type="checkbox" value="${grup.id}" ${isChecked} ${isDisabled} class="check-item-kloter w-4 h-4 rounded text-emerald-600 focus:ring-0 cursor-pointer disabled:cursor-not-allowed">
+                        <div>
+                            <div class="text-xs font-black uppercase ${isLapor ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-100'}">${grup.nama}</div>
+                            <div class="text-[10px] text-slate-400 font-semibold">
+                                ${namaProduk} • <span class="${isLapor ? 'text-slate-400' : 'text-indigo-600 dark:text-indigo-400'} font-bold">${infoSesi}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs font-black ${isLapor ? 'text-slate-400 line-through' : 'text-emerald-600 dark:text-emerald-400'}">${grup.qty} ${grup.satuan}</div>
+                        ${statusBadge}
+                    </div>
+                </label>
+            `;
+        });
+    }
+
+    const modal = document.getElementById('modalKloterWA');
+    const content = document.getElementById('contentKloterWA');
+    if (modal && content) {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        content.classList.remove('translate-y-full');
+    }
+}
 
         function toggleCentangSemuaKloter() {
             const checkboxes = document.querySelectorAll('.check-item-kloter:not(:disabled)');

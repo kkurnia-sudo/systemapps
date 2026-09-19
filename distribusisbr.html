@@ -1771,41 +1771,33 @@
             if (info) info.innerHTML = 'Ketik jumlah yang diterima';
         }
 
-        async function loadDataPenarikan() {
-            const container = document.getElementById('containerAccordionPenarikan');
-            if (!container) return;
+// 1. PERBAIKAN QUERY PENARIKAN & VALIDASI
+async function loadDataPenarikan() {
+    const container = document.getElementById('containerAccordionPenarikan');
+    if (!container) return;
 
-            container.innerHTML = `
-                <div class="p-10 text-center text-gray-400 bg-white rounded-3xl border border-gray-100 shadow-sm">
-                    <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-emerald-600"></i>
-                    <br><span class="text-xs font-bold text-gray-500">Memuat data penarikan...</span>
-                </div>
-            `;
+    // Mengambil SEMUA transaksi yang belum dibayar gajinya (is_lunas = false)
+    const { data, error } = await supabaseClient
+        .from('distribusi_packing')
+        .select(`
+            *,
+            karyawan!karyawan_id(nama),
+            pengirim:karyawan!dikirim_oleh(nama),
+            penarik:karyawan!ditarik_oleh(nama)
+        `)
+        .eq('is_lunas', false) // Menampilkan semua yang belum dilunasi admin
+        .order('tanggal', { ascending: false });
 
-            const { data, error } = await supabaseClient
-                .from('distribusi_packing')
-                .select(`
-                    *,
-                    karyawan!karyawan_id(nama),
-                    pengirim:karyawan!dikirim_oleh(nama),
-                    penarik:karyawan!ditarik_oleh(nama)
-                `)
-                .or('is_lunas.eq.false,koreksi.lt.0')
-                .order('tanggal', { ascending: false });
+    if (error) {
+        container.innerHTML = `<div class="p-5 text-center text-red-500 font-bold">Error: ${error.message}</div>`;
+        return;
+    }
 
-            if (error) {
-                container.innerHTML = `<div class="p-5 text-center text-red-500 font-bold bg-white rounded-2xl border border-red-100">Error: ${error.message}</div>`;
-                return;
-            }
+    rawDataPenarikanGlobal = data || [];
+    rawDataPenarikanGlobal.forEach(row => { masterDistribusiMap[row.id] = row; });
 
-            rawDataPenarikanGlobal = data || [];
-            rawDataPenarikanGlobal.forEach(row => {
-                masterDistribusiMap[row.id] = row;
-            });
-
-            terapkanFilterPenarikan();
-        }
-
+    terapkanFilterPenarikan();
+}
         function resetFilterPenarikan() {
             const elNama = document.getElementById('filterNamaPekerja');
             const elJenis = document.getElementById('filterJenisProduk');
@@ -2231,192 +2223,36 @@
             }
         }
 
-        async function loadRekapGaji() {
-            const elStart = document.getElementById('filterStart');
-            const elEnd = document.getElementById('filterEnd');
-            const start = elStart ? elStart.value : '';
-            const end = elEnd ? elEnd.value : '';
-            const tbody = document.getElementById('tableBodyRekap');
-            const tfoot = document.getElementById('tableFootRekap');
-            const btnFilter = document.getElementById('btnFilterRekap');
-            const iconRefresh = document.getElementById('iconRefreshRekap');
-            const tarif = getTarif();
+// 2. PERBAIKAN QUERY REKAP GAJI
+async function loadRekapGaji() {
+    const start = document.getElementById('filterStart').value;
+    const end = document.getElementById('filterEnd').value;
 
-            if (!start || !end) {
-                await showNotice("Silakan pilih rentang tanggal terlebih dahulu!", "Peringatan", "warning");
-                return;
-            }
+    // Ambil data berdasarkan rentang tanggal ATAU data saldo gantungan yang belum lunas
+    const { data, error } = await supabaseClient
+        .from('distribusi_packing')
+        .select(`
+            *,
+            karyawan!karyawan_id(nama),
+            pengirim:karyawan!dikirim_oleh(nama),
+            penarik:karyawan!ditarik_oleh(nama)
+        `)
+        .eq('is_lunas', false)
+        .order('tanggal', { ascending: false });
 
-            if (btnFilter) {
-                btnFilter.disabled = true;
-                btnFilter.classList.add('opacity-75');
-            }
-            if (iconRefresh) iconRefresh.classList.add('fa-spin');
+    if (error) return;
 
-            if (tbody) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="9" class="p-10 text-center text-gray-400">
-                            <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-indigo-600"></i>
-                            <br><span class="text-xs font-bold text-gray-500">Mengkalkulasi Rekap Gaji & Potongan...</span>
-                        </td>
-                    </tr>
-                `;
-            }
-            if (tfoot) tfoot.innerHTML = '';
-            globalRekapData = {};
-            
-            const checkAll = document.getElementById('checkAllRekap');
-            if (checkAll) checkAll.checked = false;
-            updateBatchActionBar();
+    // Filter data di Javascript agar mencakup transaksi dalam periode ATAU transaksi gantungan aktif
+    const dataTerfilter = (data || []).filter(row => {
+        const tgl = row.tanggal;
+        const dalamPeriode = (tgl >= start && tgl <= end);
+        const adaSetoran = (row.tarik_jadi || 0) > 0;
+        return dalamPeriode || adaSetoran;
+    });
 
-            try {
-                const elThB12 = document.getElementById('thLabelB12');
-                const elThB10 = document.getElementById('thLabelB10');
-                const elThOleh = document.getElementById('thLabelOleholeh');
-
-                if (elThB12) elThB12.innerHTML = `Aromanis B12<br><span class="text-gray-400 text-[9px]">@ ${formatRp(tarif.b12)}</span>`;
-                if (elThB10) elThB10.innerHTML = `Aromanis B10<br><span class="text-gray-400 text-[9px]">@ ${formatRp(tarif.b10)}</span>`;
-                if (elThOleh) elThOleh.innerHTML = `Oleh-oleh<br><span class="text-gray-400 text-[9px]">@ ${formatRp(tarif.oleholeh)}</span>`;
-
-                const [resPeriode, resSemuaGantung] = await Promise.all([
-                    supabaseClient
-                        .from('distribusi_packing')
-                        .select(`
-                            *,
-                            karyawan!karyawan_id(nama),
-                            pengirim:karyawan!dikirim_oleh(nama),
-                            penarik:karyawan!ditarik_oleh(nama)
-                        `)
-                        .eq('is_lunas', false)
-                        .gte('tanggal', start)
-                        .lte('tanggal', end)
-                        .order('tanggal', { ascending: false }),
-                    supabaseClient
-                        .from('distribusi_packing')
-                        .select(`
-                            *,
-                            karyawan!karyawan_id(nama),
-                            pengirim:karyawan!dikirim_oleh(nama),
-                            penarik:karyawan!ditarik_oleh(nama)
-                        `)
-                        .eq('is_lunas', false)
-                        .order('tanggal', { ascending: false })
-                ]);
-
-                if (resPeriode.error) throw resPeriode.error;
-
-                const data = resPeriode.data || [];
-                const semuaAktif = resSemuaGantung.data || [];
-
-                const rekap = {};
-
-                data.forEach(row => {
-                    masterDistribusiMap[row.id] = row;
-                    if ((row.tarik_jadi || 0) === 0 && (row.koreksi || 0) === 0) return;
-
-                    const kid = row.karyawan_id;
-                    if (!rekap[kid]) {
-                        rekap[kid] = {
-                            nama: row.karyawan?.nama || 'Unknown',
-                            b12: 0, 
-                            b10: 0, 
-                            oleholeh: 0,
-                            gajiDasar: 0,
-                            totalKirimMurni: 0,
-                            dapatUangMakan: false,
-                            totalPotonganNominal: 0,
-                            rincianPotongUpah: [],
-                            histori: [],
-                            tanggunganBersihPerProduk: {},
-                            daftarGantung: []
-                        };
-                    }
-
-                    rekap[kid].histori.push(row);
-                    rekap[kid].totalKirimMurni += (row.kirim_produksi || 0);
-
-                    const qty = row.tarik_jadi || 0;
-
-                    if (row.jenis_produk === 'B12') { 
-                        rekap[kid].b12 += qty; 
-                        rekap[kid].gajiDasar += (qty * tarif.b12); 
-                    } else if (row.jenis_produk === 'B10') { 
-                        rekap[kid].b10 += qty; 
-                        rekap[kid].gajiDasar += (qty * tarif.b10); 
-                    } else if (row.jenis_produk === 'Oleh-oleh') {
-                        rekap[kid].oleholeh += qty;
-                        rekap[kid].gajiDasar += (qty * tarif.oleholeh); 
-                    }
-
-                    if (row.riwayat_cicilan && row.riwayat_cicilan.includes('Ganti Potong Upah')) {
-                        const match = row.riwayat_cicilan.match(/Ganti Potong Upah \((\d+)\s*(Bal|Toros)\)/i);
-                        if (match) {
-                            const qtyPotong = parseInt(match[1], 10) || 0;
-                            let hargaDenda = tarif.dendaB12;
-                            if (row.jenis_produk === 'B10') hargaDenda = tarif.dendaB10;
-                            else if (row.jenis_produk === 'Oleh-oleh') hargaDenda = tarif.dendaOleholeh;
-
-                            const nominalDenda = qtyPotong * hargaDenda;
-                            rekap[kid].totalPotonganNominal += nominalDenda;
-                            rekap[kid].rincianPotongUpah.push({
-                                jenis: row.jenis_produk || 'B12',
-                                qty: qtyPotong,
-                                satuan: match[2],
-                                nominal: nominalDenda
-                            });
-                        }
-                    }
-                });
-
-                semuaAktif.forEach(row => {
-                    masterDistribusiMap[row.id] = row;
-                    const kid = row.karyawan_id;
-                    const jenis = row.jenis_produk || 'B12';
-                    const target = hitungTargetProduk(row.kirim_produksi, jenis);
-                    const tarik = row.tarik_jadi || 0;
-
-                    if (!rekap[kid]) {
-                        rekap[kid] = {
-                            nama: row.karyawan?.nama || 'Unknown',
-                            b12: 0, b10: 0, oleholeh: 0, gajiDasar: 0,
-                            totalKirimMurni: 0, dapatUangMakan: false,
-                            totalPotonganNominal: 0, rincianPotongUpah: [],
-                            histori: [], tanggunganBersihPerProduk: {}, daftarGantung: []
-                        };
-                    }
-
-                    if (!rekap[kid].tanggunganBersihPerProduk[jenis]) {
-                        rekap[kid].tanggunganBersihPerProduk[jenis] = {
-                            totalTarget: 0, totalTarik: 0, satuan: getSatuanTarik(jenis)
-                        };
-                    }
-
-                    rekap[kid].tanggunganBersihPerProduk[jenis].totalTarget += target;
-                    rekap[kid].tanggunganBersihPerProduk[jenis].totalTarik += tarik;
-
-                    if (!rekap[kid].daftarGantung.some(it => it.id === row.id)) {
-                        rekap[kid].daftarGantung.push(row);
-                    }
-                });
-
-                globalRekapData = rekap;
-                renderTabelRekap();
-
-            } catch (err) {
-                console.error("Gagal memuat rekap:", err);
-                if (tbody) {
-                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-red-500 font-bold text-xs">Gagal memuat data: ${err.message}</td></tr>`;
-                }
-            } finally {
-                if (btnFilter) {
-                    btnFilter.disabled = false;
-                    btnFilter.classList.remove('opacity-75');
-                }
-                if (iconRefresh) iconRefresh.classList.remove('fa-spin');
-            }
-        }
-
+    // Jalankan pengolahan rekap gaji menggunakan dataTerfilter...
+    olprocessDataRekap(dataTerfilter);
+}
         function renderTabelRekap() {
             const tbody = document.getElementById('tableBodyRekap');
             const tfoot = document.getElementById('tableFootRekap');
