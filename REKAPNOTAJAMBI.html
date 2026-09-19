@@ -1628,7 +1628,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             modal.classList.add('modal-leave');
         }
 
-        // Mengisi input bayar cepat secara full sesuai sisa piutang
+        // Mengisi input bayar cepat secara full saat tombol 'Bayar Full' ditekan
         function setQuickPayFull() {
             const amountInput = document.getElementById('quickPayAmount');
             if (quickPayRemainingAmount > 0) {
@@ -1659,23 +1659,23 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 document.getElementById('quickPaySelectContainer').classList.remove('hide');
                 quickPayTargetInvoice = selectEl.value;
 
-                // Ambil sisa piutang untuk nota urutan pertama yang terpilih
+                // Catat sisa piutang untuk nota pertama di latar belakang
                 const selectedFirst = navbarUnpaidInvoices.find(i => i.invoice_number === quickPayTargetInvoice);
                 quickPayRemainingAmount = selectedFirst ? Number(selectedFirst.remaining_amount) || 0 : 0;
 
-                // Tangani perubahan dropdown ketika pelanggan/nota lain dipilih
+                // Tangani perubahan dropdown ketika nota lain dipilih
                 selectEl.onchange = (e) => { 
                     quickPayTargetInvoice = e.target.value; 
                     const selected = navbarUnpaidInvoices.find(i => i.invoice_number === quickPayTargetInvoice);
                     quickPayRemainingAmount = selected ? Number(selected.remaining_amount) || 0 : 0;
-                    setQuickPayFull(); // Perbarui nominal bayar otomatis
+                    document.getElementById('quickPayAmount').value = ''; // Kosongkan input agar placeholder 0 kembali tampil
                 };
 
                 document.getElementById('quickPayTitle').innerText = 'Bayar Cepat (Shortcut)';
                 document.getElementById('quickPayDate').value = getTodayDate();
                 
-                // Set otomatis bayar full saat modal terbuka
-                setQuickPayFull();
+                // Kolom nominal dibuat kosong secara default (placeholder=0)
+                document.getElementById('quickPayAmount').value = '';
 
                 const modal = document.getElementById('modalQuickPay');
                 modal.classList.remove('modal-leave');
@@ -1691,7 +1691,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             document.getElementById('quickPayTitle').innerText = `Bayar Cepat: ${invNum}`;
             document.getElementById('quickPayDate').value = getTodayDate();
 
-            // Ambil nominal sisa piutang dari cache lokal atau database
+            // Ambil nominal sisa piutang di latar belakang
             let inv = allInvoicesData.find(i => i.invoice_number === invNum);
             if (!inv) {
                 try {
@@ -1707,8 +1707,8 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
             quickPayRemainingAmount = inv ? Number(inv.remaining_amount) || 0 : 0;
 
-            // Set otomatis bayar full saat modal terbuka
-            setQuickPayFull();
+            // Kolom nominal dibuat kosong secara default (placeholder=0)
+            document.getElementById('quickPayAmount').value = '';
 
             const modal = document.getElementById('modalQuickPay');
             modal.classList.remove('modal-leave');
@@ -1721,6 +1721,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             modal.classList.add('modal-leave');
             quickPayTargetInvoice = null;
             quickPayRemainingAmount = 0;
+            document.getElementById('quickPayAmount').value = '';
         }
 
         function handleQuickPayInput(el) {
