@@ -1,9 +1,10 @@
+<!-- @ts-nocheck -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBR Putra Food - Logistik & Gaji (Direct Ledger)</title>
+    <title>SBR Putra Food - Logistik & Gaji</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -19,6 +20,17 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
         .smooth-transition { transition: all 0.2s ease-in-out; }
+        
+        /* Menghilangkan spinner angka standar & perbaikan standar CSS */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            margin: 0 !important;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen pb-10">
@@ -129,7 +141,7 @@
                 </div>
             </div>
 
-            <!-- Panel Kanan: Monitoring Logistik Hari Terpilih -->
+            <!-- Monitoring Logistik Hari Terpilih -->
             <div class="xl:col-span-7 space-y-4">
                 <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-3">
                     <div class="flex items-center justify-between border-b pb-3">
@@ -149,7 +161,6 @@
                         </div>
                     </div>
 
-                    <!-- 4 WIDGET KPI -->
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-center" id="boxKpiLogistikHariIni">
                         <div class="p-3 bg-blue-50/60 rounded-2xl border border-blue-100 flex flex-col justify-between">
                             <div class="text-[10px] font-bold text-blue-600 uppercase">Total Kirim (Bahan)</div>
@@ -216,7 +227,6 @@
         <!-- VIEW 2: PENARIKAN BARANG -->
         <div id="viewPenarikan" class="hidden opacity-0 smooth-transition space-y-6">
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
-                <!-- KIRI: SETOR CEPAT DIRECT LEDGER -->
                 <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-emerald-100">
                     <div class="flex items-center justify-between pb-3 border-b border-gray-100">
                         <div class="flex items-center gap-2">
@@ -224,12 +234,12 @@
                                 <i class="fa-solid fa-bolt"></i>
                             </div>
                             <div>
-                                <h2 class="text-sm font-black text-gray-900 leading-tight">Setor Cepat (Direct Ledger)</h2>
-                                <p class="text-[11px] text-gray-400">Pencatatan setoran langsung akumulasi ke transaksi aktif.</p>
+                                <h2 class="text-sm font-black text-gray-900 leading-tight">Setor Cepat (FIFO)</h2>
+                                <p class="text-[11px] text-gray-400">Otomatis melunasi nota terlama.</p>
                             </div>
                         </div>
                         <span class="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-extrabold text-[10px] rounded-full hidden sm:inline-block">
-                            Direct Mode
+                            Mode Sinkron
                         </span>
                     </div>
 
@@ -261,7 +271,6 @@
                             </div>
                         </div>
 
-                        <!-- Box Input -->
                         <div id="boxInputSetorDesktop" class="hidden space-y-2.5 p-3 bg-emerald-50/50 border border-emerald-200 rounded-2xl">
                             <div class="flex justify-between items-center px-0.5">
                                 <label class="text-[11px] font-black text-emerald-900 uppercase" id="labelSatuanDesktop">Jumlah Disetor (Bal)</label>
@@ -285,14 +294,13 @@
                                 </select>
                             </div>
 
-                            <button type="button" id="btnEksekusiSetorDesktop" onclick="simpanSetorDirectDesktop()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-check-double"></i> SIMPAN SETORAN (DIRECT LEDGER)
+                            <button type="button" id="btnEksekusiSetorDesktop" onclick="simpanSetorFIFODesktop()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-check-double"></i> SIMPAN SETORAN (FIFO)
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- KANAN: VALIDASI & FILTER -->
                 <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
                         <div>
@@ -342,7 +350,7 @@
                         </div>
 
                         <div class="sm:col-span-2 pt-1">
-                            <button type="button" onclick="resetFilterPenarikan()" class="w-full py-2 bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 border border-gray-200">
+                            <button type="button" onclick="resetFilterPenarikan()" class="w-full py-2 bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-2xs border border-gray-200">
                                 <i class="fa-solid fa-rotate-left text-gray-500"></i> Reset Filter
                             </button>
                         </div>
@@ -361,7 +369,7 @@
             <div id="containerAccordionPenarikan" class="space-y-4"></div>
         </div>
 
-        <!-- VIEW 3: REKAP GAJI KARYAWAN -->
+        <!-- VIEW 3: REKAP GAJI KARYAWAN (PERBAIKAN SINKRONISASI PENGGAJIAN) -->
         <div id="viewRekap" class="hidden opacity-0 smooth-transition">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row items-end gap-3">
                 <div class="w-full md:w-auto">
@@ -564,7 +572,7 @@
 
     </main>
 
-    <!-- MODAL SALDO AWAL GANTUNGAN LAMA -->
+    <!-- MODAL KHUSUS INPUT SALDO GANTUNGAN LAMA -->
     <div id="modalSaldoAwal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-5 space-y-4 transform scale-95 transition-all duration-300 border border-amber-100" id="contentSaldoAwal">
             <div class="flex justify-between items-center pb-2.5 border-b border-gray-100">
@@ -696,7 +704,7 @@
 
     <!-- MODAL PRATINJAU SLIP GAJI -->
     <div id="modalPratinjau" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div id="modalContentPratinjau" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-all duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-all duration-300">
             <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 class="text-sm font-extrabold text-gray-800 flex items-center">
                     <i class="fa-solid fa-receipt text-indigo-600 mr-2"></i> Pratinjau Slip Gaji
@@ -952,8 +960,8 @@
             });
         }
 
-        const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-        const formatRpStruk = (angka) => "Rp " + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+        const formatRpStruk = (angka) => "Rp " + (angka || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
         function formatTglIndo(tglStr) {
             if (!tglStr) return "-";
@@ -1092,20 +1100,6 @@
         const day = startOfWeek.getDay() || 7; 
         if (day !== 1) startOfWeek.setHours(-24 * (day - 1));
         if (document.getElementById('filterStart')) document.getElementById('filterStart').valueAsDate = startOfWeek;
-
-        // FUNGSI SINKRONISASI GLOBAL (Panggil saat ada perubahan transaksi)
-        async function segarkanSemuaTampilan() {
-            loadDataLogistik();
-            loadDataPenarikan();
-            loadSetorFIFODesktop();
-            const elStart = document.getElementById('filterStart');
-            if (elStart && elStart.value) {
-                await loadRekapGaji();
-            }
-            if (currentGantungKaryawanId) {
-                bukaModalGantung(currentGantungKaryawanId);
-            }
-        }
 
         function switchTab(tabName) {
             const btnLogistik = document.getElementById('tabBtnLogistik');
@@ -1334,7 +1328,9 @@
             } else {
                 tutupModalSaldoAwal();
                 await showSuccess("Saldo gantungan lama berhasil dimasukkan ke sistem!");
-                await segarkanSemuaTampilan();
+                loadDataLogistik();
+                loadDataPenarikan();
+                loadSetorFIFODesktop();
             }
         }
 
@@ -1499,7 +1495,6 @@
             document.getElementById('kpiDetailSisa').innerHTML = sisaChips.join('');
         }
 
-        // SISTEM DIRECT LEDGER DESKTOP
         async function loadSetorFIFODesktop() {
             const select = document.getElementById('selectPekerjaSetorDesktop');
             if (!select) return;
@@ -1695,7 +1690,7 @@
             document.getElementById('infoPrediksiDesktop').innerHTML = infoText;
         }
 
-        async function simpanSetorDirectDesktop() {
+        async function simpanSetorFIFODesktop() {
             if (!produkTerpilihFIFODesktop) {
                 await showNotice("Pilih produk yang akan disetor!", "Peringatan", "warning");
                 return;
@@ -1714,42 +1709,73 @@
 
             const btn = document.getElementById('btnEksekusiSetorDesktop');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i> Menyimpan Direct Ledger...';
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i> Mengalokasikan FIFO...';
 
             const kid = document.getElementById('selectPekerjaSetorDesktop').value;
             const namaKaryawan = dataPekerjaFIFODesktopMap[kid]?.nama || 'Pekerja';
             const satuan = produkTerpilihFIFODesktop.satuan;
 
-            // DIRECT LEDGER: Catat langsung ke transaksi aktif tanpa memecah ke nota lama
-            const targetItem = produkTerpilihFIFODesktop.items[produkTerpilihFIFODesktop.items.length - 1];
-            const tarikLama = targetItem.tarik_jadi || 0;
-            const totalTarikBaru = tarikLama + inputBaru;
-            const targetKirim = hitungTargetProduk(targetItem.kirim_produksi, targetItem.jenis_produk);
-            const koreksiBaru = totalTarikBaru - targetKirim;
+            let sisaAlokasi = inputBaru;
+            const updatePromises = [];
 
-            const logBaru = `${penarikNama}: +${inputBaru} ${satuan} (${sesiWaktu})`;
-            const logGabungan = targetItem.riwayat_cicilan ? `${targetItem.riwayat_cicilan}, ${logBaru}` : logBaru;
+            for (let i = 0; i < produkTerpilihFIFODesktop.items.length; i++) {
+                const row = produkTerpilihFIFODesktop.items[i];
+                const rowTarget = hitungTargetProduk(row.kirim_produksi, row.jenis_produk);
+                const tarikSaatIni = row.tarik_jadi || 0;
+                const kekuranganRow = Math.max(0, rowTarget - tarikSaatIni);
+                const isLastRow = (i === produkTerpilihFIFODesktop.items.length - 1);
 
-            const payloadUpdate = {
-                tarik_jadi: totalTarikBaru,
-                koreksi: koreksiBaru,
-                ditarik_oleh: penarikId,
-                riwayat_cicilan: logGabungan
-            };
+                let jatahRowIni = 0;
+                if (sisaAlokasi > 0) {
+                    if (!isLastRow) {
+                        jatahRowIni = Math.min(kekuranganRow, sisaAlokasi);
+                        sisaAlokasi -= jatahRowIni;
+                    } else {
+                        jatahRowIni = sisaAlokasi;
+                        sisaAlokasi = 0;
+                    }
+                }
 
-            const { error } = await supabaseClient
-                .from('distribusi_packing')
-                .update(payloadUpdate)
-                .eq('id', targetItem.id);
+                const totalTarikBaru = tarikSaatIni + jatahRowIni;
+                const koreksiBaru = totalTarikBaru - rowTarget;
+
+                let logGabungan = row.riwayat_cicilan || '';
+                if (jatahRowIni > 0) {
+                    const logBaru = `${penarikNama}: +${jatahRowIni} ${satuan} (${sesiWaktu})`;
+                    logGabungan = logGabungan ? `${logGabungan}, ${logBaru}` : logBaru;
+                }
+
+                const payloadUpdate = {
+                    tarik_jadi: totalTarikBaru,
+                    koreksi: koreksiBaru
+                };
+
+                if (jatahRowIni > 0) {
+                    payloadUpdate.ditarik_oleh = penarikId;
+                    payloadUpdate.riwayat_cicilan = logGabungan;
+                }
+
+                updatePromises.push(
+                    supabaseClient
+                        .from('distribusi_packing')
+                        .update(payloadUpdate)
+                        .eq('id', row.id)
+                );
+            }
+
+            const results = await Promise.all(updatePromises);
+            const hasError = results.some(r => r.error);
 
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-check-double"></i> SIMPAN SETORAN (DIRECT LEDGER)';
+            btn.innerHTML = '<i class="fa-solid fa-check-double"></i> SIMPAN SETORAN (FIFO)';
 
-            if (error) {
-                await showError("Gagal menyimpan setoran Direct Ledger: " + error.message);
+            if (hasError) {
+                await showError("Gagal menyimpan alokasi setoran FIFO.");
             } else {
-                await showSuccess(`Setoran ${inputBaru} ${satuan} untuk ${namaKaryawan} berhasil dicatat secara langsung!`);
-                await segarkanSemuaTampilan();
+                await showSuccess(`Setoran ${inputBaru} ${satuan} untuk ${namaKaryawan} berhasil dialokasikan secara FIFO!`);
+                await loadSetorFIFODesktop();
+                loadDataPenarikan();
+                loadDataLogistik();
             }
         }
 
@@ -1771,33 +1797,41 @@
             if (info) info.innerHTML = 'Ketik jumlah yang diterima';
         }
 
-// 1. PERBAIKAN QUERY PENARIKAN & VALIDASI
-async function loadDataPenarikan() {
-    const container = document.getElementById('containerAccordionPenarikan');
-    if (!container) return;
+        async function loadDataPenarikan() {
+            const container = document.getElementById('containerAccordionPenarikan');
+            if (!container) return;
 
-    // Mengambil SEMUA transaksi yang belum dibayar gajinya (is_lunas = false)
-    const { data, error } = await supabaseClient
-        .from('distribusi_packing')
-        .select(`
-            *,
-            karyawan!karyawan_id(nama),
-            pengirim:karyawan!dikirim_oleh(nama),
-            penarik:karyawan!ditarik_oleh(nama)
-        `)
-        .eq('is_lunas', false) // Menampilkan semua yang belum dilunasi admin
-        .order('tanggal', { ascending: false });
+            container.innerHTML = `
+                <div class="p-10 text-center text-gray-400 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                    <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-emerald-600"></i>
+                    <br><span class="text-xs font-bold text-gray-500">Memuat data penarikan...</span>
+                </div>
+            `;
 
-    if (error) {
-        container.innerHTML = `<div class="p-5 text-center text-red-500 font-bold">Error: ${error.message}</div>`;
-        return;
-    }
+            const { data, error } = await supabaseClient
+                .from('distribusi_packing')
+                .select(`
+                    *,
+                    karyawan!karyawan_id(nama),
+                    pengirim:karyawan!dikirim_oleh(nama),
+                    penarik:karyawan!ditarik_oleh(nama)
+                `)
+                .or('is_lunas.eq.false,koreksi.lt.0')
+                .order('tanggal', { ascending: false });
 
-    rawDataPenarikanGlobal = data || [];
-    rawDataPenarikanGlobal.forEach(row => { masterDistribusiMap[row.id] = row; });
+            if (error) {
+                container.innerHTML = `<div class="p-5 text-center text-red-500 font-bold bg-white rounded-2xl border border-red-100">Error: ${error.message}</div>`;
+                return;
+            }
 
-    terapkanFilterPenarikan();
-}
+            rawDataPenarikanGlobal = data || [];
+            rawDataPenarikanGlobal.forEach(row => {
+                masterDistribusiMap[row.id] = row;
+            });
+
+            terapkanFilterPenarikan();
+        }
+
         function resetFilterPenarikan() {
             const elNama = document.getElementById('filterNamaPekerja');
             const elJenis = document.getElementById('filterJenisProduk');
@@ -2115,7 +2149,7 @@ async function loadDataPenarikan() {
         function tutupModalGantung() {
             const modal = document.getElementById('modalGantung');
             modal.classList.add('opacity-0', 'pointer-events-none');
-            document.getElementById('modalContentGantung').add('scale-95');
+            document.getElementById('modalContentGantung').classList.add('scale-95');
         }
 
         function bukaModalAksiPelunasan(row) {
@@ -2198,7 +2232,7 @@ async function loadDataPenarikan() {
 
                 const infoTambahan = tipe === 'potong_upah' ? `\nTotal pemotongan gaji langsung: -${formatRp(nominalDendaInfo)}.` : '';
 
-                const konfirmasi = await showConfirm(`Proses ${labelAksi} untuk sisa ${sisaKurang} ${satuan} milik ${nama}?${infoTambahan}\nTarget fisik diselaraskan ke ${tarik} ${satuan} agar nota tuntas dari kalkulasi.`, labelAksi);
+                const konfirmasi = await showConfirm(`Proses ${labelAksi} untuk sisa ${sisaKurang} ${satuan} milik ${nama}?${infoTambahan}\nTarget fisik diselaraskan ke ${tarik} ${satuan} agar nota tuntas dari kalkulasi FIFO.`, labelAksi);
                 if (!konfirmasi) return;
 
                 let kirimDisesuaikan = tarik;
@@ -2223,36 +2257,206 @@ async function loadDataPenarikan() {
             }
         }
 
-// 2. PERBAIKAN QUERY REKAP GAJI
-async function loadRekapGaji() {
-    const start = document.getElementById('filterStart').value;
-    const end = document.getElementById('filterEnd').value;
+        async function segarkanSemuaTampilan() {
+            await loadRekapGaji();
+            loadDataLogistik();
+            loadDataPenarikan();
+            loadSetorFIFODesktop();
+            if (currentGantungKaryawanId) {
+                bukaModalGantung(currentGantungKaryawanId);
+            }
+        }
 
-    // Ambil data berdasarkan rentang tanggal ATAU data saldo gantungan yang belum lunas
-    const { data, error } = await supabaseClient
-        .from('distribusi_packing')
-        .select(`
-            *,
-            karyawan!karyawan_id(nama),
-            pengirim:karyawan!dikirim_oleh(nama),
-            penarik:karyawan!ditarik_oleh(nama)
-        `)
-        .eq('is_lunas', false)
-        .order('tanggal', { ascending: false });
+        // ==============================================================
+        // LOGIKA REKAP GAJI LENGKAP & PRESISI MULTI-DONA
+        // ==============================================================
+        async function loadRekapGaji() {
+            const elStart = document.getElementById('filterStart');
+            const elEnd = document.getElementById('filterEnd');
+            const start = elStart ? elStart.value : '';
+            const end = elEnd ? elEnd.value : '';
+            const tbody = document.getElementById('tableBodyRekap');
+            const tfoot = document.getElementById('tableFootRekap');
+            const btnFilter = document.getElementById('btnFilterRekap');
+            const iconRefresh = document.getElementById('iconRefreshRekap');
+            const tarif = getTarif();
 
-    if (error) return;
+            if (!start || !end) {
+                await showNotice("Silakan pilih rentang tanggal terlebih dahulu!", "Peringatan", "warning");
+                return;
+            }
 
-    // Filter data di Javascript agar mencakup transaksi dalam periode ATAU transaksi gantungan aktif
-    const dataTerfilter = (data || []).filter(row => {
-        const tgl = row.tanggal;
-        const dalamPeriode = (tgl >= start && tgl <= end);
-        const adaSetoran = (row.tarik_jadi || 0) > 0;
-        return dalamPeriode || adaSetoran;
-    });
+            if (btnFilter) {
+                btnFilter.disabled = true;
+                btnFilter.classList.add('opacity-75');
+            }
+            if (iconRefresh) iconRefresh.classList.add('fa-spin');
 
-    // Jalankan pengolahan rekap gaji menggunakan dataTerfilter...
-    olprocessDataRekap(dataTerfilter);
-}
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="p-10 text-center text-gray-400">
+                            <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-indigo-600"></i>
+                            <br><span class="text-xs font-bold text-gray-500">Mengkalkulasi Rekap Gaji & Potongan...</span>
+                        </td>
+                    </tr>
+                `;
+            }
+            if (tfoot) tfoot.innerHTML = '';
+            globalRekapData = {};
+            
+            const checkAll = document.getElementById('checkAllRekap');
+            if (checkAll) checkAll.checked = false;
+            updateBatchActionBar();
+
+            try {
+                const elThB12 = document.getElementById('thLabelB12');
+                const elThB10 = document.getElementById('thLabelB10');
+                const elThOleh = document.getElementById('thLabelOleholeh');
+
+                if (elThB12) elThB12.innerHTML = `Aromanis B12<br><span class="text-gray-400 text-[9px]">@ ${formatRp(tarif.b12)}</span>`;
+                if (elThB10) elThB10.innerHTML = `Aromanis B10<br><span class="text-gray-400 text-[9px]">@ ${formatRp(tarif.b10)}</span>`;
+                if (elThOleh) elThOleh.innerHTML = `Oleh-oleh<br><span class="text-gray-400 text-[9px]">@ ${formatRp(tarif.oleholeh)}</span>`;
+
+                const [resPeriode, resSemuaGantung] = await Promise.all([
+                    supabaseClient
+                        .from('distribusi_packing')
+                        .select(`
+                            *,
+                            karyawan!karyawan_id(nama),
+                            pengirim:karyawan!dikirim_oleh(nama),
+                            penarik:karyawan!ditarik_oleh(nama)
+                        `)
+                        .eq('is_lunas', false)
+                        .gte('tanggal', start)
+                        .lte('tanggal', end)
+                        .order('tanggal', { ascending: false }),
+                    supabaseClient
+                        .from('distribusi_packing')
+                        .select(`
+                            *,
+                            karyawan!karyawan_id(nama),
+                            pengirim:karyawan!dikirim_oleh(nama),
+                            penarik:karyawan!ditarik_oleh(nama)
+                        `)
+                        .eq('is_lunas', false)
+                        .order('tanggal', { ascending: false })
+                ]);
+
+                if (resPeriode.error) throw resPeriode.error;
+
+                const data = resPeriode.data || [];
+                const semuaAktif = resSemuaGantung.data || [];
+
+                const rekap = {};
+
+                data.forEach(row => {
+                    masterDistribusiMap[row.id] = row;
+                    if ((row.tarik_jadi || 0) === 0 && (row.koreksi || 0) === 0) return;
+
+                    const kid = row.karyawan_id;
+                    if (!rekap[kid]) {
+                        rekap[kid] = {
+                            nama: row.karyawan?.nama || 'Unknown',
+                            b12: 0, 
+                            b10: 0, 
+                            oleholeh: 0,
+                            gajiDasar: 0,
+                            totalKirimMurni: 0,
+                            dapatUangMakan: false,
+                            totalPotonganNominal: 0,
+                            rincianPotongUpah: [],
+                            histori: [],
+                            tanggunganBersihPerProduk: {},
+                            daftarGantung: []
+                        };
+                    }
+
+                    rekap[kid].histori.push(row);
+                    rekap[kid].totalKirimMurni += (row.kirim_produksi || 0);
+
+                    const qty = row.tarik_jadi || 0;
+
+                    if (row.jenis_produk === 'B12') { 
+                        rekap[kid].b12 += qty; 
+                        rekap[kid].gajiDasar += (qty * tarif.b12); 
+                    } else if (row.jenis_produk === 'B10') { 
+                        rekap[kid].b10 += qty; 
+                        rekap[kid].gajiDasar += (qty * tarif.b10); 
+                    } else if (row.jenis_produk === 'Oleh-oleh') {
+                        rekap[kid].oleholeh += qty;
+                        rekap[kid].gajiDasar += (qty * tarif.oleholeh); 
+                    }
+
+                    // PERBAIKAN: Deteksi multi-denda ganti potong upah menggunakan ekspresi global
+                    if (row.riwayat_cicilan && row.riwayat_cicilan.includes('Ganti Potong Upah')) {
+                        const matches = [...row.riwayat_cicilan.matchAll(/Ganti Potong Upah \(\+?(\d+)\s*(Bal|Toros)\)/gi)];
+                        matches.forEach(m => {
+                            const qtyPotong = parseInt(m[1], 10) || 0;
+                            let hargaDenda = tarif.dendaB12;
+                            if (row.jenis_produk === 'B10') hargaDenda = tarif.dendaB10;
+                            else if (row.jenis_produk === 'Oleh-oleh') hargaDenda = tarif.dendaOleholeh;
+
+                            const nominalDenda = qtyPotong * hargaDenda;
+                            rekap[kid].totalPotonganNominal += nominalDenda;
+                            rekap[kid].rincianPotongUpah.push({
+                                jenis: row.jenis_produk || 'B12',
+                                qty: qtyPotong,
+                                satuan: m[2],
+                                nominal: nominalDenda
+                            });
+                        });
+                    }
+                });
+
+                semuaAktif.forEach(row => {
+                    masterDistribusiMap[row.id] = row;
+                    const kid = row.karyawan_id;
+                    const jenis = row.jenis_produk || 'B12';
+                    const target = hitungTargetProduk(row.kirim_produksi, jenis);
+                    const tarik = row.tarik_jadi || 0;
+
+                    if (!rekap[kid]) {
+                        rekap[kid] = {
+                            nama: row.karyawan?.nama || 'Unknown',
+                            b12: 0, b10: 0, oleholeh: 0, gajiDasar: 0,
+                            totalKirimMurni: 0, dapatUangMakan: false,
+                            totalPotonganNominal: 0, rincianPotongUpah: [],
+                            histori: [], tanggunganBersihPerProduk: {}, daftarGantung: []
+                        };
+                    }
+
+                    if (!rekap[kid].tanggunganBersihPerProduk[jenis]) {
+                        rekap[kid].tanggunganBersihPerProduk[jenis] = {
+                            totalTarget: 0, totalTarik: 0, satuan: getSatuanTarik(jenis)
+                        };
+                    }
+
+                    rekap[kid].tanggunganBersihPerProduk[jenis].totalTarget += target;
+                    rekap[kid].tanggunganBersihPerProduk[jenis].totalTarik += tarik;
+
+                    if (!rekap[kid].daftarGantung.some(it => it.id === row.id)) {
+                        rekap[kid].daftarGantung.push(row);
+                    }
+                });
+
+                globalRekapData = rekap;
+                renderTabelRekap();
+
+            } catch (err) {
+                console.error("Gagal memuat rekap:", err);
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-red-500 font-bold text-xs">Gagal memuat data: ${err.message}</td></tr>`;
+                }
+            } finally {
+                if (btnFilter) {
+                    btnFilter.disabled = false;
+                    btnFilter.classList.remove('opacity-75');
+                }
+                if (iconRefresh) iconRefresh.classList.remove('fa-spin');
+            }
+        }
+
         function renderTabelRekap() {
             const tbody = document.getElementById('tableBodyRekap');
             const tfoot = document.getElementById('tableFootRekap');
@@ -2730,16 +2934,14 @@ async function loadRekapGaji() {
             }
 
             const modal = document.getElementById('modalPratinjau');
-            const content = document.getElementById('modalContentPratinjau');
             modal.classList.remove('opacity-0', 'pointer-events-none');
-            if (content) content.classList.remove('scale-95');
+            modal.firstElementChild.classList.remove('scale-95');
         }
 
         function tutupPratinjau() {
             const modal = document.getElementById('modalPratinjau');
-            const content = document.getElementById('modalContentPratinjau');
             modal.classList.add('opacity-0', 'pointer-events-none');
-            if (content) content.classList.add('scale-95');
+            document.getElementById('modalContentPratinjau')?.classList.add('scale-95');
         }
 
         async function unduhSlipPNG() {
@@ -2950,13 +3152,14 @@ async function loadRekapGaji() {
             const { error } = await supabaseClient
                 .from('distribusi_packing')
                 .update({ is_lunas: true, tgl_lunas: tglSekarang })
+                .eq('is_lunas', false)
                 .in('id', semuaIdBeres);
 
             if (error) {
                 await showError("Gagal memperbarui status lunas: " + error.message);
             } else {
                 await showSuccess("Sukses! Data telah ditandai lunas.");
-                await segarkanSemuaTampilan();
+                loadRekapGaji();
             }
         }
 
@@ -3031,9 +3234,9 @@ async function loadRekapGaji() {
                 }
 
                 if (item.riwayat_cicilan && item.riwayat_cicilan.includes('Ganti Potong Upah')) {
-                    const match = item.riwayat_cicilan.match(/Ganti Potong Upah \((\d+)\s*(Bal|Toros)\)/i);
-                    if (match) {
-                        const qtyPotong = parseInt(match[1], 10) || 0;
+                    const matches = [...item.riwayat_cicilan.matchAll(/Ganti Potong Upah \(\+?(\d+)\s*(Bal|Toros)\)/gi)];
+                    matches.forEach(m => {
+                        const qtyPotong = parseInt(m[1], 10) || 0;
                         let hargaDenda = tarif.dendaB12;
                         if (item.jenis_produk === 'B10') hargaDenda = tarif.dendaB10;
                         else if (item.jenis_produk === 'Oleh-oleh') hargaDenda = tarif.dendaOleholeh;
@@ -3043,11 +3246,11 @@ async function loadRekapGaji() {
                         perKaryawan[kid].paketSlip[tglCetak].rincianPotongUpah.push({
                             jenis: item.jenis_produk || 'B12',
                             qty: qtyPotong,
-                            satuan: match[2],
+                            satuan: m[2],
                             nominal: dendaSubtotal
                         });
                         nominal -= dendaSubtotal;
-                    }
+                    });
                 }
 
                 perKaryawan[kid].paketSlip[tglCetak].gaji += nominal;
@@ -3242,7 +3445,9 @@ async function loadRekapGaji() {
                         await showSuccess("Seluruh data kiriman berhasil disimpan!");
                     }
 
-                    await segarkanSemuaTampilan();
+                    loadDataLogistik();
+                    loadDataPenarikan();
+                    loadSetorFIFODesktop();
                 } catch (err) {
                     await showError("Terjadi kesalahan:\n" + err.message);
                 } finally {
@@ -3306,9 +3511,9 @@ async function loadRekapGaji() {
 
             const { error } = await supabaseClient.from('distribusi_packing').delete().eq('id', id);
             if (!error) {
-                await segarkanSemuaTampilan();
-            } else {
-                await showError("Gagal menghapus data: " + error.message);
+                loadDataLogistik();
+                loadDataPenarikan();
+                loadSetorFIFODesktop();
             }
         }
 
@@ -3475,7 +3680,9 @@ async function loadRekapGaji() {
                 itemSetoranAktifDiModal.riwayat_cicilan = stringBaru;
                 
                 openModal(itemSetoranAktifDiModal);
-                await segarkanSemuaTampilan();
+                loadDataLogistik();
+                loadDataPenarikan();
+                loadSetorFIFODesktop();
             } else {
                 await showError("Gagal menyimpan perubahan: " + error.message);
             }
@@ -3563,7 +3770,9 @@ async function loadRekapGaji() {
                 } else {
                     await showSuccess(`Berhasil ditarik ${inputBaru} ${satuan} oleh ${penarikNama}!`);
                     closeModal();
-                    await segarkanSemuaTampilan();
+                    loadDataLogistik();
+                    loadDataPenarikan();
+                    loadSetorFIFODesktop();
                 }
 
                 btn.innerHTML = teksAsli;
@@ -3614,7 +3823,9 @@ async function loadRekapGaji() {
                 await showError("Gagal mengosongkan data: " + error.message);
             } else {
                 await showSuccess("Tabel distribusi berhasil dikosongkan.");
-                await segarkanSemuaTampilan();
+                loadDataLogistik();
+                loadDataPenarikan();
+                loadSetorFIFODesktop();
             }
         }
 
