@@ -1,1083 +1,771 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CYBER-PWA // Engine Suite</title>
-  <style>
-    /* ============================================================
-       1. TEMA UTAMA APLIKASI STUDIO (FUTURISTIK DARK)
-       ============================================================ */
-    :root {
-      --bg-main: #0a0e17;
-      --bg-card: rgba(16, 24, 39, 0.85);
-      --border-glow: rgba(0, 242, 254, 0.3);
-      --neon-cyan: #00f2fe;
-      --neon-purple: #7928ca;
-      --neon-green: #00ff66;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ PWA Injectors & Vercel Generator</title>
+    <!-- Library JSZip untuk membuat file ZIP di browser -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+            --success: #22c55e;
+            --radius: 10px;
+        }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
 
-    body {
-      background-color: var(--bg-main);
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(121, 40, 202, 0.25), transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(0, 242, 254, 0.2), transparent 40%);
-      color: var(--text-main);
-      min-height: 100vh;
-      padding: 16px 12px 60px 12px;
-      display: flex;
-      justify-content: center;
-    }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 16px;
+            min-height: 100vh;
+        }
 
-    .app-container {
-      width: 100%;
-      max-width: 500px;
-    }
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+        }
 
-    /* HEADER */
-    .header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+        header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 14px;
+        }
 
-    .cyber-badge {
-      display: inline-block;
-      font-size: 0.7rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--neon-cyan);
-      border: 1px solid var(--neon-cyan);
-      padding: 4px 10px;
-      border-radius: 20px;
-      box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
-      margin-bottom: 8px;
-    }
+        header h1 {
+            font-size: 1.4rem;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
 
-    .header h1 {
-      font-size: 1.6rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #fff 30%, var(--neon-cyan) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -0.5px;
-    }
+        header p {
+            color: var(--text-sub);
+            font-size: 0.88rem;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
 
-    /* MENU TABS */
-    .nav-tabs {
-      display: flex;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 4px;
-      margin-bottom: 20px;
-      backdrop-filter: blur(10px);
-    }
+        /* Area Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--accent);
+            border-radius: var(--radius);
+            padding: 24px 16px;
+            text-align: center;
+            background: rgba(56, 189, 248, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
 
-    .tab-btn {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      padding: 10px 2px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
+        .drop-zone.dragover {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: #fff;
+        }
 
-    .tab-btn.active {
-      background: linear-gradient(135deg, var(--neon-purple), #4f46e5);
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(121, 40, 202, 0.4);
-    }
+        .drop-zone p {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+        }
 
-    /* TAB CONTENT */
-    .tab-content {
-      display: none;
-    }
+        .drop-zone strong {
+            color: var(--accent);
+        }
 
-    .tab-content.active {
-      display: block;
-    }
+        .file-info-badge {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 10px;
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
 
-    .glass-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-glow);
-      border-radius: 18px;
-      padding: 20px 16px;
-      backdrop-filter: blur(16px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      margin-bottom: 20px;
-    }
+        /* Grid Layout */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
 
-    .card-title {
-      font-size: 1rem;
-      color: var(--neon-cyan);
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
 
-    /* GRID TEMA */
-    .theme-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
+        .card h2 {
+            font-size: 1.05rem;
+            margin-bottom: 14px;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-    .theme-card {
-      background: rgba(15, 23, 42, 0.6);
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 12px 10px;
-      cursor: pointer;
-      text-align: left;
-      transition: all 0.25s ease;
-      position: relative;
-    }
+        .form-group {
+            margin-bottom: 12px;
+        }
 
-    .theme-card:active {
-      transform: scale(0.97);
-    }
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            color: var(--text-sub);
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
 
-    .theme-card.selected {
-      border-color: var(--neon-cyan);
-      background: rgba(0, 242, 254, 0.08);
-      box-shadow: 0 0 14px rgba(0, 242, 254, 0.3);
-    }
+        .form-group input, 
+        .form-group textarea, 
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-main);
+            font-size: 0.88rem;
+        }
 
-    .theme-preview-dots {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
+        .form-group input:focus, 
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
 
-    .dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      display: inline-block;
-    }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
 
-    .theme-name {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #fff;
-      display: block;
-      margin-bottom: 2px;
-    }
+        .checkbox-container input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
 
-    .theme-desc {
-      font-size: 0.68rem;
-      color: var(--text-muted);
-    }
+        /* Live Icon Finder */
+        .search-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
 
-    /* FORM INPUT */
-    .form-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-      display: block;
-    }
+        .search-box select {
+            flex: 1.2;
+        }
 
-    .cyber-input {
-      width: 100%;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #fff;
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      margin-bottom: 14px;
-      outline: none;
-      transition: border 0.2s;
-    }
+        .search-box input {
+            flex: 2;
+        }
 
-    .cyber-input:focus {
-      border-color: var(--neon-cyan);
-      box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
-    }
+        .icon-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 8px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
 
-    /* TOMBOL CYBER */
-    .btn-cyber {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 0.88rem;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      cursor: pointer;
-      color: #050811;
-      background: linear-gradient(135deg, var(--neon-cyan), #38bdf8);
-      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.35);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-      transition: transform 0.1s ease;
-    }
+        .icon-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: rgba(255, 255, 255, 0.04);
+            text-align: center;
+        }
 
-    .btn-cyber:active {
-      transform: scale(0.98);
-    }
+        .icon-card:hover, .icon-card.active {
+            border-color: var(--accent);
+            background: rgba(56, 189, 248, 0.15);
+        }
 
-    .btn-cyber:disabled {
-      background: #334155;
-      color: #64748b;
-      box-shadow: none;
-      cursor: not-allowed;
-    }
+        .icon-card img {
+            width: 30px;
+            height: 30px;
+            display: block;
+        }
 
-    .btn-success {
-      background: linear-gradient(135deg, var(--neon-green), #10b981);
-      box-shadow: 0 4px 15px rgba(0, 255, 102, 0.3);
-      color: #03200d;
-    }
+        .icon-card span {
+            display: block;
+            font-size: 0.65rem;
+            color: var(--text-sub);
+            margin-top: 4px;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
-    .btn-outline {
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
-      box-shadow: none;
-    }
+        .icon-preview-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-top: 12px;
+        }
 
-    .upload-zone {
-      border: 2px dashed rgba(0, 242, 254, 0.4);
-      background: rgba(0, 242, 254, 0.03);
-      border-radius: 14px;
-      padding: 24px 14px;
-      text-align: center;
-      cursor: pointer;
-      margin-bottom: 16px;
-      display: block;
-    }
+        .icon-preview-box img {
+            width: 42px;
+            height: 42px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 5px;
+            border: 1px solid var(--border-color);
+        }
 
-    .upload-zone input {
-      display: none;
-    }
+        /* Buttons & Actions */
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
 
-    /* SIMULATOR */
-    .phone-simulator {
-      background: #020617;
-      border: 2px solid #334155;
-      border-radius: 28px;
-      height: 380px;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 16px;
-    }
+        .btn {
+            flex: 1;
+            min-width: 160px;
+            background: var(--accent);
+            color: #0f172a;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-align: center;
+        }
 
-    .mock-web-content {
-      text-align: center;
-      margin-top: 40px;
-      color: #475569;
-      font-size: 0.85rem;
-    }
+        .btn:hover {
+            opacity: 0.9;
+        }
 
-    .preview-sheet {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      padding: 18px 16px 24px 16px;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
-    }
+        .btn-success {
+            background: var(--success);
+            color: #ffffff;
+            flex-basis: 100%;
+            font-size: 0.95rem;
+        }
 
-    .preview-sheet.visible {
-      transform: translateY(0);
-    }
+        .btn-secondary {
+            background: #334155;
+            color: var(--text-main);
+        }
 
-    .notch-bar {
-      width: 38px;
-      height: 4px;
-      border-radius: 2px;
-      margin: 0 auto 12px auto;
-    }
-  </style>
+        pre {
+            background: var(--bg-color);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: #a7f3d0;
+            max-height: 130px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 12px 10px; }
+            .grid-layout { grid-template-columns: 1fr; gap: 14px; }
+            .search-box { flex-direction: column; }
+            .btn { width: 100%; min-width: 100%; }
+            .drop-zone { padding: 18px 12px; }
+        }
+    </style>
+  <!-- Injeksi PWA Otomatis -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#af32d2">
+  <link rel="icon" href="https://api.iconify.design/fa6-solid/laptop-file.svg?color=%23af32d2" type="image/svg+xml">
 </head>
 <body>
 
-  <div class="app-container">
-    
-    <!-- HEADER -->
-    <div class="header">
-      <div class="cyber-badge">SYSTEM V5.0 // INLINE PWA ENGINE</div>
-      <h1>S B R - PWA STUDIO</h1>
-    </div>
+    <div class="container">
+        <header>
+            <h1>⚡ PWA Injectors & Vercel Generator</h1>
+            <p>Masukkan file HTML apa saja untuk membaca informasi meta, memilih ikon interaktif, dan mengekspor proyek PWA lengkap dalam ZIP.</p>
+        </header>
 
-    <!-- TABS NAVIGASI -->
-    <div class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('tab-inject')">1. Injector</button>
-      <button class="tab-btn" onclick="switchTab('tab-config')">2. Opsi Tema</button>
-      <button class="tab-btn" onclick="switchTab('tab-preview')">3. Simulator</button>
-      <button class="tab-btn" onclick="switchTab('tab-bundle')">4. Ekspor</button>
-    </div>
-
-    <!-- ============================================================
-         TAB 1: INJECTOR (LENGKAP DENGAN FITUR MENYATUKAN MANIFEST)
-         ============================================================ -->
-    <div id="tab-inject" class="tab-content active">
-      <div class="glass-card">
-        <div class="card-title">⚡ Unggah & Generate Otomatis</div>
-        
-        <label class="upload-zone" for="fileInput">
-          <div style="font-size: 2.2rem;">📄</div>
-          <div style="margin-top: 6px; font-weight: 700;">PILIH FILE HTML SUMBER</div>
-          <div id="statusFileName" style="font-size: 0.8rem; color: var(--neon-cyan); margin-top: 6px;">Belum ada file dipilih</div>
-          <input type="file" id="fileInput" accept=".html,.htm">
-        </label>
-
-        <!-- TOMBOL 1: SIMPAN MENYATU KE 1 FILE HTML -->
-        <button class="btn-cyber btn-success" id="btnProcessInline" disabled onclick="generateSingleFilePWA()">
-          ⚡ Simpan 1 File HTML (Manifest Menyatu)
-        </button>
-
-        <!-- TOMBOL 2: PAKET LENGKAP 1-KLIK (HTML + SERVICE WORKER) -->
-        <button class="btn-cyber" id="btnProcessBundle" disabled onclick="downloadCompleteBundle()">
-          📦 Simpan Paket Lengkap (HTML + SW)
-        </button>
-
-        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; line-height: 1.4; text-align: center;">
-          *Manifest akan langsung tertanam di dalam HTML via Data URI. Tidak perlu file manifest terpisah lagi!
-        </p>
-      </div>
-    </div>
-
-    <!-- ============================================================
-         TAB 2: OPSI TEMA (8 TEMPLATE TECHNO)
-         ============================================================ -->
-    <div id="tab-config" class="tab-content">
-      <div class="glass-card">
-        <div class="card-title">🎨 Pilih Gaya Desain Pop-Up</div>
-
-        <div class="theme-grid">
-          <!-- 1. MODERN SIMPLE -->
-          <div class="theme-card selected" id="theme-card-modern" onclick="selectTheme('modern')">
-            <div class="theme-preview-dots">
-              <span class="dot" style="background: #00f2fe;"></span>
-              <span class="dot" style="background: #0f172a; border: 1px solid #00f2fe;"></span>
-            </div>
-            <span class="theme-name">1. Modern Simple</span>
-            <span class="theme-desc">CYBER // Azure Glow</span>
-          </div>
-
-          <!-- 2. MINIMAL -->
-          <div class="theme-card" id="theme-card-minimal" onclick="selectTheme('minimal')">
-            <div class="theme-preview-dots">
-              <span class="dot" style="background: #ffffff;"></span>
-              <span class="dot" style="background: #000000; border: 1px solid #ffffff;"></span>
-            </div>
-            <span class="theme-name">2. Minimal</span>
-            <span class="theme-desc">VOID // Stealth Mono</span>
-          </div>
-
-          <!-- 3. GLAMOR -->
-          <div class="theme-card" id="theme-card-glamor" onclick="selectTheme('glamor')">
-            <div class="theme-preview-dots">
-              <span class="dot" style="background: #f59e0b;"></span>
-              <span class="dot" style="background: #ec4899;"></span>
-            </div>
-            <span class="theme-name">3. Glamor</span>
-            <span class="theme-desc">NEO-LUX // Cyber Gold</span>
-          </div>
-
-          <!-- 4. 8-BIT -->
-          <div class="theme-card" id="theme-card-retro" onclick="selectTheme('retro')">
-            <div class="theme-preview-dots">
-              <span class="dot" style="background: #ff0055; border-radius: 0;"></span>
-              <span class="dot" style="background: #00ffcc; border-radius: 0;"></span>
-            </div>
-            <span class="theme-name">4. 8-Bit</span>
-            <span class="theme-desc">ARCADE // Pixel Retro</span>
-          </div>
-
-          <!-- 5. HACKING -->
-          <div class="theme-card" id="theme-card-hacking" onclick="selectTheme('hacking')">
-            <div class="theme-preview-dots">
-              <span class="dot" style="background: #00ff66;"></span>
-              <span class="dot" style="background: #020d06; border: 1px solid #00ff66;"></span>
-            </div>
-            <span class="theme-name">5. Hacking</span>
-            <span class="theme-desc">ROOT // Terminal Matrix</span>
-          </div>
-
-          <!-- 6. SYNTHWAVE -->
-          <div class="theme-card" id="theme-card-synthwave" onclick="selectTheme('synthwave')">
-            <div class="theme-preview-dots">
-              <span class="dot" style="background: #ff7700;"></span>
-              <span class="dot" style="background: #ff007f;"></span>
-            </div>
-            <span class="theme-name">6. Synthwave</span>
-            <span class="theme-desc">OUTRUN // Sunset Coral</span>
-          </div>
-
-          <!-- 7. CRYOGENIC -->
-          <div class="theme-card" id="theme-card-cryo" onclick="selectTheme('cryo')">
-            <div class="theme-preview-dots">
-              <span class="dot" style="background: #64ffda;"></span>
-              <span class="dot" style="background: #0a192f; border: 1px solid #64ffda;"></span>
-            </div>
-            <span class="theme-name">7. Cryogenic</span>
-            <span class="theme-desc">FROST // Ice Sci-Fi</span>
-          </div>
-
-          <!-- 8. HAZARD -->
-          <div class="theme-card" id="theme-card-hazard" onclick="selectTheme('hazard')">
-            <div class="theme-preview-dots">
-              <span class="dot" style="background: #eab308; border-radius: 2px;"></span>
-              <span class="dot" style="background: #18181b; border: 1px solid #eab308; border-radius: 2px;"></span>
-            </div>
-            <span class="theme-name">8. Hazard</span>
-            <span class="theme-desc">MECHA // Bio Industrial</span>
-          </div>
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="dropZone">
+            <p>📁 Tarik & Lepaskan file <strong>.html apa saja</strong> ke sini</p>
+            <p style="font-size: 0.8rem; margin-top: 6px;">(Atau ketuk area ini untuk memilih file dari perangkat Anda)</p>
+            <div id="fileStatus" class="file-info-badge" style="display: none;"></div>
+            <input type="file" id="fileInput" accept=".html" style="display: none;">
         </div>
 
-        <div class="card-title" style="margin-top: 20px;">⚙️ Teks & Ikon</div>
+        <div class="grid-layout">
+            <!-- 1. Konfigurasi Aplikasi -->
+            <div class="card">
+                <h2>1. Informasi Aplikasi</h2>
+                <div class="form-group">
+                    <label>Nama Aplikasi (Name)</label>
+                    <input type="text" id="appName" placeholder="Contoh: Toko Kasir Pintar">
+                </div>
+                <div class="form-group">
+                    <label>Nama Singkat (Short Name)</label>
+                    <input type="text" id="appShortName" placeholder="Contoh: Kasir App">
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi</label>
+                    <textarea id="appDesc" rows="2" placeholder="Deskripsi aplikasi..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Warna Tema (Theme Color)</label>
+                    <input type="color" id="themeColor" value="#38bdf8" style="height: 42px; cursor: pointer;">
+                </div>
 
-        <label class="form-label">Nama Aplikasi</label>
-        <input type="text" id="cfgTitle" class="cyber-input" value="S B R - App">
-
-        <label class="form-label">Deskripsi Ajakan</label>
-        <input type="text" id="cfgDesc" class="cyber-input" value="Akses instan langsung dari layar utama.">
-
-        <label class="form-label">Simbol / Emoji Ikon</label>
-        <input type="text" id="cfgIcon" class="cyber-input" value="💠">
-
-        <button class="btn-cyber btn-outline" onclick="switchTab('tab-preview')">
-          Terapkan ke Simulator ➜
-        </button>
-      </div>
-    </div>
-
-    <!-- ============================================================
-         TAB 3: SIMULATOR REAL-TIME
-         ============================================================ -->
-    <div id="tab-preview" class="tab-content">
-      <div class="glass-card">
-        <div class="card-title">📱 Layar Uji Coba Real-Time</div>
-
-        <div class="phone-simulator">
-          <div class="mock-web-content">
-            <h3>WEBSITE ANDA</h3>
-            <p style="margin-top: 4px;">Mode pratinjau bottom popup...</p>
-          </div>
-
-          <!-- Bottom Sheet Simulator -->
-          <div id="simPopup" class="preview-sheet">
-            <div id="simNotch" class="notch-bar"></div>
-            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 14px;">
-              <div id="simIconBox" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;">💠</div>
-              <div>
-                <h4 id="simTitle" style="margin: 0; font-size: 0.95rem;">CyberNet App</h4>
-                <p id="simDesc" style="margin: 2px 0 0 0; font-size: 0.75rem;">Akses instan mode offline langsung dari layar utama.</p>
-              </div>
+                <label class="checkbox-container">
+                    <input type="checkbox" id="renameToIndex" checked>
+                    <span>Simpan file HTML ini sebagai <strong>index.html</strong> di file ZIP</span>
+                </label>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button id="simBtnDismiss" style="flex: 1; padding: 10px; font-weight: 600; cursor: pointer;" onclick="toggleSimulator(false)">Nanti</button>
-              <button id="simBtnInstall" style="flex: 2; padding: 10px; font-weight: 700; cursor: pointer;" onclick="alert('Simulasi: Instalasi PWA Berhasil Dipicu!')">Pasang</button>
+
+            <!-- 2. Live Icon Finder (Iconify API) -->
+            <div class="card">
+                <h2>2. Live Icon Finder (Iconify)</h2>
+                
+                <div class="search-box">
+                    <select id="iconPrefix">
+                        <option value="">Semua Koleksi</option>
+                        <option value="ph" selected>Phosphor Icons</option>
+                        <option value="fa6-solid">FontAwesome 6</option>
+                        <option value="tabler">Tabler Icons</option>
+                    </select>
+                    <input type="text" id="iconSearchInput" placeholder="Cari ikon... (contoh: store, chart, user)">
+                </div>
+
+                <label style="font-size: 0.8rem; color: var(--text-sub);">Pilih ikon hasil pencarian:</label>
+                <div class="icon-results-grid" id="iconGrid">
+                    <div style="grid-column: 1/-1; text-align: center; color: var(--text-sub); font-size: 0.8rem; padding: 10px;">
+                        Memuat rekomendasi ikon...
+                    </div>
+                </div>
+
+                <div class="icon-preview-box">
+                    <img id="currentIconImg" src="https://api.iconify.design/ph/squares-four-duotone.svg?color=%2338bdf8" alt="Preview">
+                    <div style="flex: 1; overflow: hidden;">
+                        <input type="text" id="iconUrl" value="https://api.iconify.design/ph/squares-four-duotone.svg?color=%2338bdf8" style="font-size: 0.75rem; padding: 6px;">
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
 
-        <div style="margin-top: 14px; display: flex; gap: 8px;">
-          <button class="btn-cyber" onclick="toggleSimulator(true)">Trigger Popup</button>
-          <button class="btn-cyber btn-outline" onclick="toggleSimulator(false)">Tutup</button>
+        <!-- Section 3: Hasil & Pratinjau -->
+        <div class="card">
+            <h2>3. Pratinjau & Ekspor File</h2>
+            <div class="grid-layout" style="margin-bottom: 0;">
+                <div>
+                    <label style="font-size: 0.8rem; color: var(--accent);">manifest.json</label>
+                    <pre id="previewManifest">Memuat...</pre>
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; color: var(--accent);">vercel.json</label>
+                    <pre id="previewVercel">Memuat...</pre>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-success" onclick="downloadAllZip()">📦 Unduh Paket Lengkap (ZIP Siap Pakai)</button>
+                <button class="btn btn-secondary" onclick="downloadSingleFile('manifest.json', getManifestContent())">📄 manifest.json</button>
+                <button class="btn btn-secondary" onclick="downloadSingleFile('sw.js', getSWContent())">⚙️ sw.js</button>
+                <button class="btn btn-secondary" onclick="downloadSingleFile('vercel.json', getVercelContent())">📐 vercel.json</button>
+            </div>
         </div>
-      </div>
     </div>
 
-    <!-- ============================================================
-         TAB 4: EKSPOR MANUAL
-         ============================================================ -->
-    <div id="tab-bundle" class="tab-content">
-      <div class="glass-card">
-        <div class="card-title">📦 Unduh Aset Terpisah</div>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">
-          Jika kamu lebih menyukai susunan file terpisah standar, kamu bisa mengunduhnya di sini:
-        </p>
+    <script>
+        let uploadedHtmlContent = "";
+        let originalFileName = "index.html";
 
-        <button class="btn-cyber btn-outline" onclick="downloadManifestFile()">
-          Unduh manifest.json
-        </button>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileStatus = document.getElementById('fileStatus');
+        const appName = document.getElementById('appName');
+        const appShortName = document.getElementById('appShortName');
+        const appDesc = document.getElementById('appDesc');
+        const themeColor = document.getElementById('themeColor');
+        const renameToIndex = document.getElementById('renameToIndex');
+        const iconUrl = document.getElementById('iconUrl');
+        const currentIconImg = document.getElementById('currentIconImg');
+        const iconSearchInput = document.getElementById('iconSearchInput');
+        const iconPrefix = document.getElementById('iconPrefix');
+        const iconGrid = document.getElementById('iconGrid');
 
-        <button class="btn-cyber btn-outline" onclick="downloadServiceWorkerFile()">
-          Unduh service-worker.js
-        </button>
-      </div>
-    </div>
+        // Drag & Drop
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
 
-  </div>
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.html')) {
+                alert('Silakan pilih file berekstensi .html!');
+                return;
+            }
 
-  <script>
-    /* ============================================================
-       DATA 8 TEMPLATE TEMA TECHNO
-       ============================================================ */
-    const THEMES = {
-      modern: {
-        id: "modern",
-        name: "Modern Simple",
-        sheetBg: "rgba(15, 23, 42, 0.95)",
-        sheetBorder: "1px solid rgba(0, 242, 254, 0.5)",
-        sheetRadius: "24px 24px 0 0",
-        shadow: "0 -10px 30px rgba(0, 242, 254, 0.2)",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        notchBg: "#334155",
-        textColor: "#ffffff",
-        subTextColor: "#94a3b8",
-        iconBg: "rgba(0, 242, 254, 0.1)",
-        iconBorder: "1px solid #00f2fe",
-        iconRadius: "12px",
-        btnInstallBg: "linear-gradient(135deg, #00f2fe, #38bdf8)",
-        btnInstallColor: "#020617",
-        btnInstallRadius: "10px",
-        btnDismissBg: "transparent",
-        btnDismissBorder: "1px solid rgba(255, 255, 255, 0.2)",
-        btnDismissColor: "#94a3b8",
-        btnDismissRadius: "10px",
-        themeColor: "#00f2fe"
-      },
-      minimal: {
-        id: "minimal",
-        name: "Minimal Void",
-        sheetBg: "#050505",
-        sheetBorder: "1px solid #27272a",
-        sheetRadius: "16px 16px 0 0",
-        shadow: "0 -10px 30px rgba(0, 0, 0, 0.8)",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        notchBg: "#27272a",
-        textColor: "#ffffff",
-        subTextColor: "#71717a",
-        iconBg: "#121212",
-        iconBorder: "1px solid #27272a",
-        iconRadius: "8px",
-        btnInstallBg: "#ffffff",
-        btnInstallColor: "#000000",
-        btnInstallRadius: "8px",
-        btnDismissBg: "transparent",
-        btnDismissBorder: "1px solid #27272a",
-        btnDismissColor: "#a1a1aa",
-        btnDismissRadius: "8px",
-        themeColor: "#ffffff"
-      },
-      glamor: {
-        id: "glamor",
-        name: "Cyber Glamor",
-        sheetBg: "rgba(24, 11, 36, 0.95)",
-        sheetBorder: "1px solid rgba(245, 158, 11, 0.5)",
-        sheetRadius: "28px 28px 0 0",
-        shadow: "0 -10px 35px rgba(245, 158, 11, 0.25)",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        notchBg: "#78350f",
-        textColor: "#fef3c7",
-        subTextColor: "#d8b4fe",
-        iconBg: "rgba(245, 158, 11, 0.12)",
-        iconBorder: "1px solid #f59e0b",
-        iconRadius: "16px",
-        btnInstallBg: "linear-gradient(135deg, #f59e0b, #ec4899)",
-        btnInstallColor: "#ffffff",
-        btnInstallRadius: "12px",
-        btnDismissBg: "rgba(255, 255, 255, 0.05)",
-        btnDismissBorder: "1px solid rgba(245, 158, 11, 0.3)",
-        btnDismissColor: "#fef3c7",
-        btnDismissRadius: "12px",
-        themeColor: "#f59e0b"
-      },
-      retro: {
-        id: "retro",
-        name: "8-Bit Arcade",
-        sheetBg: "#0f051d",
-        sheetBorder: "3px solid #ff0055",
-        sheetRadius: "0px",
-        shadow: "0 -8px 0px #00ffcc",
-        fontFamily: "'Courier New', Courier, monospace",
-        notchBg: "#ff0055",
-        textColor: "#00ffcc",
-        subTextColor: "#ff77aa",
-        iconBg: "#1a0033",
-        iconBorder: "2px solid #00ffcc",
-        iconRadius: "0px",
-        btnInstallBg: "#00ffcc",
-        btnInstallColor: "#000000",
-        btnInstallRadius: "0px",
-        btnDismissBg: "#ff0055",
-        btnDismissBorder: "none",
-        btnDismissColor: "#ffffff",
-        btnDismissRadius: "0px",
-        themeColor: "#00ffcc"
-      },
-      hacking: {
-        id: "hacking",
-        name: "Matrix Terminal",
-        sheetBg: "#020d06",
-        sheetBorder: "1px solid #00ff66",
-        sheetRadius: "8px 8px 0 0",
-        shadow: "0 -8px 25px rgba(0, 255, 102, 0.3)",
-        fontFamily: "'Courier New', monospace",
-        notchBg: "#005522",
-        textColor: "#00ff66",
-        subTextColor: "#4ade80",
-        iconBg: "rgba(0, 255, 102, 0.1)",
-        iconBorder: "1px solid #00ff66",
-        iconRadius: "4px",
-        btnInstallBg: "#00ff66",
-        btnInstallColor: "#020d06",
-        btnInstallRadius: "4px",
-        btnDismissBg: "transparent",
-        btnDismissBorder: "1px solid #00ff66",
-        btnDismissColor: "#00ff66",
-        btnDismissRadius: "4px",
-        themeColor: "#00ff66"
-      },
-      synthwave: {
-        id: "synthwave",
-        name: "Synthwave Sunset",
-        sheetBg: "rgba(26, 11, 46, 0.96)",
-        sheetBorder: "1px solid #ff007f",
-        sheetRadius: "22px 22px 0 0",
-        shadow: "0 -10px 30px rgba(255, 0, 127, 0.35)",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        notchBg: "#ff7700",
-        textColor: "#ffffff",
-        subTextColor: "#ff9ebb",
-        iconBg: "rgba(255, 0, 127, 0.15)",
-        iconBorder: "1px solid #ff7700",
-        iconRadius: "14px",
-        btnInstallBg: "linear-gradient(135deg, #ff7700, #ff007f)",
-        btnInstallColor: "#ffffff",
-        btnInstallRadius: "10px",
-        btnDismissBg: "transparent",
-        btnDismissBorder: "1px solid rgba(255, 119, 0, 0.4)",
-        btnDismissColor: "#ff9ebb",
-        btnDismissRadius: "10px",
-        themeColor: "#ff007f"
-      },
-      cryo: {
-        id: "cryo",
-        name: "Cryogenic Frost",
-        sheetBg: "rgba(10, 25, 47, 0.96)",
-        sheetBorder: "1px solid #64ffda",
-        sheetRadius: "18px 18px 0 0",
-        shadow: "0 -10px 30px rgba(100, 255, 218, 0.25)",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        notchBg: "#64ffda",
-        textColor: "#e6f1ff",
-        subTextColor: "#8892b0",
-        iconBg: "rgba(100, 255, 218, 0.1)",
-        iconBorder: "1px solid #64ffda",
-        iconRadius: "12px",
-        btnInstallBg: "linear-gradient(135deg, #64ffda, #00b4d8)",
-        btnInstallColor: "#0a192f",
-        btnInstallRadius: "10px",
-        btnDismissBg: "transparent",
-        btnDismissBorder: "1px solid rgba(100, 255, 218, 0.3)",
-        btnDismissColor: "#8892b0",
-        btnDismissRadius: "10px",
-        themeColor: "#64ffda"
-      },
-      hazard: {
-        id: "hazard",
-        name: "Hazard Industrial",
-        sheetBg: "#121212",
-        sheetBorder: "2px solid #eab308",
-        sheetRadius: "8px 8px 0 0",
-        shadow: "0 -10px 30px rgba(234, 179, 8, 0.25)",
-        fontFamily: "'Trebuchet MS', 'Segoe UI', sans-serif",
-        notchBg: "#eab308",
-        textColor: "#fef08a",
-        subTextColor: "#a1a1aa",
-        iconBg: "rgba(234, 179, 8, 0.12)",
-        iconBorder: "1px solid #eab308",
-        iconRadius: "4px",
-        btnInstallBg: "linear-gradient(135deg, #eab308, #ca8a04)",
-        btnInstallColor: "#000000",
-        btnInstallRadius: "6px",
-        btnDismissBg: "#1c1917",
-        btnDismissBorder: "1px solid #44403c",
-        btnDismissColor: "#fef08a",
-        btnDismissRadius: "6px",
-        themeColor: "#eab308"
-      }
-    };
+            originalFileName = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedHtmlContent = e.target.result;
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(uploadedHtmlContent, 'text/html');
 
-    let currentThemeKey = "modern";
-    let rawHtmlContent = "";
-    let originalName = "index.html";
+                const title = doc.querySelector('title')?.innerText.trim();
+                if (title) {
+                    appName.value = title;
+                    appShortName.value = title.substring(0, 15);
+                } else {
+                    appName.value = file.name.replace('.html', '');
+                    appShortName.value = appName.value.substring(0, 15);
+                }
 
-    // Navigasi Tab
-    function switchTab(targetId) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                const desc = doc.querySelector('meta[name="description"]')?.getAttribute('content');
+                if (desc) appDesc.value = desc;
 
-      event.target.classList.add('active');
-      document.getElementById(targetId).classList.add('active');
+                fileStatus.style.display = 'inline-block';
+                fileStatus.innerText = `✓ Terpilih: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
 
-      applyThemeToSimulator();
-    }
-
-    // Pemilihan Tema
-    function selectTheme(themeKey) {
-      currentThemeKey = themeKey;
-      document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
-      const activeCard = document.getElementById('theme-card-' + themeKey);
-      if (activeCard) activeCard.classList.add('selected');
-
-      applyThemeToSimulator();
-    }
-
-    // Terapkan ke Simulator
-    function applyThemeToSimulator() {
-      const t = THEMES[currentThemeKey];
-      const popup = document.getElementById('simPopup');
-      const notch = document.getElementById('simNotch');
-      const title = document.getElementById('simTitle');
-      const desc = document.getElementById('simDesc');
-      const iconBox = document.getElementById('simIconBox');
-      const btnInstall = document.getElementById('simBtnInstall');
-      const btnDismiss = document.getElementById('simBtnDismiss');
-
-      title.innerText = document.getElementById('cfgTitle').value;
-      desc.innerText = document.getElementById('cfgDesc').value;
-      iconBox.innerText = document.getElementById('cfgIcon').value;
-
-      popup.style.background = t.sheetBg;
-      popup.style.borderTop = t.sheetBorder;
-      popup.style.borderRadius = t.sheetRadius;
-      popup.style.boxShadow = t.shadow;
-      popup.style.fontFamily = t.fontFamily;
-
-      notch.style.background = t.notchBg;
-      title.style.color = t.textColor;
-      desc.style.color = t.subTextColor;
-
-      iconBox.style.background = t.iconBg;
-      iconBox.style.border = t.iconBorder;
-      iconBox.style.borderRadius = t.iconRadius;
-
-      btnInstall.style.background = t.btnInstallBg;
-      btnInstall.style.color = t.btnInstallColor;
-      btnInstall.style.borderRadius = t.btnInstallRadius;
-      btnInstall.style.border = "none";
-
-      btnDismiss.style.background = t.btnDismissBg;
-      btnDismiss.style.border = t.btnDismissBorder;
-      btnDismiss.style.color = t.btnDismissColor;
-      btnDismiss.style.borderRadius = t.btnDismissRadius;
-    }
-
-    function toggleSimulator(show) {
-      applyThemeToSimulator();
-      const popup = document.getElementById('simPopup');
-      if (show) popup.classList.add('visible');
-      else popup.classList.remove('visible');
-    }
-
-    // Membaca Berkas HTML
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        originalName = file.name;
-        document.getElementById('statusFileName').innerText = "Terpilih: " + originalName;
-        
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          rawHtmlContent = evt.target.result;
-          document.getElementById('btnProcessInline').disabled = false;
-          document.getElementById('btnProcessBundle').disabled = false;
-        };
-        reader.readAsText(file);
-      }
-    });
-
-    /* ============================================================
-       HELPER: MEMBUAT INLINE MANIFEST DATA URI
-       ============================================================ */
-    function buildInlineManifestDataUri(title, themeColor, iconChar) {
-      const manifestObj = {
-        name: title,
-        short_name: title.substring(0, 12),
-        start_url: "./",
-        display: "standalone",
-        background_color: "#0a0e17",
-        theme_color: themeColor,
-        icons: [
-          {
-            src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${iconChar}</text></svg>`),
-            sizes: "192x192 512x512",
-            type: "image/svg+xml"
-          },
-          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "icon-512.png", sizes: "512x512", type: "image/png" }
-        ]
-      };
-      return "data:application/manifest+json," + encodeURIComponent(JSON.stringify(manifestObj));
-    }
-
-    /* ============================================================
-       HELPER: MEMBUAT SNIPPET INJEKSI LENGKAP KE DALAM HTML
-       ============================================================ */
-    function buildInjectedHtml(includeInlineManifest) {
-      const t = THEMES[currentThemeKey];
-      const title = document.getElementById('cfgTitle').value || "CyberNet App";
-      const desc = document.getElementById('cfgDesc').value || "Akses PWA Cepat";
-      const icon = document.getElementById('cfgIcon').value || "⚡";
-
-      let finalHtml = rawHtmlContent;
-
-      // 1. Tanamkan Manifest ke dalam <head> jika mode menyatu diaktifkan
-      if (includeInlineManifest) {
-        const manifestDataUri = buildInlineManifestDataUri(title, t.themeColor, icon);
-        const manifestHeadTag = `
-  <!-- PWA MANIFEST INLINE (Auto-Generated) -->
-  <link rel="manifest" href="${manifestDataUri}">
-  <meta name="theme-color" content="${t.themeColor}">
-`;
-        if (finalHtml.includes("</head>")) {
-          finalHtml = finalHtml.replace("</head>", manifestHeadTag + "\n</head>");
-        } else {
-          finalHtml = manifestHeadTag + "\n" + finalHtml;
+                updatePreviews();
+            };
+            reader.readAsText(file);
         }
-      }
 
-      // 2. Tanamkan Popup Bottom Sheet & Skrip PWA sebelum </body>
-      const popupSnippet = `
-<!-- === START PWA BOTTOM SHEET (${t.name.toUpperCase()}) === -->
-<style>
-  .custom-pwa-sheet {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: ${t.sheetBg};
-    border-top: ${t.sheetBorder};
-    border-radius: ${t.sheetRadius};
-    box-shadow: ${t.shadow};
-    padding: 16px 20px 24px 20px;
-    box-sizing: border-box;
-    z-index: 999999;
-    transform: translateY(100%);
-    transition: transform 0.35s cubic-bezier(0.1, 0.9, 0.2, 1);
-    font-family: ${t.fontFamily};
-    backdrop-filter: blur(12px);
-  }
-  .custom-pwa-sheet.active {
-    transform: translateY(0);
-  }
-  .custom-pwa-notch {
-    width: 40px;
-    height: 4px;
-    background: ${t.notchBg};
-    border-radius: 2px;
-    margin: 0 auto 14px auto;
-  }
-  .custom-pwa-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-  .custom-pwa-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: ${t.iconRadius};
-    background: ${t.iconBg};
-    border: ${t.iconBorder};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    flex-shrink: 0;
-  }
-  .custom-pwa-btn-group {
-    display: flex;
-    gap: 10px;
-  }
-  .custom-pwa-install {
-    flex: 2;
-    padding: 12px;
-    border: none;
-    border-radius: ${t.btnInstallRadius};
-    background: ${t.btnInstallBg};
-    color: ${t.btnInstallColor};
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .custom-pwa-dismiss {
-    flex: 1;
-    padding: 12px;
-    border: ${t.btnDismissBorder};
-    border-radius: ${t.btnDismissRadius};
-    background: ${t.btnDismissBg};
-    color: ${t.btnDismissColor};
-    font-weight: 600;
-    cursor: pointer;
-  }
-</style>
+        // URL Iconify dengan Warna Tema Otomatis
+        function buildIconifyUrl(iconString, fallbackPrefix = 'ph') {
+            let fullId = iconString;
+            if (!fullId.includes(':') && fallbackPrefix) {
+                fullId = `${fallbackPrefix}:${fullId}`;
+            }
+            const cleanPath = fullId.replace(':', '/');
+            const encodedColor = encodeURIComponent(themeColor.value || '#38bdf8');
+            return `https://api.iconify.design/${cleanPath}.svg?color=${encodedColor}`;
+        }
 
-<div id="dynamicPwaSheet" class="custom-pwa-sheet">
-  <div class="custom-pwa-notch"></div>
-  <div class="custom-pwa-row">
-    <div class="custom-pwa-icon">${icon}</div>
-    <div>
-      <h4 style="margin: 0; font-size: 1rem; color: ${t.textColor};">${title}</h4>
-      <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: ${t.subTextColor};">${desc}</p>
-    </div>
-  </div>
-  <div class="custom-pwa-btn-group">
-    <button id="pwaBtnDismiss" class="custom-pwa-dismiss">Nanti</button>
-    <button id="pwaBtnInstall" class="custom-pwa-install">Pasang</button>
-  </div>
-</div>
+        let searchDebounce = null;
+        iconSearchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(() => {
+                fetchIcons(iconSearchInput.value.trim(), iconPrefix.value);
+            }, 300);
+        });
 
-<script>
-  (function() {
-    let pwaPrompt = null;
-    const sheet = document.getElementById('dynamicPwaSheet');
-    const bInstall = document.getElementById('pwaBtnInstall');
-    const bDismiss = document.getElementById('pwaBtnDismiss');
+        iconPrefix.addEventListener('change', () => {
+            fetchIcons(iconSearchInput.value.trim(), iconPrefix.value);
+        });
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      pwaPrompt = e;
-      if (!sessionStorage.getItem('pwa_prompt_dismissed')) {
-        sheet.classList.add('active');
-      }
-    });
+        themeColor.addEventListener('input', () => {
+            if (iconUrl.value.includes('api.iconify.design')) {
+                const encodedColor = encodeURIComponent(themeColor.value);
+                const updatedUrl = iconUrl.value.replace(/color=[^&]*/, `color=${encodedColor}`);
+                iconUrl.value = updatedUrl;
+                currentIconImg.src = updatedUrl;
+            }
+            fetchIcons(iconSearchInput.value.trim(), iconPrefix.value);
+            updatePreviews();
+        });
 
-    bInstall.addEventListener('click', async () => {
-      if (pwaPrompt) {
-        pwaPrompt.prompt();
-        await pwaPrompt.userChoice;
-        pwaPrompt = null;
-        sheet.classList.remove('active');
-      }
-    });
+        async function fetchIcons(query, prefix) {
+            if (!query) {
+                loadDefaultPresets(prefix);
+                return;
+            }
 
-    bDismiss.addEventListener('click', () => {
-      sheet.classList.remove('active');
-      sessionStorage.setItem('pwa_prompt_dismissed', '1');
-    });
+            iconGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--text-sub); font-size:0.8rem; padding:10px;">Mencari ikon...</div>';
 
-    // Registrasi Service Worker di Latar Belakang
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js').catch(() => {});
-      });
-    }
-  })();
-<\\/script>
-<!-- === END PWA BOTTOM SHEET === -->
-`;
+            try {
+                let url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=36`;
+                if (prefix) url += `&prefix=${prefix}`;
 
-      if (finalHtml.includes("</body>")) {
-        finalHtml = finalHtml.replace("</body>", popupSnippet + "\n</body>");
-      } else {
-        finalHtml = finalHtml + "\n" + popupSnippet;
-      }
+                const res = await fetch(url);
+                const data = await res.json();
 
-      return finalHtml;
-    }
+                if (!data.icons || data.icons.length === 0) {
+                    iconGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:var(--text-sub); font-size:0.8rem; padding:10px;">Ikon tidak ditemukan. Coba kata kunci bahasa Inggris.</div>';
+                    return;
+                }
 
-    /* ============================================================
-       FUNGSI EKSEKUSI TOMBOL
-       ============================================================ */
+                renderIconResults(data.icons, prefix);
+            } catch (err) {
+                iconGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#ef4444; font-size:0.8rem; padding:10px;">Gagal memuat ikon dari Iconify.</div>';
+            }
+        }
 
-    // 1. Tombol: Simpan 1 File HTML (Manifest Menyatu)
-    function generateSingleFilePWA() {
-      const outputHtml = buildInjectedHtml(true);
-      downloadBlob(outputHtml, "all-in-one-" + originalName, "text/html");
-    }
+        function renderIconResults(icons, currentPrefix) {
+            iconGrid.innerHTML = '';
+            icons.forEach(iconIdentifier => {
+                const svgUrl = buildIconifyUrl(iconIdentifier, currentPrefix);
+                const displayName = iconIdentifier.split(/[:/]/).pop();
 
-    // 2. Tombol: Simpan Paket Lengkap 1-Klik (HTML + SW)
-    function downloadCompleteBundle() {
-      // Unduh File HTML Terinjeksi
-      generateSingleFilePWA();
+                const card = document.createElement('div');
+                card.className = 'icon-card';
+                card.title = iconIdentifier;
+                card.innerHTML = `
+                    <img src="${svgUrl}" alt="${displayName}" loading="lazy" onerror="this.parentElement.style.display='none'">
+                    <span>${displayName}</span>
+                `;
 
-      // Beri jeda 300 milidetik agar browser mengizinkan unduhan kedua secara otomatis
-      setTimeout(() => {
-        downloadServiceWorkerFile();
-      }, 300);
-    }
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.icon-card').forEach(el => el.classList.remove('active'));
+                    card.classList.add('active');
+                    iconUrl.value = svgUrl;
+                    currentIconImg.src = svgUrl;
+                    updatePreviews();
+                });
 
-    // Helper Download
-    function downloadBlob(content, fileName, mimeType) {
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
+                iconGrid.appendChild(card);
+            });
+        }
 
-    // Generator File manifest.json Terpisah
-    function downloadManifestFile() {
-      const t = THEMES[currentThemeKey];
-      const title = document.getElementById('cfgTitle').value || "CyberNet App";
-      const manifestData = {
-        name: title,
-        short_name: title.substring(0, 12),
-        start_url: "./",
-        display: "standalone",
-        background_color: "#0a0e17",
-        theme_color: t.themeColor,
-        icons: [
-          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "icon-512.png", sizes: "512x512", type: "image/png" }
-        ]
-      };
-      downloadBlob(JSON.stringify(manifestData, null, 2), "manifest.json", "application/json");
-    }
+        function loadDefaultPresets(prefix = 'ph') {
+            let defaults = [];
+            if (prefix === 'fa6-solid') {
+                defaults = ['fa6-solid:shop', 'fa6-solid:boxes-stacked', 'fa6-solid:receipt', 'fa6-solid:cart-shopping', 'fa6-solid:user', 'fa6-solid:chart-pie', 'fa6-solid:bell', 'fa6-solid:gear'];
+            } else if (prefix === 'tabler') {
+                defaults = ['tabler:smart-home', 'tabler:building-store', 'tabler:box-seam', 'tabler:receipt-2', 'tabler:user-circle', 'tabler:chart-donut', 'tabler:settings'];
+            } else {
+                defaults = ['ph:squares-four-duotone', 'ph:shopping-bag-duotone', 'ph:chart-line-up-duotone', 'ph:user-circle-duotone', 'ph:bell-ringing-duotone', 'ph:receipt-duotone', 'ph:gear-duotone'];
+            }
+            renderIconResults(defaults, prefix);
+        }
 
-    // Generator File service-worker.js
-    function downloadServiceWorkerFile() {
-      const swData = `const CACHE = 'cyber-cache-v1';
-const ASSETS = ['./', './index.html'];
+        loadDefaultPresets('ph');
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+        // Generator File Konten
+        function getManifestContent() {
+            return JSON.stringify({
+                name: appName.value || "Aplikasi Web Siap Pakai",
+                short_name: appShortName.value || "Aplikasi",
+                description: appDesc.value || "Aplikasi web progresif",
+                start_url: "/",
+                display: "standalone",
+                background_color: "#0f172a",
+                theme_color: themeColor.value || "#0f172a",
+                orientation: "portrait",
+                icons: [
+                    {
+                        src: iconUrl.value,
+                        sizes: "192x192 512x512",
+                        type: "image/svg+xml",
+                        purpose: "any maskable"
+                    }
+                ]
+            }, null, 2);
+        }
+
+        function getSWContent() {
+            return `const CACHE_NAME = 'pwa-cache-v1';
+const ASSETS_TO_CACHE = [
+  '/',
+  './index.html',
+  './manifest.json'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+  );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(
-    keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-  )));
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null))
+      );
+    })
+  );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', e => {
-  e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      return cachedResponse || fetch(event.request).catch(() => caches.match('./index.html'));
+    })
+  );
 });`;
-      downloadBlob(swData, "service-worker.js", "application/javascript");
-    }
+        }
 
-    // Inisialisasi awal
-    applyThemeToSimulator();
+        function getVercelContent() {
+            return JSON.stringify({
+                version: 2,
+                cleanUrls: true,
+                routes: [
+                    { src: "/(.*)", dest: "/index.html" }
+                ]
+            }, null, 2);
+        }
+
+        // Injeksi PWA Aman (Mencegah HTML Terpotong/Bocor)
+        function injectPWAToHTML(rawHtml) {
+            let html = rawHtml;
+            
+            const headInjection = [
+                '  <!-- Injeksi PWA Otomatis -->',
+                '  <link rel="manifest" href="manifest.json">',
+                `  <meta name="theme-color" content="${themeColor.value || '#0f172a'}">`,
+                `  <link rel="icon" href="${iconUrl.value}" type="image/svg+xml">`
+            ].join('\n');
+
+            const swInjection = [
+                '  <!-- Injeksi Registrasi Service Worker -->',
+                '  <' + 'script>',
+                '    if (location.protocol === "file:") {',
+                '      console.warn("PWA Service Worker memerlukan server web (http/https/Vercel) dan tidak dapat aktif langsung di file:///.");',
+                '    } else if ("serviceWorker" in navigator) {',
+                '      window.addEventListener("load", () => {',
+                '        navigator.serviceWorker.register("./sw.js")',
+                '          .then(reg => console.log("PWA Aktif!", reg.scope))',
+                '          .catch(err => console.error("SW gagal:", err));',
+                '      });',
+                '    }',
+                '  <' + '/script>'
+            ].join('\n');
+
+            const headCloseTag = '<' + '/head>';
+            const bodyCloseTag = '<' + '/body>';
+
+            if (html.toLowerCase().includes(headCloseTag)) {
+                html = html.replace(new RegExp(headCloseTag, 'i'), `${headInjection}\n${headCloseTag}`);
+            } else {
+                html = `${headInjection}\n${html}`;
+            }
+
+            if (html.toLowerCase().includes(bodyCloseTag)) {
+                html = html.replace(new RegExp(bodyCloseTag, 'i'), `${swInjection}\n${bodyCloseTag}`);
+            } else {
+                html = `${html}\n${swInjection}`;
+            }
+
+            return html;
+        }
+
+        function updatePreviews() {
+            document.getElementById('previewManifest').innerText = getManifestContent();
+            document.getElementById('previewVercel').innerText = getVercelContent();
+        }
+
+        [appName, appShortName, appDesc, iconUrl].forEach(el => {
+            el.addEventListener('input', updatePreviews);
+        });
+
+        function downloadSingleFile(filename, text) {
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function downloadAllZip() {
+            const zip = new JSZip();
+
+            zip.file("manifest.json", getManifestContent());
+            zip.file("sw.js", getSWContent());
+            zip.file("vercel.json", getVercelContent());
+
+            let baseHtml = uploadedHtmlContent;
+            if (!baseHtml) {
+                baseHtml = [
+                    '<!DOCTYPE html>',
+                    '<html lang="id">',
+                    '<head>',
+                    '  <meta charset="UTF-8">',
+                    '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+                    `  <title>${appName.value || 'PWA App'}</title>`,
+                    '<' + '/head>',
+                    '<body style="font-family: system-ui, sans-serif; text-align: center; padding: 40px; background: #0f172a; color: white;">',
+                    `  <h1>Selamat Datang di ${appName.value || 'PWA App'}</h1>`,
+                    `  <p>${appDesc.value || 'Aplikasi PWA ini siap diinstal di HP dan Komputer!'}</p>`,
+                    '<' + '/body>',
+                    '</html>'
+                ].join('\n');
+            }
+
+            const finalizedHtml = injectPWAToHTML(baseHtml);
+            const htmlFileName = renameToIndex.checked ? "index.html" : originalFileName;
+            zip.file(htmlFileName, finalizedHtml);
+
+            zip.generateAsync({ type: "blob" }).then(function(content) {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = "pwa-project-ready.zip";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        }
+
+        updatePreviews();
+    </script>
+  <!-- Injeksi Registrasi Service Worker -->
+  <script>
+    if (location.protocol === "file:") {
+      console.warn("PWA Service Worker memerlukan server web (http/https/Vercel) dan tidak dapat aktif langsung di file:///.");
+    } else if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+          .then(reg => console.log("PWA Aktif!", reg.scope))
+          .catch(err => console.error("SW gagal:", err));
+      });
+    }
   </script>
 </body>
 </html>
