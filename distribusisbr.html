@@ -145,12 +145,27 @@
             <div class="xl:col-span-7 space-y-4">
                 <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-3">
                     <div class="flex items-center justify-between border-b pb-3">
-                        <div>
-                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Monitoring Kiriman Tanggal:</div>
-                            <h2 class="text-base font-black text-gray-900 flex items-center gap-2 mt-0.5" id="labelLogistikTanggalTerpilih">
-                                <i class="fa-solid fa-calendar-day text-indigo-600"></i> Memuat...
-                            </h2>
-                        </div>
+                        <!-- KODE BARU: Tanggal Monitoring Interaktif -->
+						<div>
+							<label for="filterTanggalLogistik" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+								Monitoring Kiriman Tanggal:
+							</label>
+							<div class="flex items-center gap-2">
+								<div class="relative">
+									<input 
+										type="date" 
+										id="filterTanggalLogistik" 
+										onchange="loadDataLogistik()" 
+										class="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl font-black text-xs sm:text-sm text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer transition shadow-2xs"
+										title="Klik untuk memilih tanggal monitoring"
+									>
+								</div>
+								<!-- Badge Nama Hari Otomatis -->
+								<span id="badgeHariMonitoring" class="text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2.5 py-1.5 rounded-xl shadow-2xs">
+									-
+								</span>
+							</div>
+						</div>
                         <div class="flex items-center gap-2">
                             <button type="button" onclick="loadDataLogistik()" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-xs font-bold transition flex items-center gap-1">
                                 <i class="fa-solid fa-rotate-right"></i> Refresh
@@ -362,7 +377,7 @@
                 <div class="w-full h-0.5 bg-gradient-to-r from-transparent via-gray-400 to-transparent"></div>
                 <div class="absolute bg-gray-50 px-4 py-1.5 rounded-full border-2 border-gray-200 shadow-sm flex items-center gap-2 text-gray-600 text-[11px] font-black uppercase tracking-wider select-none">
                     <i class="fa-solid fa-boxes-stacked text-emerald-600 text-xs"></i>
-                    <span>Daftar Antrean Penarikan</span>
+                    <span>Daftar Rincian Kirim/Penarikan</span>
                 </div>
             </div>
 
@@ -591,35 +606,45 @@
             </div>
 
             <form id="formSaldoAwal" onsubmit="simpanSaldoAwalGantungan(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Pilih Karyawan</label>
-                    <select id="saldoKaryawanId" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-amber-500">
-                        <option value="">-- Pilih Karyawan --</option>
-                    </select>
-                </div>
+				<!-- 1. KOTAK KALENDER TANGGAL GANTUNGAN (DEFAULT H-3) -->
+				<div>
+					<label class="block text-xs font-bold text-gray-600 uppercase mb-1">Tanggal Gantungan</label>
+					<input type="date" id="saldoTanggal" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-amber-500">
+					<p class="text-[10px] text-gray-400 mt-0.5">*Otomatis terisi H-3 (bisa diklik untuk ganti tanggal lain).</p>
+				</div>
 
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Jenis Produk</label>
-                    <select id="saldoJenisProduk" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-amber-500">
-                        <option value="B12">Aromanis B12</option>
-                        <option value="B10">Aromanis B10</option>
-                        <option value="Oleh-oleh">Oleh-oleh</option>
-                    </select>
-                </div>
+				<!-- 2. PILIH KARYAWAN -->
+				<div>
+					<label class="block text-xs font-bold text-gray-600 uppercase mb-1">Pilih Karyawan</label>
+					<select id="saldoKaryawanId" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-amber-500">
+						<option value="">-- Pilih Karyawan --</option>
+					</select>
+				</div>
 
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Jumlah Bal Fisik Gantungan</label>
-                    <input type="number" id="saldoJumlahBal" required min="1" placeholder="Misal: 15" class="w-full px-3 py-2 text-center font-black text-lg text-amber-700 bg-amber-50/40 border border-amber-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500">
-                    <p class="text-[10px] text-gray-400 mt-1">*Otomatis dimasukkan sebagai antrean awal yang wajib disetor lebih dulu.</p>
-                </div>
+				<!-- 3. JENIS PRODUK -->
+				<div>
+					<label class="block text-xs font-bold text-gray-600 uppercase mb-1">Jenis Produk</label>
+					<select id="saldoJenisProduk" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-amber-500">
+						<option value="B12">Aromanis B12</option>
+						<option value="B10">Aromanis B10</option>
+						<option value="Oleh-oleh">Oleh-oleh</option>
+					</select>
+				</div>
 
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="tutupModalSaldoAwal()" class="w-1/3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition">Batal</button>
-                    <button type="submit" id="btnSimpanSaldoAwal" class="w-2/3 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-check"></i> Simpan Saldo
-                    </button>
-                </div>
-            </form>
+				<!-- 4. JUMLAH BAL -->
+				<div>
+					<label class="block text-xs font-bold text-gray-600 uppercase mb-1">Jumlah Bal Fisik Gantungan</label>
+					<input type="number" id="saldoJumlahBal" required min="1" placeholder="Misal: 15" class="w-full px-3 py-2 text-center font-black text-lg text-amber-700 bg-amber-50/40 border border-amber-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500">
+					<p class="text-[10px] text-gray-400 mt-1">*Otomatis dimasukkan sebagai antrean awal yang wajib disetor lebih dulu.</p>
+				</div>
+
+				<div class="pt-2 flex gap-2">
+					<button type="button" onclick="tutupModalSaldoAwal()" class="w-1/3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition">Batal</button>
+					<button type="submit" id="btnSimpanSaldoAwal" class="w-2/3 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-1">
+						<i class="fa-solid fa-check"></i> Simpan Saldo
+					</button>
+				</div>
+			</form>
         </div>
     </div>
 
@@ -1091,11 +1116,11 @@
             }));
         }
 
-        const today = new Date();
-        if (document.getElementById('tanggal')) document.getElementById('tanggal').valueAsDate = today;
-        if (document.getElementById('filterEnd')) document.getElementById('filterEnd').valueAsDate = today;
-        if (document.getElementById('riwayatTanggal')) document.getElementById('riwayatTanggal').valueAsDate = today;
-
+		const today = new Date();
+		if (document.getElementById('tanggal')) document.getElementById('tanggal').valueAsDate = today;
+		if (document.getElementById('filterTanggalLogistik')) document.getElementById('filterTanggalLogistik').valueAsDate = today; // <- TAMBAHKAN BARIS INI
+		if (document.getElementById('filterEnd')) document.getElementById('filterEnd').valueAsDate = today;
+		if (document.getElementById('riwayatTanggal')) document.getElementById('riwayatTanggal').valueAsDate = today;
         const startOfWeek = new Date(today);
         const day = startOfWeek.getDay() || 7; 
         if (day !== 1) startOfWeek.setHours(-24 * (day - 1));
@@ -1263,18 +1288,30 @@
         }
 
         function bukaModalSaldoAwal() {
-            const select = document.getElementById('saldoKaryawanId');
-            select.innerHTML = '<option value="">-- Pilih Karyawan --</option>';
-            daftarKaryawanGlobal.forEach(k => {
-                select.innerHTML += `<option value="${k.id}">${k.nama}</option>`;
-            });
+			// 1. Siapkan daftar nama karyawan di dropdown
+			const select = document.getElementById('saldoKaryawanId');
+			select.innerHTML = '<option value="">-- Pilih Karyawan --</option>';
+			daftarKaryawanGlobal.forEach(k => {
+				select.innerHTML += `<option value="${k.id}">${k.nama}</option>`;
+			});
 
-            document.getElementById('saldoJumlahBal').value = '';
-            
-            const modal = document.getElementById('modalSaldoAwal');
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            document.getElementById('contentSaldoAwal').classList.remove('scale-95');
-        }
+			// 2. Kosongkan isian jumlah bal
+			document.getElementById('saldoJumlahBal').value = '';
+
+			// 3. Setel tanggal default menjadi H-3 (3 hari ke belakang)
+			const tglHMinus3 = new Date();
+			tglHMinus3.setDate(tglHMinus3.getDate() - 3); // Mengurangi 3 hari dari hari ini
+
+			const inputSaldoTanggal = document.getElementById('saldoTanggal');
+			if (inputSaldoTanggal) {
+				inputSaldoTanggal.valueAsDate = tglHMinus3; // Memasukkan tanggal H-3 ke form kalender
+			}
+			
+			// 4. Tampilkan modal ke layar
+			const modal = document.getElementById('modalSaldoAwal');
+			modal.classList.remove('opacity-0', 'pointer-events-none');
+			document.getElementById('contentSaldoAwal').classList.remove('scale-95');
+		}
 
         function tutupModalSaldoAwal() {
             const modal = document.getElementById('modalSaldoAwal');
@@ -1282,218 +1319,256 @@
             document.getElementById('contentSaldoAwal').classList.add('scale-95');
         }
 
-        async function simpanSaldoAwalGantungan(e) {
-            e.preventDefault();
-            const kid = document.getElementById('saldoKaryawanId').value;
-            const jenis = document.getElementById('saldoJenisProduk').value;
-            const jumlahBal = parseInt(document.getElementById('saldoJumlahBal').value) || 0;
-            const btn = document.getElementById('btnSimpanSaldoAwal');
+       async function simpanSaldoAwalGantungan(e) {
+			e.preventDefault();
+			
+			// 1. Ambil nilai dari setiap inputan form modal
+			const tglDipilih = document.getElementById('saldoTanggal').value; // Mengambil tanggal dari kalender
+			const kid = document.getElementById('saldoKaryawanId').value;
+			const jenis = document.getElementById('saldoJenisProduk').value;
+			const jumlahBal = parseInt(document.getElementById('saldoJumlahBal').value) || 0;
+			const btn = document.getElementById('btnSimpanSaldoAwal');
 
-            if (!kid || jumlahBal <= 0) {
-                await showNotice("Pilih karyawan dan isi jumlah bal dengan benar!", "Peringatan", "warning");
-                return;
-            }
+			// Validasi: pastikan tanggal, nama pekerja, dan jumlah bal valid
+			if (!tglDipilih || !kid || jumlahBal <= 0) {
+				await showNotice("Pilih tanggal, nama karyawan, dan isi jumlah bal dengan benar!", "Peringatan", "warning");
+				return;
+			}
 
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Menyimpan...';
+			btn.disabled = true;
+			btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Menyimpan...';
 
-            const tglLampau = new Date();
-            tglLampau.setDate(tglLampau.getDate() - 1);
-            const tglStr = tglLampau.toISOString().split('T')[0];
-            const targetKirim = hitungTargetProduk(jumlahBal, jenis);
+			// Hitung target bal yang harus disetor sesuai jenis produk
+			const targetKirim = hitungTargetProduk(jumlahBal, jenis);
 
-            const payload = {
-                tanggal: tglStr,
-                sesi: 'Pagi',
-                dikirim_oleh: null,
-                karyawan_id: kid,
-                kirim_produksi: jumlahBal,
-                jenis_produk: jenis,
-                tarik_jadi: 0,
-                koreksi: -targetKirim,
-                is_lunas: false,
-                is_lembur: false,
-                riwayat_cicilan: 'Saldo Awal Gantungan (Sistem Lama)'
-            };
+			// 2. Siapkan data untuk dikirim ke Supabase
+			const payload = {
+				tanggal: tglDipilih, // Menggunakan tanggal yang ada di form (default H-3 atau pilihan pengguna)
+				sesi: 'Pagi',
+				dikirim_oleh: null,
+				karyawan_id: kid,
+				kirim_produksi: jumlahBal,
+				jenis_produk: jenis,
+				tarik_jadi: 0,
+				koreksi: -targetKirim,
+				is_lunas: false,
+				is_lembur: false,
+				riwayat_cicilan: 'Saldo Awal Gantungan (Sistem Lama)'
+			};
 
-            const { error } = await supabaseClient
-                .from('distribusi_packing')
-                .insert([payload]);
+			// 3. Masukkan ke tabel distribusi_packing
+			const { error } = await supabaseClient
+				.from('distribusi_packing')
+				.insert([payload]);
 
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan Saldo';
+			btn.disabled = false;
+			btn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan Saldo';
 
-            if (error) {
-                await showError("Gagal menyimpan saldo gantungan: " + error.message);
-            } else {
-                tutupModalSaldoAwal();
-                await showSuccess("Saldo gantungan lama berhasil dimasukkan ke sistem!");
-                loadDataLogistik();
-                loadDataPenarikan();
-                loadSetorFIFODesktop();
-            }
-        }
+			if (error) {
+				await showError("Gagal menyimpan saldo gantungan: " + error.message);
+			} else {
+				tutupModalSaldoAwal();
+				await showSuccess(`Saldo gantungan tanggal ${formatTglIndo(tglDipilih)} berhasil dimasukkan!`);
+				
+				// Segarkan data di layar agar langsung terlihat di antrean
+				loadDataLogistik();
+				loadDataPenarikan();
+				loadSetorFIFODesktop();
+			}
+		}
 
-        async function loadDataLogistik() {
-            const inputTgl = document.getElementById('tanggal');
-            const tgl = inputTgl ? inputTgl.value : new Date().toISOString().split('T')[0];
-            const tbody = document.getElementById('tableBodyLogistikHariIni');
-            const labelTgl = document.getElementById('labelLogistikTanggalTerpilih');
-            const badgeCount = document.getElementById('badgeJumlahPekerjaLogistik');
+		async function loadDataLogistik() {
+			// 1. Ambil tanggal dari input kalender monitoring baru (atau form kirim sebagai cadangan)
+			const inputMonitoring = document.getElementById('filterTanggalLogistik');
+			const inputFormKirim = document.getElementById('tanggal');
+			
+			let tgl = '';
+			if (inputMonitoring && inputMonitoring.value) {
+				tgl = inputMonitoring.value;
+			} else if (inputFormKirim && inputFormKirim.value) {
+				tgl = inputFormKirim.value;
+				if (inputMonitoring) inputMonitoring.value = tgl;
+			} else {
+				tgl = new Date().toISOString().split('T')[0];
+				if (inputMonitoring) inputMonitoring.value = tgl;
+			}
 
-            if (labelTgl) labelTgl.innerHTML = `<i class="fa-solid fa-calendar-day text-indigo-600"></i> ${formatTglIndo(tgl)}`;
-            if (!tbody) return;
+			// 2. Perbarui badge nama hari di samping kalender monitoring
+			const badgeHari = document.getElementById('badgeHariMonitoring');
+			if (badgeHari && tgl) {
+				const parts = tgl.split('-');
+				const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+				const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+				badgeHari.innerText = namaHari[dObj.getDay()] || '-';
+			}
 
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="p-6 text-center text-gray-400">
-                        <i class="fa-solid fa-circle-notch fa-spin text-indigo-500 mr-1.5"></i> Memuat data ${formatTglIndo(tgl)}...
-                    </td>
-                </tr>
-            `;
+			// 3. DEKLARASI VARIABEL PENTING (tbody, labelTgl, badgeCount)
+			// Bagian ini yang sebelumnya hilang sehingga memicu error ReferenceError
+			const tbody = document.getElementById('tableBodyLogistikHariIni');
+			const labelTgl = document.getElementById('labelLogistikTanggalTerpilih');
+			const badgeCount = document.getElementById('badgeJumlahPekerjaLogistik');
 
-            const { data, error } = await supabaseClient
-                .from('distribusi_packing')
-                .select(`
-                    *,
-                    karyawan!karyawan_id(nama),
-                    pengirim:karyawan!dikirim_oleh(nama)
-                `)
-                .eq('tanggal', tgl)
-                .order('sesi', { ascending: false })
-                .order('id', { ascending: false });
+			if (labelTgl) labelTgl.innerHTML = `<i class="fa-solid fa-calendar-day text-indigo-600"></i> ${formatTglIndo(tgl)}`;
+			
+			// Jika elemen tbody di HTML belum siap, hentikan agar tidak error
+			if (!tbody) return;
 
-            if (error) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500 font-bold">Error: ${error.message}</td></tr>`;
-                return;
-            }
+			// Tampilkan animasi memuat data
+			tbody.innerHTML = `
+				<tr>
+					<td colspan="5" class="p-6 text-center text-gray-400">
+						<i class="fa-solid fa-circle-notch fa-spin text-indigo-500 mr-1.5"></i> Memuat data ${formatTglIndo(tgl)}...
+					</td>
+				</tr>
+			`;
 
-            let totalKirim = 0;
-            let totalTarget = 0;
-            let totalSetor = 0;
+			// 4. Ambil data dari Supabase berdasarkan tanggal yang dipilih
+			const { data, error } = await supabaseClient
+				.from('distribusi_packing')
+				.select(`
+					*,
+					karyawan!karyawan_id(nama),
+					pengirim:karyawan!dikirim_oleh(nama)
+				`)
+				.eq('tanggal', tgl)
+				.order('sesi', { ascending: false })
+				.order('id', { ascending: false });
 
-            let kirimB12 = 0, kirimB10 = 0, kirimOleholeh = 0;
-            let targetB12 = 0, targetB10 = 0, targetOleholeh = 0;
-            let setorB12 = 0, setorB10 = 0, setorOleholeh = 0;
+			if (error) {
+				tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500 font-bold">Error: ${error.message}</td></tr>`;
+				return;
+			}
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="p-8 text-center text-gray-400">
-                            <i class="fa-solid fa-clipboard-check text-2xl text-gray-300 mb-1.5 block"></i>
-                            Belum ada kiriman barang yang dicatat pada tanggal ${formatTglIndo(tgl)}.
-                        </td>
-                    </tr>
-                `;
-                document.getElementById('kpiLogistikKirim').innerText = 0;
-                document.getElementById('kpiLogistikTarget').innerText = 0;
-                document.getElementById('kpiLogistikSetor').innerText = 0;
-                document.getElementById('kpiLogistikSisa').innerText = 0;
-                document.getElementById('kpiDetailKirim').innerHTML = '';
-                document.getElementById('kpiDetailTarget').innerHTML = '';
-                document.getElementById('kpiDetailSetor').innerHTML = '';
-                document.getElementById('kpiDetailSisa').innerHTML = '';
-                if (badgeCount) badgeCount.innerText = "0 Karyawan";
-                return;
-            }
+			let totalKirim = 0;
+			let totalTarget = 0;
+			let totalSetor = 0;
 
-            tbody.innerHTML = '';
-            if (badgeCount) badgeCount.innerText = `${data.length} Karyawan`;
+			let kirimB12 = 0, kirimB10 = 0, kirimOleholeh = 0;
+			let targetB12 = 0, targetB10 = 0, targetOleholeh = 0;
+			let setorB12 = 0, setorB10 = 0, setorOleholeh = 0;
 
-            data.forEach(row => {
-                masterDistribusiMap[row.id] = row;
+			// Jika belum ada data kiriman pada tanggal ini
+			if (!data || data.length === 0) {
+				tbody.innerHTML = `
+					<tr>
+						<td colspan="5" class="p-8 text-center text-gray-400">
+							<i class="fa-solid fa-clipboard-check text-2xl text-gray-300 mb-1.5 block"></i>
+							Belum ada kiriman barang yang dicatat pada tanggal ${formatTglIndo(tgl)}.
+						</td>
+					</tr>
+				`;
+				document.getElementById('kpiLogistikKirim').innerText = 0;
+				document.getElementById('kpiLogistikTarget').innerText = 0;
+				document.getElementById('kpiLogistikSetor').innerText = 0;
+				document.getElementById('kpiLogistikSisa').innerText = 0;
+				document.getElementById('kpiDetailKirim').innerHTML = '';
+				document.getElementById('kpiDetailTarget').innerHTML = '';
+				document.getElementById('kpiDetailSetor').innerHTML = '';
+				document.getElementById('kpiDetailSisa').innerHTML = '';
+				if (badgeCount) badgeCount.innerText = "0 Karyawan";
+				return;
+			}
 
-                const jenis = row.jenis_produk || 'B12';
-                const target = hitungTargetProduk(row.kirim_produksi, jenis);
-                const tarik = row.tarik_jadi || 0;
-                const satuan = getSatuanTarik(jenis);
-                const kirim = row.kirim_produksi || 0;
+			// 5. Render baris data tabel jika data ditemukan
+			tbody.innerHTML = '';
+			if (badgeCount) badgeCount.innerText = `${data.length} Karyawan`;
 
-                totalKirim += kirim;
-                totalTarget += target;
-                totalSetor += tarik;
+			data.forEach(row => {
+				masterDistribusiMap[row.id] = row;
 
-                if (jenis === 'Oleh-oleh') {
-                    kirimOleholeh += kirim;
-                    targetOleholeh += target;
-                    setorOleholeh += tarik;
-                } else if (jenis === 'B10') {
-                    kirimB10 += kirim;
-                    targetB10 += target;
-                    setorB10 += tarik;
-                } else {
-                    kirimB12 += kirim;
-                    targetB12 += target;
-                    setorB12 += tarik;
-                }
+				const jenis = row.jenis_produk || 'B12';
+				const target = hitungTargetProduk(row.kirim_produksi, jenis);
+				const tarik = row.tarik_jadi || 0;
+				const satuan = getSatuanTarik(jenis);
+				const kirim = row.kirim_produksi || 0;
 
-                const namaProduk = jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${jenis.replace('B','')}`;
-                const labelPengirim = row.pengirim?.nama ? `<div class="text-[10px] text-gray-400">Kirim: ${row.pengirim.nama}</div>` : '';
+				totalKirim += kirim;
+				totalTarget += target;
+				totalSetor += tarik;
 
-                tbody.innerHTML += `
-                    <tr class="hover:bg-indigo-50/40 border-b border-gray-100 last:border-0 transition">
-                        <td class="px-4 py-3 font-bold text-gray-700 whitespace-nowrap">
-                            <span class="px-2 py-0.5 rounded-lg text-[10px] font-black ${row.sesi === 'Pagi' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'}">
-                                ${row.sesi}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="font-black text-gray-900 uppercase text-xs">${row.karyawan?.nama || '-'}</div>
-                            <div class="text-[11px] font-bold text-indigo-600 mt-0.5">${namaProduk}</div>
-                            ${labelPengirim}
-                        </td>
-                        <td class="px-3 py-3 text-center">
-                            <div class="font-black text-blue-700 text-sm">${row.kirim_produksi} <span class="text-[10px] text-gray-400 font-normal">Bal</span></div>
-                            <div class="text-[9px] text-gray-400">Target: ${target}</div>
-                        </td>
-                        <td class="px-3 py-3 text-center">
-                            <div class="font-black ${tarik >= target ? 'text-emerald-600' : 'text-amber-600'} text-sm">
-                                ${tarik} <span class="text-[10px] text-gray-400 font-normal">${satuan}</span>
-                            </div>
-                        </td>
-                        <td class="px-4 py-3 text-center space-x-1 whitespace-nowrap">
-                            <button onclick="editData('${row.id}')" class="w-7 h-7 rounded-xl bg-gray-100 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 transition" title="Edit"><i class="fa-solid fa-pen text-xs"></i></button>
-                            <button onclick="hapusData('${row.id}')" class="w-7 h-7 rounded-xl bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600 transition" title="Hapus"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
+				if (jenis === 'Oleh-oleh') {
+					kirimOleholeh += kirim;
+					targetOleholeh += target;
+					setorOleholeh += tarik;
+				} else if (jenis === 'B10') {
+					kirimB10 += kirim;
+					targetB10 += target;
+					setorB10 += tarik;
+				} else {
+					kirimB12 += kirim;
+					targetB12 += target;
+					setorB12 += tarik;
+				}
 
-            const sisaB12 = Math.max(0, targetB12 - setorB12);
-            const sisaB10 = Math.max(0, targetB10 - setorB10);
-            const sisaOleholeh = Math.max(0, targetOleholeh - setorOleholeh);
-            const totalSisa = Math.max(0, totalTarget - totalSetor);
+				const namaProduk = jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${jenis.replace('B','')}`;
+				const labelPengirim = row.pengirim?.nama ? `<div class="text-[10px] text-gray-400">Kirim: ${row.pengirim.nama}</div>` : '';
 
-            document.getElementById('kpiLogistikKirim').innerText = totalKirim;
-            document.getElementById('kpiLogistikTarget').innerText = totalTarget;
-            document.getElementById('kpiLogistikSetor').innerText = totalSetor;
-            document.getElementById('kpiLogistikSisa').innerText = totalSisa;
+				tbody.innerHTML += `
+					<tr class="hover:bg-indigo-50/40 border-b border-gray-100 last:border-0 transition">
+						<td class="px-4 py-3 font-bold text-gray-700 whitespace-nowrap">
+							<span class="px-2 py-0.5 rounded-lg text-[10px] font-black ${row.sesi === 'Pagi' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'}">
+								${row.sesi}
+							</span>
+						</td>
+						<td class="px-4 py-3">
+							<div class="font-black text-gray-900 uppercase text-xs">${row.karyawan?.nama || '-'}</div>
+							<div class="text-[11px] font-bold text-indigo-600 mt-0.5">${namaProduk}</div>
+							${labelPengirim}
+						</td>
+						<td class="px-3 py-3 text-center">
+							<div class="font-black text-blue-700 text-sm">${row.kirim_produksi} <span class="text-[10px] text-gray-400 font-normal">Bal</span></div>
+							<div class="text-[9px] text-gray-400">Target: ${target}</div>
+						</td>
+						<td class="px-3 py-3 text-center">
+							<div class="font-black ${tarik >= target ? 'text-emerald-600' : 'text-amber-600'} text-sm">
+								${tarik} <span class="text-[10px] text-gray-400 font-normal">${satuan}</span>
+							</div>
+						</td>
+						<td class="px-4 py-3 text-center space-x-1 whitespace-nowrap">
+							<button onclick="editData('${row.id}')" class="w-7 h-7 rounded-xl bg-gray-100 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 transition" title="Edit"><i class="fa-solid fa-pen text-xs"></i></button>
+							<button onclick="hapusData('${row.id}')" class="w-7 h-7 rounded-xl bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600 transition" title="Hapus"><i class="fa-solid fa-trash text-xs"></i></button>
+						</td>
+					</tr>
+				`;
+			});
 
-            let kirimChips = [];
-            if (kirimB12 > 0) kirimChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-blue-100">B12: ${kirimB12} Bal</span>`);
-            if (kirimB10 > 0) kirimChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-blue-100">B10: ${kirimB10} Bal</span>`);
-            if (kirimOleholeh > 0) kirimChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-blue-100">Oleh: ${kirimOleholeh} Bal</span>`);
-            document.getElementById('kpiDetailKirim').innerHTML = kirimChips.join('');
+			// 6. Hitung dan perbarui angka kartu KPI di bagian atas
+			const sisaB12 = Math.max(0, targetB12 - setorB12);
+			const sisaB10 = Math.max(0, targetB10 - setorB10);
+			const sisaOleholeh = Math.max(0, targetOleholeh - setorOleholeh);
+			const totalSisa = Math.max(0, totalTarget - totalSetor);
 
-            let targetChips = [];
-            if (targetB12 > 0) targetChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-indigo-100">B12: ${targetB12} Bal</span>`);
-            if (targetB10 > 0) targetChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-indigo-100">B10: ${targetB10} Bal</span>`);
-            if (targetOleholeh > 0) targetChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-amber-200 text-amber-900">Oleh: ${targetOleholeh} Toros</span>`);
-            document.getElementById('kpiDetailTarget').innerHTML = targetChips.join('');
+			document.getElementById('kpiLogistikKirim').innerText = totalKirim;
+			document.getElementById('kpiLogistikTarget').innerText = totalTarget;
+			document.getElementById('kpiLogistikSetor').innerText = totalSetor;
+			document.getElementById('kpiLogistikSisa').innerText = totalSisa;
 
-            let setorChips = [];
-            if (targetB12 > 0 || setorB12 > 0) setorChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-emerald-100">B12: ${setorB12} Bal</span>`);
-            if (targetB10 > 0 || setorB10 > 0) setorChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-emerald-100">B10: ${setorB10} Bal</span>`);
-            if (targetOleholeh > 0 || setorOleholeh > 0) setorChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-emerald-100">Oleh: ${setorOleholeh} Toros</span>`);
-            document.getElementById('kpiDetailSetor').innerHTML = setorChips.join('');
+			let kirimChips = [];
+			if (kirimB12 > 0) kirimChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-blue-100">B12: ${kirimB12} Bal</span>`);
+			if (kirimB10 > 0) kirimChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-blue-100">B10: ${kirimB10} Bal</span>`);
+			if (kirimOleholeh > 0) kirimChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-blue-100">Oleh: ${kirimOleholeh} Bal</span>`);
+			document.getElementById('kpiDetailKirim').innerHTML = kirimChips.join('');
 
-            let sisaChips = [];
-            if (sisaB12 > 0) sisaChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-rose-200 text-rose-700">B12: ${sisaB12} Bal</span>`);
-            if (sisaB10 > 0) sisaChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-rose-200 text-rose-700">B10: ${sisaB10} Bal</span>`);
-            if (sisaOleholeh > 0) sisaChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-rose-200 text-rose-700">Oleh: ${sisaOleholeh} Toros</span>`);
-            if (totalSisa === 0 && totalTarget > 0) sisaChips.push(`<span class="bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-200 text-emerald-800 font-black">LUNAS</span>`);
-            document.getElementById('kpiDetailSisa').innerHTML = sisaChips.join('');
-        }
+			let targetChips = [];
+			if (targetB12 > 0) targetChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-indigo-100">B12: ${targetB12} Bal</span>`);
+			if (targetB10 > 0) targetChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-indigo-100">B10: ${targetB10} Bal</span>`);
+			if (targetOleholeh > 0) targetChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-amber-200 text-amber-900">Oleh: ${targetOleholeh} Toros</span>`);
+			document.getElementById('kpiDetailTarget').innerHTML = targetChips.join('');
+
+			let setorChips = [];
+			if (targetB12 > 0 || setorB12 > 0) setorChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-emerald-100">B12: ${setorB12} Bal</span>`);
+			if (targetB10 > 0 || setorB10 > 0) setorChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-emerald-100">B10: ${setorB10} Bal</span>`);
+			if (targetOleholeh > 0 || setorOleholeh > 0) setorChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-emerald-100">Oleh: ${setorOleholeh} Toros</span>`);
+			document.getElementById('kpiDetailSetor').innerHTML = setorChips.join('');
+
+			let sisaChips = [];
+			if (sisaB12 > 0) sisaChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-rose-200 text-rose-700">B12: ${sisaB12} Bal</span>`);
+			if (sisaB10 > 0) sisaChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-rose-200 text-rose-700">B10: ${sisaB10} Bal</span>`);
+			if (sisaOleholeh > 0) sisaChips.push(`<span class="bg-white/90 px-1.5 py-0.5 rounded border border-rose-200 text-rose-700">Oleh: ${sisaOleholeh} Toros</span>`);
+			if (totalSisa === 0 && totalTarget > 0) sisaChips.push(`<span class="bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-200 text-emerald-800 font-black">LUNAS</span>`);
+			document.getElementById('kpiDetailSisa').innerHTML = sisaChips.join('');
+		}
+        
 
         async function loadSetorFIFODesktop() {
             const select = document.getElementById('selectPekerjaSetorDesktop');
@@ -1897,8 +1972,7 @@
                 const totalItem = items.length;
                 const belumTarik = items.filter(r => (r.tarik_jadi || 0) === 0).length;
                 const adaGantung = items.filter(r => (r.koreksi || 0) < 0).length;
-                const isOpen = (index === 0 || kataKunci.length > 0 || filterStatus.length > 0);
-
+				const isOpen = Boolean(kataKunci.length > 0 || filterProduk.length > 0 || filterStatus.length > 0);
                 let targetB12 = 0;
                 let targetB10 = 0;
                 let targetOleholeh = 0;
@@ -2646,101 +2720,139 @@
             await prosesPelunasanDatabase(listKid);
         }
 
-        function bukaModalRincian(karyawanId) {
-            const data = globalRekapData[karyawanId];
-            if (!data) return;
+		function bukaModalRincian(karyawanId) {
+			const data = globalRekapData[karyawanId];
+			if (!data) return;
 
-            currentRincianKaryawanId = karyawanId;
-            const start = document.getElementById('filterStart').value;
-            const end = document.getElementById('filterEnd').value;
+			currentRincianKaryawanId = karyawanId;
+			const start = document.getElementById('filterStart').value;
+			const end = document.getElementById('filterEnd').value;
 
-            document.getElementById('infoRincianPeriode').innerText = `Periode: ${formatTglIndo(start)} s/d ${formatTglIndo(end)}`;
-            document.getElementById('infoRincianNama').innerText = data.nama;
+			document.getElementById('infoRincianPeriode').innerText = `Periode: ${formatTglIndo(start)} s/d ${formatTglIndo(end)}`;
+			document.getElementById('infoRincianNama').innerText = data.nama;
 
-            const tbody = document.getElementById('tableBodyRincian');
-            const tfoot = document.getElementById('tableFootRincian');
-            tbody.innerHTML = '';
-            tfoot.innerHTML = '';
+			const tbody = document.getElementById('tableBodyRincian');
+			const tfoot = document.getElementById('tableFootRincian');
+			tbody.innerHTML = '';
+			tfoot.innerHTML = '';
 
-            let grandKirim = 0;
-            let grandTarget = 0;
-            let grandSetor = 0;
+			let grandKirim = 0;
+			let grandTarget = 0;
+			let grandSetor = 0;
 
-            const listHistori = [...(data.histori || [])].sort((a, b) => {
-                if (a.tanggal !== b.tanggal) return a.tanggal.localeCompare(b.tanggal);
-                return (a.sesi === 'Pagi') ? -1 : 1;
-            });
+			const listHistori = [...(data.histori || [])].sort((a, b) => {
+				if (a.tanggal !== b.tanggal) return a.tanggal.localeCompare(b.tanggal);
+				return (a.sesi === 'Pagi') ? -1 : 1;
+			});
 
-            listHistori.forEach(row => {
-                const jenis = row.jenis_produk || 'B12';
-                const kirimAsli = row.kirim_produksi || 0;
-                const targetKirim = hitungTargetProduk(kirimAsli, jenis);
-                const setor = row.tarik_jadi || 0;
-                const selisih = row.koreksi || (setor - targetKirim);
-                const satuan = getSatuanTarik(jenis);
+			listHistori.forEach(row => {
+				const jenis = row.jenis_produk || 'B12';
+				const kirimAsli = row.kirim_produksi || 0;
+				const targetKirim = hitungTargetProduk(kirimAsli, jenis);
+				const setor = row.tarik_jadi || 0;
+				const selisih = row.koreksi || (setor - targetKirim);
+				const satuan = getSatuanTarik(jenis);
 
-                grandKirim += kirimAsli;
-                grandTarget += targetKirim;
-                grandSetor += setor;
+				grandKirim += kirimAsli;
+				grandTarget += targetKirim;
+				grandSetor += setor;
 
-                let statusUI = '';
-                if (setor === 0 && selisih === 0) {
-                    statusUI = `<span class="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">Belum Ditarik</span>`;
-                } else if (selisih === 0) {
-                    statusUI = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">PAS</span>`;
-                } else if (selisih < 0) {
-                    statusUI = `<span class="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded">Kurang ${Math.abs(selisih)} ${satuan}</span>`;
-                } else {
-                    statusUI = `<span class="text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">Lebih +${selisih} ${satuan}</span>`;
-                }
+				// 1. Tentukan status teks badge dan tema warna untuk kolom setor
+				let statusUI = '';
+				let warnaSetor = {
+					teks: 'text-amber-600',
+					bgHover: 'hover:bg-amber-50',
+					borderHover: 'hover:border-amber-200',
+					icon: 'text-amber-400 group-hover:text-amber-600',
+					subteks: 'text-amber-500 group-hover:text-amber-700'
+				};
 
-                const tombolSetorInteraktif = setor > 0
-                    ? `
-                        <button type="button" onclick="lihatRincianPenarikBarang('${row.id}')" class="group inline-flex flex-col items-center justify-center px-2.5 py-1 rounded-xl hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition cursor-pointer" title="Klik rincian">
-                            <span class="font-black text-emerald-600 text-base group-hover:underline flex items-center gap-1">
-                                ${setor} <i class="fa-solid fa-circle-info text-[10px] text-emerald-400 group-hover:text-emerald-600"></i>
-                            </span>
-                            <span class="text-[9px] text-gray-400 group-hover:text-emerald-600 font-semibold leading-none">rincian</span>
-                        </button>
-                    `
-                    : `<span class="font-black text-gray-400 text-base">0</span>`;
+				if (setor === 0) {
+					statusUI = `<span class="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">Belum Ditarik</span>`;
+					warnaSetor = {
+						teks: 'text-amber-600',
+						bgHover: 'hover:bg-amber-50',
+						borderHover: 'hover:border-amber-200',
+						icon: 'text-amber-400 group-hover:text-amber-600',
+						subteks: 'text-amber-500 group-hover:text-amber-700'
+					};
+				} else if (selisih === 0) {
+					statusUI = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">PAS</span>`;
+					warnaSetor = {
+						teks: 'text-emerald-600',
+						bgHover: 'hover:bg-emerald-50',
+						borderHover: 'hover:border-emerald-200',
+						icon: 'text-emerald-400 group-hover:text-emerald-600',
+						subteks: 'text-emerald-500 group-hover:text-emerald-700'
+					};
+				} else if (selisih < 0) {
+					statusUI = `<span class="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded">Kurang ${Math.abs(selisih)} ${satuan}</span>`;
+					warnaSetor = {
+						teks: 'text-red-600',
+						bgHover: 'hover:bg-red-50',
+						borderHover: 'hover:border-red-200',
+						icon: 'text-red-400 group-hover:text-red-600',
+						subteks: 'text-red-500 group-hover:text-red-700'
+					};
+				} else {
+					statusUI = `<span class="text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">Lebih +${selisih} ${satuan}</span>`;
+					warnaSetor = {
+						teks: 'text-purple-600',
+						bgHover: 'hover:bg-purple-50',
+						borderHover: 'hover:border-purple-200',
+						icon: 'text-purple-400 group-hover:text-purple-600',
+						subteks: 'text-purple-500 group-hover:text-purple-700'
+					};
+				}
 
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 border-b border-gray-100 transition">
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <div class="font-bold text-gray-800 text-xs">${formatTglIndo(row.tanggal)}</div>
-                            <div class="text-[10px] text-gray-500">Waktu ${row.sesi}</div>
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
-                                ${jenis === 'Oleh-oleh' ? 'Oleh-oleh' : 'Aromanis B' + jenis.replace('B','')}
-                            </span>
-                        </td>
-                        <td class="px-3 py-3 text-center font-bold text-blue-700 text-sm">${kirimAsli}</td>
-                        <td class="px-3 py-3 text-center font-bold text-indigo-600 text-sm">${targetKirim}</td>
-                        <td class="px-3 py-3 text-center leading-tight">${tombolSetorInteraktif}</td>
-                        <td class="px-4 py-3 text-center">${statusUI}</td>
-                    </tr>
-                `;
-            });
+				// 2. Render tombol setor dengan warna yang sudah disinkronkan
+				const tombolSetorInteraktif = setor > 0
+					? `
+						<button type="button" onclick="lihatRincianPenarikBarang('${row.id}')" class="group inline-flex flex-col items-center justify-center px-2.5 py-1 rounded-xl ${warnaSetor.bgHover} border border-transparent ${warnaSetor.borderHover} transition cursor-pointer" title="Klik rincian">
+							<span class="font-black ${warnaSetor.teks} text-base group-hover:underline flex items-center gap-1">
+								${setor} <i class="fa-solid fa-circle-info text-[10px] ${warnaSetor.icon}"></i>
+							</span>
+							<span class="text-[9px] ${warnaSetor.subteks} font-semibold leading-none">rincian</span>
+						</button>
+					`
+					: `<span class="font-black text-amber-600 text-base">0</span>`;
 
-            tfoot.innerHTML = `
-                <tr>
-                    <td colspan="2" class="px-4 py-3 text-right uppercase tracking-wider text-gray-600 font-extrabold text-[11px]">Total:</td>
-                    <td class="px-3 py-3 text-center font-black text-blue-700 text-sm border-l border-gray-200">${grandKirim}</td>
-                    <td class="px-3 py-3 text-center font-black text-indigo-700 text-sm border-l border-gray-200">${grandTarget}</td>
-                    <td class="px-3 py-3 text-center font-black text-emerald-700 text-base border-l border-gray-200">${grandSetor}</td>
-                    <td class="border-l border-gray-200"></td>
-                </tr>
-            `;
+				tbody.innerHTML += `
+					<tr class="hover:bg-gray-50 border-b border-gray-100 transition">
+						<td class="px-4 py-3 whitespace-nowrap">
+							<div class="font-bold text-gray-800 text-xs">${formatTglIndo(row.tanggal)}</div>
+							<div class="text-[10px] text-gray-500">Waktu ${row.sesi}</div>
+						</td>
+						<td class="px-4 py-3">
+							<span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+								${jenis === 'Oleh-oleh' ? 'Oleh-oleh' : 'Aromanis B' + jenis.replace('B','')}
+							</span>
+						</td>
+						<td class="px-3 py-3 text-center font-bold text-blue-700 text-sm">${kirimAsli}</td>
+						<td class="px-3 py-3 text-center font-bold text-indigo-600 text-sm">${targetKirim}</td>
+						<td class="px-3 py-3 text-center leading-tight">${tombolSetorInteraktif}</td>
+						<td class="px-4 py-3 text-center">${statusUI}</td>
+					</tr>
+				`;
+			});
 
-            document.getElementById('infoRincianTotalKirim').innerText = grandKirim;
-            document.getElementById('infoRincianTotalSetor').innerText = grandSetor;
+			tfoot.innerHTML = `
+				<tr>
+					<td colspan="2" class="px-4 py-3 text-right uppercase tracking-wider text-gray-600 font-extrabold text-[11px]">Total:</td>
+					<td class="px-3 py-3 text-center font-black text-blue-700 text-sm border-l border-gray-200">${grandKirim}</td>
+					<td class="px-3 py-3 text-center font-black text-indigo-700 text-sm border-l border-gray-200">${grandTarget}</td>
+					<td class="px-3 py-3 text-center font-black text-gray-800 text-base border-l border-gray-200">${grandSetor}</td>
+					<td class="border-l border-gray-200"></td>
+				</tr>
+			`;
 
-            const modal = document.getElementById('modalRincian');
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            document.getElementById('modalContentRincian').classList.remove('scale-95');
-        }
+			document.getElementById('infoRincianTotalKirim').innerText = grandKirim;
+			document.getElementById('infoRincianTotalSetor').innerText = grandSetor;
+
+			const modal = document.getElementById('modalRincian');
+			modal.classList.remove('opacity-0', 'pointer-events-none');
+			document.getElementById('modalContentRincian').classList.remove('scale-95');
+		}
 
         function lihatRincianPenarikBarang(rowId) {
             const data = globalRekapData[currentRincianKaryawanId];
