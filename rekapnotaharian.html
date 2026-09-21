@@ -662,7 +662,7 @@
         return kiri + " ".repeat(spasi) + kanan + "\n";
     }
 
-    async function cetakStrukBluetooth() {
+async function cetakStrukBluetooth() {
         if (!navigator.bluetooth) {
             alert("Browser ini tidak mendukung Web Bluetooth API.");
             return;
@@ -676,24 +676,35 @@
         const GARIS_GANDA = "=".repeat(LEBAR_MAX) + "\n";
 
         let teks = "";
-        const ESC_INIT = "\x1B\x40"; 
-        const ESC_CENTER = "\x1B\x61\x01";
-        const ESC_LEFT = "\x1B\x61\x00";
-        const ESC_BOLD_ON = "\x1B\x45\x01";
-        const ESC_BOLD_OFF = "\x1B\x45\x00";
+        
+        // --- KODE PERINTAH ESC/POS UNTUK FORMATTING ---
+        const ESC_INIT = "\x1B\x40";           // Reset printer ke setelan awal
+        const ESC_CENTER = "\x1B\x61\x01";      // Teks rata tengah
+        const ESC_LEFT = "\x1B\x61\x00";        // Teks rata kiri
+        const ESC_BOLD_ON = "\x1B\x45\x01";     // Mengaktifkan teks tebal (bold)
+        const ESC_BOLD_OFF = "\x1B\x45\x00";    // Mematikan teks tebal
+        const GS_TXT_DOUBLE_HEIGHT = "\x1D\x21\x01"; // Mengaktifkan tinggi ganda (double height)
+        const GS_TXT_NORMAL = "\x1D\x21\x00";        // Mereset ukuran teks ke normal
 
         const [y, m, d] = trx.tanggal.split('-');
         const drvGabung = trx.driver_2 ? `${trx.driver_1}/${trx.driver_2}` : trx.driver_1;
 
+        // Header Struk
         teks += ESC_INIT;
         teks += ESC_CENTER + ESC_BOLD_ON + "SBR PUTRA FOOD\n" + ESC_BOLD_OFF;
         teks += "Lembang, Bandung Barat\n";
         teks += ESC_LEFT + GARIS;
         teks += formatBarisKiriKanan(`NO: ${trx.no_nota}`, `TGL: ${d}-${m}-${y}`);
-        teks += ESC_CENTER + ESC_BOLD_ON + `${trx.nama_agen.toUpperCase()}\n` + ESC_BOLD_OFF;
+        
+        // [1] NAMA AGEN: Bold & Double Height
+        teks += ESC_CENTER + ESC_BOLD_ON + GS_TXT_DOUBLE_HEIGHT;
+        teks += `${trx.nama_agen.toUpperCase()}\n`;
+        teks += GS_TXT_NORMAL + ESC_BOLD_OFF; // Reset kembali ke normal
+
         teks += ESC_LEFT + `DRV: ${drvGabung} [${trx.plat_nomor || '-'}]\n`;
         teks += GARIS;
 
+        // Daftar Barang Kirim
         const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
         const itemsRetur = detail.filter(i => i.tipe === 'Retur');
 
@@ -704,9 +715,14 @@
             teks += formatBarisKiriKanan(rincian, sub);
         });
         teks += GARIS;
+        
+        // [2] TOTAL KIRIM: Bold saja
+        teks += ESC_BOLD_ON;
         teks += formatBarisKiriKanan("TOTAL KIRIM:", `Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}`);
+        teks += ESC_BOLD_OFF;
 
-        if(itemsRetur.length > 0) {
+        // Daftar Barang Retur (jika ada)
+        if (itemsRetur.length > 0) {
             teks += GARIS;
             teks += ESC_BOLD_ON + "BARANG RETUR:\n" + ESC_BOLD_OFF;
             itemsRetur.forEach(i => {
@@ -716,7 +732,11 @@
                 teks += formatBarisKiriKanan(rincian, sub);
             });
             teks += GARIS;
+            
+            // [3] TOTAL RETUR: Bold saja
+            teks += ESC_BOLD_ON;
             teks += formatBarisKiriKanan("TOTAL RETUR:", `Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}`);
+            teks += ESC_BOLD_OFF;
         }
 
         const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
@@ -724,10 +744,20 @@
         let teksBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
         
         teks += "\n";
-        teks += formatBarisKiriKanan(teksBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`);
-        teks += GARIS_GANDA;
-        teks += ESC_BOLD_ON + formatBarisKiriKanan("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`) + ESC_BOLD_OFF;
         
+        // [4] DEPOSIT / BON LAMA: Bold saja
+        teks += ESC_BOLD_ON;
+        teks += formatBarisKiriKanan(teksBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`);
+        teks += ESC_BOLD_OFF;
+
+        teks += GARIS_GANDA;
+
+        // [5] TOTAL TAGIHAN: Bold & Double Height
+        teks += ESC_BOLD_ON + GS_TXT_DOUBLE_HEIGHT;
+        teks += formatBarisKiriKanan("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`);
+        teks += GS_TXT_NORMAL + ESC_BOLD_OFF; // Reset kembali ke normal
+        
+        // Keterangan Ongkir (jika ada)
         let ketOngkir = trx.ongkir || trx.keterangan_ongkir;
         if (ketOngkir) {
             let displayOngkir = isNaN(ketOngkir) ? ketOngkir : `Rp ${Number(ketOngkir).toLocaleString('id-ID')}`;
@@ -739,6 +769,7 @@
         teks += formatBarisKiriKanan("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`);
         teks += GARIS;
         
+        // Riwayat Cicilan (jika ada)
         if (riwayatBayar && riwayatBayar.length > 0) {
             teks += ESC_BOLD_ON + "RIWAYAT CICILAN:\n" + ESC_BOLD_OFF;
             riwayatBayar.forEach(p => {
@@ -751,11 +782,24 @@
             teks += GARIS;
         }
 
+        // [6] STATUS AKHIR SEBELUM FOOTER (SISA NOTA / LUNAS / DEPOSIT): Bold & Double Height
         let sisaAkhir = trx.sisa_akhir || 0;
-        let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
-        teks += ESC_BOLD_ON + formatBarisKiriKanan(teksSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`) + ESC_BOLD_OFF;
+        let teksSisa;
+        if (sisaAkhir === 0) {
+            teksSisa = "LUNAS:";
+        } else if (sisaAkhir < 0) {
+            teksSisa = "DEPOSIT:";
+        } else {
+            teksSisa = "SISA BON:";
+        }
+
+        teks += ESC_BOLD_ON + GS_TXT_DOUBLE_HEIGHT;
+        teks += formatBarisKiriKanan(teksSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`);
+        teks += GS_TXT_NORMAL + ESC_BOLD_OFF; // Reset kembali ke normal
+
         teks += GARIS;
 
+        // Footer
         teks += ESC_CENTER + ESC_BOLD_ON + "SBR PUTRA FOOD SYSTEM\n" + ESC_BOLD_OFF;
         teks += "\n\n\n"; 
 
