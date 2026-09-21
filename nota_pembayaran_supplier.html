@@ -874,20 +874,30 @@
     }
 
     async function fetchPreviousBalance(customerName) {
-        if(!isSupabaseConnected) return 0;
-        try {
-            const { data, error } = await supabaseClient.from('supplier_recaps').select('balance_due, invoice_no').eq('customer_name', customerName).order('created_at', { ascending: false }).limit(1);
-            if (!error && data && data.length > 0) {
-                const latestBal = parseFloat(data[0].balance_due) || 0;
-                customerBalances[customerName] = latestBal;
-                currentLastInvoiceNo = data[0].invoice_no;
-                return latestBal;
-            }
-        } catch (err) {} 
-        
-        currentLastInvoiceNo = null;
-        return customerBalances[customerName] !== undefined ? customerBalances[customerName] : 0;
-    }
+		if(!isSupabaseConnected) return 0;
+		try {
+			// Cari nota terakhir yang balance_due-nya belum 0
+			const { data, error } = await supabaseClient
+				.from('supplier_recaps')
+				.select('balance_due, invoice_no')
+				.eq('customer_name', customerName)
+				.neq('balance_due', 0)
+				.order('created_at', { ascending: false })
+				.limit(1);
+
+			if (!error && data && data.length > 0) {
+				const latestBal = parseFloat(data[0].balance_due) || 0;
+				customerBalances[customerName] = latestBal;
+				currentLastInvoiceNo = data[0].invoice_no; // Simpan ID nota lama
+				return latestBal;
+			}
+		} catch (err) {
+			console.error("Gagal mengambil saldo sebelumnya:", err);
+		} 
+		
+		currentLastInvoiceNo = null;
+		return 0;
+	}
 
     function tutupPratinjauKeEdit() {
         const invoiceNo = document.getElementById('prevInvNo').innerText;
@@ -1456,32 +1466,34 @@
     }
 
     // --- LOGIKA FORM TRANSAKSI & RINCIAN BARANG ---
-    async function autoFillCustomer() {
-        const select = document.getElementById('custName');
-        currentCustomerId = parseInt(select.value) || null;
-        const customer = customers.find(c => c.id === currentCustomerId);
-        
-        if (customer) {
-            document.getElementById('warningRow').style.color = 'var(--primary)'; 
-            document.getElementById('warningRow').innerText = '✓ Supplier aktif, silakan tambah barang baru';
-        } else {
-            document.getElementById('warningRow').style.color = 'var(--text-muted)'; 
-            document.getElementById('warningRow').innerText = 'Pilih supplier terlebih dahulu untuk menambah barang';
-        }
+	async function autoFillCustomer() {
+		const select = document.getElementById('custName');
+		currentCustomerId = parseInt(select.value) || null;
+		const customer = customers.find(c => c.id === currentCustomerId);
+		
+		if (customer) {
+			document.getElementById('warningRow').style.color = 'var(--primary)'; 
+			document.getElementById('warningRow').innerText = '✓ Supplier aktif, silakan masukkan barang kiriman baru';
+		} else {
+			document.getElementById('warningRow').style.color = 'var(--text-muted)'; 
+			document.getElementById('warningRow').innerText = 'Pilih supplier terlebih dahulu untuk menambah barang';
+		}
 
-        if(!isEditingMode) {
-            document.getElementById('itemsBody').innerHTML = ''; 
-            depositList = []; 
-            currentPiutang = 0;
-            if(currentCustomerId && customer) {
-                const prevBalance = await fetchPreviousBalance(customer.name);
-                currentPiutang = prevBalance;
-                addRow(); 
-            }
-            calculate();
-        }
-    }
-
+		if(!isEditingMode) {
+			// Kosongkan rincian barang lama dan cicilan lama
+			document.getElementById('itemsBody').innerHTML = ''; 
+			depositList = []; 
+			currentPiutang = 0;
+			
+			if(currentCustomerId && customer) {
+				// Ambil sisa saldo berjalan (kelebihan bayar / sisa hutang)
+				const prevBalance = await fetchPreviousBalance(customer.name);
+				currentPiutang = prevBalance;
+				addRow(); // Siapkan 1 baris bersih untuk barang baru
+			}
+			calculate();
+		}
+	}
     function getAvailableProductsForCurrentAgent() {
         return [...products].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => ({ 
             id: p.id, 
@@ -1952,40 +1964,50 @@
             return;
         }
 
-        try {
-            if(isEditingMode) {
-                await supabaseClient.from('supplier_recap_items').delete().eq('invoice_no', invoiceNo);
-                await supabaseClient.from('supplier_recaps').update({ 
-                    customer_name: customer.name, 
-                    customer_phone: customer.phone || "-", 
-                    customer_address: customer.address || "-", 
-                    subtotal: subtotalDB, 
-                    deposit: totalDeposit, 
-                    balance_due: balanceDueDB 
-                }).eq('invoice_no', invoiceNo);
-                await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
-                customerBalances[customer.name] = balanceDueDB;
-                showSuccessPopup(successTitle, successSub);
-                buatInvoiceBaru(); 
-            } else {
-                await supabaseClient.from('supplier_recaps').insert([{ 
-                    invoice_no: invoiceNo, 
-                    customer_name: customer.name, 
-                    customer_phone: customer.phone || "-", 
-                    customer_address: customer.address || "-", 
-                    subtotal: subtotalDB, 
-                    deposit: totalDeposit, 
-                    balance_due: balanceDueDB 
-                }]);
-                await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
-                customerBalances[customer.name] = balanceDueDB;
-                showSuccessPopup(successTitle, successSub);
-                buatInvoiceBaru(); 
-            }
-        } catch (error) { 
-            closePopup();
-            showWarningPopup("Gagal Menyimpan", error.message); 
-        }
+		try {
+			if(isEditingMode) {
+				await supabaseClient.from('supplier_recap_items').delete().eq('invoice_no', invoiceNo);
+				await supabaseClient.from('supplier_recaps').update({ 
+					customer_name: customer.name, 
+					customer_phone: customer.phone || "-", 
+					customer_address: customer.address || "-", 
+					subtotal: subtotalDB, 
+					deposit: totalDeposit, 
+					balance_due: balanceDueDB 
+				}).eq('invoice_no', invoiceNo);
+				await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
+				customerBalances[customer.name] = balanceDueDB;
+				showSuccessPopup(successTitle, successSub);
+				buatInvoiceBaru(); 
+			} else {
+				// 1. Simpan Nota Baru
+				await supabaseClient.from('supplier_recaps').insert([{ 
+					invoice_no: invoiceNo, 
+					customer_name: customer.name, 
+					customer_phone: customer.phone || "-", 
+					customer_address: customer.address || "-", 
+					subtotal: subtotalDB, 
+					deposit: totalDeposit, 
+					balance_due: balanceDueDB 
+				}]);
+				await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
+
+				// 2. OTOMATIS LUNASKAN NOTA LAMA JIKA SALDONYA SUDAH DIALIHKAN KE NOTA BARU
+				if (currentLastInvoiceNo && currentPiutang !== 0) {
+					await supabaseClient
+						.from('supplier_recaps')
+						.update({ balance_due: 0 })
+						.eq('invoice_no', currentLastInvoiceNo);
+				}
+
+				customerBalances[customer.name] = balanceDueDB;
+				showSuccessPopup(successTitle, successSub);
+				buatInvoiceBaru(); 
+			}
+		} catch (error) { 
+			closePopup();
+			showWarningPopup("Gagal Menyimpan", error.message); 
+		}
     }
 
     // =========================================================================
