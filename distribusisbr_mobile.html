@@ -243,6 +243,48 @@
                         <select id="selectPekerjaSetor" onchange="onPilihPekerjaSetorCepat()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500">
                             <option value="">-- Pilih Tarik Dari Packing Siapa ?? --</option>
                         </select>
+						<!-- KODE BARU: Letakkan tepat di bawah penutup tag </select> pekerja setor -->
+						<div id="placeholderTarikKosong" class="space-y-3 pt-1">
+							<!-- 1. Panduan Visual 3 Langkah Modern -->
+							<div class="p-3.5 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-slate-800/80 rounded-2xl border border-emerald-100 dark:border-slate-700/80">
+								<div class="flex items-center gap-2 mb-2">
+									<span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] shadow-sm">
+										<i class="fa-solid fa-wand-magic-sparkles"></i>
+									</span>
+									<span class="text-xs font-black text-slate-800 dark:text-slate-100">Alur Tarik Cepat</span>
+								</div>
+								<div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+									<div class="p-2 bg-white/90 dark:bg-slate-800 rounded-xl border border-emerald-100 dark:border-slate-700 shadow-2xs">
+										<div class="font-black text-emerald-600 dark:text-emerald-400 mb-0.5">1. Pilih</div>
+										<div class="text-slate-500 dark:text-slate-400 leading-tight">Nama pekerja</div>
+									</div>
+									<div class="p-2 bg-white/90 dark:bg-slate-800 rounded-xl border border-emerald-100 dark:border-slate-700 shadow-2xs">
+										<div class="font-black text-indigo-600 dark:text-indigo-400 mb-0.5">2. Ketik</div>
+										<div class="text-slate-500 dark:text-slate-400 leading-tight">Jumlah disetor</div>
+									</div>
+									<div class="p-2 bg-white/90 dark:bg-slate-800 rounded-xl border border-emerald-100 dark:border-slate-700 shadow-2xs">
+										<div class="font-black text-purple-600 dark:text-purple-400 mb-0.5">3. Simpan</div>
+										<div class="text-slate-500 dark:text-slate-400 leading-tight">Beres & kirim WA</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- 2. Shortcut Chip Pekerja yang Masih Punya Tanggungan -->
+							<div id="boxShortcutTanggungan" class="space-y-2">
+								<div class="flex items-center justify-between text-[11px] px-1 font-bold text-slate-500 dark:text-slate-400">
+									<span class="flex items-center gap-1.5">
+										<i class="fa-solid fa-fire text-amber-500"></i>
+										<span>Paling Sering / Ada Sisa:</span>
+									</span>
+									<span id="badgeJumlahTanggungan" class="text-[9px] px-2 py-0.5 bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 rounded-full font-black">
+										0 Orang
+									</span>
+								</div>
+								<div id="listShortcutPekerja" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-0.5">
+									<!-- Chip nama pekerja akan di-render otomatis melalui JavaScript -->
+								</div>
+							</div>
+						</div>
                     </div>
 
                     <div id="boxRingkasanSisaPerJenis" class="hidden p-3 bg-slate-50 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
@@ -850,6 +892,27 @@
                 return { index: index, nama: str, qty: 0, satuan: 'Bal', waktu: 'Waktu' };
             });
         }
+
+
+		// ==============================================================
+		// FUNGSI LOGIKA WAKTU OPERASIONAL (CUT-OFF 23:45)
+		// ==============================================================
+		function getTanggalOperasionalTarik() {
+			const now = new Date();
+			const jam = now.getHours();
+			const menit = now.getMinutes();
+
+			// Buat salinan tanggal hari ini
+			const tglOperasional = new Date(now);
+
+			// Jika lewat dari jam 23:45, Anda bisa menentukan apakah sudah masuk hari esok.
+			// Selama masih di bawah jam 23:45, tanggal operasional murni adalah HARI INI.
+			const yyyy = tglOperasional.getFullYear();
+			const mm = String(tglOperasional.getMonth() + 1).padStart(2, '0');
+			const dd = String(tglOperasional.getDate()).padStart(2, '0');
+
+			return `${yyyy}-${mm}-${dd}`;
+		}
 
 // ==============================================================
         // 1. FUNGSI PEMBANTU: TANGGAL LOKAL INDONESIA (WIB)
@@ -2073,9 +2136,78 @@
             card.classList.add('scale-95');
         }
 
+		
+		// Fungsi untuk merender tombol cepat pekerja yang masih berhutang/punya tanggungan
+		function renderShortcutPekerjaTanggungan() {
+			const container = document.getElementById('listShortcutPekerja');
+			const badge = document.getElementById('badgeJumlahTanggungan');
+			if (!container) return;
 
-        // =========================================================================
-        // FORM SETOR CEPAT (DIRECT LEDGER ENTRY)
+			container.innerHTML = '';
+			const listAdaTanggungan = [];
+
+			// Cari pekerja yang memiliki produk dengan sisa (netSisa > 0)
+			Object.values(dataPekerjaTanggunganMap).forEach(pekerja => {
+				let totalSisa = 0;
+				let ringkasanProduk = [];
+				Object.values(pekerja.produkMap).forEach(prod => {
+					if (prod.netSisa > 0) {
+						totalSisa += prod.netSisa;
+						ringkasanProduk.push(`${prod.jenis}: ${prod.netSisa}`);
+					}
+				});
+
+				if (totalSisa > 0) {
+					listAdaTanggungan.push({
+						id: pekerja.id,
+						nama: pekerja.nama,
+						totalSisa: totalSisa,
+						info: ringkasanProduk.join(', ')
+					});
+				}
+			});
+
+			if (badge) badge.innerText = `${listAdaTanggungan.length} Orang`;
+
+			if (listAdaTanggungan.length === 0) {
+				container.innerHTML = `
+					<div class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-center text-[10px] font-bold text-slate-400">
+						Semua setoran pekerja dalam status PAS (Lunas).
+					</div>
+				`;
+				return;
+			}
+
+			// Urutkan pekerja dari tanggungan terbanyak
+			listAdaTanggungan.sort((a, b) => b.totalSisa - a.totalSisa);
+
+			listAdaTanggungan.forEach(item => {
+				const btnChip = document.createElement('button');
+				btnChip.type = 'button';
+				btnChip.className = 'py-1.5 px-2.5 bg-slate-50 hover:bg-emerald-50 active:scale-95 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 hover:border-emerald-300 dark:border-slate-700 rounded-xl text-left transition flex items-center gap-1.5';
+				btnChip.onclick = () => pilihPekerjaLewatShortcut(item.id);
+				btnChip.innerHTML = `
+					<span class="text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase">${item.nama}</span>
+					<span class="text-[9px] font-extrabold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-1.5 py-0.5 rounded-md">
+						-${item.totalSisa}
+					</span>
+				`;
+				container.appendChild(btnChip);
+			});
+		}
+
+		// Handler saat kurir menekan salah satu tombol chip
+		function pilihPekerjaLewatShortcut(kid) {
+			const select = document.getElementById('selectPekerjaSetor');
+			if (select) {
+				select.value = kid;
+				onPilihPekerjaSetorCepat();
+			}
+		}
+		
+		
+		// =========================================================================
+        // FORM SETOR CEPAT (HANYA MEMBACA KIRIMAN HARI INI & SEBELUMNYA)
         // =========================================================================
         async function loadFormSetorCepat() {
             const select = document.getElementById('selectPekerjaSetor');
@@ -2083,12 +2215,18 @@
 
             select.innerHTML = '<option value="">Memuat data tanggungan...</option>';
 
+            // Dapatkan tanggal hari ini (maksimal hari ini)
+            const tglMaksimal = getTanggalOperasionalTarik();
+
+            // AMBIL DATA: Hanya ambil transaksi yang tanggalnya <= hari ini
+            // Kiriman besok yang di-prepare siang/sore TIDAK AKAN diikutkan di sini!
             const { data, error } = await supabaseClient
                 .from('distribusi_packing')
                 .select(`*, karyawan!karyawan_id(nama)`)
                 .eq('is_lunas', false)
-                .order('tanggal', { ascending: false })
-                .order('id', { ascending: false });
+                .lte('tanggal', tglMaksimal) // PROTEKSI: Batasi hanya sampai hari ini
+                .order('tanggal', { ascending: true })
+                .order('id', { ascending: true });
 
             if (error) {
                 select.innerHTML = '<option value="">Gagal memuat data</option>';
@@ -2142,14 +2280,25 @@
                 select.innerHTML += `<option value="${k.id}">${k.nama.toUpperCase()}</option>`;
             });
 
+            if (typeof renderShortcutPekerjaTanggungan === 'function') {
+                renderShortcutPekerjaTanggungan();
+            }
             resetFormSetorCepat();
         }
 
         function onPilihPekerjaSetorCepat() {
-            const kid = document.getElementById('selectPekerjaSetor').value;
-            resetFormSetorCepat();
+			const kid = document.getElementById('selectPekerjaSetor').value;
+			const placeholder = document.getElementById('placeholderTarikKosong');
 
-            if (!kid) return;
+			resetFormSetorCepat();
+
+			if (!kid) {
+				if (placeholder) placeholder.classList.remove('hidden');
+				return;
+			}
+
+			// Sembunyikan placeholder jika pekerja sudah dipilih
+			if (placeholder) placeholder.classList.add('hidden');
 
             const pekerjaData = dataPekerjaTanggunganMap[kid];
             const boxRingkasan = document.getElementById('boxRingkasanSisaPerJenis');
@@ -2278,7 +2427,7 @@
             document.getElementById('infoPrediksiSetorCepat').innerHTML = infoText;
         }
 
-        // SIMPAN SETORAN LANGSUNG (DIRECT LEDGER ENTRY)
+// SIMPAN SETORAN LANGSUNG (DIRECT LEDGER ENTRY - VERSI BERSIH)
         async function simpanSetorCepat() {
             const btn = document.getElementById('btnEksekusiSetorCepat');
             if (btn && btn.disabled) return;
@@ -2306,8 +2455,23 @@
             const sesiWaktu = getSesiWaktuOtomatis();
             const kurirNama = userKurirAktif.nama;
 
-            // Catat langsung pada transaksi aktif yang dipilih
-            const itemTarget = transaksiTerpilihCepat.items[0];
+            // 1. Ambil tanggal operasional hari ini
+            const tglHariIni = typeof getTanggalOperasionalTarik === 'function' 
+                ? getTanggalOperasionalTarik() 
+                : getTanggalHariIniLocal();
+
+            // 2. Kunci tarikan: prioritaskan transaksi kiriman hari ini milik pekerja tersebut
+            let itemTarget = transaksiTerpilihCepat.items.find(it => it.tanggal === tglHariIni);
+
+            // Jika hari ini belum ada kiriman baru, ambil kiriman lama yang belum lunas
+            if (!itemTarget) {
+                itemTarget = transaksiTerpilihCepat.items.find(it => it.tanggal <= tglHariIni && (it.tarik_jadi || 0) < hitungTargetProduk(it.kirim_produksi, it.jenis_produk));
+            }
+
+            // Cadangan jika tidak ditemukan kriteria di atas
+            if (!itemTarget) {
+                itemTarget = transaksiTerpilihCepat.items[0];
+            }
             
             if (!itemTarget) {
                 await showError("Tidak ditemukan transaksi aktif untuk pekerja ini.");
@@ -2315,17 +2479,18 @@
                 return;
             }
 
+            // 3. Perhitungan target dan log penarikan (cukup dideklarasikan satu kali)
             const rowTarget = hitungTargetProduk(itemTarget.kirim_produksi, itemTarget.jenis_produk);
             const tarikLama = itemTarget.tarik_jadi || 0;
             const totalTarikBaru = tarikLama + inputBaru;
             const koreksiBaru = totalTarikBaru - rowTarget;
 
-            const logBaru = `${kurirNama}: +${inputBaru} ${satuan} (${sesiWaktu})`;
+            const logBaru = `${kurirNama}: +${inputBaru} ${satuan} (${sesiWaktu} • ${tglHariIni})`;
             const logGabungan = itemTarget.riwayat_cicilan 
                 ? `${itemTarget.riwayat_cicilan}, ${logBaru}` 
                 : logBaru;
 
-            // DIPAKSA FALSE: Hanya Admin di Tablet yang berhak melunasi saat Rekap Gaji
+            // 4. Update data ke Supabase
             const { error } = await supabaseClient
                 .from('distribusi_packing')
                 .update({
@@ -2345,6 +2510,7 @@
                 return;
             }
 
+            // 5. Catat ke kloter laporan WhatsApp
             catatMuatanKloterAktif({
                 karyawanId: kid,
                 nama: namaKaryawan,
@@ -2354,6 +2520,7 @@
                 sesi: sesiWaktu
             });
 
+            // 6. Muat ulang data antrean dan form
             await loadFormSetorCepat();
             if (typeof loadAntreanTarik === 'function') loadAntreanTarik();
 
@@ -2379,14 +2546,18 @@
         }
 
         function resetFormSetorCepat() {
-            transaksiTerpilihCepat = null;
-            const boxRingkasan = document.getElementById('boxRingkasanSisaPerJenis');
-            if (boxRingkasan) boxRingkasan.classList.add('hidden');
-            document.getElementById('boxPilihanBarangPekerja').classList.add('hidden');
-            document.getElementById('boxInputJumlahSetor').classList.add('hidden');
-            document.getElementById('inputJumlahSetorCepat').value = '';
-            document.getElementById('infoPrediksiSetorCepat').innerText = 'Ketik jumlah bal/toros yang disetor';
-        }
+			transaksiTerpilihCepat = null;
+			const boxRingkasan = document.getElementById('boxRingkasanSisaPerJenis');
+			if (boxRingkasan) boxRingkasan.classList.add('hidden');
+			document.getElementById('boxPilihanBarangPekerja').classList.add('hidden');
+			document.getElementById('boxInputJumlahSetor').classList.add('hidden');
+			document.getElementById('inputJumlahSetorCepat').value = '';
+			document.getElementById('infoPrediksiSetorCepat').innerText = 'Ketik jumlah bal/toros yang disetor';
+
+			// Tampilkan kembali placeholder kosong
+			const placeholder = document.getElementById('placeholderTarikKosong');
+			if (placeholder) placeholder.classList.remove('hidden');
+		}
 
         function bukaModalLaporWACepat() {
             const now = new Date();
@@ -3766,7 +3937,7 @@ loadFormSetorCepat();
                     `;
                 }
 
-                // --- DAFTAR ITEM TARIK ---
+				// --- DAFTAR ITEM TARIK ---
                 let htmlListTarik = '';
                 if (dataHari.daftarTarik.length > 0) {
                     htmlListTarik = `
@@ -3781,8 +3952,8 @@ loadFormSetorCepat();
                                         <div class="text-xs font-black text-slate-800 dark:text-slate-100 uppercase">${t.namaPekerja}</div>
                                     </div>
                                     <div class="text-right">
-									// KODE BARU (Diberi spasi):
-									<div class="text-xs font-black text-emerald-600 dark:text-emerald-400">${t.qty} ${t.satuan}</div>                                        <div class="text-[9px] text-slate-400 font-bold">${t.jenis} • Sesi: ${t.waktu}</div>
+                                        <div class="text-xs font-black text-emerald-600 dark:text-emerald-400">${t.qty}${t.satuan}</div>
+                                        <div class="text-[9px] text-slate-400 font-bold">${t.jenis} • Sesi: ${t.waktu}</div>
                                     </div>
                                 </div>
                             `).join('')}
