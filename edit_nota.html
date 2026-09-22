@@ -2,15 +2,19 @@
 <html lang="id" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SBR Putra Food - Edit Nota</title>
     
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#ffffff" id="themeColorMeta">
 
+    <!-- Supabase & HTML2Canvas -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Modern Font & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
@@ -39,47 +43,201 @@
             --input-bg: #2d2d2d;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        /* --- ANIMASI SCANNER RADAR BLUETOOTH --- */
+        .radar-box {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 15px auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .radar-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(37, 99, 235, 0.12);
+            animation: pulseRadar 2s infinite ease-out;
+        }
+
+        .radar-circle:nth-child(2) { animation-delay: 0.6s; }
+        .radar-circle:nth-child(3) { animation-delay: 1.2s; }
+
+        .radar-center-icon {
+            position: relative;
+            z-index: 2;
+            width: 64px;
+            height: 64px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.45);
+        }
+
+        @keyframes pulseRadar {
+            0% { transform: scale(0.4); opacity: 0.9; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        /* --- ANIMASI PULSE BIRU SAAT BLUETOOTH TERHUBUNG --- */
+        @keyframes pulseBlueGlow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6);
+                border-color: #2563eb;
+            }
+            70% {
+                box-shadow: 0 0 0 7px rgba(37, 99, 235, 0);
+                border-color: #60a5fa;
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+                border-color: #2563eb;
+            }
+        }
+
+        .bt-connected-pulse {
+            background: rgba(37, 99, 235, 0.12) !important;
+            border: 1.5px solid #2563eb !important;
+            color: #2563eb !important;
+            animation: pulseBlueGlow 2s infinite cubic-bezier(0.4, 0, 0.6, 1) !important;
+        }
+
+        .bt-connected-pulse i,
+        .bt-connected-pulse span {
+            color: #2563eb !important;
+            font-weight: 700;
+        }
+
+        [data-theme="dark"] .bt-connected-pulse {
+            background: rgba(37, 99, 235, 0.22) !important;
+            border-color: #60a5fa !important;
+            color: #93c5fd !important;
+        }
+
+        [data-theme="dark"] .bt-connected-pulse i,
+        [data-theme="dark"] .bt-connected-pulse span {
+            color: #93c5fd !important;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
         
-        body { background: var(--bg-color); color: var(--text-main); font-size: 14px; transition: background 0.3s, color 0.3s; padding-bottom: 120px;}
+        body { 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            font-size: 14px; 
+            transition: background 0.3s, color 0.3s; 
+            padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+            overscroll-behavior-y: contain;
+        }
 
         input[type="number"]::-webkit-inner-spin-button, 
-        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
         input[type="number"] { -moz-appearance: textfield; }
 
+        /* HEADER */
         header { 
-            background: var(--card-bg); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.3s;
+            background: var(--card-bg); 
+            padding: 12px 16px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            position: sticky; 
+            top: 0; 
+            z-index: 50; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            transition: background 0.3s;
         }
-        .brand { font-weight: 800; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        .brand { 
+            font-weight: 800; 
+            font-size: 16px; 
+            color: var(--text-main); 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+        }
         .header-actions { display: flex; gap: 8px; }
-        .icon-btn { background: var(--bg-color); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text-main); cursor: pointer; transition: 0.2s; }
-        .icon-btn.danger { color: var(--danger); background: #fef2f2; }
-        .icon-btn.connected { color: #ffffff !important; background: var(--primary) !important; box-shadow: 0 0 10px rgba(37,99,235,0.4); }
-        
-        [data-theme="dark"] .icon-btn.danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-        [data-theme="dark"] .icon-btn.connected { background: var(--primary) !important; color: #ffffff !important; }
 
+        .icon-btn { 
+            background: var(--bg-color); 
+            border: none; 
+            border-radius: 50%; 
+            width: 40px; 
+            height: 40px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 18px; 
+            color: var(--text-main); 
+            cursor: pointer; 
+            transition: 0.2s; 
+            touch-action: manipulation;
+        }
+        .icon-btn.danger { color: var(--danger); background: #fef2f2; }
+        [data-theme="dark"] .icon-btn.danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+        /* CONTAINER & CARDS */
         .container { padding: 12px; margin: 0 auto; max-width: 600px; }
         .card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: background 0.3s; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .card-title { font-size: 15px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
         
+        /* FORM ELEMENTS */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .form-group { margin-bottom: 0; }
         .form-group.full { grid-column: span 2; }
         label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
         input, select { 
-            width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); 
-            background: var(--input-bg); font-size: 14px; font-weight: 600; color: var(--text-main); outline: none; transition: 0.2s; appearance: none;
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid var(--border); 
+            border-radius: var(--radius-md); 
+            background: var(--input-bg); 
+            font-size: 14px; 
+            font-weight: 600; 
+            color: var(--text-main); 
+            outline: none; 
+            transition: 0.2s; 
+            appearance: none;
         }
         input:focus, select:focus { border-color: var(--primary); background: var(--card-bg); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
         input[readonly] { opacity: 0.8; }
         .input-money { text-align: right; font-size: 16px; font-weight: 700; color: var(--primary); }
         [data-theme="dark"] .input-money { color: #60a5fa; }
 
-        .btn { padding: 12px 16px; border-radius: var(--radius-md); font-weight: 700; font-size: 13px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; width: 100%; }
-        .btn-sm { padding: 6px 10px; font-size: 12px; width: auto; border-radius: 6px; }
+        /* BUTTONS */
+        .btn { 
+            padding: 12px 16px; 
+            border-radius: var(--radius-md); 
+            font-weight: 700; 
+            font-size: 13px; 
+            border: none; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 6px; 
+            transition: transform 0.1s, opacity 0.2s; 
+            width: 100%; 
+            touch-action: manipulation;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-sm { padding: 8px 12px; font-size: 12px; width: auto; border-radius: 8px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: var(--success); color: white; }
         .btn-warning { background: var(--warning); color: white; }
@@ -87,13 +245,15 @@
         .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text-main); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+        /* TABLES */
         .table-wrapper { margin: 10px 0; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { background: var(--input-bg); padding: 10px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
         td { padding: 10px; border-top: 1px solid var(--border); font-size: 13px; font-weight: 600; vertical-align: middle; }
-        .td-action { text-align: right; width: 40px; }
+        .td-action { text-align: right; width: 44px; }
         .subtotal-row { display: flex; justify-content: space-between; padding: 10px 0 0; font-weight: 700; font-size: 14px; border-top: 2px dashed var(--border); margin-top: 10px; }
 
+        /* NOTIFICATIONS & BADGES */
         .alert { padding: 10px 14px; border-radius: var(--radius-md); font-weight: 600; font-size: 13px; display: none; align-items: center; gap: 8px; margin-bottom: 12px; }
         .alert-danger { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
         .alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
@@ -103,12 +263,29 @@
         @keyframes blinkWarning { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .blink-anim { animation: blinkWarning 1.2s infinite; }
 
+        /* CHECKBOX PERSEKSI */
         .checkbox-wrapper { 
-            display: flex; align-items: center; gap: 8px; padding: 12px 10px; 
-            background: #fffbeb; border: 1.5px solid #fde68a; border-radius: var(--radius-md); 
-            cursor: pointer; margin-bottom: 12px; user-select: none;
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 12px 10px; 
+            background: #fffbeb; 
+            border: 1.5px solid #fde68a; 
+            border-radius: var(--radius-md); 
+            cursor: pointer; 
+            margin-bottom: 12px; 
+            user-select: none;
+            touch-action: manipulation;
         }
-        .checkbox-wrapper input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--warning); cursor: pointer; flex-shrink: 0; appearance: auto !important; -webkit-appearance: checkbox !important; }
+        .checkbox-wrapper input[type="checkbox"] { 
+            width: 22px; 
+            height: 22px; 
+            accent-color: var(--warning); 
+            cursor: pointer; 
+            flex-shrink: 0; 
+            appearance: auto !important; 
+            -webkit-appearance: checkbox !important; 
+        }
         .checkbox-wrapper span { font-weight: 700; color: #b45309; font-size: 11px; pointer-events: none; white-space: nowrap; }
         [data-theme="dark"] .checkbox-wrapper { background: var(--input-bg); border-color: var(--border); }
         [data-theme="dark"] .checkbox-wrapper span { color: #fbbf24; }
@@ -116,16 +293,65 @@
         .checkbox-wrapper.cb-blue input[type="checkbox"] { accent-color: var(--primary); }
         .checkbox-wrapper.cb-blue span { color: #1d4ed8; }
         [data-theme="dark"] .checkbox-wrapper.cb-blue { background: #031936; border-color: #072f61; }
-		[data-theme="dark"] .checkbox-wrapper.cb-blue span { color: #80a3cf; }
+        [data-theme="dark"] .checkbox-wrapper.cb-blue span { color: #80a3cf; }
 
-        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); padding: 12px 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 40; border-radius: 20px 20px 0 0; transition: background 0.3s; }
-        .summary-flex { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
-        .summary-label { font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+        /* STICKY BOTTOM BAR */
+        .bottom-bar { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: var(--card-bg); 
+            padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); 
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08); 
+            z-index: 40; 
+            border-radius: 20px 20px 0 0; 
+            transition: background 0.3s; 
+        }
+        .summary-flex { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
+        .summary-label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
         .summary-value { font-size: 20px; font-weight: 800; color: var(--primary); }
         [data-theme="dark"] .summary-value { color: #60a5fa; }
-        .action-grid { display: grid; grid-template-columns: 1fr 44px 44px; gap: 8px; }
+
+        /* BARIS KONTROL CEPAT DI ATAS SIMPAN */
+        .quick-print-bar { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+            margin-bottom: 10px; 
+        }
+        .quick-btn { 
+            height: 40px; 
+            padding: 6px 10px; 
+            font-size: 12px; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            border: 1.5px solid var(--border); 
+            background: var(--input-bg); 
+            color: var(--text-main); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 6px;
+            transition: all 0.25s ease;
+        }
+        .quick-select { 
+            height: 40px; 
+            padding: 6px 10px; 
+            font-size: 12px; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            border: 1.5px solid var(--border); 
+            background: var(--input-bg); 
+            color: var(--text-main); 
+            cursor: pointer; 
+            text-align-last: center;
+        }
+
+        .action-grid { display: grid; grid-template-columns: 1fr 48px 48px; gap: 8px; }
         .btn-large { padding: 14px; font-size: 14px; border-radius: 12px; }
 
+        /* RESPONSIVE DESKTOP */
         .layout-grid { display: flex; flex-direction: column; }
         @media (min-width: 768px) {
             body { padding-bottom: 20px; }
@@ -136,37 +362,64 @@
             .bottom-bar { position: relative; border-radius: var(--radius-lg); padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 12px; }
         }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-out, visibility 0.3s ease-out; will-change: opacity, visibility; }
+        /* MODALS */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(0,0,0,0.5); z-index: 100; 
+            opacity: 0; visibility: hidden; 
+            transition: opacity 0.25s ease-out, visibility 0.25s ease-out; 
+        }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         
-        .bottom-sheet { position: fixed; bottom: -100%; left: 0; right: 0; background: var(--card-bg); border-radius: 20px 20px 0 0; padding: 20px; z-index: 101; transition: bottom 0.3s ease-out, transform 0.3s ease-out, opacity 0.3s ease-out; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; will-change: bottom, transform, opacity;}
+        .bottom-sheet { 
+            position: fixed; 
+            bottom: -100%; 
+            left: 0; 
+            right: 0; 
+            background: var(--card-bg); 
+            border-radius: 20px 20px 0 0; 
+            padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px)); 
+            z-index: 101; 
+            transition: bottom 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1); 
+            max-height: 88vh; 
+            overflow-y: auto; 
+            overscroll-behavior-y: contain;
+        }
         .bottom-sheet.active { bottom: 0; }
-        .sheet-indicator { width: 40px; height: 5px; background: var(--border); border-radius: 10px; margin: 0 auto 16px; }
+        .sheet-indicator { width: 42px; height: 5px; background: var(--border); border-radius: 10px; margin: 0 auto 16px; }
 
         @media (min-width: 768px) {
-            .bottom-sheet { max-width: 450px; left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%) scale(0.9); opacity: 0; visibility: hidden; border-radius: 20px; transition: opacity 0.3s ease-out, transform 0.3s ease-out; }
+            .bottom-sheet { 
+                max-width: 450px; left: 50%; right: auto; top: 50%; bottom: auto; 
+                transform: translate(-50%, -50%) scale(0.95); opacity: 0; visibility: hidden; 
+                border-radius: 20px; transition: opacity 0.2s, transform 0.2s; 
+            }
             .bottom-sheet.active { top: 50%; bottom: auto; transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
             .sheet-indicator { display: none; } 
         }
         
+        /* VISUAL STRUK */
         .struk-visual-container { position: absolute; left: -9999px; top: 0; width: 400px; }
         .struk-visual { background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace; font-size: 14px; border: 1px solid #ccc; line-height: 1.4; -webkit-font-smoothing: antialiased; }
         .struk-visual .garis { border-top: 1px dashed #000; margin: 8px 0; }
         .struk-visual .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
         .struk-visual .flex-row { display: flex; justify-content: space-between; }
         
-        #imgPreviewLaporan { width: 100%; max-height: 50vh; object-fit: contain; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        #imgPreviewLaporan { width: 100%; max-height: 48vh; object-fit: contain; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="brand"><i class="ph-fill ph-pencil-simple"></i> SBR Systems <span style="color: #f59e0b; margin-left: 6px;">(Mode Edit)</span> </div>
+    <div class="brand">
+        <i class="ph-fill ph-pencil-simple"></i> SBR Systems 
+        <span style="color: #f59e0b; font-size: 13px; font-weight: 700; margin-left: 2px;">(Mode Edit)</span>
+    </div>
     <div class="header-actions">
         <button class="icon-btn" onclick="toggleInfoLanjutan()" title="Tampil/Sembunyi Opsi Opsional"><i class="ph ph-eye-slash" id="iconToggleInfo"></i></button>
-        <button class="icon-btn" id="btnPrinterIcon" onclick="openSheet('sheetPrinter')" title="Pengaturan Printer"><i class="ph ph-printer"></i></button>
         <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema"><i class="ph ph-moon"></i></button>
-        <!-- Tombol Tutup Halaman karena ini Mode Edit -->
+        <!-- Tombol Tutup Halaman Edit -->
         <button class="icon-btn danger" onclick="window.close()" title="Tutup Edit"><i class="ph ph-x"></i></button>
     </div>
 </header>
@@ -245,7 +498,7 @@
                 <div class="form-grid">
                     <div class="form-group full" id="boxBonLama">
                         <label id="labelBonUI">Bon Lama (Historis Nota Ini)</label>
-                        <input type="text" id="inputBonLama" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+                        <input type="text" id="inputBonLama" inputmode="numeric" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
                     </div>
                 </div>
             </div>
@@ -253,23 +506,29 @@
             <div class="card">
                 <div class="form-grid" style="margin-bottom: 12px;">
                     <label class="checkbox-wrapper cb-blue" style="margin-bottom: 0;" onclick="document.getElementById('cbOngkir').click();">
-                        <input type="checkbox" id="cbOngkir" onchange="toggleOngkir()" onclick="event.stopPropagation();">
+                        <input type="checkbox" id="cbOngkir" onchange="toggleOngkir(true)" onclick="event.stopPropagation();">
                         <span>ONGKIR ?</span>
                     </label>
                     <label class="checkbox-wrapper" style="margin-bottom: 0;" onclick="document.getElementById('cbTidakTitip').click();">
-                        <input type="checkbox" id="cbTidakTitip" onchange="togglePembayaran()" onclick="event.stopPropagation();">
+                        <input type="checkbox" id="cbTidakTitip" onchange="togglePembayaran(true)" onclick="event.stopPropagation();">
                         <span>TIDAK TITIP UANG</span>
                     </label>
                 </div>
                 
                 <div class="form-group full" id="boxOngkir" style="display:none; margin-bottom: 12px;">
                     <label>Nominal Ongkos Kirim</label>
-                    <input type="text" id="inputOngkir" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+                    <input type="text" id="inputOngkir" inputmode="numeric" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
                 </div>
 
                 <div class="form-grid">
-                    <div class="form-group"><label>Tunai (Cash)</label><input type="text" id="inputCash" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
-                    <div class="form-group"><label>Transfer</label><input type="text" id="inputTrf" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+                    <div class="form-group">
+                        <label>Tunai (Cash)</label>
+                        <input type="text" id="inputCash" inputmode="numeric" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Transfer</label>
+                        <input type="text" id="inputTrf" inputmode="numeric" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+                    </div>
                 </div>
             </div>
 
@@ -281,15 +540,30 @@
                     </div>
                     <div class="summary-value" id="txtGrand">Rp 0</div>
                 </div>
+
+                <!-- Kontrol Cepat: Bluetooth & Ukuran Kertas -->
+                <div class="quick-print-bar">
+                    <button type="button" class="btn quick-btn" id="btnQuickBT" onclick="mulaiScanBT()">
+                        <i class="ph-bold ph-bluetooth" id="iconQuickBT" style="font-size: 16px; color: var(--primary);"></i>
+                        <span id="labelQuickBT" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Hubungkan BT</span>
+                    </button>
+
+                    <select id="ukuranKertasBottom" class="quick-select" onchange="syncKertas(this.value)">
+                        <option value="" disabled selected>-- Pilih Kertas --</option>
+                        <option value="48">80mm (Besar)</option>
+                        <option value="32">58mm (Kecil)</option>
+                    </select>
+                </div>
+
                 <div class="action-grid">
                     <button class="btn btn-warning btn-large" id="btnSimpan" onclick="handleMainButtonClick()">
-                        <i class="ph-bold ph-pencil-line"></i> UPDATE & PRINT
+                        <i class="ph-bold ph-pencil-line" style="font-size: 18px;"></i> UPDATE & PRINT
                     </button>
-                    <button class="btn btn-outline" id="btnIconPratinjau" style="border-radius: 12px; border-color: var(--primary); color: var(--primary);" onclick="bukaPratinjau()" title="Pratinjau Nota">
-                        <i class="ph-bold ph-eye" style="font-size: 20px;"></i>
+                    <button class="btn btn-outline" id="btnIconPratinjau" style="border-radius: 12px; border-color: var(--primary); color: var(--primary); height: 48px;" onclick="bukaPratinjau()" title="Pratinjau Nota">
+                        <i class="ph-bold ph-eye" style="font-size: 22px;"></i>
                     </button>
-                    <button class="btn" style="border-radius: 12px; background: #ef4444; color: white; border: none;" onclick="window.close()" title="Tutup Edit">
-                        <i class="ph-bold ph-x" style="font-size: 20px;"></i>
+                    <button class="btn" style="border-radius: 12px; background: #ef4444; color: white; border: none; height: 48px;" onclick="window.close()" title="Tutup Edit">
+                        <i class="ph-bold ph-x" style="font-size: 22px;"></i>
                     </button>
                 </div>
             </div>
@@ -297,11 +571,11 @@
     </div>
 </div>
 
-<!-- Modal Dialog, Item, dsb (Sama seperti Input Form) -->
+<!-- MODAL: Custom Modern Dialog -->
 <div class="modal-overlay" id="overlayCustomDialog" style="z-index: 200;" onclick="closeCustomDialog()"></div>
 <div class="bottom-sheet" id="sheetCustomDialog" style="z-index: 201; text-align: center;">
     <div class="sheet-indicator"></div>
-    <div id="customDialogIcon" style="width: 44px; height: 44px; background: #dbeafe; color: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 0 auto 10px;">
+    <div id="customDialogIcon" style="width: 46px; height: 46px; background: #dbeafe; color: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 12px;">
         <i class="ph-bold ph-info"></i>
     </div>
     <h3 id="customDialogTitle" style="margin-bottom: 8px; font-weight: 800; font-size: 16px;">Pemberitahuan</h3>
@@ -309,23 +583,25 @@
     <div id="customDialogButtons" class="form-grid"></div>
 </div>
 
+<!-- MODAL: Aksi Barang -->
 <div class="modal-overlay" id="overlayAction" onclick="closeSheet('sheetAction')"></div>
 <div class="bottom-sheet" id="sheetAction">
     <div class="sheet-indicator"></div>
     <h3 style="margin-bottom: 16px; font-weight: 800; font-size: 16px; text-align: center;" id="actionTitle">Pilih Aksi Barang</h3>
-    <button class="btn btn-primary" style="margin-bottom: 10px;" onclick="doActionEdit()">
+    <button class="btn btn-primary" style="margin-bottom: 10px; height: 44px;" onclick="doActionEdit()">
         <i class="ph-bold ph-pencil-simple"></i> Edit Barang Ini
     </button>
-    <button class="btn btn-danger" style="margin-bottom: 10px;" onclick="doActionDelete()">
+    <button class="btn btn-danger" style="margin-bottom: 10px; height: 44px;" onclick="doActionDelete()">
         <i class="ph-bold ph-trash"></i> Hapus Barang Ini
     </button>
-    <button class="btn btn-outline" onclick="closeSheet('sheetAction')">Batal / Kembali</button>
+    <button class="btn btn-outline" style="height: 44px;" onclick="closeSheet('sheetAction')">Batal / Kembali</button>
 </div>
 
+<!-- MODAL: Input Barang Tunggal -->
 <div class="modal-overlay" id="overlayInput" onclick="closeSheet('sheetInput')"></div>
 <div class="bottom-sheet" id="sheetInput">
     <div class="sheet-indicator"></div>
-    <h3 style="margin-bottom: 16px; font-weight: 800; font-size: 16px;" id="sheetInputTitle">Tambah Item</h3>
+    <h3 style="margin-bottom: 14px; font-weight: 800; font-size: 16px;" id="sheetInputTitle">Tambah Item</h3>
     <div class="form-group" style="margin-bottom: 10px; display: flex; gap: 8px;">
         <select id="modalBarang" style="flex: 1;"><option value="">-- Pilih Barang --</option></select>
         <button type="button" class="btn btn-outline" style="width: 44px; padding: 0; flex-shrink: 0;" onclick="toggleKeterangan()" title="Tambah Keterangan (Opsional)">
@@ -337,81 +613,100 @@
     </div>
     <div class="form-grid">
         <div class="form-group"><select id="modalSatuan"><option>Ball</option><option>Pack</option><option>Pcs</option></select></div>
-        <div class="form-group"><input type="number" id="modalQty" placeholder="Jumlah" value="0" style="text-align: right;" onfocus="clearZero(this)"></div>
+        <div class="form-group"><input type="number" inputmode="numeric" id="modalQty" placeholder="Jumlah" value="0" style="text-align: right;" onfocus="clearZero(this)"></div>
     </div>
     <div class="form-grid" style="margin-top: 20px;">
-        <button class="btn btn-outline" onclick="closeSheet('sheetInput')">Batal</button>
-        <button class="btn btn-primary" onclick="addItem()">Simpan Item</button>
+        <button class="btn btn-outline" style="height: 44px;" onclick="closeSheet('sheetInput')">Batal</button>
+        <button class="btn btn-primary" style="height: 44px;" onclick="addItem()">Simpan Item</button>
     </div>
 </div>
 
-<div class="modal-overlay" id="overlayPrinter" onclick="closeSheet('sheetPrinter')"></div>
-<div class="bottom-sheet" id="sheetPrinter">
-    <div class="sheet-indicator"></div>
-    <h3 style="margin-bottom: 16px; font-weight: 800; font-size: 16px;">Pengaturan Printer BT</h3>
-    <div style="background: var(--input-bg); padding: 12px; border-radius: 10px; margin-bottom: 16px; text-align: center; border: 1px solid var(--border);">
-        <i class="ph-fill ph-bluetooth" style="font-size: 28px; color: var(--primary); margin-bottom: 4px;"></i>
-        <div id="statusBT" style="font-weight: 700; color: var(--text-muted); font-size: 13px;">Status: Terputus</div>
-    </div>
-    <button class="btn btn-primary" onclick="connectBT()" style="margin-bottom: 12px;">
-        <i class="ph-bold ph-link"></i> Hubungkan Printer
-    </button>
-    <div class="form-group" style="margin-bottom: 16px;">
-        <label>Ukuran Kertas Printer</label>
-        <select id="ukuranKertas" onchange="syncKertas(this.value)">
-            <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
-            <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
-        </select>
-    </div>
-    <button class="btn btn-warning" id="btnReprint" onclick="reprintLast()" disabled style="margin-bottom: 12px;">
-        <i class="ph-bold ph-printer"></i> Reprint Nota Terakhir
-    </button>
-    <button class="btn btn-outline" onclick="closeSheet('sheetPrinter')">Tutup</button>
-</div>
-
+<!-- MODAL: Preview Laporan Digital -->
 <div class="modal-overlay" id="overlayPreview" onclick="closeSheet('sheetPreview')"></div>
 <div class="bottom-sheet" id="sheetPreview" style="text-align: center;">
     <div class="sheet-indicator"></div>
     <h3 style="margin-bottom: 6px; font-weight: 800; font-size: 16px;">Pratinjau Revisi Nota</h3>
-    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Pastikan data sudah benar sebelum diperbarui.</p>
+    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Pastikan data sudah benar sebelum diperbarui.</p>
     <img id="imgPreviewLaporan" />
     <div class="form-group" style="text-align: left; margin-bottom: 16px;">
         <label>Ukuran Kertas Pencetakan</label>
         <select id="ukuranKertasPreview" onchange="syncKertas(this.value)">
+            <option value="" disabled selected>-- PILIH UKURAN KERTAS --</option>
             <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
             <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
         </select>
     </div>
     <div class="form-grid">
-        <button class="btn btn-outline" onclick="closeSheet('sheetPreview')">Kembali</button>
-        <button class="btn btn-warning" id="btnSimpanPreview" onclick="simpanDanPrint()">
+        <button class="btn btn-outline" style="height: 44px;" onclick="closeSheet('sheetPreview')">Kembali</button>
+        <button class="btn btn-warning" style="height: 44px;" id="btnSimpanPreview" onclick="simpanDanPrint()">
             <i class="ph-bold ph-pencil-line"></i> Update & Print
         </button>
     </div>
 </div>
 
+<!-- MODAL SCANNER RADAR BLUETOOTH -->
+<div class="modal-overlay" id="overlayBTScanner" style="z-index: 210;" onclick="batalScanBT()"></div>
+<div class="bottom-sheet" id="sheetBTScanner" style="z-index: 211; text-align: center;">
+    <div class="sheet-indicator"></div>
+    
+    <div class="radar-box">
+        <div class="radar-circle"></div>
+        <div class="radar-circle"></div>
+        <div class="radar-circle"></div>
+        <div class="radar-center-icon">
+            <i class="ph-bold ph-printer"></i>
+        </div>
+    </div>
+
+    <h3 style="font-weight: 800; font-size: 16px; margin-bottom: 6px;">Mencari Printer Bluetooth...</h3>
+    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4;">
+        Pastikan printer kasir dalam keadaan <b>ON</b> dan Bluetooth HP aktif. Pilih printer Anda pada jendela browser yang muncul.
+    </p>
+
+    <button class="btn btn-outline" style="height: 44px;" onclick="batalScanBT()">
+        Batal Mencari
+    </button>
+</div>
+
 <div class="struk-visual-container"><div id="areaCetakGambar" class="struk-visual"></div></div>
 
 <script>
+    // --- FUNGSI GETAR YANG AMAN DARI INTERVENSI BROWSER ---
+    function triggerHaptic(duration = 35) {
+        if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
+            return;
+        }
+        if (window.navigator && window.navigator.vibrate) {
+            try {
+                window.navigator.vibrate(duration);
+            } catch (e) {
+                // Abaikan jika browser tidak mengizinkan akses getar
+            }
+        }
+    }
+
+    // --- DIALOG SISTEM ---
     function showCustomAlert(title, message, type = 'info') {
+        triggerHaptic(type === 'danger' ? 80 : 35);
         document.getElementById('customDialogTitle').innerText = title;
         document.getElementById('customDialogMessage').innerHTML = message;
         const iconEl = document.getElementById('customDialogIcon');
         if (type === 'danger') { iconEl.style.background = '#fee2e2'; iconEl.style.color = '#dc2626'; iconEl.innerHTML = '<i class="ph-bold ph-warning-circle"></i>'; } 
         else if (type === 'success') { iconEl.style.background = '#d1fae5'; iconEl.style.color = '#059669'; iconEl.innerHTML = '<i class="ph-bold ph-check"></i>'; } 
         else { iconEl.style.background = '#dbeafe'; iconEl.style.color = '#2563eb'; iconEl.innerHTML = '<i class="ph-bold ph-info"></i>'; }
-        document.getElementById('customDialogButtons').innerHTML = `<button class="btn btn-primary full" style="grid-column: span 2;" onclick="closeCustomDialog()">OK</button>`;
+        document.getElementById('customDialogButtons').innerHTML = `<button class="btn btn-primary full" style="grid-column: span 2; height: 44px;" onclick="closeCustomDialog()">OK</button>`;
         openSheet('sheetCustomDialog');
     }
 
     function showCustomConfirm(title, message, onYes, onNo = null) {
+        triggerHaptic(40);
         document.getElementById('customDialogTitle').innerText = title;
         document.getElementById('customDialogMessage').innerHTML = message;
         const iconEl = document.getElementById('customDialogIcon');
         iconEl.style.background = '#fef3c7'; iconEl.style.color = '#d97706'; iconEl.innerHTML = '<i class="ph-bold ph-question"></i>';
         document.getElementById('customDialogButtons').innerHTML = `
-            <button class="btn btn-outline" id="dlgBtnNo">Batal</button>
-            <button class="btn btn-primary" id="dlgBtnYes">Ya, Lanjutkan</button>
+            <button class="btn btn-outline" style="height: 44px;" id="dlgBtnNo">Batal</button>
+            <button class="btn btn-primary" style="height: 44px;" id="dlgBtnYes">Ya, Lanjutkan</button>
         `;
         document.getElementById('dlgBtnNo').onclick = () => { closeCustomDialog(); if(onNo) onNo(); };
         document.getElementById('dlgBtnYes').onclick = () => { closeCustomDialog(); if(onYes) onYes(); };
@@ -419,7 +714,9 @@
     }
     function closeCustomDialog() { closeSheet('sheetCustomDialog'); }
 
+    // --- TEMA APLIKASI ---
     function toggleTheme() {
+        triggerHaptic(30);
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', newTheme);
@@ -443,6 +740,7 @@
     function openSheet(id) { document.getElementById(id).classList.add('active'); document.getElementById('overlay' + id.replace('sheet', '')).classList.add('active'); }
     function closeSheet(id) { document.getElementById(id).classList.remove('active'); document.getElementById('overlay' + id.replace('sheet', '')).classList.remove('active'); }
     function toggleInfoLanjutan() {
+        triggerHaptic(25);
         const fields = document.querySelectorAll('.toggleable-info');
         const isHidden = fields[0].style.display === 'none';
         fields.forEach(f => { f.style.display = isHidden ? 'block' : 'none'; });
@@ -459,12 +757,14 @@
     }
 
     function toggleKeterangan() {
+        triggerHaptic(25);
         const box = document.getElementById('boxKeterangan');
         if (box.style.display === 'none') { box.style.display = 'block'; document.getElementById('modalKeterangan').focus(); } 
         else { box.style.display = 'none'; document.getElementById('modalKeterangan').value = ''; }
     }
 
-    function toggleOngkir() {
+    function toggleOngkir(isUserAction = false) {
+        if (isUserAction) triggerHaptic(30);
         const isChecked = document.getElementById('cbOngkir').checked;
         const boxOngkir = document.getElementById('boxOngkir');
         const inputOngkir = document.getElementById('inputOngkir');
@@ -479,11 +779,12 @@
 
     let database = { harga: {}, barang: [] };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
-	let masterTable = 'transaksi'; let detailTable = 'transaksi_detail'; // Tambahan penampung nama tabel
-	let lastPrintText = ""; let isDeposit = false; let isInitialLoad = true;
+    let masterTable = 'transaksi'; let detailTable = 'transaksi_detail';
+    let lastPrintText = ""; let isDeposit = false; let isInitialLoad = true;
 
     function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
-    function togglePembayaran() {
+    function togglePembayaran(isUserAction = false) {
+        if (isUserAction) triggerHaptic(30);
         const isChecked = document.getElementById('cbTidakTitip').checked;
         const inputCash = document.getElementById('inputCash'); const inputTrf = document.getElementById('inputTrf');
         if (isChecked) { inputCash.value = "0"; inputTrf.value = "0"; inputCash.disabled = true; inputTrf.disabled = true; inputCash.style.opacity = "0.5"; inputTrf.style.opacity = "0.5"; } 
@@ -492,15 +793,15 @@
     }
 
     function syncKertas(val) {
-        document.getElementById('ukuranKertas').value = val; document.getElementById('ukuranKertasPreview').value = val;
-        if (connectedDeviceId) localStorage.setItem('printerSize_' + connectedDeviceId, val);
+        if (document.getElementById('ukuranKertasBottom')) document.getElementById('ukuranKertasBottom').value = val;
+        if (document.getElementById('ukuranKertasPreview')) document.getElementById('ukuranKertasPreview').value = val;
     }
 
     async function initEdit() {
         const urlParams = new URLSearchParams(window.location.search);
         const notaEdit = urlParams.get('nota');
-        const sumberTabel = urlParams.get('sumber'); // Tangkap tabel sumber dari URL
-		// Logika penentuan nama tabel
+        const sumberTabel = urlParams.get('sumber');
+        
         if (sumberTabel === 'transaksi_dp') {
             masterTable = 'transaksi_dp';
             detailTable = 'transaksi_detaildp';
@@ -508,9 +809,10 @@
             masterTable = 'transaksi';
             detailTable = 'transaksi_detail';
         }
-		if(!notaEdit) { showCustomAlert("Kesalahan URL", "Tidak ada parameter nota yang dituju (contoh: ?nota=SBR-xxx).", "danger"); return; }
+
+        if(!notaEdit) { showCustomAlert("Kesalahan URL", "Tidak ada parameter nota yang dituju (contoh: ?nota=SBR-xxx).", "danger"); return; }
+        
         try {
-            // Load base data untuk form
             const { data: agen } = await clientSupabase.from('agen').select('*');
             const selAgen = document.getElementById('pilihAgen');
             selAgen.innerHTML = '<option value="">-- PILIH AGEN --</option>';
@@ -540,12 +842,10 @@
             selMobil.innerHTML = '<option value="">-- MOBIL (OPSIONAL) --</option>';
             if(mobil) mobil.forEach(m => selMobil.options.add(new Option(m.plat_nomor, m.plat_nomor)));
 
-            // Fetch Data Transaksi & Detail (SEKARANG DINAMIS)
-			const { data: trxData, error: errTrx } = await clientSupabase.from(masterTable).select('*').eq('no_nota', notaEdit).single();
-			if(errTrx || !trxData) { showCustomAlert("Data Tidak Ditemukan", "Nota tidak ada di sistem.", "danger"); return; }
-			const { data: detailData } = await clientSupabase.from(detailTable).select('*').eq('no_nota', notaEdit);
+            const { data: trxData, error: errTrx } = await clientSupabase.from(masterTable).select('*').eq('no_nota', notaEdit).single();
+            if(errTrx || !trxData) { showCustomAlert("Data Tidak Ditemukan", "Nota tidak ada di sistem.", "danger"); return; }
+            const { data: detailData } = await clientSupabase.from(detailTable).select('*').eq('no_nota', notaEdit);
 
-            // Populasikan Data ke UI
             document.getElementById('noNota').value = trxData.no_nota;
             document.getElementById('tglNota').value = trxData.tanggal; formatTglDisplay();
             document.getElementById('pilihAgen').value = trxData.nama_agen;
@@ -557,7 +857,7 @@
             document.getElementById('inputTrf').value = trxData.bayar_transfer.toLocaleString('id-ID');
             
             if (trxData.ongkir > 0) {
-                document.getElementById('cbOngkir').checked = true; toggleOngkir();
+                document.getElementById('cbOngkir').checked = true; toggleOngkir(false);
                 document.getElementById('inputOngkir').value = trxData.ongkir.toLocaleString('id-ID');
             }
 
@@ -571,8 +871,9 @@
                 itemsRetur = detailData.filter(d => d.tipe === 'Retur').map(d => parseItemDB(d));
             }
             
+            syncKertas("");
             render(); hitungTotal();
-            isInitialLoad = false; // Membuka kunci logic bon reguler untuk perubahan berikutnya
+            isInitialLoad = false;
             
         } catch(e) { showCustomAlert("Koneksi Database Error", e.message, "danger"); }
     }
@@ -584,7 +885,7 @@
     }
 
     function updateBon() {
-        if(isInitialLoad) return; // Abaikan saat memuat data historis pertama kali
+        if(isInitialLoad) return;
         const ag = document.getElementById('pilihAgen').value;
         const saldoBon = database.harga[ag]?.bon || 0;
         isDeposit = saldoBon < 0;
@@ -601,6 +902,7 @@
     }
 
     function openItemSheet(mode) { 
+        triggerHaptic(30);
         const ag = document.getElementById('pilihAgen').value;
         if(!ag) { showCustomAlert("Perhatian", "Pilih Agen terlebih dahulu sebelum menambahkan barang!", "danger"); return; }
         
@@ -618,6 +920,7 @@
     }
 
     function addItem() {
+        triggerHaptic(35);
         const ag = document.getElementById('pilihAgen').value; const b = document.getElementById('modalBarang').value;
         const s = document.getElementById('modalSatuan').value; const q = parseFloat(document.getElementById('modalQty').value) || 0;
         const k = document.getElementById('modalKeterangan').value.trim();
@@ -636,6 +939,7 @@
     }
 
     function openActionSheet(idx, mode) {
+        triggerHaptic(30);
         currentActionIndex = idx; currentActionMode = mode;
         const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
         document.getElementById('actionTitle').innerText = item.barang;
@@ -644,6 +948,7 @@
 
     function doActionEdit() { closeSheet('sheetAction'); setTimeout(() => { editItem(currentActionIndex, currentActionMode); }, 200); }
     function doActionDelete() {
+        triggerHaptic(40);
         showCustomConfirm("Hapus Barang", "Yakin ingin menghapus barang ini dari daftar?", () => {
             if(currentActionMode === 'Kirim') itemsKirim.splice(currentActionIndex, 1); else itemsRetur.splice(currentActionIndex, 1);
             render(); hitungTotal(); closeSheet('sheetAction');
@@ -675,7 +980,7 @@
                         ${infoKet}
                     </td>
                     <td style="font-weight:700; color:var(--text-main);">${it.total.toLocaleString()}</td>
-                    <td class="td-action"><button class="icon-btn" style="width:28px; height:28px; background:var(--input-bg);" onclick="openActionSheet(${idx},'${mode}')"><i class="ph-bold ph-pencil-simple"></i></button></td>`;
+                    <td class="td-action"><button class="icon-btn" style="width:34px; height:34px; background:var(--input-bg);" onclick="openActionSheet(${idx},'${mode}')"><i class="ph-bold ph-pencil-simple"></i></button></td>`;
             });
         };
         draw(itemsKirim, 'tabelKirim', 'Kirim'); draw(itemsRetur, 'tabelRetur', 'Retur');
@@ -700,18 +1005,59 @@
         document.getElementById('txtSisaLabel').innerText = sisa < 0 ? "Deposit Tersisa" : "Sisa Bon Belum Lunas";
     }
 
+    // --- PENGATURAN BLUETOOTH PRINTER ---
+    function mulaiScanBT() {
+        triggerHaptic(35);
+        openSheet('sheetBTScanner');
+        setTimeout(() => {
+            connectBT();
+        }, 300);
+    }
+
+    function batalScanBT() {
+        closeSheet('sheetBTScanner');
+    }
+
     async function connectBT() {
         try {
-            const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] });
-            const server = await device.gatt.connect(); const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+            const device = await navigator.bluetooth.requestDevice({ 
+                acceptAllDevices: true, 
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] 
+            });
+
+            closeSheet('sheetBTScanner');
+
+            const server = await device.gatt.connect(); 
+            const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
             const characteristics = await service.getCharacteristics();
             btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
             connectedDeviceId = device.id;
-            document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")"; document.getElementById('statusBT').style.color = "var(--success)";
-            document.getElementById('btnPrinterIcon').classList.add('connected');
-            const savedSize = localStorage.getItem('printerSize_' + connectedDeviceId);
-            if (savedSize) { document.getElementById('ukuranKertas').value = savedSize; document.getElementById('ukuranKertasPreview').value = savedSize; }
-        } catch (e) { document.getElementById('btnPrinterIcon').classList.remove('connected'); throw e; }
+
+            // Update status tombol cepat di panel bawah
+            const btnQuick = document.getElementById('btnQuickBT');
+            const lblQuick = document.getElementById('labelQuickBT');
+            if (btnQuick && lblQuick) {
+                btnQuick.classList.add('bt-connected-pulse');
+                lblQuick.innerText = device.name ? device.name.slice(0, 10) : "Terhubung";
+            }
+
+            triggerHaptic(60);
+            showCustomAlert("Printer Terhubung", `Berhasil tersambung ke printer <b>${device.name || 'Bluetooth'}</b>.`, "success");
+
+        } catch (e) { 
+            closeSheet('sheetBTScanner');
+            
+            const btnQuick = document.getElementById('btnQuickBT');
+            const lblQuick = document.getElementById('labelQuickBT');
+            if (btnQuick && lblQuick && !connectedDeviceId) {
+                btnQuick.classList.remove('bt-connected-pulse');
+                lblQuick.innerText = "Hubungkan BT";
+            }
+            
+            if (e.name !== 'NotFoundError') {
+                showCustomAlert("Koneksi Gagal", "Tidak dapat menyambungkan ke printer: " + e.message, "danger");
+            }
+        }
     }
 
     async function printToBT(text) {
@@ -723,15 +1069,17 @@
     }
 
     async function reprintLast() {
+        triggerHaptic(30);
         if(!lastPrintText) { showCustomAlert("Perhatian", "Belum ada data cetak terakhir!", "danger"); return; }
         if(!btCharacteristic) { try { await connectBT(); } catch(e) { showCustomAlert("Perhatian", "Printer belum terhubung!", "danger"); return; } }
         try {
-            closeSheet('sheetPrinter'); let cetakReprint = lastPrintText.replace('[JENIS_CETAKAN]', '*** REPRINT REVISI NOTA ***');
+            let cetakReprint = lastPrintText.replace('[JENIS_CETAKAN]', '*** REPRINT REVISI NOTA ***');
             await printToBT(cetakReprint); showCustomAlert("Sukses", "Berhasil Cetak Ulang Nota!", "success");
         } catch(e) { showCustomAlert("Gagal", "Cetak Ulang Gagal: " + e, "danger"); }
     }
 
     function handleMainButtonClick() {
+        triggerHaptic(35);
         const btn = document.getElementById('btnSimpan');
         if (btn.dataset.action === 'reprint') reprintLast(); else simpanDanPrint();
     }
@@ -802,7 +1150,7 @@
         if (isSimpan) {
             setTimeout(() => {
                 showCustomConfirm(
-                    "Simpan Gambar & Tutup",
+                    "Simpan Gambar & Selesai",
                     "Data berhasil diperbarui ke Database!<br><br>Apakah Anda ingin mengunduh gambar nota digital ini?",
                     () => {
                         const downloadLink = document.createElement("a"); downloadLink.href = imgUrl; downloadLink.download = `Revisi_SBR_${dataStruk.noNota}.jpg`;
@@ -818,7 +1166,7 @@
     function askResetFormAfterTransaction() {
         showCustomConfirm(
             "Revisi Selesai",
-            "Update nota selesai.<br><br>Apakah Anda ingin menutup tab Edit ini?",
+            "Update nota selesai.<br><br>Apakah Anda ingin menutup tab Edit ini sekarang?",
             () => { window.close(); },
             () => {
                 const btn = document.getElementById('btnSimpan');
@@ -828,6 +1176,7 @@
     }
 
     async function bukaPratinjau() {
+        triggerHaptic(30);
         let errorList = []; const ag = document.getElementById('pilihAgen').value;
         const drv1 = document.getElementById('driver1').value; const mobil = document.getElementById('pilihMobil').value; const drv2 = document.getElementById('driver2').value;
         const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
@@ -857,6 +1206,7 @@
     }
 
     async function simpanDanPrint() {
+        triggerHaptic(40);
         let errorList = []; const ag = document.getElementById('pilihAgen').value;
         const drv1 = document.getElementById('driver1').value; const mobil = document.getElementById('pilihMobil').value; const drv2 = document.getElementById('driver2').value;
         const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
@@ -867,8 +1217,11 @@
         const isTidakTitip = document.getElementById('cbTidakTitip').checked;
         if (cash === 0 && trf === 0 && !isTidakTitip) errorList.push("- Pembayaran belum diisi");
 
+        const kertasPilihan = document.getElementById('ukuranKertasBottom').value || document.getElementById('ukuranKertasPreview').value;
+        if (!kertasPilihan) errorList.push("- Ukuran kertas pencetakan belum dipilih");
+
         if (errorList.length > 0) { showCustomAlert("Data Belum Lengkap", "Mohon lengkapi data berikut:<br><br>" + errorList.join("<br>"), "danger"); return; }
-        if (!btCharacteristic) { try { await connectBT(); } catch (e) { } } // Lewati koneksi paksa jika gagal
+        if (!btCharacteristic) { try { await connectBT(); } catch (e) { } }
 
         const btn = document.getElementById('btnSimpan'); const btnModal = document.getElementById('btnSimpanPreview'); 
         btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> MENYIMPAN...'; btn.disabled = true;
@@ -879,7 +1232,7 @@
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0); const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl_input = getAngka('inputBonLama'); const bl_actual = isDeposit ? -bl_input : bl_input; const ongkir = getAngka('inputOngkir');
         const tagihanBersih = tk - tr - ongkir + bl_actual; const sisa = tagihanBersih - cash - trf;
-        const lebar = parseInt(document.getElementById('ukuranKertas').value); 
+        const lebar = parseInt(kertasPilihan); 
         
         const buatBaris = (l, r) => { let space = lebar - l.length - String(r).length; return l + " ".repeat(Math.max(1, space)) + r + "\n"; };
         const garisStrip = "-".repeat(lebar) + "\n"; const garisSamaDengan = "=".repeat(lebar) + "\n";
@@ -917,25 +1270,19 @@
         p += `\x1B\x61\x01\x1B\x21\x00\n\n\n( ............................ )\n` + garisStrip + `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
         try {
-            // WIPE AND REPLACE DATABASE
-            // 1. Update Master Transaksi
             await clientSupabase.from(masterTable).update({
                 tanggal: tglInput, driver_1: drv1, driver_2: drv2, plat_nomor: mobil || '-', 
                 total_kirim: tk, total_retur: tr, bon_lama: bl_actual, ongkir: ongkir, 
                 bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
             }).eq('no_nota', noNota);
 
-            // 2. Hapus Detail Lama
             await clientSupabase.from(detailTable).delete().eq('no_nota', noNota);
 
-            // 3. Masukkan Detail Revisi Baru
             const details = [
                 ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.keterangan ? `${i.barang} - (${i.keterangan})` : i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
                 ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.keterangan ? `${i.barang} - (${i.keterangan})` : i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
             ];
             await clientSupabase.from(detailTable).insert(details);
-            
-            // 4. Update Saldo Bon Agen Terakhir
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
             if (btCharacteristic) {
@@ -961,7 +1308,7 @@
                     }
                 );
             } else {
-                lastPrintText = p; document.getElementById('btnReprint').disabled = false;
+                lastPrintText = p;
                 btn.innerHTML = "MEMBUAT LAPORAN DIGITAL..."; if (btnModal) btnModal.innerHTML = "MEMBUAT LAPORAN...";
                 await buatGambarLaporan({ noNota, tglIndo, ag, drvGabung, mobil: mobil || '-', itemsKirim, itemsRetur, tk, tr, ongkir, bl_input, tagihanBersih, cash, trf, sisa }, true); 
             }
