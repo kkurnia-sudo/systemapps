@@ -42,6 +42,100 @@
             --border: #333333;
             --input-bg: #2d2d2d;
         }
+		
+		/* --- ANIMASI SCANNER RADAR BLUETOOTH --- */
+		.radar-box {
+			position: relative;
+			width: 140px;
+			height: 140px;
+			margin: 15px auto 25px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.radar-circle {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			border-radius: 50%;
+			background: rgba(37, 99, 235, 0.12);
+			animation: pulseRadar 2s infinite ease-out;
+		}
+
+		.radar-circle:nth-child(2) {
+			animation-delay: 0.6s;
+		}
+
+		.radar-circle:nth-child(3) {
+			animation-delay: 1.2s;
+		}
+
+		.radar-center-icon {
+			position: relative;
+			z-index: 2;
+			width: 64px;
+			height: 64px;
+			background: var(--primary);
+			color: white;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 28px;
+			box-shadow: 0 0 20px rgba(37, 99, 235, 0.45);
+		}
+
+		@keyframes pulseRadar {
+			0% {
+				transform: scale(0.4);
+				opacity: 0.9;
+			}
+			100% {
+				transform: scale(1.6);
+				opacity: 0;
+			}
+		}
+
+        /* --- ANIMASI PULSE BIRU TOMBOL KETIKA TERHUBUNG --- */
+        @keyframes pulseBlueGlow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6);
+                border-color: #2563eb;
+            }
+            70% {
+                box-shadow: 0 0 0 7px rgba(37, 99, 235, 0);
+                border-color: #60a5fa;
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+                border-color: #2563eb;
+            }
+        }
+
+        .bt-connected-pulse {
+            background: rgba(37, 99, 235, 0.12) !important;
+            border: 1.5px solid #2563eb !important;
+            color: #2563eb !important;
+            animation: pulseBlueGlow 2s infinite cubic-bezier(0.4, 0, 0.6, 1) !important;
+        }
+
+        .bt-connected-pulse i,
+        .bt-connected-pulse span {
+            color: #2563eb !important;
+            font-weight: 700;
+        }
+
+        [data-theme="dark"] .bt-connected-pulse {
+            background: rgba(37, 99, 235, 0.22) !important;
+            border-color: #60a5fa !important;
+            color: #93c5fd !important;
+        }
+
+        [data-theme="dark"] .bt-connected-pulse i,
+        [data-theme="dark"] .bt-connected-pulse span {
+            color: #93c5fd !important;
+        }
 
         * { 
             box-sizing: border-box; 
@@ -51,17 +145,15 @@
             -webkit-tap-highlight-color: transparent; 
         }
         
-        /* Optimasi Tampilan Android: Mengatur ruang bawah agar tidak tertutup sticky bar */
         body { 
             background: var(--bg-color); 
             color: var(--text-main); 
             font-size: 14px; 
             transition: background 0.3s, color 0.3s; 
-            padding-bottom: calc(175px + env(safe-area-inset-bottom, 0px));
-            overscroll-behavior-y: contain; /* Mencegah refresh tak sengaja saat scroll */
+            padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+            overscroll-behavior-y: contain;
         }
 
-        /* Hilangkan spinner bawaan browser pada input number */
         input[type="number"]::-webkit-inner-spin-button, 
         input[type="number"]::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
@@ -84,14 +176,22 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
             transition: background 0.3s;
         }
-        .brand { font-weight: 800; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        .brand { 
+            font-weight: 800; 
+            font-size: 16px; 
+            color: var(--text-main); 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+        }
         .header-actions { display: flex; gap: 8px; }
+
         .icon-btn { 
             background: var(--bg-color); 
             border: none; 
             border-radius: 50%; 
-            width: 38px; 
-            height: 38px; 
+            width: 40px; 
+            height: 40px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
@@ -102,10 +202,8 @@
             touch-action: manipulation;
         }
         .icon-btn.danger { color: var(--danger); background: #fef2f2; }
-        .icon-btn.connected { color: #ffffff !important; background: var(--primary) !important; box-shadow: 0 0 10px rgba(37,99,235,0.4); }
         
         [data-theme="dark"] .icon-btn.danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-        [data-theme="dark"] .icon-btn.connected { background: var(--primary) !important; color: #ffffff !important; }
 
         /* CONTAINER & CARDS */
         .container { padding: 12px; margin: 0 auto; max-width: 600px; }
@@ -218,7 +316,7 @@
         [data-theme="dark"] .checkbox-wrapper.cb-blue { background: #031936; border-color: #072f61; }
         [data-theme="dark"] .checkbox-wrapper.cb-blue span { color: #80a3cf; }
 
-        /* STICKY BOTTOM BAR (MOBILE FRIENDLY) */
+        /* STICKY BOTTOM BAR */
         .bottom-bar { 
             position: fixed; 
             bottom: 0; 
@@ -226,7 +324,7 @@
             right: 0; 
             background: var(--card-bg); 
             padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); 
-            box-shadow: 0 -4px 25px rgba(0,0,0,0.1); 
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08); 
             z-index: 40; 
             border-radius: 20px 20px 0 0; 
             transition: background 0.3s; 
@@ -256,6 +354,7 @@
             align-items: center; 
             justify-content: center; 
             gap: 6px;
+            transition: all 0.25s ease;
         }
         .quick-select { 
             height: 40px; 
@@ -285,13 +384,12 @@
             .bottom-bar { position: relative; border-radius: var(--radius-lg); padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 12px; }
         }
 
-        /* MODAL BOTTOM SHEET */
+        /* MODALS UMUM */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(0,0,0,0.6); z-index: 100; 
+            background: rgba(0,0,0,0.5); z-index: 100; 
             opacity: 0; visibility: hidden; 
             transition: opacity 0.25s ease-out, visibility 0.25s ease-out; 
-            backdrop-filter: blur(2px);
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         
@@ -304,11 +402,11 @@
             border-radius: 20px 20px 0 0; 
             padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px)); 
             z-index: 101; 
-            transition: bottom 0.28s cubic-bezier(0.1, 0.9, 0.2, 1); 
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.15); 
+            transition: bottom 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1); 
             max-height: 88vh; 
             overflow-y: auto; 
-            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
         }
         .bottom-sheet.active { bottom: 0; }
         .sheet-indicator { width: 42px; height: 5px; background: var(--border); border-radius: 10px; margin: 0 auto 16px; }
@@ -346,10 +444,12 @@
 <body>
 
 <header>
-    <div class="brand"><i class="ph-fill ph-receipt"></i> SBR Systems <p style="color: red; font-size: 11px; margin-left: 4px;">(Nota Digital)</p> </div>
+    <div class="brand">
+        <i class="ph-fill ph-receipt"></i> SBR Systems 
+        <span style="color: #ef4444; font-size: 13px; font-weight: 700; margin-left: 2px;">(Nota Digital)</span>
+    </div>
     <div class="header-actions">
         <button class="icon-btn" onclick="toggleInfoLanjutan()" title="Tampil/Sembunyi Opsi Opsional"><i class="ph ph-eye-slash" id="iconToggleInfo"></i></button>
-        <button class="icon-btn" id="btnPrinterIcon" onclick="openSheet('sheetPrinter')" title="Pengaturan Printer"><i class="ph ph-printer"></i></button>
         <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema"><i class="ph ph-moon"></i></button>
         <button class="icon-btn danger" onclick="resetFormForNewNota()" title="Reset / Nota Baru"><i class="ph ph-arrow-counter-clockwise"></i></button>
     </div>
@@ -440,7 +540,6 @@
                 <div class="form-grid">
                     <div class="form-group full" id="boxBonLama">
                         <label id="labelBonUI">Bon Lama / Tagihan Sebelumnya</label>
-                        <!-- inputmode="numeric" untuk membuka numpad otomatis di Android -->
                         <input type="text" id="inputBonLama" inputmode="numeric" class="input-money" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
                     </div>
                 </div>
@@ -449,11 +548,11 @@
             <div class="card">
                 <div class="form-grid" style="margin-bottom: 12px;">
                     <label class="checkbox-wrapper cb-blue" style="margin-bottom: 0;" onclick="document.getElementById('cbOngkir').click();">
-                        <input type="checkbox" id="cbOngkir" onchange="toggleOngkir()" onclick="event.stopPropagation();">
+                        <input type="checkbox" id="cbOngkir" onchange="toggleOngkir(true)" onclick="event.stopPropagation();">
                         <span>ONGKIR ?</span>
                     </label>
                     <label class="checkbox-wrapper" style="margin-bottom: 0;" onclick="document.getElementById('cbTidakTitip').click();">
-                        <input type="checkbox" id="cbTidakTitip" onchange="togglePembayaran()" onclick="event.stopPropagation();">
+                        <input type="checkbox" id="cbTidakTitip" onchange="togglePembayaran(true)" onclick="event.stopPropagation();">
                         <span>TIDAK TITIP UANG</span>
                     </label>
                 </div>
@@ -485,12 +584,12 @@
                     <div class="summary-value" id="txtGrand">Rp 0</div>
                 </div>
 
-                <!-- KONTROL MINIMALIS: BLUETOOTH & PILIHAN KERTAS -->
+                <!-- Kontrol Cepat: Bluetooth & Ukuran Kertas -->
                 <div class="quick-print-bar">
-                    <button type="button" class="btn quick-btn" id="btnQuickBT" onclick="connectBT()">
-                        <i class="ph-bold ph-bluetooth" id="iconQuickBT" style="font-size: 16px; color: var(--primary);"></i>
-                        <span id="labelQuickBT" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Hubungkan BT</span>
-                    </button>
+                    <button type="button" class="btn quick-btn" id="btnQuickBT" onclick="mulaiScanBT()">
+						<i class="ph-bold ph-bluetooth" id="iconQuickBT" style="font-size: 16px; color: var(--primary);"></i>
+						<span id="labelQuickBT" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Hubungkan BT</span>
+					</button>
 
                     <select id="ukuranKertasBottom" class="quick-select" onchange="syncKertas(this.value)">
                         <option value="" disabled selected>-- Pilih Kertas --</option>
@@ -619,11 +718,38 @@
     </div>
 </div>
 
+<!-- MODAL SCANNER RADAR BLUETOOTH -->
+<div class="modal-overlay" id="overlayBTScanner" style="z-index: 210;" onclick="batalScanBT()"></div>
+<div class="bottom-sheet" id="sheetBTScanner" style="z-index: 211; text-align: center;">
+    <div class="sheet-indicator"></div>
+    
+    <div class="radar-box">
+        <div class="radar-circle"></div>
+        <div class="radar-circle"></div>
+        <div class="radar-circle"></div>
+        <div class="radar-center-icon">
+            <i class="ph-bold ph-printer"></i>
+        </div>
+    </div>
+
+    <h3 style="font-weight: 800; font-size: 16px; margin-bottom: 6px;">Mencari Printer Bluetooth...</h3>
+    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4;">
+        Pastikan printer kasir dalam keadaan <b>ON</b> dan Bluetooth HP aktif. Pilih printer Anda pada jendela browser yang muncul.
+    </p>
+
+    <button class="btn btn-outline" style="height: 44px;" onclick="batalScanBT()">
+        Batal Mencari
+    </button>
+</div>
+
 <div class="struk-visual-container"><div id="areaCetakGambar" class="struk-visual"></div></div>
 
 <script>
-    // --- BANTUAN GETARAN HALUS (HAPTIC FEEDBACK) UNTUK ANDROID ---
-    function triggerHaptic(duration = 40) {
+    function triggerHaptic(duration = 35) {
+        if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
+            return;
+        }
+
         if (window.navigator && window.navigator.vibrate) {
             try {
                 window.navigator.vibrate(duration);
@@ -633,7 +759,7 @@
         }
     }
 
-    // --- DIALOG SISTEM (PENGGANTI ALERT & CONFIRM) ---
+    // --- DIALOG SISTEM ---
     function showCustomAlert(title, message, type = 'info') {
         triggerHaptic(type === 'danger' ? 80 : 35);
         document.getElementById('customDialogTitle').innerText = title;
@@ -717,7 +843,7 @@
     document.documentElement.setAttribute('data-theme', savedTheme);
     window.addEventListener('DOMContentLoaded', () => updateThemeIcon(savedTheme));
 
-    // --- STATE GLOBAL & KONEKSI SUPABASE ---
+    // --- STATE GLOBAL & SUPABASE ---
     let btCharacteristic = null;
     let connectedDeviceId = null; 
     let currentActionIndex = -1;
@@ -756,7 +882,6 @@
         icon.className = isHidden ? 'ph ph-eye-slash' : 'ph ph-eye';
     }
 
-    // --- PENANGANAN TANGGAL SESUAI WAKTU LOKAL ---
     function getTanggalHariIniLocal() {
         const now = new Date();
         const year = now.getFullYear();
@@ -781,9 +906,8 @@
         document.getElementById('tglNotaDisplay').value = `${dayName}, ${dayStr}/${monthStr}/${y}`;
     }
 
-    // --- LOGIKA ONGKIR & PEMBAYARAN ---
-    function toggleOngkir() {
-        triggerHaptic(30);
+    function toggleOngkir(isUserAction = false) {
+        if (isUserAction) triggerHaptic(30);
         const isChecked = document.getElementById('cbOngkir').checked;
         const boxOngkir = document.getElementById('boxOngkir');
         const inputOngkir = document.getElementById('inputOngkir');
@@ -801,8 +925,8 @@
         if (el.value === "0" || el.value === 0) el.value = ""; 
     }
 
-    function togglePembayaran() {
-        triggerHaptic(30);
+    function togglePembayaran(isUserAction = false) {
+        if (isUserAction) triggerHaptic(30);
         const isChecked = document.getElementById('cbTidakTitip').checked;
         const inputCash = document.getElementById('inputCash');
         const inputTrf = document.getElementById('inputTrf');
@@ -823,14 +947,12 @@
         hitungTotal();
     }
 
-    // SINKRONISASI UKURAN KERTAS DI SEMUA LOKASI
     function syncKertas(val) {
         if (document.getElementById('ukuranKertas')) document.getElementById('ukuranKertas').value = val;
         if (document.getElementById('ukuranKertasPreview')) document.getElementById('ukuranKertasPreview').value = val;
         if (document.getElementById('ukuranKertasBottom')) document.getElementById('ukuranKertasBottom').value = val;
     }
 
-    // --- INISIALISASI DATA DARI SUPABASE ---
     async function init() {
         try {
             const { data: agen } = await clientSupabase.from('agen').select('*');
@@ -896,9 +1018,9 @@
         syncKertas("");
         
         document.getElementById('cbOngkir').checked = false; 
-        toggleOngkir(); 
+        toggleOngkir(false); 
         document.getElementById('cbTidakTitip').checked = false; 
-        togglePembayaran();
+        togglePembayaran(false); 
         
         document.getElementById('notifBon').style.display = "none";
         document.getElementById('cardBiayaLain').style.display = "none";
@@ -962,7 +1084,6 @@
         hitungTotal();
     }
 
-    // --- PENGELOLAAN ITEM (BARIS BARANG) ---
     function openItemSheet(mode) { 
         triggerHaptic(30);
         const ag = document.getElementById('pilihAgen').value;
@@ -1002,7 +1123,6 @@
         const rowId = 'row_' + Math.random().toString(36).substr(2, 9);
         const ketId = 'ket_' + rowId;
         
-        // Desain baris input yang ramah sentuhan jempol di layar HP
         const rowHtml = `
             <div class="item-input-row" id="${rowId}" style="background: var(--card-bg); padding: 8px; border-radius: 10px; margin-bottom: 8px; border: 1.5px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                 <div style="display: grid; grid-template-columns: 34px 1fr 68px 56px 34px; gap: 5px; align-items: center;">
@@ -1196,13 +1316,28 @@
     }
 
     // --- PENGATURAN BLUETOOTH PRINTER ---
+    function mulaiScanBT() {
+        triggerHaptic(35);
+        openSheet('sheetBTScanner');
+        
+        setTimeout(() => {
+            connectBT();
+        }, 300);
+    }
+
+    function batalScanBT() {
+        closeSheet('sheetBTScanner');
+    }
+
     async function connectBT() {
-        triggerHaptic(30);
         try {
             const device = await navigator.bluetooth.requestDevice({
                 acceptAllDevices: true,
                 optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
             });
+
+            closeSheet('sheetBTScanner');
+
             const server = await device.gatt.connect();
             const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
             const characteristics = await service.getCharacteristics();
@@ -1210,36 +1345,43 @@
             
             connectedDeviceId = device.id;
             
-            document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")";
-            document.getElementById('statusBT').style.color = "var(--success)";
-            document.getElementById('btnPrinterIcon').classList.add('connected');
-
-            // Perbarui tombol cepat Bluetooth di panel bawah
-            const btnQuick = document.getElementById('btnQuickBT');
-            const lblQuick = document.getElementById('labelQuickBT');
-            const iconQuick = document.getElementById('iconQuickBT');
-            if (btnQuick && lblQuick) {
-                btnQuick.style.borderColor = "var(--success)";
-                btnQuick.style.background = "rgba(16, 185, 129, 0.12)";
-                lblQuick.innerText = device.name ? device.name.slice(0, 10) : "Terhubung";
-                lblQuick.style.color = "var(--success)";
-                if (iconQuick) iconQuick.style.color = "var(--success)";
+            const statusBT = document.getElementById('statusBT');
+            if (statusBT) {
+                statusBT.innerText = "Status: Terhubung (" + device.name + ")";
+                statusBT.style.color = "var(--success)";
             }
-            triggerHaptic(50);
-        } catch (e) { 
-            document.getElementById('btnPrinterIcon').classList.remove('connected');
             
+            const headerPrinterBtn = document.getElementById('btnPrinterIcon');
+            if (headerPrinterBtn) headerPrinterBtn.classList.add('connected');
+
+            // PERBAIKAN: Pasang class denyut biru saat terhubung
             const btnQuick = document.getElementById('btnQuickBT');
             const lblQuick = document.getElementById('labelQuickBT');
-            const iconQuick = document.getElementById('iconQuickBT');
             if (btnQuick && lblQuick) {
-                btnQuick.style.borderColor = "var(--border)";
-                btnQuick.style.background = "var(--input-bg)";
-                lblQuick.innerText = "Hubungkan BT";
-                lblQuick.style.color = "var(--text-main)";
-                if (iconQuick) iconQuick.style.color = "var(--primary)";
+                btnQuick.classList.add('bt-connected-pulse');
+                lblQuick.innerText = device.name ? device.name.slice(0, 10) : "Terhubung";
             }
-            throw e; 
+
+            triggerHaptic(60);
+            showCustomAlert("Printer Terhubung", `Berhasil tersambung ke printer <b>${device.name || 'Bluetooth'}</b>.`, "success");
+
+        } catch (e) {
+            closeSheet('sheetBTScanner');
+            
+            const headerPrinterBtn = document.getElementById('btnPrinterIcon');
+            if (headerPrinterBtn) headerPrinterBtn.classList.remove('connected');
+            
+            // PERBAIKAN: Lepas class denyut jika terputus/batal
+            const btnQuick = document.getElementById('btnQuickBT');
+            const lblQuick = document.getElementById('labelQuickBT');
+            if (btnQuick && lblQuick && !connectedDeviceId) {
+                btnQuick.classList.remove('bt-connected-pulse');
+                lblQuick.innerText = "Hubungkan BT";
+            }
+            
+            if (e.name !== 'NotFoundError') {
+                showCustomAlert("Koneksi Gagal", "Tidak dapat menyambungkan ke printer: " + e.message, "danger");
+            }
         }
     }
 
@@ -1286,7 +1428,6 @@
         }
     }
 
-    // --- JUDUL NOTA & STRUK VISUAL ---
     function ambilJudulNota(isKhususAdmin = false) {
         if (isKhususAdmin) return "*** LEMBAR ADMIN ***";
         
@@ -1521,7 +1662,7 @@
             try {
                 await connectBT();
             } catch (e) {
-                // Lanjut simpan tanpa printer jika pengguna membatalkan Bluetooth
+                // Lanjut simpan digital jika Bluetooth dibatalkan
             }
         }
 
@@ -1694,7 +1835,6 @@
 
     window.onload = init;
 
-    // Pembaruan tanggal otomatis saat aplikasi dibuka kembali dari layar mati
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             if (itemsKirim.length === 0 && itemsRetur.length === 0) {
