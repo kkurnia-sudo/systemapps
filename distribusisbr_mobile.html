@@ -2402,24 +2402,22 @@
                 });
             }
 
-            const listProdukBelumLunas = listSemuaProduk.filter(prod => prod.netSisa > 0);
-
+			// KODE BARU (Form tetap terbuka untuk setor kedua / surplus):
             const boxPilihanBarang = document.getElementById('boxPilihanBarangPekerja');
             const containerRadio = document.getElementById('containerRadioBarang');
 
-            if (listProdukBelumLunas.length === 0) {
+            // Jika hanya memegang 1 macam produk (misal hanya B12), langsung buka form setornya
+            if (listSemuaProduk.length === 1) {
                 boxPilihanBarang.classList.add('hidden');
-                document.getElementById('boxInputJumlahSetor').classList.add('hidden');
-            } else if (listProdukBelumLunas.length === 1) {
-                boxPilihanBarang.classList.add('hidden');
-                aktifkanInputSetorCepat(listProdukBelumLunas[0]);
+                aktifkanInputSetorCepat(listSemuaProduk[0]);
             } else {
+                // Jika memegang lebih dari 1 produk, tampilkan pilihan radionya
                 boxPilihanBarang.classList.remove('hidden');
                 containerRadio.innerHTML = '';
 
-                listProdukBelumLunas.forEach((prod) => {
+                listSemuaProduk.forEach((prod) => {
                     const namaProduk = prod.jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${prod.jenis.replace('B','')}`;
-                    const teksHutang = `Sisa ${prod.netSisa} ${prod.satuan}`;
+                    const teksHutang = prod.netSisa > 0 ? `Sisa ${prod.netSisa} ${prod.satuan}` : `PAS (Lunas)`;
 
                     containerRadio.innerHTML += `
                         <label class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer transition select-none">
@@ -2431,7 +2429,7 @@
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-xs font-black text-red-600 dark:text-red-400">${teksHutang}</div>
+                                <div class="text-xs font-black ${prod.netSisa > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}">${teksHutang}</div>
                                 <div class="text-[9px] text-slate-400">Target: ${prod.totalTarget} • Masuk: ${prod.totalTarik}</div>
                             </div>
                         </label>
