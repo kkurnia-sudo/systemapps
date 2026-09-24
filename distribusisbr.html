@@ -2086,7 +2086,7 @@
             if (info) info.innerHTML = 'Ketik jumlah yang diterima';
         }
 
-        async function loadDataPenarikan() {
+	async function loadDataPenarikan() {
             const container = document.getElementById('containerAccordionPenarikan');
             if (!container) return;
 
@@ -2105,7 +2105,7 @@
                     pengirim:karyawan!dikirim_oleh(nama),
                     penarik:karyawan!ditarik_oleh(nama)
                 `)
-                .or('is_lunas.eq.false,koreksi.lt.0')
+                .eq('is_lunas', false) // <-- GANTI DARI .or('is_lunas.eq.false,koreksi.lt.0')
                 .order('tanggal', { ascending: false });
 
             if (error) {
@@ -2120,7 +2120,6 @@
 
             terapkanFilterPenarikan();
         }
-
         function resetFilterPenarikan() {
             const elNama = document.getElementById('filterNamaPekerja');
             const elJenis = document.getElementById('filterJenisProduk');
@@ -2738,7 +2737,25 @@
                     rekap[kid].tanggunganBersihPerProduk[jenis].totalTarget += target;
                     rekap[kid].tanggunganBersihPerProduk[jenis].totalTarik += tarik;
 
-                    if (!rekap[kid].daftarGantung.some(it => it.id === row.id)) {
+                    // Pastikan transaksi ini tercatat di histori pelunasan jika belum ada
+                    if (!rekap[kid].histori.some(it => String(it.id) === String(row.id))) {
+                        rekap[kid].histori.push(row);
+                        rekap[kid].totalKirimMurni += (row.kirim_produksi || 0);
+
+                        const qty = row.tarik_jadi || 0;
+                        if (row.jenis_produk === 'B12') {
+                            rekap[kid].b12 += qty;
+                            rekap[kid].gajiDasar += (qty * tarif.b12);
+                        } else if (row.jenis_produk === 'B10') {
+                            rekap[kid].b10 += qty;
+                            rekap[kid].gajiDasar += (qty * tarif.b10);
+                        } else if (row.jenis_produk === 'Oleh-oleh') {
+                            rekap[kid].oleholeh += qty;
+                            rekap[kid].gajiDasar += (qty * tarif.oleholeh);
+                        }
+                    }
+
+                    if (!rekap[kid].daftarGantung.some(it => String(it.id) === String(row.id))) {
                         rekap[kid].daftarGantung.push(row);
                     }
                 });
@@ -3674,7 +3691,7 @@
 			const updateLunasPromises = [];
 			const catatanOperRiwayat = `Gantung ${totalBalGantung} Bal dioper ke gajian ${tglIndoHariIni}`;
 
-			// 2. Tutup SEMUA nota lama milik karyawan & bubuhkan catatan gantung dioper
+		// 2. Tutup SEMUA nota lama milik karyawan & bubuhkan catatan gantung dioper
 			(r.histori || []).forEach(row => {
 				const logLama = row.riwayat_cicilan || '';
 				const logBaru = logLama ? `${logLama}, ${catatanOperRiwayat}` : catatanOperRiwayat;
@@ -3685,7 +3702,8 @@
 						.update({ 
 							is_lunas: true, 
 							tgl_lunas: tglSekarang,
-							riwayat_cicilan: logBaru
+							riwayat_cicilan: logBaru,
+							koreksi: 0
 						})
 						.eq('id', row.id)
 				);
@@ -3783,36 +3801,35 @@
 			tutupPratinjau();
 		}
 
-		// Kembalikan prosesPelunasanDatabase standar (untuk yang tidak memiliki gantung)
+		// Kembalikan prosesPelunasanDatabase standar (Semua transaksi aktif milik pekerja dilunasi tuntas)
 		async function prosesPelunasanDatabase(listKaryawanId) {
-			let semuaIdBeres = [];
-
-			listKaryawanId.forEach(kid => {
-				const r = globalRekapData[kid];
-				if (r && r.histori) {
-					const idKiriman = r.histori.map(item => item.id);
-					semuaIdBeres = semuaIdBeres.concat(idKiriman);
-				}
-			});
-
-			if (semuaIdBeres.length === 0) return;
+			if (!listKaryawanId || listKaryawanId.length === 0) return;
 
 			const tglSekarang = new Date().toISOString().split('T')[0];
+
+			// Update langsung berdasarkan karyawan_id yang is_lunas masih false
 			const { error } = await supabaseClient
 				.from('distribusi_packing')
-				.update({ is_lunas: true, tgl_lunas: tglSekarang })
+				.update({ 
+					is_lunas: true, 
+					tgl_lunas: tglSekarang,
+					koreksi: 0 //
+				})
 				.eq('is_lunas', false)
-				.in('id', semuaIdBeres);
+				.in('karyawan_id', listKaryawanId);
 
 			if (error) {
 				await showError("Gagal memperbarui status lunas: " + error.message);
 			} else {
-				await showSuccess("Sukses! Data telah ditandai lunas.");
+				await showSuccess("Sukses! Semua data transaksi pekerja telah ditandai lunas.");
 				loadRekapGaji();
+				loadDataLogistik();
+				loadDataPenarikan();
+				loadSetorFIFODesktop();
 			}
 		}
 
-async function loadRiwayatLunas(page = 1) {
+	async function loadRiwayatLunas(page = 1) {
             currentPageRiwayat = page;
             const elKaryawan = document.getElementById('riwayatKaryawan');
             const elTanggal = document.getElementById('riwayatTanggal');
