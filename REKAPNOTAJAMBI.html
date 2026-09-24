@@ -628,6 +628,28 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             </div>
         </div>
     </div>
+	
+	
+	<!-- MODAL PENAWARAN SIMPAN PNG -->
+	<div id="modalOfferPNG" class="fixed inset-0 z-[130] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 modal-leave">
+		<div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden border border-slate-100">
+			<div class="p-6 flex flex-col items-center text-center gap-3">
+				<div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-2 shadow-inner">
+					<i class="fas fa-file-image"></i>
+				</div>
+				<h3 class="font-bold text-lg text-slate-800">Simpan Nota ke PNG?</h3>
+				<p class="text-xs text-slate-500 leading-relaxed px-2">Data berhasil disimpan ke database. Apakah Anda ingin mengunduh gambar nota (PNG) sekarang?</p>
+			</div>
+			<div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-center gap-3">
+				<button onclick="closeOfferPNGModal()" class="px-4 py-2.5 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-all flex-1">
+					Tidak
+				</button>
+				<button onclick="executeOfferPNGDownload()" class="px-4 py-2.5 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/20 flex-1 flex items-center justify-center gap-1.5">
+					<i class="fas fa-download"></i> Ya, Simpan PNG
+				</button>
+			</div>
+		</div>
+	</div>
 
     <!-- MODAL DOWNLOAD MASSAL PNG -->
     <div id="modalMassDownload" class="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 modal-leave">
@@ -704,7 +726,25 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 txt.innerText = 'Offline'; txt.className = 'text-xs font-bold text-red-600';
             }
         }
-
+		
+		
+		// Fungsi untuk mengubah format tanggal 'YYYY-MM-DD' menjadi 'DD-Mmm-YYYY' (Contoh: 24-Sept-2026)
+		function formatDateCustom(dateStr) {
+			if (!dateStr) return 'Nota';
+			
+			// Daftar nama bulan disingkat
+			const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sept', 'Okt', 'Nov', 'Des'];
+			
+			// Jika tanggal menggunakan pemisah '-'
+			const parts = dateStr.split('T')[0].split('-');
+			if (parts.length === 3) {
+				const [year, month, day] = parts;
+				const monthName = months[parseInt(month, 10) - 1] || month;
+				return `${day}-${monthName}-${year}`;
+			}
+			
+			return dateStr;
+		}
         async function fetchMasterItems() {
             try {
                 const { data, error } = await db.from('master_items_jambi').select('*').order('item_name', { ascending: true });
@@ -736,47 +776,61 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             currentMasterId = null;
         }
 
-        async function saveMasterItem() {
-            const name = document.getElementById('newMasterName').value.toUpperCase().trim();
-            const price = parseNumber(document.getElementById('newMasterPrice').value);
-            const isActive = document.getElementById('newMasterStatus').value === 'true';
+		async function saveMasterItem() {
+			const name = document.getElementById('newMasterName').value.toUpperCase().trim();
+			const price = parseNumber(document.getElementById('newMasterPrice').value);
+			const isActive = document.getElementById('newMasterStatus').value === 'true';
 
-            if (!name || price <= 0) return alert("Mohon isi nama barang dan harga dengan benar!");
+			if (!name || price <= 0) return alert("Mohon isi nama barang dan harga dengan benar!");
 
-            const btn = document.getElementById('btnSaveMaster');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            btn.disabled = true;
+			const btn = document.getElementById('btnSaveMaster');
+			const originalHTML = btn.innerHTML;
+			btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+			btn.disabled = true;
 
-            try {
-                if (currentMasterId) {
-                    const { error } = await db.from('master_items_jambi')
-                        .update({ item_name: name, default_price: price, is_active: isActive })
-                        .eq('id', currentMasterId);
-                    if (error) throw error;
-                } else {
-                    const { count, error: countError } = await db.from('master_items_jambi')
-                        .select('*', { count: 'exact', head: true });
-                    if (countError) throw countError;
+			try {
+				if (currentMasterId) {
+					// Update barang yang sudah ada
+					const { error } = await db.from('master_items_jambi')
+						.update({ item_name: name, default_price: price, is_active: isActive })
+						.eq('id', currentMasterId);
+					if (error) throw error;
+				} else {
+					// PERBAIKAN: Ambil ID paling terakhir berdasarkan urutan ID
+					const { data: lastItems, error: fetchError } = await db.from('master_items_jambi')
+						.select('id')
+						.order('id', { ascending: false })
+						.limit(1);
 
-                    const nextNumber = (count || 0) + 1;
-                    const customId = `BJB_${String(nextNumber).padStart(2, '0')}`;
+					if (fetchError) throw fetchError;
 
-                    const { error } = await db.from('master_items_jambi')
-                        .insert([{ id: customId, item_name: name, default_price: price, is_active: isActive }]);
-                    if (error) throw error;
-                }
-                
-                closeMasterModal();
-                fetchMasterItems(); 
-            } catch (error) {
-                alert("Gagal menyimpan ke database: " + error.message);
-                console.error(error);
-            } finally {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-            }
-        }
+					let nextNumber = 1;
+					if (lastItems && lastItems.length > 0) {
+						// Ekstrak angka dari string ID (contoh: "BJB_27" -> 27)
+						const lastId = lastItems[0].id;
+						const numberMatch = lastId.match(/\d+/);
+						if (numberMatch) {
+							nextNumber = parseInt(numberMatch[0], 10) + 1;
+						}
+					}
+
+					const customId = `BJB_${String(nextNumber).padStart(2, '0')}`;
+
+					const { error } = await db.from('master_items_jambi')
+						.insert([{ id: customId, item_name: name, default_price: price, is_active: isActive }]);
+					if (error) throw error;
+				}
+				
+				closeMasterModal();
+				fetchMasterItems(); 
+			} catch (error) {
+				alert("Gagal menyimpan ke database: " + error.message);
+				console.error(error);
+			} finally {
+				btn.innerHTML = originalHTML;
+				btn.disabled = false;
+			}
+		}
 
         let masterItemToDeleteId = null;
 
@@ -1446,29 +1500,35 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             modal.classList.add('modal-leave');
         }
 
-        function downloadInvoicePNG() {
-            const element = document.getElementById('invoicePaper');
-            const invNum = element.dataset.inv || 'Invoice';
-            const custNameRaw = element.dataset.cust || 'Nota';
-            const custName = custNameRaw.replace(/[^a-zA-Z0-9]/g, '_');
-            
-            const clone = element.cloneNode(true);
-            clone.style.position = 'absolute';
-            clone.style.left = '-9999px';
-            clone.style.top = '0';
-            clone.style.width = '800px';
-            clone.style.height = 'auto';
-            clone.style.overflow = 'visible';
-            document.body.appendChild(clone);
-            
-            html2canvas(clone, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `${invNum}_${custName}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                document.body.removeChild(clone);
-            });
-        }
+		function downloadInvoicePNG() {
+			const element = document.getElementById('invoicePaper');
+			const custNameRaw = element.dataset.cust || 'Nota';
+			
+			// Ambil tanggal nota dari input #invoiceDate
+			const dateInput = document.getElementById('invoiceDate').value || getTodayDate();
+			const formattedDate = formatDateCustom(dateInput);
+			
+			// Bersihkan nama pelanggan agar aman untuk nama file
+			const safeCustName = custNameRaw.replace(/[^a-zA-Z0-9]/g, '_');
+			
+			const clone = element.cloneNode(true);
+			clone.style.position = 'absolute';
+			clone.style.left = '-9999px';
+			clone.style.top = '0';
+			clone.style.width = '800px';
+			clone.style.height = 'auto';
+			clone.style.overflow = 'visible';
+			document.body.appendChild(clone);
+			
+			html2canvas(clone, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+				const link = document.createElement('a');
+				// Format nama file seragam: DD-Mmm-YYYY_NAMA_PELANGGAN.png
+				link.download = `${formattedDate}_${safeCustName}.png`;
+				link.href = canvas.toDataURL('image/png');
+				link.click();
+				document.body.removeChild(clone);
+			});
+		}
 
         async function countTotalUnpaidNotes() {
             try {
@@ -1554,60 +1614,67 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         }
 
         async function saveToSupabase() {
-            const customer = document.getElementById('customerName').value;
-            const date = document.getElementById('invoiceDate').value;
-            const note = document.getElementById('shippingNote').value;
+			const customer = document.getElementById('customerName').value;
+			const date = document.getElementById('invoiceDate').value;
+			const note = document.getElementById('shippingNote').value;
 
-            if(!customer) return alert("Mohon isi nama pelanggan!");
-            
-            const validItems = items.filter(i => i.qty > 0 && i.name);
-            if(validItems.length === 0) return alert("Pilih minimal 1 barang dan isi jumlahnya (Qty)!");
+			if(!customer) return alert("Mohon isi nama pelanggan!");
+			
+			const validItems = items.filter(i => i.qty > 0 && i.name);
+			if(validItems.length === 0) return alert("Pilih minimal 1 barang dan isi jumlahnya (Qty)!");
 
-            const btnSave = document.getElementById('btnSave');
-            const originalBtnHtml = btnSave.innerHTML;
-            btnSave.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memproses...';
-            btnSave.disabled = true;
-            btnSave.classList.add('opacity-75', 'cursor-not-allowed');
+			const btnSave = document.getElementById('btnSave');
+			const originalBtnHtml = btnSave.innerHTML;
+			btnSave.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memproses...';
+			btnSave.disabled = true;
+			btnSave.classList.add('opacity-75', 'cursor-not-allowed');
 
-            try {
-                let grandTotal = validItems.reduce((sum, item) => sum + (item.qty * item.price), 0);
-                let totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-                let remaining = grandTotal - totalPaid;
+			try {
+				let grandTotal = validItems.reduce((sum, item) => sum + (item.qty * item.price), 0);
+				let totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+				let remaining = grandTotal - totalPaid;
 
-                if (currentEditingInvoiceNumber) {
-                    await db.from('invoices_jambi').update({ customer_name: customer, invoice_date: date, shipping_note: note, grand_total: grandTotal, remaining_amount: remaining }).eq('invoice_number', currentEditingInvoiceNumber);
-                    await db.from('invoice_items_jambi').delete().eq('invoice_number', currentEditingInvoiceNumber);
-                    await db.from('invoice_payments_jambi').delete().eq('invoice_number', currentEditingInvoiceNumber);
-                    
-                    const itemsToInsert = validItems.map(item => ({ invoice_number: currentEditingInvoiceNumber, qty: item.qty, item_name: item.name, item_uom: item.uom, item_note: item.note, price: item.price }));
-                    await db.from('invoice_items_jambi').insert(itemsToInsert);
-                    
-                    if (payments.length > 0) {
-                        const paymentsToInsert = payments.map(p => ({ invoice_number: currentEditingInvoiceNumber, payment_date: p.date, amount: p.amount }));
-                        await db.from('invoice_payments_jambi').insert(paymentsToInsert);
-                    }
-                } else {
-                    await db.from('invoices_jambi').insert([{ invoice_number: currentInvoiceNumber, customer_name: customer, invoice_date: date, shipping_note: note, grand_total: grandTotal, remaining_amount: remaining }]);
-                    
-                    const itemsToInsert = validItems.map(item => ({ invoice_number: currentInvoiceNumber, qty: item.qty, item_name: item.name, item_uom: item.uom, item_note: item.note, price: item.price }));
-                    await db.from('invoice_items_jambi').insert(itemsToInsert);
-                    
-                    if (payments.length > 0) {
-                        const paymentsToInsert = payments.map(p => ({ invoice_number: currentInvoiceNumber, payment_date: p.date, amount: p.amount }));
-                        await db.from('invoice_payments_jambi').insert(paymentsToInsert);
-                    }
-                }
-                
-                resetFormToCreateMode();
-                countTotalUnpaidNotes();
-                switchTab('history');
-            } catch (error) {
-                alert("Gagal memproses data: " + error.message);
-                console.error(error);
-            } finally {
-                btnSave.innerHTML = originalBtnHtml; btnSave.disabled = false; btnSave.classList.remove('opacity-75', 'cursor-not-allowed');
-            }
-        }
+				const targetInvoiceNumber = currentEditingInvoiceNumber || currentInvoiceNumber;
+
+				if (currentEditingInvoiceNumber) {
+					await db.from('invoices_jambi').update({ customer_name: customer, invoice_date: date, shipping_note: note, grand_total: grandTotal, remaining_amount: remaining }).eq('invoice_number', currentEditingInvoiceNumber);
+					await db.from('invoice_items_jambi').delete().eq('invoice_number', currentEditingInvoiceNumber);
+					await db.from('invoice_payments_jambi').delete().eq('invoice_number', currentEditingInvoiceNumber);
+					
+					const itemsToInsert = validItems.map(item => ({ invoice_number: currentEditingInvoiceNumber, qty: item.qty, item_name: item.name, item_uom: item.uom, item_note: item.note, price: item.price }));
+					await db.from('invoice_items_jambi').insert(itemsToInsert);
+					
+					if (payments.length > 0) {
+						const paymentsToInsert = payments.map(p => ({ invoice_number: currentEditingInvoiceNumber, payment_date: p.date, amount: p.amount }));
+						await db.from('invoice_payments_jambi').insert(paymentsToInsert);
+					}
+				} else {
+					await db.from('invoices_jambi').insert([{ invoice_number: currentInvoiceNumber, customer_name: customer, invoice_date: date, shipping_note: note, grand_total: grandTotal, remaining_amount: remaining }]);
+					
+					const itemsToInsert = validItems.map(item => ({ invoice_number: currentInvoiceNumber, qty: item.qty, item_name: item.name, item_uom: item.uom, item_note: item.note, price: item.price }));
+					await db.from('invoice_items_jambi').insert(itemsToInsert);
+					
+					if (payments.length > 0) {
+						const paymentsToInsert = payments.map(p => ({ invoice_number: currentInvoiceNumber, payment_date: p.date, amount: p.amount }));
+						await db.from('invoice_payments_jambi').insert(paymentsToInsert);
+					}
+				}
+				
+				resetFormToCreateMode();
+				countTotalUnpaidNotes();
+				switchTab('history');
+
+			// Buka popup penawaran simpan PNG dengan menyertakan Tanggal Invoice (date)
+			openOfferPNGModal(targetInvoiceNumber, customer, date);
+			} catch (error) {
+				alert("Gagal memproses data: " + error.message);
+				console.error(error);
+			} finally {
+				btnSave.innerHTML = originalBtnHtml; 
+				btnSave.disabled = false; 
+				btnSave.classList.remove('opacity-75', 'cursor-not-allowed');
+			}
+		}
 
         function openActionModal(invNum) {
             document.getElementById('actionModalTitle').innerText = `Aksi: ${invNum}`;
@@ -2019,7 +2086,9 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 
                 const canvas = await html2canvas(offScreenDiv.firstElementChild, { scale: 2, backgroundColor: '#ffffff' });
                 const link = document.createElement('a');
-                link.download = `${inv.invoice_number}_${inv.customer_name.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+                const formattedDate = formatDateCustom(inv.invoice_date);
+				const safeCustName = inv.customer_name.replace(/[^a-zA-Z0-9]/g, '_');
+				link.download = `${formattedDate}_${safeCustName}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 
@@ -2470,6 +2539,76 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             chartTopItemsInstance = new ApexCharts(document.querySelector("#chartTopItems"), options);
             chartTopItemsInstance.render();
         }
+		
+		// Variabel penyimpan data nota yang baru disimpan
+		let lastSavedInvoiceNumber = null;
+		let lastSavedCustomerName = null;
+		let lastSavedInvoiceDate = null; // Tambahan untuk menyimpan tanggal invoice
+
+		// Fungsi untuk membuka modal penawaran PNG
+		function openOfferPNGModal(invNum, custName, invDate) {
+			lastSavedInvoiceNumber = invNum;
+			lastSavedCustomerName = custName;
+			lastSavedInvoiceDate = invDate; // Simpan tanggal invoice
+			
+			const modal = document.getElementById('modalOfferPNG');
+			modal.classList.remove('modal-leave');
+			modal.classList.add('modal-enter');
+		}
+
+		// Fungsi untuk menutup modal penawaran PNG
+		function closeOfferPNGModal() {
+			const modal = document.getElementById('modalOfferPNG');
+			modal.classList.remove('modal-enter');
+			modal.classList.add('modal-leave');
+			lastSavedInvoiceNumber = null;
+			lastSavedCustomerName = null;
+			lastSavedInvoiceDate = null;
+		}
+
+		// Fungsi eksekusi unduh PNG menggunakan Tanggal Invoice berformat DD-Mmm-YYYY
+		async function executeOfferPNGDownload() {
+			if (!lastSavedInvoiceNumber) return;
+			const invNum = lastSavedInvoiceNumber;
+			const custName = lastSavedCustomerName || 'Nota';
+			const invDate = lastSavedInvoiceDate || getTodayDate();
+			
+			closeOfferPNGModal();
+
+			try {
+				const { data: invData } = await db.from('invoices_jambi').select('*').eq('invoice_number', invNum).single();
+				const { data: itemsData } = await db.from('invoice_items_jambi').select('*').eq('invoice_number', invNum);
+				const { data: payData } = await db.from('invoice_payments_jambi').select('*').eq('invoice_number', invNum);
+
+				const offScreenDiv = document.createElement('div');
+				offScreenDiv.style.position = 'absolute';
+				offScreenDiv.style.left = '-9999px';
+				offScreenDiv.style.top = '0';
+				offScreenDiv.style.width = '800px';
+				document.body.appendChild(offScreenDiv);
+
+				offScreenDiv.innerHTML = getInvoiceHTML(invData, itemsData || [], payData || []);
+
+				await new Promise(r => setTimeout(r, 400));
+
+				// Format tanggal nota
+				const formattedDate = formatDateCustom(invDate);
+				const safeCustName = custName.replace(/[^a-zA-Z0-9]/g, '_');
+
+				const canvas = await html2canvas(offScreenDiv.firstElementChild, { scale: 2, backgroundColor: '#ffffff' });
+				const link = document.createElement('a');
+				// Format nama file seragam: DD-Mmm-YYYY_NAMA_PELANGGAN.png
+				link.download = `${formattedDate}_${safeCustName}.png`;
+				link.href = canvas.toDataURL('image/png');
+				link.click();
+
+				document.body.removeChild(offScreenDiv);
+			} catch (error) {
+				alert("Gagal mengunduh gambar nota: " + error.message);
+				console.error(error);
+			}
+		}
+		
     </script>
 </body>
 </html>
