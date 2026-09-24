@@ -873,22 +873,22 @@
         }
     }
 
+    // --- PERBAIKAN UTAMA LOGIKA SALDO SEBELUMNYA ---
     async function fetchPreviousBalance(customerName) {
 		if(!isSupabaseConnected) return 0;
 		try {
-			// Cari nota terakhir yang balance_due-nya belum 0
+			// Cari nota paling terakhir dari supplier tersebut (apapun status balance_due-nya)
 			const { data, error } = await supabaseClient
 				.from('supplier_recaps')
 				.select('balance_due, invoice_no')
 				.eq('customer_name', customerName)
-				.neq('balance_due', 0)
 				.order('created_at', { ascending: false })
 				.limit(1);
 
 			if (!error && data && data.length > 0) {
 				const latestBal = parseFloat(data[0].balance_due) || 0;
 				customerBalances[customerName] = latestBal;
-				currentLastInvoiceNo = data[0].invoice_no; // Simpan ID nota lama
+				currentLastInvoiceNo = data[0].invoice_no; 
 				return latestBal;
 			}
 		} catch (err) {
@@ -939,9 +939,9 @@
             const { data, error } = await supabaseClient.from('supplier_recaps').select('*').order('created_at', { ascending: false });
             if (error) throw error;
             allHistoryData = data || [];
-            filteredHistoryData = [...allHistoryData];
-            currentPage = 1;
-            renderHistoryTable();
+            
+            // Re-apply filter global jika ada kata kunci pencarian aktif
+            filterHistoryTable();
         } catch (err) { 
             tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Gagal memuat. <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; margin-left: 6px;" onclick="refreshHistoryData()">🔄 Muat Ulang</button></td></tr>`; 
         }
@@ -995,17 +995,22 @@
         renderHistoryTable();
     }
 
+    // --- PERBAIKAN UTAMA PENCARIAN RIWAYAT ---
     function filterHistoryTable() {
         const keyword = document.getElementById('filterGlobal').value.toLowerCase().trim();
-        filteredHistoryData = allHistoryData.filter(inv => {
-            const invNoMatch = (inv.invoice_no || '').toLowerCase().includes(keyword);
-            const dateShort = formatShortDate(inv.created_at).toLowerCase();
-            const dateLong = formatCustomDate(inv.created_at).toLowerCase();
-            const rawDate = (inv.created_at || '').toLowerCase();
-            const dateMatch = dateShort.includes(keyword) || dateLong.includes(keyword) || rawDate.includes(keyword);
-            const nameMatch = (inv.customer_name || '').toLowerCase().includes(keyword);
-            return invNoMatch || dateMatch || nameMatch;
-        });
+        if(!keyword) {
+            filteredHistoryData = [...allHistoryData];
+        } else {
+            filteredHistoryData = allHistoryData.filter(inv => {
+                const invNoMatch = (inv.invoice_no || '').toLowerCase().includes(keyword);
+                const dateShort = formatShortDate(inv.created_at).toLowerCase();
+                const dateLong = formatCustomDate(inv.created_at).toLowerCase();
+                const rawDate = (inv.created_at || '').toLowerCase();
+                const dateMatch = dateShort.includes(keyword) || dateLong.includes(keyword) || rawDate.includes(keyword);
+                const nameMatch = (inv.customer_name || '').toLowerCase().includes(keyword);
+                return invNoMatch || dateMatch || nameMatch;
+            });
+        }
         currentPage = 1;
         renderHistoryTable();
     }
@@ -1120,112 +1125,114 @@
         }
     }
 
-    // --- FUNGSI PRATINJAU DARI RIWAYAT ---
-    async function previewInvoiceFromHistory(invoiceNo) {
-        if(!isSupabaseConnected) return;
-        showLoadingPopup("Memuat Pratinjau...");
-        try {
-            const { data: invData } = await supabaseClient.from('supplier_recaps').select('*').eq('invoice_no', invoiceNo).single();
-            const { data: itemsData } = await supabaseClient.from('supplier_recap_items').select('*').eq('invoice_no', invoiceNo);
-            
-            closePopup(); 
+	// --- FUNGSI PRATINJAU DARI RIWAYAT ---
+	async function previewInvoiceFromHistory(invoiceNo) {
+		if(!isSupabaseConnected) return;
+		showLoadingPopup("Memuat Pratinjau...");
+		try {
+			const { data: invData } = await supabaseClient.from('supplier_recaps').select('*').eq('invoice_no', invoiceNo).single();
+			const { data: itemsData } = await supabaseClient.from('supplier_recap_items').select('*').eq('invoice_no', invoiceNo);
+			
+			closePopup(); 
 
-            if(!invData) throw new Error("Rekap tidak ditemukan");
+			if(!invData) throw new Error("Rekap tidak ditemukan");
 
-            let itemsHtml = '';
-            let depositHtml = '';
-            let subtotalBarang = 0;
-            let piutangFromItems = null;
+			let itemsHtml = '';
+			let depositHtml = '';
+			let subtotalBarang = 0;
+			let piutangFromItems = null;
 
-            let balanceDue = parseFloat(invData.balance_due) || 0;
-            let totalDeposit = parseFloat(invData.deposit) || 0;
-            let displayDate = formatCustomDate(invData.created_at);
+			let balanceDue = parseFloat(invData.balance_due) || 0;
+			let totalDeposit = parseFloat(invData.deposit) || 0;
+			let displayDate = formatCustomDate(invData.created_at);
 
-            if (itemsData && itemsData.length > 0) {
-                if (itemsData[0].tanggal) displayDate = formatCustomDate(itemsData[0].tanggal);
-                itemsData.forEach(item => {
-                    if (item.unit === 'DEPOSIT' || item.product_id === 'DEPOSIT') {
-                        depositHtml += `<tr><td style="padding: 4px; color: #555;">${item.product_name}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(item.price)}</td></tr>`;
-                    } else if (item.product_id === 'PIUTANG') {
-                        piutangFromItems = parseFloat(item.total) || 0;
-                    } else {
-                        subtotalBarang += parseFloat(item.total) || 0;
-                        itemsHtml += `<tr><td style="padding: 8px 4px; border-bottom: 1px solid #eee; text-align: center;">${item.qty}</td><td style="padding: 8px 4px; border-bottom: 1px solid #eee; text-align: center;">${item.unit || '-'}</td><td style="padding: 8px 4px; border-bottom: 1px solid #eee;"><strong>${item.product_name}</strong></td><td style="padding: 8px 4px; border-bottom: 1px solid #eee; text-align: right;">${formatMoney(item.price).replace('Rp ', '')}</td><td style="padding: 8px 4px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600; font-style: italic;">${formatMoney(item.total)}</td></tr>`;
-                    }
-                });
-            }
+			if (itemsData && itemsData.length > 0) {
+				if (itemsData[0].tanggal) displayDate = formatCustomDate(itemsData[0].tanggal);
+				itemsData.forEach(item => {
+					if (item.unit === 'DEPOSIT' || item.product_id === 'DEPOSIT') {
+						depositHtml += `<tr><td style="padding: 4px; color: #555;">${item.product_name}</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(item.price)}</td></tr>`;
+					} else if (item.product_id === 'PIUTANG') {
+						piutangFromItems = parseFloat(item.total) || 0;
+					} else {
+						subtotalBarang += parseFloat(item.total) || 0;
+						itemsHtml += `<tr><td style="padding: 8px 4px; border-bottom: 1px solid #eee; text-align: center;">${item.qty}</td><td style="padding: 8px 4px; border-bottom: 1px solid #eee; text-align: center;">${item.unit || '-'}</td><td style="padding: 8px 4px; border-bottom: 1px solid #eee;"><strong>${item.product_name}</strong></td><td style="padding: 8px 4px; border-bottom: 1px solid #eee; text-align: right;">${formatMoney(item.price).replace('Rp ', '')}</td><td style="padding: 8px 4px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600; font-style: italic;">${formatMoney(item.total)}</td></tr>`;
+					}
+				});
+			}
 
-            const docTitleEl = document.getElementById('prevDocTitle');
-            const prevSubtotalRow = document.getElementById('prevSubtotalRow');
+			const docTitleEl = document.getElementById('prevDocTitle');
+			const prevSubtotalRow = document.getElementById('prevSubtotalRow');
 
-            if (subtotalBarang === 0) {
-                if (docTitleEl) docTitleEl.innerText = "KUITANSI PEMBAYARAN";
-                if (prevSubtotalRow) prevSubtotalRow.style.display = 'none';
-                itemsHtml = `<tr><td colspan="5" style="text-align: center; padding: 16px; color: #64748b; font-style: italic; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">⚡ Pembayaran / Cicilan Tagihan Supplier (Tanpa Pemesanan Barang Baru)</td></tr>`;
-            } else {
-                if (docTitleEl) docTitleEl.innerText = "NOTA PEMBAYARAN";
-                if (prevSubtotalRow) prevSubtotalRow.style.display = 'table-row';
-            }
+			if (subtotalBarang === 0) {
+				if (docTitleEl) docTitleEl.innerText = "KUITANSI PEMBAYARAN";
+				if (prevSubtotalRow) prevSubtotalRow.style.display = 'none';
+				itemsHtml = `<tr><td colspan="5" style="text-align: center; padding: 16px; color: #64748b; font-style: italic; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">⚡ Pembayaran / Cicilan Tagihan Supplier (Tanpa Pemesanan Barang Baru)</td></tr>`;
+			} else {
+				if (docTitleEl) docTitleEl.innerText = "NOTA PEMBAYARAN";
+				if (prevSubtotalRow) prevSubtotalRow.style.display = 'table-row';
+			}
 
-            let currentPiutangView = 0;
-            if (piutangFromItems !== null) {
-                currentPiutangView = piutangFromItems;
-            } else {
-                currentPiutangView = balanceDue - subtotalBarang + totalDeposit;
-            }
+			let currentPiutangView = 0;
+			if (piutangFromItems !== null) {
+				currentPiutangView = piutangFromItems;
+			} else {
+				currentPiutangView = balanceDue - subtotalBarang + totalDeposit;
+			}
 
-            const status = getBalanceStatus(balanceDue);
-            let prevBalanceLabelEl = document.getElementById('prevBalanceLabel');
-            let prevBalanceEl = document.getElementById('prevBalance');
+			const status = getBalanceStatus(balanceDue);
+			let prevBalanceLabelEl = document.getElementById('prevBalanceLabel');
+			let prevBalanceEl = document.getElementById('prevBalance');
 
-            if (prevBalanceLabelEl) prevBalanceLabelEl.innerText = status.label;
-            if (prevBalanceEl) {
-                prevBalanceEl.innerText = status.text;
-                prevBalanceEl.style.color = status.color;
-            }
+			if (prevBalanceLabelEl) prevBalanceLabelEl.innerText = status.label;
+			if (prevBalanceEl) {
+				prevBalanceEl.innerText = status.text;
+				prevBalanceEl.style.color = status.color;
+			}
 
-            document.getElementById('prevInvNo').innerText = invData.invoice_no; 
-            document.getElementById('prevCustName').innerText = invData.customer_name;
-            document.getElementById('prevDate').innerText = displayDate;
-            
-            const prevItemsBodyEl = document.getElementById('prevItemsBody');
-            if (prevItemsBodyEl) {
-                prevItemsBodyEl.innerHTML = itemsHtml;
-            }
+			// TAMPILKAN NOMOR REKAP HANYA PADA TEKS MODAL PRATINJAU
+			document.getElementById('prevInvNo').innerText = invData.invoice_no; 
+			document.getElementById('prevCustName').innerText = invData.customer_name;
+			document.getElementById('prevDate').innerText = displayDate;
+			
+			const prevItemsBodyEl = document.getElementById('prevItemsBody');
+			if (prevItemsBodyEl) {
+				prevItemsBodyEl.innerHTML = itemsHtml;
+			}
 
-            document.getElementById('prevSubtotal').innerText = formatMoney(subtotalBarang);
-            
-            const prevPiutangRow = document.getElementById('prevPiutangRow');
-            const prevTotalTagihanRow = document.getElementById('prevTotalTagihanRow');
-            
-            if (Math.abs(currentPiutangView) > 0.01) {
-                prevPiutangRow.style.display = 'table-row';
-                prevPiutangRow.querySelector('td').innerText = currentPiutangView > 0 ? 'Sisa Tagihan Sebelumnya' : 'Deposit Sebelumnya';
-                document.getElementById('prevPiutangAmount').innerText = currentPiutangView > 0 ? formatMoney(currentPiutangView) : `- ${formatMoney(Math.abs(currentPiutangView))}`;
-                document.getElementById('prevPiutangAmount').style.color = currentPiutangView < 0 ? '#dc2626' : '';
+			document.getElementById('prevSubtotal').innerText = formatMoney(subtotalBarang);
+			
+			const prevPiutangRow = document.getElementById('prevPiutangRow');
+			const prevTotalTagihanRow = document.getElementById('prevTotalTagihanRow');
+			
+			if (Math.abs(currentPiutangView) > 0.01) {
+				prevPiutangRow.style.display = 'table-row';
+				prevPiutangRow.querySelector('td').innerText = currentPiutangView > 0 ? 'Sisa Tagihan Sebelumnya' : 'Deposit Sebelumnya';
+				document.getElementById('prevPiutangAmount').innerText = currentPiutangView > 0 ? formatMoney(currentPiutangView) : `- ${formatMoney(Math.abs(currentPiutangView))}`;
+				document.getElementById('prevPiutangAmount').style.color = currentPiutangView < 0 ? '#dc2626' : '';
 
-                prevTotalTagihanRow.style.display = 'table-row';
-                let totalTagihan = subtotalBarang + currentPiutangView;
-                document.getElementById('prevTotalTagihanAmount').innerText = formatMoney(totalTagihan);
-            } else {
-                prevPiutangRow.style.display = 'none';
-                prevTotalTagihanRow.style.display = 'none';
-            }
+				prevTotalTagihanRow.style.display = 'table-row';
+				let totalTagihan = subtotalBarang + currentPiutangView;
+				document.getElementById('prevTotalTagihanAmount').innerText = formatMoney(totalTagihan);
+			} else {
+				prevPiutangRow.style.display = 'none';
+				prevTotalTagihanRow.style.display = 'none';
+			}
 
-            document.getElementById('prevDepositBody').innerHTML = depositHtml; 
-            document.getElementById('invoiceNumber').value = invoiceNo; 
-            
-            const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
-            if(btnSavePreview) {
-                btnSavePreview.style.display = 'none';
-            }
+			document.getElementById('prevDepositBody').innerHTML = depositHtml; 
+			
+			// HAPUS BARIS INI: document.getElementById('invoiceNumber').value = invoiceNo;
 
-            toggleModal('previewModal');
+			const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
+			if(btnSavePreview) {
+				btnSavePreview.style.display = 'none';
+			}
 
-        } catch (err) { 
-            showWarningPopup("Terjadi Kesalahan", "Gagal memuat pratinjau: " + err.message); 
-        }
-    }
+			toggleModal('previewModal');
+
+		} catch (err) { 
+			showWarningPopup("Terjadi Kesalahan", "Gagal memuat pratinjau: " + err.message); 
+		}
+	}
 
     function deleteInvoice(invoiceNo) {
         document.getElementById('popupConfirmText').innerText = "Konfirmasi Hapus";
@@ -1480,16 +1487,14 @@
 		}
 
 		if(!isEditingMode) {
-			// Kosongkan rincian barang lama dan cicilan lama
 			document.getElementById('itemsBody').innerHTML = ''; 
 			depositList = []; 
 			currentPiutang = 0;
 			
 			if(currentCustomerId && customer) {
-				// Ambil sisa saldo berjalan (kelebihan bayar / sisa hutang)
 				const prevBalance = await fetchPreviousBalance(customer.name);
 				currentPiutang = prevBalance;
-				addRow(); // Siapkan 1 baris bersih untuk barang baru
+				addRow(); 
 			}
 			calculate();
 		}
@@ -1896,76 +1901,77 @@
         }, 350);
     }
 
-    // --- PENYIMPANAN INVOICE / REKAP ---
-    async function simpanInvoice() {
-        if(!currentCustomerId) return showWarningPopup("Pilih Supplier!", "Pilih Supplier terlebih dahulu sebelum menyimpan rekap!");
-        const invoiceNo = document.getElementById('invoiceNumber').value;
-        const customer = customers.find(c => c.id === currentCustomerId);
-        const rows = document.querySelectorAll('#itemsBody tr');
-        const deliveryDateVal = document.getElementById('deliveryDate').value;
-        let subtotalBarang = 0; 
-        let itemsPayload = [];
-        
-        rows.forEach(row => {
-            const prodSelect = row.querySelector('.item-select'); 
-            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const price = parseFloat(row.querySelector('.item-price').value) || 0; 
-            const total = qty * price; 
-            if (prodSelect.value && qty > 0) {
-                subtotalBarang += total;
-                itemsPayload.push({
-                    invoice_no: invoiceNo, 
-                    tanggal: deliveryDateVal, 
-                    product_id: String(prodSelect.value), 
-                    product_name: prodSelect.options[prodSelect.selectedIndex].getAttribute('data-name'),
-                    qty: qty, 
-                    unit: row.querySelector('.item-unit').value, 
-                    destination: "-", 
-                    price: price, 
-                    total: total                    
-                });
-            }
-        });
+	// --- PENYIMPANAN INVOICE / REKAP ---
+	async function simpanInvoice() {
+		if(!currentCustomerId) return showWarningPopup("Pilih Supplier!", "Pilih Supplier terlebih dahulu sebelum menyimpan rekap!");
+		const invoiceNo = document.getElementById('invoiceNumber').value;
+		const customer = customers.find(c => c.id === currentCustomerId);
+		const rows = document.querySelectorAll('#itemsBody tr');
+		const deliveryDateVal = document.getElementById('deliveryDate').value;
+		let subtotalBarang = 0; 
+		let itemsPayload = [];
+		
+		rows.forEach(row => {
+			const prodSelect = row.querySelector('.item-select'); 
+			const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+			const price = parseFloat(row.querySelector('.item-price').value) || 0; 
+			const total = qty * price; 
+			if (prodSelect.value && qty > 0) {
+				subtotalBarang += total;
+				itemsPayload.push({
+					invoice_no: invoiceNo, 
+					tanggal: deliveryDateVal, 
+					product_id: String(prodSelect.value), 
+					product_name: prodSelect.options[prodSelect.selectedIndex].getAttribute('data-name'),
+					qty: qty, 
+					unit: row.querySelector('.item-unit').value, 
+					destination: "-", 
+					price: price, 
+					total: total                    
+				});
+			}
+		});
 
-        if(itemsPayload.length === 0 && depositList.length === 0) return showWarningPopup("Data Kosong!", "Lengkapi minimal 1 data barang atau deposit!");
+		if(itemsPayload.length === 0 && depositList.length === 0) return showWarningPopup("Data Kosong!", "Lengkapi minimal 1 data barang atau deposit!");
 
-        let subtotalDB = subtotalBarang; 
+		let subtotalDB = subtotalBarang; 
 
-        let totalDeposit = 0;
-        depositList.forEach(dep => {
-            totalDeposit += dep.nom;
-            itemsPayload.push({ 
-                invoice_no: invoiceNo, 
-                tanggal: deliveryDateVal, 
-                product_id: 'DEPOSIT', 
-                product_name: dep.ket, 
-                qty: 1, 
-                unit: 'DEPOSIT', 
-                destination: '-', 
-                price: dep.nom, 
-                total: dep.nom 
-            });
-        });
+		let totalDeposit = 0;
+		depositList.forEach(dep => {
+			totalDeposit += dep.nom;
+			itemsPayload.push({ 
+				invoice_no: invoiceNo, 
+				tanggal: deliveryDateVal, 
+				product_id: 'DEPOSIT', 
+				product_name: dep.ket, 
+				qty: 1, 
+				unit: 'DEPOSIT', 
+				destination: '-', 
+				price: dep.nom, 
+				total: dep.nom 
+			});
+		});
 
-        const actionText = isEditingMode ? "Menyimpan Perubahan..." : "Menyimpan Rekap...";
-        const successTitle = isEditingMode ? "Perubahan Disimpan!" : "Rekap Berhasil Disimpan!";
-        const successSub = isEditingMode ? `Rekap ${invoiceNo} berhasil diperbarui.` : `Rekap ${invoiceNo} berhasil disimpan ke sistem.`;
+		const actionText = isEditingMode ? "Menyimpan Perubahan..." : "Menyimpan Rekap...";
+		const successTitle = isEditingMode ? "Perubahan Disimpan!" : "Rekap Berhasil Disimpan!";
+		const successSub = isEditingMode ? `Rekap ${invoiceNo} berhasil diperbarui.` : `Rekap ${invoiceNo} berhasil disimpan ke sistem.`;
 
-        showLoadingPopup(actionText);
+		showLoadingPopup(actionText);
 
-        const balanceDueDB = subtotalDB + currentPiutang - totalDeposit;
+		const balanceDueDB = subtotalDB + currentPiutang - totalDeposit;
 
-        if(!isSupabaseConnected) {
-            customerBalances[customer.name] = balanceDueDB;
-            setTimeout(() => {
-                showSuccessPopup(successTitle, successSub);
-                buatInvoiceBaru(); 
-            }, 600);
-            return;
-        }
+		if(!isSupabaseConnected) {
+			customerBalances[customer.name] = balanceDueDB;
+			setTimeout(() => {
+				showSuccessPopup(successTitle, successSub);
+				buatInvoiceBaru(); // Reset form otomatis
+			}, 600);
+			return;
+		}
 
 		try {
 			if(isEditingMode) {
+				// 1. Hapus item lama dan update data rekap
 				await supabaseClient.from('supplier_recap_items').delete().eq('invoice_no', invoiceNo);
 				await supabaseClient.from('supplier_recaps').update({ 
 					customer_name: customer.name, 
@@ -1976,9 +1982,16 @@
 					balance_due: balanceDueDB 
 				}).eq('invoice_no', invoiceNo);
 				await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
+				
 				customerBalances[customer.name] = balanceDueDB;
+
+				// 2. Refresh data di latar belakang
+				await fetchDataFromSupabase();
+				await fetchHistoryDataSilent();
+
+				// 3. Tampilkan Notifikasi Sukses & Otomatis Keluar dari Edit Mode
 				showSuccessPopup(successTitle, successSub);
-				buatInvoiceBaru(); 
+				buatInvoiceBaru(); // <-- Mengembalikan form ke keadaan rekap baru
 			} else {
 				// 1. Simpan Nota Baru
 				await supabaseClient.from('supplier_recaps').insert([{ 
@@ -1992,7 +2005,7 @@
 				}]);
 				await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
 
-				// 2. OTOMATIS LUNASKAN NOTA LAMA JIKA SALDONYA SUDAH DIALIHKAN KE NOTA BARU
+				// 2. Otomatis lunaskan nota lama jika saldonya dialihkan
 				if (currentLastInvoiceNo && currentPiutang !== 0) {
 					await supabaseClient
 						.from('supplier_recaps')
@@ -2001,6 +2014,11 @@
 				}
 
 				customerBalances[customer.name] = balanceDueDB;
+				
+				// Refresh data riwayat & reset form
+				await fetchDataFromSupabase();
+				await fetchHistoryDataSilent();
+
 				showSuccessPopup(successTitle, successSub);
 				buatInvoiceBaru(); 
 			}
@@ -2008,7 +2026,7 @@
 			closePopup();
 			showWarningPopup("Gagal Menyimpan", error.message); 
 		}
-    }
+	}
 
     // =========================================================================
     // MODUL BAYAR CEPAT (QUICK PAY) & PRATINJAU NOTA
@@ -2142,21 +2160,29 @@
     }
 
     function closePreviewModal() {
-        const prevModal = document.getElementById('previewModal');
-        if (prevModal) {
-            prevModal.classList.remove('active');
-        }
+		const prevModal = document.getElementById('previewModal');
+		if (prevModal) {
+			prevModal.classList.remove('active');
+		}
 
-        if (isPreviewFromQuickPay) {
-            isPreviewFromQuickPay = false;
-            const btnClose = document.getElementById('btnClosePreview');
-            if (btnClose) {
-                btnClose.innerHTML = "Tutup";
-                btnClose.style.fontWeight = "normal";
-                btnClose.style.color = "";
-            }
-        }
-    }
+		if (isPreviewFromQuickPay) {
+			isPreviewFromQuickPay = false;
+			const btnClose = document.getElementById('btnClosePreview');
+			if (btnClose) {
+				btnClose.innerHTML = "Tutup";
+				btnClose.style.fontWeight = "normal";
+				btnClose.style.color = "";
+			}
+		}
+
+		// PENGAMANKAN: Jika sedang tidak dalam edit mode, pastikan nomor invoice utama adalah nomor rekap acak baru
+		if (!isEditingMode) {
+			const invInput = document.getElementById('invoiceNumber');
+			if (!invInput.value || invInput.value === document.getElementById('prevInvNo').innerText) {
+				generateRandomInvoice();
+			}
+		}
+	}
 
     async function prosesQuickPay() {
         const qpSelect = document.getElementById('qpSupplierSelect');
