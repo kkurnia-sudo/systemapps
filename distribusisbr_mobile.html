@@ -1232,11 +1232,25 @@
             inisialisasiPWA();
             inisialisasiDatePickerKurir();
 
-            const savedKurir = localStorage.getItem('sbr_kurir_session');
+			const savedKurir = localStorage.getItem('sbr_kurir_session');
             await loadDropdownKaryawan();
 
             if (savedKurir) {
                 userKurirAktif = JSON.parse(savedKurir);
+
+                // AUTO-HEALING: Deteksi jika ID kurir masih memakai UUID lama
+                if (userKurirAktif && (isNaN(Number(userKurirAktif.id)) || String(userKurirAktif.id).includes('-'))) {
+                    const dataBaru = semuaKaryawanAdmin.find(k => k.nama.toLowerCase().trim() === (userKurirAktif.nama || '').toLowerCase().trim());
+                    if (dataBaru) {
+                        userKurirAktif.id = dataBaru.id; // Ganti otomatis ke ID angka database
+                        localStorage.setItem('sbr_kurir_session', JSON.stringify(userKurirAktif));
+                    } else {
+                        localStorage.removeItem('sbr_kurir_session');
+                        location.reload();
+                        return;
+                    }
+                }
+
                 bukaAplikasi();
             }
 
@@ -1410,14 +1424,14 @@
                     payloads.push({
                         tanggal: tanggal,
                         sesi: sesi,
-                        karyawan_id: kid,
+                        karyawan_id: parseInt(kid),
                         kirim_produksi: bal,
                         jenis_produk: jenis,
                         tarik_jadi: 0,
                         koreksi: 0,
                         is_lunas: false,
                         is_lembur: false,
-                        dikirim_oleh: userKurirAktif.id
+                        dikirim_oleh: parseInt(userKurirAktif.id)
                     });
 
                     listLaporanItem.push({
