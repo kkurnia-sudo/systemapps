@@ -2674,11 +2674,28 @@
                         };
                     }
 
+                    // GANTI BAGIAN PENGHITUNGAN totalKirimMurni MENJADI:
                     rekap[kid].histori.push(row);
-                    rekap[kid].totalKirimMurni += (row.kirim_produksi || 0);
+
+				// OPSI 2: Patokan murni bal bahan kiriman dari barang yang disetor
+                    const setorQty = row.tarik_jadi || 0;
+                    let balBahanDisetor = 0;
+
+                    if (row.jenis_produk === 'B10') {
+                        balBahanDisetor = Math.round(setorQty / 1.2);
+                    } else if (row.jenis_produk === 'Oleh-oleh') {
+                        balBahanDisetor = Math.floor(setorQty / 10);
+                    } else {
+                        balBahanDisetor = setorQty;
+                    }
+
+                    rekap[kid].totalKirimMurni += balBahanDisetor;
 
                     const qty = row.tarik_jadi || 0;
 
+                    // ==============================================================
+                    // TAMBAHKAN KEMBALI BLOK DI BAWAH INI (PENGHITUNGAN GAJI POKOK)
+                    // ==============================================================
                     if (row.jenis_produk === 'B12') {
                         rekap[kid].b12 += qty;
                         rekap[kid].gajiDasar += (qty * tarif.b12);
@@ -2690,7 +2707,7 @@
                         rekap[kid].gajiDasar += (qty * tarif.oleholeh);
                     }
 
-                    // PERBAIKAN: Deteksi multi-denda ganti potong upah menggunakan ekspresi global
+                    // Deteksi potongan ganti rugi jika ada
                     if (row.riwayat_cicilan && row.riwayat_cicilan.includes('Ganti Potong Upah')) {
                         const matches = [...row.riwayat_cicilan.matchAll(/Ganti Potong Upah \(\+?(\d+)\s*(Bal|Toros)\)/gi)];
                         matches.forEach(m => {
@@ -2841,10 +2858,10 @@
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-semibold">${r.b10 || '-'}</td>
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-semibold text-amber-700">${r.oleholeh ? r.oleholeh + ' T' : '-'}</td>
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-black text-red-600 bg-red-50/30">${gantungUI}</td>
-                        <td class="px-4 py-3 text-center border-l border-gray-100">
+						<td class="px-4 py-3 text-center border-l border-gray-100"
                             <label class="inline-flex items-center gap-1.5 cursor-pointer bg-amber-50 px-2 py-1 rounded border border-amber-200">
                                 <input type="checkbox" onchange="toggleUangMakan('${k}', this.checked)" ${r.dapatUangMakan ? 'checked' : ''} class="rounded text-indigo-600 focus:ring-0">
-                                <span class="text-[11px] font-bold text-amber-900">${r.totalKirimMurni} Bal</span>
+                                <span class="text-[11px] font-bold text-amber-900">${r.totalKirimMurni} Bal Bahan</span>
                             </label>
                             <div class="text-[10px] text-gray-400 mt-0.5">${formatRp(nominalUangMakan)}</div>
                         </td>
@@ -3315,7 +3332,7 @@
 
                     ${slipAktif.dapatUangMakan && slipAktif.nominalMakan > 0 ? `
                         <div>
-                            <div>Uang Makan (${slipAktif.totalKirimMurni} x ${tarif.makan.toLocaleString('id-ID')})</div>
+                            <div>Uang Makan (${slipAktif.totalKirimMurni} Bal Bahan x ${tarif.makan.toLocaleString('id-ID')})</div>
                             <div class="text-right text-gray-700">${formatRpStruk(slipAktif.nominalMakan)}</div>
                         </div>
                     ` : ''}
@@ -3528,9 +3545,9 @@
                     struk += barisTeks(`Oleh-oleh (${oleholeh} Toros)`);
                     struk += barisKiriKanan(`@ ${tarif.oleholeh.toLocaleString('id-ID')}`, formatRpStruk(oleholeh * tarif.oleholeh));
                 }
-                if (dapatUangMakan && totalKirimMurni > 0) {
+				if (dapatUangMakan && totalKirimMurni > 0) {
                     const nominalMakan = totalKirimMurni * tarif.makan;
-                    struk += barisTeks(`Uang Makan (${totalKirimMurni} Bal)`);
+                    struk += barisTeks(`Uang Makan (${totalKirimMurni} Bal Bahan)`);
                     struk += barisKiriKanan(`@ ${tarif.makan.toLocaleString('id-ID')}`, formatRpStruk(nominalMakan));
                 }
 
