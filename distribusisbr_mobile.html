@@ -48,6 +48,19 @@
         input[type="number"] {
             -moz-appearance: textfield !important;
         }
+		
+		
+		@keyframes bellRing {
+            0%, 100% { transform: rotate(0); }
+            10%, 30%, 50%, 70% { transform: rotate(14deg); }
+            20%, 40%, 60% { transform: rotate(-14deg); }
+            80% { transform: rotate(8deg); }
+            90% { transform: rotate(-8deg); }
+        }
+        .animate-bell-ring {
+            animation: bellRing 2.2s infinite ease-in-out;
+            transform-origin: top center;
+        }
 
         /* Pengaturan Mode Gelap */
         html.dark body {
@@ -324,23 +337,34 @@
                     </div>
                 </div>
 
-				<div class="relative p-0.5 rounded-3xl bg-gradient-to-r from-emerald-500 via-indigo-500 to-emerald-500 shadow-md shadow-emerald-500/10 transition-all duration-300">
-					<div class="bg-white dark:bg-slate-800 p-4 rounded-[22px] text-center space-y-3 relative z-10">
-						<div class="flex items-center justify-center gap-2">
-							<div class="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs animate-bounce shadow-2xs">
-								<i class="fa-solid fa-bell"></i>
+				<div class="relative p-[2.5px] rounded-3xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 shadow-lg shadow-emerald-500/20 transition-all duration-300">
+					<div class="bg-white dark:bg-slate-800 p-5 rounded-[22px] text-center space-y-3.5 relative z-10">
+						
+						<!-- Header: Lonceng Besar Beranimasi + Judul +2px -->
+						<div class="flex items-center justify-center gap-3">
+							<!-- Wadah Lonceng Berdenyut (Radar Effect) -->
+							<div class="relative flex items-center justify-center shrink-0">
+								<span class="absolute w-10 h-10 rounded-2xl bg-emerald-400/40 animate-ping"></span>
+								<div class="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-950 dark:to-teal-900/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shadow-inner border border-emerald-200 dark:border-emerald-700/60">
+									<i class="fa-solid fa-bell animate-bell-ring"></i>
+								</div>
 							</div>
-							<span class="text-sm font-black text-slate-900 dark:text-white tracking-tight">
+
+							<!-- Teks Judul +2px (16px) Ekstra Tebal -->
+							<span class="text-[16px] font-black text-slate-900 dark:text-white tracking-tight leading-snug text-left">
 								Yakin sudah beres tarik barangnya?
 							</span>
 						</div>
 
-						<p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">
+						<p class="text-xs text-slate-500 dark:text-slate-400 font-semibold leading-relaxed px-2">
 							Bagikan rincian muatan terbaru hari ini langsung ke grup WhatsApp.
 						</p>
 
-						<button type="button" onclick="bukaModalLaporWACepat()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-2xl shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
-							<i class="fa-brands fa-whatsapp text-lg"></i> BAGIKAN LAPORAN KE GRUP
+						<!-- Tombol WA dengan Efek Glow & Shimmer -->
+						<button type="button" onclick="bukaModalLaporWACepat()" 
+							class="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white font-black text-xs sm:text-sm rounded-2xl shadow-md shadow-emerald-600/35 transition flex items-center justify-center gap-2 border border-emerald-400/30">
+							<i class="fa-brands fa-whatsapp text-xl"></i>
+							<span class="tracking-wide">BAGIKAN LAPORAN KE GRUP</span>
 						</button>
 					</div>
 				</div>
@@ -1627,16 +1651,16 @@
                 </div>
             `;
 
-            const { data, error } = await supabaseClient
+		const { data, error } = await supabaseClient
                 .from('distribusi_packing')
                 .select(`
                     *,
                     karyawan!karyawan_id(nama),
                     pengirim:karyawan!dikirim_oleh(nama)
                 `)
+                .eq('is_lunas', false) // <-- Tambahkan baris ini di bawah .select(...)
                 .order('tanggal', { ascending: false })
                 .order('id', { ascending: false });
-
             if (error) {
                 container.innerHTML = `<div class="p-4 text-center text-xs text-red-500 font-bold bg-white dark:bg-slate-800 rounded-2xl border border-red-200 dark:border-red-900">Gagal memuat: ${error.message}</div>`;
                 return;
@@ -1951,58 +1975,61 @@
                     let warnaSetorClass = 'text-emerald-600 dark:text-emerald-400';
                     let hoverRincianClass = 'hover:text-emerald-700 dark:hover:text-emerald-300';
                     let statusHtml = '';
+                    let tombolSetorInteraktif = '';
 
                     if (tarik === 0) {
-                        // Belum Tarik -> Kuning / Amber
-                        warnaSetorClass = 'text-amber-500 dark:text-amber-400';
-                        hoverRincianClass = 'hover:text-amber-600 dark:hover:text-amber-300';
-                        statusHtml = `<span class="px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">Belum Tarik</span>`;
-                    } else if (selisih === 0) {
-                        // PAS Target -> Hijau / Emerald
-                        warnaSetorClass = 'text-emerald-600 dark:text-emerald-400';
-                        hoverRincianClass = 'hover:text-emerald-700 dark:hover:text-emerald-300';
-                        statusHtml = `<span class="px-2.5 py-0.5 rounded-md text-[9px] font-black bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">PAS</span>`;
+                        // Belum Ada Tarik -> Oranye
+                        tombolSetorInteraktif = `
+                            <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 font-black text-xs shadow-2xs">
+                                0
+                            </span>
+                        `;
+                        statusHtml = `<span class="px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 inline-flex items-center gap-1 shadow-2xs"><i class="fa-solid fa-clock text-[8px]"></i> Belum Ada Tarik</span>`;
                     } else if (selisih < 0) {
-                        // Kurang / Ada Gap -> Merah
-                        warnaSetorClass = 'text-red-600 dark:text-red-400';
-                        hoverRincianClass = 'hover:text-red-700 dark:hover:text-red-300';
-                        statusHtml = `<span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60">Kurang ${Math.abs(selisih)} ${satuan}</span>`;
-                    } else {
-                        // Lebih Target -> Ungu
-                        warnaSetorClass = 'text-purple-600 dark:text-purple-400';
-                        hoverRincianClass = 'hover:text-purple-700 dark:hover:text-purple-300';
-                        statusHtml = `<span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800">Lebih +${selisih} ${satuan}</span>`;
-                    }
-
-                    // 2. Tombol rincian penarikan dengan warna yang mengikuti status
-                    let infoRincianHtml = '';
-                    if (tarik > 0) {
-                        infoRincianHtml = `
-                            <button type="button" onclick="event.stopPropagation(); bukaPopupDetailPenarikan('${row.id}')" class="text-[9px] ${warnaSetorClass} ${hoverRincianClass} font-bold inline-flex items-center justify-center gap-0.5 mt-0.5 active:scale-90 transition cursor-pointer">
-                                rincian <i class="fa-solid fa-circle-info text-[8px]"></i>
+                        // Kurang -> Merah
+                        tombolSetorInteraktif = `
+                            <button type="button" onclick="event.stopPropagation(); bukaPopupDetailPenarikan('${row.id}')" 
+                                class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-900/60 font-black text-xs active:scale-95 transition shadow-2xs" title="Klik rincian">
+                                <span>${tarik}</span>
+                                <i class="fa-solid fa-circle-info text-[8px] text-red-500"></i>
                             </button>
                         `;
+                        statusHtml = `<span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60 shadow-2xs">Kurang ${Math.abs(selisih)} ${satuan}</span>`;
+                    } else if (selisih > 0) {
+                        // Lebih -> Ungu
+                        tombolSetorInteraktif = `
+                            <button type="button" onclick="event.stopPropagation(); bukaPopupDetailPenarikan('${row.id}')" 
+                                class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 font-black text-xs active:scale-95 transition shadow-2xs" title="Klik rincian">
+                                <span>${tarik}</span>
+                                <i class="fa-solid fa-circle-info text-[8px] text-purple-500"></i>
+                            </button>
+                        `;
+                        statusHtml = `<span class="px-2 py-0.5 rounded-md text-[9px] font-black bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 shadow-2xs">Lebih +${selisih} ${satuan}</span>`;
+                    } else {
+                        // PAS -> Hijau
+                        tombolSetorInteraktif = `
+                            <button type="button" onclick="event.stopPropagation(); bukaPopupDetailPenarikan('${row.id}')" 
+                                class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 font-black text-xs active:scale-95 transition shadow-2xs" title="Klik rincian">
+                                <span>${tarik}</span>
+                                <i class="fa-solid fa-circle-info text-[8px] text-emerald-500"></i>
+                            </button>
+                        `;
+                        statusHtml = `<span class="px-2.5 py-0.5 rounded-md text-[9px] font-black bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-2xs">PAS</span>`;
                     }
 
                     const namaProduk = jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis ${jenis}`;
 
-                    // 3. Masukkan ke dalam baris tabel
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/40 transition">
-                            <td class="py-2.5 px-2">
-                                ${tanggalCellHtml}
-                            </td>
+                            <td class="py-2.5 px-2">${tanggalCellHtml}</td>
                             <td class="py-2.5 px-1 font-bold text-slate-600 dark:text-slate-300">${namaProduk}</td>
                             <td class="py-2.5 px-1 text-center font-black text-slate-800 dark:text-slate-100">${kirim}</td>
                             <td class="py-2.5 px-1 text-center font-black text-indigo-600 dark:text-indigo-400">${target}</td>
-                            <td class="py-2.5 px-1 text-center font-black ${warnaSetorClass}">
-                                <div>${tarik}</div>
-                                ${infoRincianHtml}
-                            </td>
+                            <td class="py-2.5 px-1 text-center leading-tight">${tombolSetorInteraktif}</td>
                             <td class="py-2.5 px-2 text-center whitespace-nowrap">${statusHtml}</td>
                         </tr>
-                    `;
-                });
+                    `;  
+				});
             }
 
             // Hitung Gap Bersih
@@ -2697,7 +2724,7 @@
             document.getElementById('contentKloterWA').classList.add('translate-y-full');
         }
 
-        async function eksekusiKirimWAKloter() {
+		async function eksekusiKirimWAKloter() {
             const checkboxes = document.querySelectorAll('.check-item-kloter:checked:not(:disabled)');
             if (checkboxes.length === 0) {
                 await showNotice("Tidak ada tarikan baru yang dipilih untuk dibagikan ke WA.", "Pilih Tarikan");
@@ -2741,8 +2768,40 @@
 
             tandaiMuatanKloterSudahLapor(idsTerpilih);
 
-            const linkWA = `https://api.whatsapp.com/send?text=${encodeURIComponent(pesanWA)}`;
-            window.open(linkWA, '_blank');
+            // ==============================================================
+            // TRIK OTOMATIS: SALIN TEKS + LANGSUNG BUKA RUANG GRUP WA
+            // ==============================================================
+            // Ganti KODE_GRUP_ANDA dengan kode tautan undangan grup Anda
+            const KODE_GRUP_WA = "https://chat.whatsapp.com/BEfVvhR5olm61M8vXMp9Tc"; 
+
+            try {
+                // 1. Salin teks pesan otomatis ke clipboard HP
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(pesanWA);
+                } else {
+                    const tempTextArea = document.createElement("textarea");
+                    tempTextArea.value = pesanWA;
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(tempTextArea);
+                }
+
+                // 2. Beri notifikasi singkat
+                await showNotice(
+                    "Laporan berhasil disalin!\nWhatsApp akan langsung membuka grup, silakan Tempel (Paste) & Kirim.", 
+                    "Menuju Grup WhatsApp"
+                );
+
+                // 3. Buka ruang grup WhatsApp secara langsung
+                const linkGrup = `https://chat.whatsapp.com/${KODE_GRUP_WA}`;
+                window.open(linkGrup, '_blank');
+
+            } catch (err) {
+                // Cadangan jika browser memblokir clipboard: gunakan share biasa
+                const fallbackLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(pesanWA)}`;
+                window.open(fallbackLink, '_blank');
+            }
 
             tutupModalKloterWA();
         }
@@ -2773,8 +2832,8 @@
 					karyawan!karyawan_id(nama),
 					pengirim:karyawan!dikirim_oleh(nama)
 				`)
+				.eq('is_lunas', false) // <-- TAMBAHKAN INI
 				.order('tanggal', { ascending: false });
-
 			if (error) {
 				containerBelum.innerHTML = `<div class="p-4 text-center text-xs text-red-500 font-bold bg-white dark:bg-slate-800 rounded-2xl border border-red-200 dark:border-red-900">Error: ${error.message}</div>`;
 				return;
@@ -3798,9 +3857,8 @@ loadFormSetorCepat();
                 const namaPacking = item.karyawan?.nama || 'Packing';
 
                 // 1. Cek apakah ini kiriman yang dilakukan kurir yang aktif
-                const isKirimSaya = (item.dikirim_oleh && item.dikirim_oleh === kurirIdAktif) || 
-                                    (item.pengirim?.nama && item.pengirim.nama.toLowerCase().trim() === kurirNamaAktif);
-
+				const isKirimSaya = (item.dikirim_oleh && String(item.dikirim_oleh) === String(kurirIdAktif)) || 
+									(item.pengirim?.nama && item.pengirim.nama.toLowerCase().trim() === kurirNamaAktif);
                 // 2. Cek apakah ada penarikan oleh kurir ini
                 let tarikanSayaList = [];
                 if (item.riwayat_cicilan) {
@@ -3808,8 +3866,7 @@ loadFormSetorCepat();
                     tarikanSayaList = parsedCicilan.filter(c => 
                         c.nama && c.nama.toLowerCase().trim() === kurirNamaAktif
                     );
-                } else if (item.ditarik_oleh === kurirIdAktif && (item.tarik_jadi || 0) > 0) {
-                    tarikanSayaList.push({
+			} else if (String(item.ditarik_oleh) === String(kurirIdAktif) && (item.tarik_jadi || 0) > 0) {                    tarikanSayaList.push({
                         nama: userKurirAktif.nama,
                         qty: item.tarik_jadi,
                         satuan: satuanTarik,
