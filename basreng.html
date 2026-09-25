@@ -55,7 +55,7 @@
 		/* Transisi Halus Sidebar */
 		#sidebar { 
 			transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
-			max-height: 600px; /* Cukup tinggi untuk menampung isi */
+			max-height: 1200px; /* Ditingkatkan agar muat kolom catatan baru */
 			max-width: 100%; 
 			opacity: 1; 
 			overflow: hidden; 
@@ -273,10 +273,17 @@
                         <p class="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">Total Sisa Nota</p>
                         <p class="text-xs lg:text-sm font-poppins-custom text-indigo-700 dark:text-indigo-300" id="wdgTagihan">Rp 0</p>
                     </div>
-                    <div id="widgetBarangKeluar" class="bg-rose-50 dark:bg-slate-800 border border-rose-200 dark:border-rose-900 px-3 py-2 rounded-xl text-right shadow-sm flex flex-col justify-between h-[62px] w-[150px]">
-                        <p class="text-[9px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">Nota Plastik / Lainnya</p>
-                        <p class="text-xs lg:text-sm font-poppins-custom text-rose-700 dark:text-rose-300" id="wdgBarangKeluar">Rp 0</p>
-                    </div>
+                    <!-- SESUDAH: -->
+					<div id="widgetBarangKeluar" 
+						 onclick="toggleModal('modalBarangKeluar')" 
+						 class="bg-rose-50 hover:bg-rose-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-rose-200 dark:border-rose-900 px-3 py-2 rounded-xl text-right shadow-sm hover:shadow transition active:scale-95 cursor-pointer flex flex-col justify-between h-[62px] w-[150px]" 
+						 title="Klik untuk melihat Daftar Nota Plastik / Lainnya">
+						<p class="text-[9px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide flex items-center justify-between">
+							<svg class="w-3 h-3 text-rose-400 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+							<span>Nota Plastik / Lainnya</span>
+						</p>
+						<p class="text-xs lg:text-sm font-poppins-custom text-rose-700 dark:text-rose-300" id="wdgBarangKeluar">Rp 0</p>
+					</div>
 					<!-- Widget Estimasi Bersih (Hijau) -->
 					<div id="widgetEstimasiBersih" class="bg-emerald-50 dark:bg-slate-800 border border-emerald-200 dark:border-emerald-900 px-3 py-2 rounded-xl text-right shadow-sm flex flex-col justify-between h-[62px] w-[150px]">
 						<p class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Estimasi Sisa Pembayaran</p>
@@ -287,9 +294,9 @@
         </header>
 
         <!-- LAYOUT UTAMA DENGAN SIDEBAR -->
-        <div class="flex flex-col lg:flex-row gap-6 items-start relative">
+        <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch relative">
 		<!-- SIDEBAR NAVIGASI -->
-		<aside id="sidebar" class="w-full lg:w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-4 shrink-0">
+		<aside id="sidebar" class="w-full lg:w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-4 shrink-0 flex flex-col">
 			<p class="text-[10px] font-extrabold uppercase text-gray-400 tracking-wider px-2 mb-3 lg:mb-1 w-full text-center lg:text-left">Navigasi Menu</p>
 			
 			<!-- Kontainer Grid 2 Kolom untuk HP, Stack Vertikal untuk Desktop -->
@@ -324,55 +331,91 @@
 					<span class="truncate">Riwayat Invoice</span>
 				</button>
 			</div>
+			<!-- KOLOM CATATAN / NOTE (MEREGANG SEJAJAR KE BAWAH) -->
+			<div class="mt-4 pt-3 border-t border-gray-100 dark:border-slate-700 flex-1 flex flex-col">
+				<!-- KODE BARU DENGAN TOMBOL ICON SAVE: -->
+				<div class="flex items-center justify-between px-1 mb-2">
+					<span class="text-[10px] font-extrabold uppercase text-gray-400 dark:text-gray-400 tracking-wider flex items-center gap-1.5">
+						<svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+						Catatan / Memo
+					</span>
+					
+					<!-- Tombol Simpan Icon Only (Hitbox Nyaman 32x32px) -->
+					<button type="button" 
+						onclick="simpanCatatanManual()" 
+						id="btnSaveNote" 
+						class="w-8 h-8 flex items-center justify-center rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-700/80 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-slate-600 transition active:scale-95 shadow-sm shrink-0"
+						title="Simpan Catatan">
+						<!-- Ikon Disket / Save -->
+						<svg id="iconSaveFloppy" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H8zm0 0v4h8V4M6 20h12v-6H6v6z"></path>
+						</svg>
+						<!-- Ikon Centang (Muncul saat tersimpan) -->
+						<svg id="iconSaveCheck" class="w-4 h-4 hidden text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+						</svg>
+					</button>
+				</div>
+				<!-- textarea diberi flex-1 & min-h agar tinggi otomatis pas dengan kolom kanan -->
+				<textarea id="catatanSidebar" 
+					placeholder="Ketik catatan, memo kurir, atau pengingat di sini..." 
+					class="w-full flex-1 min-h-[140px] text-xs p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/60 text-gray-700 dark:text-gray-200 outline-none focus:border-indigo-500 resize-none transition shadow-inner leading-relaxed"
+					oninput="simpanCatatanSidebar()"></textarea>
+				<p class="text-[9px] text-gray-400 dark:text-gray-500 mt-2 italic px-1">*Tersimpan otomatis di memori perangkat.</p>
+			</div>
 		</aside>
-            <!-- KONTEN UTAMA -->
-            <div class="flex-1 w-full grid grid-cols-1 xl:grid-cols-12 gap-6 min-w-0">
-                <div class="glass-card p-6 xl:col-span-4 h-fit border border-gray-100 dark:border-slate-700">
-                    <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-5 border-b pb-3 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                        Catat Barang Masuk
-                    </h2>
-                    <form id="formCatat" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 mb-1">Tanggal</label>
-                            <input type="date" id="tanggal" required class="block w-full rounded-xl border-gray-300 border p-2 text-sm outline-none focus:border-indigo-500">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
+		<!-- KONTEN UTAMA -->
+            <div class="flex-1 w-full grid grid-cols-1 xl:grid-cols-12 gap-6 min-w-0 items-stretch">
+                <!-- KOLOM KIRI (CATAT BARANG) - DISEJAJARKAN DENGAN KARTU KANAN -->
+                <div class="glass-card p-6 xl:col-span-4 border border-gray-100 dark:border-slate-700 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-5 border-b pb-3 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            Catat Barang Masuk
+                        </h2>
+                        <form id="formCatat" class="space-y-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Agen</label>
-                                <select id="agen" required class="w-full rounded-xl border-gray-300 border p-2 text-sm outline-none" onchange="onAgenChange()"><option value="" disabled selected>Pilih Agen</option><option value="Jambi">Jambi</option><option value="Jakarta">Jakarta</option></select>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Tanggal</label>
+                                <input type="date" id="tanggal" required class="block w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none focus:border-indigo-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Agen</label>
+                                    <select id="agen" required class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none" onchange="onAgenChange()"><option value="" disabled selected>Pilih Agen</option><option value="Jambi">Jambi</option><option value="Jakarta">Jakarta</option></select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Kurir</label>
+                                    <select id="keterangan_kurir" required class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none"></select>
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Kurir</label>
-                                <select id="keterangan_kurir" required class="w-full rounded-xl border-gray-300 border p-2 text-sm outline-none"></select>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Varian Basreng</label>
+                                <select id="varian" required class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none" onchange="kalkulasiKarungKeBal()"></select>
                             </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 mb-1">Varian Basreng</label>
-                            <select id="varian" required class="w-full rounded-xl border-gray-300 border p-2 text-sm outline-none" onchange="kalkulasiKarungKeBal()"></select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-bold text-gray-600 mb-1" id="labelQtyKarung">Qty (Karung)</label><input type="number" id="qty_karung" placeholder="0" class="w-full rounded-xl border p-2 text-sm" oninput="kalkulasiKarungKeBal()"></div>
-                            <div><label class="block text-xs font-bold text-gray-600 mb-1">Qty (Bal)</label><input type="number" id="qty_bal" required class="w-full rounded-xl border p-2 text-sm font-bold" placeholder="0" oninput="hitungNominal()"></div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 mb-1">Keterangan (Opsional)</label>
-                            <input type="text" id="keterangan_barang" placeholder="Contoh: Catatan khusus / bonus" class="w-full rounded-xl border-gray-300 border p-2 text-sm outline-none focus:border-indigo-500">
-                        </div>
-                        <div class="bg-indigo-50 dark:bg-slate-800 p-3 rounded-xl text-center border dark:border-slate-700">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1" id="labelQtyKarung">Qty (Karung)</label><input type="number" id="qty_karung" placeholder="0" class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm" oninput="kalkulasiKarungKeBal()"></div>
+                                <div><label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Qty (Bal)</label><input type="number" id="qty_bal" required class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm font-bold" placeholder="0" oninput="hitungNominal()"></div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Keterangan (Opsional)</label>
+                                <input type="text" id="keterangan_barang" placeholder="Contoh: Catatan khusus / bonus" class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none focus:border-indigo-500">
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- BAGIAN TOTAL & TOMBOL AKSI TERKUNCI RAPI DI BAWAH -->
+                    <div class="space-y-4 pt-4 mt-auto">
+                        <div class="bg-indigo-50 dark:bg-slate-800 p-3 rounded-xl text-center border border-indigo-100 dark:border-slate-700">
                             <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Total Harga</p>
                             <p class="text-xl font-poppins-custom text-indigo-700 dark:text-indigo-400" id="nominalKalkulasi">Rp 0</p>
                         </div>
                         <div class="flex gap-3">
-    <!-- Tombol Reset Icon -->
-    <button type="button" onclick="resetFormCatat()" class="bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 p-3 rounded-xl transition shadow-sm border border-gray-200 dark:border-slate-700 flex items-center justify-center shrink-0 aspect-square" title="Reset Form">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-    </button>
-    
-    <!-- Tombol Simpan -->
-    <button type="submit" id="btnSimpanCatat" class="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg transition">Simpan Barang Masuk</button>
-</div>
-                    </form>
+                            <button type="button" onclick="resetFormCatat()" class="bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 p-3 rounded-xl transition shadow-sm border border-gray-200 dark:border-slate-700 flex items-center justify-center shrink-0 aspect-square" title="Reset Form">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            </button>
+                            <button type="button" onclick="document.getElementById('formCatat').requestSubmit()" id="btnSimpanCatat" class="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg transition">Simpan Barang Masuk</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="glass-card p-6 xl:col-span-8 border border-gray-100 flex flex-col dark:border-slate-700">
@@ -3405,6 +3448,60 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 					alert("Gagal menyalin teks: " + err);
 				});
 			}
+			
+	// GANTI FUNGSI CATATAN LAMA DENGAN INI:
+	let noteTimeout = null;
+
+	// Fungsi Simpan Otomatis (Saat Mengetik)
+	function simpanCatatanSidebar() {
+		const teks = document.getElementById('catatanSidebar').value;
+		localStorage.setItem('sbr_catatan_memo', teks);
+	}
+
+	// Fungsi Simpan Manual (Saat Tombol Save Diklik)
+	function simpanCatatanManual() {
+		const teks = document.getElementById('catatanSidebar').value;
+		localStorage.setItem('sbr_catatan_memo', teks);
+
+		const btn = document.getElementById('btnSaveNote');
+		const iconFloppy = document.getElementById('iconSaveFloppy');
+		const iconCheck = document.getElementById('iconSaveCheck');
+
+		// Beri efek visual: Tombol berubah hijau dan ikon disket berganti ikon centang
+		btn.classList.remove('bg-indigo-50', 'text-indigo-600', 'border-indigo-100');
+		btn.classList.add('bg-emerald-50', 'text-emerald-600', 'border-emerald-200');
+		iconFloppy.classList.add('hidden');
+		iconCheck.classList.remove('hidden');
+
+		clearTimeout(noteTimeout);
+		noteTimeout = setTimeout(() => {
+			// Kembalikan ke ikon disket normal setelah 1.5 detik
+			btn.classList.remove('bg-emerald-50', 'text-emerald-600', 'border-emerald-200');
+			btn.classList.add('bg-indigo-50', 'text-indigo-600', 'border-indigo-100');
+			iconFloppy.classList.remove('hidden');
+			iconCheck.classList.add('hidden');
+		}, 1500);
+	}
+
+	function muatCatatanSidebar() {
+		const savedText = localStorage.getItem('sbr_catatan_memo');
+		const el = document.getElementById('catatanSidebar');
+		if (savedText !== null && el) {
+			el.value = savedText;
+		}
+	}
+		
+		// --- INISIALISASI ---
+        document.getElementById('tanggal').valueAsDate = new Date();
+        
+        // Panggil fungsi pemuatan catatan di sini
+        muatCatatanSidebar();
+
+        fetchMasterData().then(() => {
+            terapkanPengaturanWidget();
+            loadWidgets();
+            loadDataMasuk();
+        });
     </script>
 </body>
 </html>
