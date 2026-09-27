@@ -1177,6 +1177,16 @@
             if (jam >= 15 && jam < 18) return 'Sore';
             return 'Malam';
         }
+		
+		// ==============================================================
+        // FUNGSI PEMBANTU: FORMAT JAM & MENIT DIGITAL (HH:mm)
+        // ==============================================================
+        function getJamMenitSekarang() {
+            const now = new Date();
+            const jam = String(now.getHours()).padStart(2, '0');
+            const menit = String(now.getMinutes()).padStart(2, '0');
+            return `${jam}:${menit}`;
+        }
 
         function parseRiwayatCicilan(teks) {
             if (!teks) return [];
@@ -1553,10 +1563,10 @@
 
             // 2. Siapkan data untuk dikirim ke Supabase
             const payload = {
-                tanggal: tglDipilih, // Menggunakan tanggal yang ada di form (default H-3 atau pilihan pengguna)
+                tanggal: tglDipilih,
                 sesi: 'Pagi',
                 dikirim_oleh: null,
-                karyawan_id: kid,
+                karyawan_id: parseInt(kid), // Pastikan bertipe integer
                 kirim_produksi: jumlahBal,
                 jenis_produk: jenis,
                 tarik_jadi: 0,
@@ -2037,7 +2047,8 @@
             const totalTarikBaru = tarikLama + inputBaru;
             const koreksiBaru = totalTarikBaru - rowTarget;
 
-            const logBaru = `${penarikNama}: +${inputBaru} ${satuan} (${sesiWaktu} • ${tglHariIni})`;
+            const jamMenit = getJamMenitSekarang();
+            const logBaru = `${penarikNama}: +${inputBaru} ${satuan} (${sesiWaktu} • ${jamMenit} • ${tglHariIni})`;
             const logGabungan = itemTarget.riwayat_cicilan 
                 ? `${itemTarget.riwayat_cicilan}, ${logBaru}` 
                 : logBaru;
@@ -2046,7 +2057,7 @@
                 tarik_jadi: totalTarikBaru,
                 koreksi: koreksiBaru,
                 is_lunas: false,
-                ditarik_oleh: penarikId,
+                ditarik_oleh: penarikId ? parseInt(penarikId) : null,
                 riwayat_cicilan: logGabungan
             };
 
@@ -2756,10 +2767,21 @@
 
                     // Pastikan transaksi ini tercatat di histori pelunasan jika belum ada
                     if (!rekap[kid].histori.some(it => String(it.id) === String(row.id))) {
-                        rekap[kid].histori.push(row);
-                        rekap[kid].totalKirimMurni += (row.kirim_produksi || 0);
+						rekap[kid].histori.push(row);
 
-                        const qty = row.tarik_jadi || 0;
+						// Hitung proporsi bal bahan sesuai Opsi 2
+						const setorQtyLama = row.tarik_jadi || 0;
+						let balDisetorLama = 0;
+						if (row.jenis_produk === 'B10') {
+							balDisetorLama = Math.round(setorQtyLama / 1.2);
+						} else if (row.jenis_produk === 'Oleh-oleh') {
+							balDisetorLama = Math.floor(setorQtyLama / 10);
+						} else {
+							balDisetorLama = setorQtyLama;
+						}
+						rekap[kid].totalKirimMurni += balDisetorLama;
+
+						const qty = row.tarik_jadi || 0;
                         if (row.jenis_produk === 'B12') {
                             rekap[kid].b12 += qty;
                             rekap[kid].gajiDasar += (qty * tarif.b12);
@@ -2858,8 +2880,8 @@
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-semibold">${r.b10 || '-'}</td>
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-semibold text-amber-700">${r.oleholeh ? r.oleholeh + ' T' : '-'}</td>
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-black text-red-600 bg-red-50/30">${gantungUI}</td>
-						<td class="px-4 py-3 text-center border-l border-gray-100"
-                            <label class="inline-flex items-center gap-1.5 cursor-pointer bg-amber-50 px-2 py-1 rounded border border-amber-200">
+						<td class="px-4 py-3 text-center border-l border-gray-100">
+							<label class="inline-flex items-center gap-1.5 cursor-pointer bg-amber-50 px-2 py-1 rounded border border-amber-200">
                                 <input type="checkbox" onchange="toggleUangMakan('${k}', this.checked)" ${r.dapatUangMakan ? 'checked' : ''} class="rounded text-indigo-600 focus:ring-0">
                                 <span class="text-[11px] font-bold text-amber-900">${r.totalKirimMurni} Bal Bahan</span>
                             </label>
@@ -3195,10 +3217,18 @@
 
             // 2. Olah riwayat cicilan penarikan
             let isiRiwayat = '';
-            if (row.riwayat_cicilan) {
+			if (row.riwayat_cicilan) {
                 const list = parseRiwayatCicilan(row.riwayat_cicilan);
                 if (list.length > 0) {
-                    isiRiwayat = list.map(c => `• ${c.nama}: ${c.qty} ${c.satuan} (${c.waktu})`).join('\n');
+                    isiRiwayat = list.map(c => {
+                        const waktuBersih = (c.waktu || '')
+                            .replace(/•\s*\d{4}-\d{2}-\d{2}/g, '') // Hilangkan tanggal YYYY-MM-DD
+                            .replace(/•\s*•/g, '•')
+                            .replace(/^•\s*|\s*•$/g, '')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                        return `• ${c.nama}: ${c.qty} ${c.satuan} (${waktuBersih})`;
+                    }).join('\n');
                 } else {
                     isiRiwayat = `• ${row.riwayat_cicilan}`;
                 }
@@ -3384,11 +3414,11 @@
             modal.firstElementChild.classList.remove('scale-95');
         }
 
-        function tutupPratinjau() {
-            const modal = document.getElementById('modalPratinjau');
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            document.getElementById('modalContentPratinjau')?.classList.add('scale-95');
-        }
+		   function tutupPratinjau() {
+			  const modal = document.getElementById('modalPratinjau');
+			  modal.classList.add('opacity-0', 'pointer-events-none');
+			  modal.firstElementChild?.classList.add('scale-95');
+		  }
 
         async function unduhSlipPNG() {
             if (!slipAktif) return;
@@ -3640,35 +3670,6 @@
             }
         }
 
-		// Perbaikan fungsi tandaiLunasManual
-		async function tandaiLunasManual() {
-			if (!slipAktif) return;
-
-			const kid = slipAktif.karyawanId;
-			const r = globalRekapData[kid];
-
-			// Cek apakah masih ada sisa gantungan netto
-			let sisaGantung = 0;
-			if (r && r.tanggunganBersihPerProduk) {
-				Object.values(r.tanggunganBersihPerProduk).forEach(p => {
-					const def = p.totalTarget - p.totalTarik;
-					if (def > 0) sisaGantung += def;
-				});
-			}
-
-			if (sisaGantung > 0) {
-				bukaModalKeputusanGantung(kid, sisaGantung, async () => {
-					await gantungKeKirimanSelanjutnya(kid);
-				});
-				return;
-			}
-
-			const konfirmasi = await showConfirm(`Tandai lunas data gaji untuk ${slipAktif.nama}?`);
-			if (!konfirmasi) return;
-
-			await prosesPelunasanDatabase([slipAktif.karyawanId]);
-			tutupPratinjau();
-		}
 		
 	async function gantungKeKirimanSelanjutnya(karyawanId) {
 		const r = globalRekapData[karyawanId];
@@ -3751,7 +3752,7 @@
 						tanggal: tglSekarang,
 						sesi: 'Pagi',
 						dikirim_oleh: null,
-						karyawan_id: karyawanId,
+						karyawan_id: parseInt(karyawanId),
 						kirim_produksi: balKirimAkumulasi,
 						jenis_produk: jenis,
 						tarik_jadi: 0,
@@ -3788,35 +3789,6 @@
 			await showError("Gagal memproses akumulasi gantungan: " + err.message);
 		}
 	}
-		// Perbaikan fungsi tandaiLunasManual
-		async function tandaiLunasManual() {
-			if (!slipAktif) return;
-
-			const kid = slipAktif.karyawanId;
-			const r = globalRekapData[kid];
-
-			// Cek apakah masih ada sisa gantungan netto
-			let sisaGantung = 0;
-			if (r && r.tanggunganBersihPerProduk) {
-				Object.values(r.tanggunganBersihPerProduk).forEach(p => {
-					const def = p.totalTarget - p.totalTarik;
-					if (def > 0) sisaGantung += def;
-				});
-			}
-
-			if (sisaGantung > 0) {
-				bukaModalKeputusanGantung(kid, sisaGantung, async () => {
-					await gantungKeKirimanSelanjutnya(kid);
-				});
-				return;
-			}
-			
-			const konfirmasi = await showConfirm(`Tandai lunas data gaji untuk ${slipAktif.nama}?`);
-			if (!konfirmasi) return;
-
-			await prosesPelunasanDatabase([slipAktif.karyawanId]);
-			tutupPratinjau();
-		}
 
 		// Kembalikan prosesPelunasanDatabase standar (Semua transaksi aktif milik pekerja dilunasi tuntas)
 		async function prosesPelunasanDatabase(listKaryawanId) {
@@ -4103,14 +4075,16 @@
                 btnSubmit.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> MENYIMPAN...';
                 btnSubmit.disabled = true;
 
-                try {
+				try {
+                    const idPetugasInt = petugasKirimId ? parseInt(petugasKirimId) : null;
+
                     if (dataId) {
                         const row = document.querySelector('.baris-kiriman');
                         const payload = {
                             tanggal: tanggal,
                             sesi: sesi,
-                            dikirim_oleh: petugasKirimId,
-                            karyawan_id: row.querySelector('.input-karyawan').value,
+                            dikirim_oleh: idPetugasInt,
+                            karyawan_id: parseInt(row.querySelector('.input-karyawan').value),
                             kirim_produksi: parseInt(row.querySelector('.input-kirim').value) || 0,
                             jenis_produk: row.querySelector('.input-jenis').value,
                             is_lembur: false
@@ -4137,8 +4111,8 @@
                                 payloads.push({
                                     tanggal: tanggal,
                                     sesi: sesi,
-                                    dikirim_oleh: petugasKirimId,
-                                    karyawan_id: kid,
+                                    dikirim_oleh: idPetugasInt,
+                                    karyawan_id: parseInt(kid),
                                     kirim_produksi: kirim,
                                     jenis_produk: jenis,
                                     tarik_jadi: 0,
@@ -4468,13 +4442,17 @@
                 const tarikTotalBaru = tarikLama + inputBaru;
                 const koreksiBaru = tarikTotalBaru - targetKirim;
 
-                const logBaru = `${penarikNama}: +${inputBaru} ${satuan} (${sesiWaktu})`;
+                const jamMenit = getJamMenitSekarang();
+                const now = new Date();
+                const tglHariIni = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+                const logBaru = `${penarikNama}: +${inputBaru} ${satuan} (${sesiWaktu} • ${jamMenit} • ${tglHariIni})`;
                 const logGabungan = riwayatLama ? `${riwayatLama}, ${logBaru}` : logBaru;
 
                 const payload = {
                     tarik_jadi: tarikTotalBaru,
                     koreksi: koreksiBaru,
-                    ditarik_oleh: penarikId,
+                    ditarik_oleh: penarikId ? parseInt(penarikId) : null,
                     riwayat_cicilan: logGabungan
                 };
 
@@ -4491,6 +4469,11 @@
                     loadDataLogistik();
                     loadDataPenarikan();
                     loadSetorFIFODesktop();
+					// Tambahkan ini agar jika modal rincian sedang terbuka, angkanya langsung ter-refresh:
+                    if (currentRincianKaryawanId) {
+                        await loadRekapGaji();
+                        bukaModalRincian(currentRincianKaryawanId);
+					}
                 }
 
                 btn.innerHTML = teksAsli;
