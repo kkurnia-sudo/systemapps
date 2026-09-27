@@ -8,6 +8,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SBR Kurir & Distribusi</title>
+	
+	<!-- Pencegah Cache Standar Browser HP -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     
     <!-- PWA & Standalone Meta Tags -->
     <meta name="theme-color" content="#4f46e5">
@@ -873,6 +878,69 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvY3Z1ZGRxaHZpb3JlYmlucHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2OTQ0NDAsImV4cCI6MjEwMTI3MDQ0MH0.mWGTOTfHG4Q62S3P4LQi-5bGviMPWgMzo2p2AECquL8';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 		
+		
+		// ==============================================================
+        // SISTEM AUTO-UPDATE SENYAP (100% OTOMATIS DARI GITHUB)
+        // Nama file tetap sama, tanpa perlu ubah nomor versi manual.
+        // ==============================================================
+        async function getSHA256Hash(text) {
+            const msgUint8 = new TextEncoder().encode(text);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function cekPembaruanAplikasiOtomatis() {
+            try {
+                // Ambil URL murni file saat ini tanpa embel-embel query lama
+                const urlBersih = window.location.origin + window.location.pathname;
+
+                // Tarik file HTML terbaru langsung dari GitHub (tembus cache dengan timestamp)
+                const response = await fetch(`${urlBersih}?_ts=${Date.now()}`, {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+                });
+
+                if (!response.ok) return;
+
+                const textServer = await response.text();
+                const hashServer = await getSHA256Hash(textServer);
+                const hashLokal = localStorage.getItem('sbr_app_content_hash');
+
+                // Jika baru pertama kali dipasang di HP kurir, simpan hash awal
+                if (!hashLokal) {
+                    localStorage.setItem('sbr_app_content_hash', hashServer);
+                    return;
+                }
+
+                // Jika ada perubahan kode di GitHub (hash berbeda), perbarui aplikasi
+                if (hashServer !== hashLokal) {
+                    console.log("Kode baru terdeteksi di GitHub! Memuat pembaruan...");
+
+                    // Simpan hash baru agar tidak reload berulang
+                    localStorage.setItem('sbr_app_content_hash', hashServer);
+
+                    // Bersihkan cache storage HP jika ada
+                    if ('caches' in window) {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(k => caches.delete(k)));
+                    }
+
+                    // Beri tahu kurir secara singkat
+                    await showNotice(
+                        "Pembaruan sistem berhasil diunduh!\nAplikasi akan memuat versi terbaru...", 
+                        "Pembaruan Otomatis"
+                    );
+
+                    // Muat ulang halaman dengan file segar (sesi login localStorage tetap utuh)
+                    window.location.replace(`${urlBersih}?_v=${Date.now()}`);
+                }
+            } catch (err) {
+                // Lewati jika kurir sedang offline di jalan
+                console.log("Cek pembaruan dilewati:", err);
+            }
+        }
+		
 		let antreanDataGlobal = [];
         let userKurirAktif = null;
         let daftarPackingGlobal = [];
@@ -1228,11 +1296,22 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
+		document.addEventListener('DOMContentLoaded', async () => {
             inisialisasiPWA();
             inisialisasiDatePickerKurir();
 
-			const savedKurir = localStorage.getItem('sbr_kurir_session');
+            // 1. Cek pembaruan saat aplikasi pertama kali dibuka
+            cekPembaruanAplikasiOtomatis();
+
+            // 2. Cek pembaruan setiap kali kurir membuka HP dari layar mati / kembali dari WhatsApp
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    cekPembaruanAplikasiOtomatis();
+                }
+            });
+
+            const savedKurir = localStorage.getItem('sbr_kurir_session');
+            // ... sisa kode login dan inisialisasi Anda di bawahnya tetap sama ...
             await loadDropdownKaryawan();
 
             if (savedKurir) {
@@ -2168,18 +2247,25 @@
 
             const listCicilan = parseRiwayatCicilan(transaksi.riwayat_cicilan);
 
-            if (listCicilan && listCicilan.length > 0) {
+			if (listCicilan && listCicilan.length > 0) {
                 listCicilan.forEach(c => {
+                    // Saring tanggal YYYY-MM-DD dan rapikan bullet
+                    let waktuTampil = (c.waktu || '')
+                        .replace(/•\s*\d{4}-\d{2}-\d{2}/g, '') // Hapus tanggal YYYY-MM-DD
+                        .replace(/•\s*•/g, '•')                // Hapus bullet dobel jika ada
+                        .replace(/^•\s*|\s*•$/g, '')           // Hapus bullet di awal/akhir
+                        .replace(/\s+/g, ' ')
+                        .trim();
+
                     containerList.innerHTML += `
                         <div class="flex items-center gap-1.5">
                             <span class="text-slate-400">•</span>
                             <span class="font-bold text-slate-800 dark:text-slate-200">${c.nama}:</span>
-                            <span class="text-slate-600 dark:text-slate-300 font-medium">${c.qty} ${c.satuan} (${c.waktu})</span>
+                            <span class="text-slate-600 dark:text-slate-300 font-medium">${c.qty} ${c.satuan} (${waktuTampil})</span>
                         </div>
                     `;
                 });
             } else if (tarikTotal > 0) {
-                // Tampilan cadangan jika data lama belum memiliki string cicilan
                 const penarik = transaksi.pengirim?.nama || 'Petugas Distribusi';
                 containerList.innerHTML = `
                     <div class="flex items-center gap-1.5">
@@ -2495,7 +2581,7 @@
             document.getElementById('infoPrediksiSetorCepat').innerHTML = infoText;
         }
 
-// SIMPAN SETORAN LANGSUNG (DIRECT LEDGER ENTRY - VERSI BERSIH)
+	// SIMPAN SETORAN LANGSUNG (DIRECT LEDGER ENTRY - VERSI BERSIH)
         async function simpanSetorCepat() {
             const btn = document.getElementById('btnEksekusiSetorCepat');
             if (btn && btn.disabled) return;
@@ -2531,10 +2617,10 @@
             // 2. Kunci tarikan: prioritaskan transaksi kiriman hari ini milik pekerja tersebut
             let itemTarget = transaksiTerpilihCepat.items.find(it => it.tanggal === tglHariIni);
 
-            // Jika hari ini belum ada kiriman baru, ambil kiriman lama yang belum lunas
-            if (!itemTarget) {
-                itemTarget = transaksiTerpilihCepat.items.find(it => it.tanggal <= tglHariIni && (it.tarik_jadi || 0) < hitungTargetProduk(it.kirim_produksi, it.jenis_produk));
-            }
+            // Cadangan jika tidak ditemukan kriteria di atas (ambil transaksi paling baru/hari ini)
+			if (!itemTarget) {
+				itemTarget = transaksiTerpilihCepat.items[transaksiTerpilihCepat.items.length - 1];
+			}
 
             // Cadangan jika tidak ditemukan kriteria di atas
             if (!itemTarget) {
@@ -2547,13 +2633,17 @@
                 return;
             }
 
-            // 3. Perhitungan target dan log penarikan (cukup dideklarasikan satu kali)
+            // 3. Perhitungan target dan log penarikan
             const rowTarget = hitungTargetProduk(itemTarget.kirim_produksi, itemTarget.jenis_produk);
             const tarikLama = itemTarget.tarik_jadi || 0;
             const totalTarikBaru = tarikLama + inputBaru;
             const koreksiBaru = totalTarikBaru - rowTarget;
 
-            const logBaru = `${kurirNama}: +${inputBaru} ${satuan} (${sesiWaktu} • ${tglHariIni})`;
+            // Ambil jam & menit penarikan
+            const now = new Date();
+            const jamMenit = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+            const logBaru = `${kurirNama}: +${inputBaru} ${satuan} (${sesiWaktu} • ${jamMenit} • ${tglHariIni})`;
             const logGabungan = itemTarget.riwayat_cicilan 
                 ? `${itemTarget.riwayat_cicilan}, ${logBaru}` 
                 : logBaru;
@@ -2565,7 +2655,7 @@
                     tarik_jadi: totalTarikBaru,
                     koreksi: koreksiBaru,
                     is_lunas: false, 
-                    ditarik_oleh: userKurirAktif.id,
+                    ditarik_oleh: parseInt(userKurirAktif.id),
                     riwayat_cicilan: logGabungan
                 })
                 .eq('id', itemTarget.id);
@@ -2636,70 +2726,65 @@
             kirimLaporanWATarikan(tglHariIni, true);
         }
 
-	// ==============================================================
-        // 4. MEMBUKA & MERENDER MODAL LAPORAN WA
+		// ==============================================================
+        // 4. MEMBUKA & MERENDER MODAL LAPORAN WA (SINKRON SEMUA PERANGKAT)
         // ==============================================================
         async function kirimLaporanWATarikan(tgl, isModeCepat = false) {
             const elTglAktif = document.getElementById('kloterTanggalAktif');
             if (elTglAktif) elTglAktif.value = tgl;
 
-            // Ambil daftar ID yang sudah terlapor pada tanggal ini
-            const terlaporKey = `sbr_terlapor_ids_${userKurirAktif?.id}_${tgl}`;
-            const daftarTerlapor = JSON.parse(localStorage.getItem(terlaporKey) || '[]');
+            const kurirNama = (userKurirAktif?.nama || '').toLowerCase().trim();
 
-            let itemsKloter = getDaftarMuatanKloterAktif(tgl);
+            // Ambil data langsung dari Supabase agar sinkron di HP mana pun
+            const { data: dataDb, error } = await supabaseClient
+                .from('distribusi_packing')
+                .select(`*, karyawan!karyawan_id(nama)`)
+                .eq('is_lunas', false)
+                .order('id', { ascending: false });
 
-            // Jika kloter lokal kosong, ambil data dari database Supabase
-            if (itemsKloter.length === 0) {
-                const { data: dataDb, error } = await supabaseClient
-                    .from('distribusi_packing')
-                    .select(`*, karyawan!karyawan_id(nama)`)
-                    .eq('is_lunas', false)
-                    .order('id', { ascending: false });
-
-                if (!error && dataDb && dataDb.length > 0) {
-                    const fallbackList = [];
-                    dataDb.forEach(row => {
-                        if (!row.riwayat_cicilan) return;
-
-                        const jenis = row.jenis_produk || 'B12';
-                        const cicilanList = parseRiwayatCicilan(row.riwayat_cicilan);
-                        
-                        const cicilanKurirIni = cicilanList.filter(c => 
-                            c.nama && c.nama.toLowerCase().includes((userKurirAktif?.nama || '').toLowerCase())
-                        );
-                        const qtyTarikKurir = cicilanKurirIni.reduce((acc, curr) => acc + (parseInt(curr.qty) || 0), 0);
-
-                        if (qtyTarikKurir > 0) {
-                            const itemId = 'db_' + row.id;
-                            // Cek apakah item database ini sudah pernah dilaporkan
-                            const isSudahLapor = daftarTerlapor.includes(itemId);
-
-                            fallbackList.push({
-                                id: itemId,
-                                karyawanId: row.karyawan_id,
-                                nama: (row.karyawan?.nama || 'PACKING').toUpperCase(),
-                                jenis: jenis,
-                                satuan: getSatuanTarik(jenis),
-                                qty: qtyTarikKurir,
-                                sesiList: [row.sesi || 'Sesi'],
-                                sudahLapor: isSudahLapor // Status sinkron dengan memori pelaporan
-                            });
-                        }
-                    });
-                    itemsKloter = fallbackList;
-                }
-            } else {
-                // Jika data ada di kloter lokal, pastikan statusnya sinkron dengan daftar terlapor
-                itemsKloter.forEach(item => {
-                    if (daftarTerlapor.includes(item.id)) {
-                        item.sudahLapor = true;
-                    }
-                });
+            if (error) {
+                await showError("Gagal memuat data tarikan: " + error.message);
+                return;
             }
 
+            const itemsKloter = [];
+
+            (dataDb || []).forEach(row => {
+                if (!row.riwayat_cicilan) return;
+
+                const jenis = row.jenis_produk || 'B12';
+                const satuan = getSatuanTarik(jenis);
+                const namaPekerja = (row.karyawan?.nama || 'PACKING').toUpperCase();
+                const cicilanList = parseRiwayatCicilan(row.riwayat_cicilan);
+
+                // Filter HANYA cicilan milik kurir ini dan HANYA yang ditarik pada tanggal tgl
+                cicilanList.forEach(c => {
+                    const isKurirCocok = c.nama && c.nama.toLowerCase().includes(kurirNama);
+                    const isTglCocok = (c.waktu && c.waktu.includes(tgl)) || (row.tanggal === tgl);
+
+                    if (isKurirCocok && isTglCocok && c.qty > 0) {
+                        // Jika sudah ada tanda WA di log database, tandai sebagai sudah lapor
+                        const isSudahLapor = c.waktu.includes('WA');
+                        const sesiBersih = c.waktu.replace(/•.*$/, '').trim();
+
+                        itemsKloter.push({
+                            id: `cicilan_${row.id}_${c.index}`,
+                            rowId: row.id,
+                            indexCicilan: c.index,
+                            karyawanId: row.karyawan_id,
+                            nama: namaPekerja,
+                            jenis: jenis,
+                            satuan: satuan,
+                            qty: c.qty,
+                            sesi: sesiBersih,
+                            sudahLapor: isSudahLapor
+                        });
+                    }
+                });
+            });
+
             if (itemsKloter.length === 0) {
-                await showNotice("Belum ada catatan tarikan barang apa pun hari ini.", "Data Tarikan Kosong");
+                await showNotice(`Belum ada catatan tarikan barang untuk tanggal ${formatTglIndo(tgl)}.`, "Data Tarikan Kosong");
                 return;
             }
 
@@ -2711,7 +2796,6 @@
                 
                 dataTarikanGroupedGlobal.forEach(grup => {
                     const namaProduk = grup.jenis === 'Oleh-oleh' ? 'Oleh-oleh' : `Aromanis B${grup.jenis.replace('B','')}`;
-                    const infoSesi = grup.sesiList.join(', ');
                     const isLapor = grup.sudahLapor === true;
 
                     const isChecked = !isLapor ? 'checked' : '';
@@ -2731,7 +2815,7 @@
                                 <div>
                                     <div class="text-xs font-black uppercase ${isLapor ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-100'}">${grup.nama}</div>
                                     <div class="text-[10px] text-slate-400 font-semibold">
-                                        ${namaProduk} • <span class="${isLapor ? 'text-slate-400' : 'text-indigo-600 dark:text-indigo-400'} font-bold">${infoSesi}</span>
+                                        ${namaProduk} • <span class="${isLapor ? 'text-slate-400' : 'text-indigo-600 dark:text-indigo-400'} font-bold">${grup.sesi}</span>
                                     </div>
                                 </div>
                             </div>
@@ -2773,7 +2857,7 @@
             }
 
             const idsTerpilih = Array.from(checkboxes).map(cb => cb.value);
-            const tgl = document.getElementById('kloterTanggalAktif')?.value || new Date().toISOString().split('T')[0];
+            const tgl = document.getElementById('kloterTanggalAktif')?.value || getTanggalHariIniLocal();
             const namaKurir = userKurirAktif?.nama ? userKurirAktif.nama.toUpperCase() : 'KURIR';
             const tglWA = typeof formatTglLaporanWA === 'function' ? formatTglLaporanWA(tgl) : tgl;
 
@@ -2807,8 +2891,50 @@
             pesanWA += `_*( ${rincianTotal.join(' | ')} )*_\n\n`;
             pesanWA += `_Via © Sbr Systems_`;
 
-            tandaiMuatanKloterSudahLapor(idsTerpilih);
+            // ==============================================================
+            // TANDAI LANGSUNG KE SUPABASE: BUBURKAN TANDA "• WA" KE DATABASE
+            // ==============================================================
+            const rowIdsTerpilih = [...new Set(grupTerpilih.map(g => g.rowId))];
 
+            try {
+                for (const rId of rowIdsTerpilih) {
+                    const { data: rowData } = await supabaseClient
+                        .from('distribusi_packing')
+                        .select('riwayat_cicilan')
+                        .eq('id', rId)
+                        .single();
+
+                    if (rowData && rowData.riwayat_cicilan) {
+                        const cicilanArr = rowData.riwayat_cicilan.split(', ');
+                        const riwayatDiupdate = cicilanArr.map(str => {
+                            const match = str.match(/^(.+?):\s*[\+]?(\d+)\s*(Bal|Toros)\s*\((.+?)\)$/);
+                            if (!match) return str;
+                            const nama = match[1].trim();
+                            const qty = match[2];
+                            const satuan = match[3];
+                            const waktu = match[4].trim();
+
+                            const isKurir = nama.toLowerCase().includes(userKurirAktif.nama.toLowerCase().trim());
+                            const isTgl = waktu.includes(tgl);
+
+                            // Jika tarikan milik kurir ini pada tanggal hari ini dan belum ada tanda WA
+                            if (isKurir && isTgl && !waktu.includes('WA')) {
+                                return `${nama}: +${qty} ${satuan} (${waktu} • WA)`;
+                            }
+                            return str;
+                        }).join(', ');
+
+                        await supabaseClient
+                            .from('distribusi_packing')
+                            .update({ riwayat_cicilan: riwayatDiupdate })
+                            .eq('id', rId);
+                    }
+                }
+            } catch (err) {
+                console.error("Gagal sinkronisasi tanda WA ke database:", err);
+            }
+
+            // Buka WhatsApp
             const linkWA = `https://api.whatsapp.com/send?text=${encodeURIComponent(pesanWA)}`;
             window.open(linkWA, '_blank');
 
@@ -3569,15 +3695,22 @@ loadFormSetorCepat();
             const totalBaru = tarikLama + inputBaru;
             const koreksiBaru = totalBaru - target;
             const sesiWaktu = getSesiWaktuOtomatis();
+            const tglHariIni = typeof getTanggalOperasionalTarik === 'function' 
+                ? getTanggalOperasionalTarik() 
+                : getTanggalHariIniLocal();
 
-            const logBaru = `${userKurirAktif.nama}: +${inputBaru} ${satuan} (${sesiWaktu})`;
+            // Ambil jam & menit saat ini (contoh: 16:30)
+            const now = new Date();
+            const jamMenit = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+            const logBaru = `${userKurirAktif.nama}: +${inputBaru} ${satuan} (${sesiWaktu} • ${jamMenit} • ${tglHariIni})`;
             const logGabungan = riwayatLama ? `${riwayatLama}, ${logBaru}` : logBaru;
 
             const payload = {
                 tarik_jadi: totalBaru,
                 koreksi: koreksiBaru,
                 is_lunas: false, // DIPAKSA FALSE
-                ditarik_oleh: userKurirAktif.id,
+                ditarik_oleh: parseInt(userKurirAktif.id),
                 riwayat_cicilan: logGabungan
             };
 
@@ -3883,7 +4016,7 @@ loadFormSetorCepat();
                     });
                 }
 
-                // Jika ada transaksi kirim atau tarik, masukkan ke grup tanggal
+				// Jika ada transaksi kirim atau tarik, masukkan ke grup tanggal
                 if (isKirimSaya || tarikanSayaList.length > 0) {
                     if (!tugasPerHariMap[tgl]) {
                         tugasPerHariMap[tgl] = {
@@ -3891,18 +4024,25 @@ loadFormSetorCepat();
                             daftarKirim: [],
                             daftarTarik: [],
                             summaryKirim: { 'B12': 0, 'B10': 0, 'Oleh-oleh': 0 },
-                            summaryTarik: { 'B12': 0, 'B10': 0, 'Oleh-oleh': 0 }
+                            summaryTargetKirim: { 'B12': 0, 'B10': 0, 'Oleh-oleh': 0 }, // <-- TAMBAHKAN INI
+                            summaryTarik: { 'B12': 0, 'B10': 0, 'Oleh-oleh': 0 },
+                            summaryTargetTarik: { 'B12': 0, 'B10': 0, 'Oleh-oleh': 0 }, // <-- TAMBAHKAN INI
+                            itemTarikSet: new Set()                                      // <-- TAMBAHKAN INI
                         };
                     }
 
                     // Akumulasi Kirim
                     if (isKirimSaya) {
                         const balKirim = parseInt(item.kirim_produksi) || 0;
+                        const tgtKirim = hitungTargetProduk(balKirim, jenisKategori); // Hitung target produk
                         tugasPerHariMap[tgl].summaryKirim[jenisKategori] += balKirim;
+                        tugasPerHariMap[tgl].summaryTargetKirim[jenisKategori] += tgtKirim;
+
                         tugasPerHariMap[tgl].daftarKirim.push({
                             id: item.id,
                             namaPekerja: namaPacking,
                             qty: balKirim,
+                            target: tgtKirim,
                             jenis: jenisKategori,
                             sesi: item.sesi || 'Pagi'
                         });
@@ -3910,6 +4050,12 @@ loadFormSetorCepat();
 
                     // Akumulasi Tarik
                     if (tarikanSayaList.length > 0) {
+                        const tgtItem = hitungTargetProduk(item.kirim_produksi, jenisKategori);
+                        if (!tugasPerHariMap[tgl].itemTarikSet.has(item.id)) {
+                            tugasPerHariMap[tgl].itemTarikSet.add(item.id);
+                            tugasPerHariMap[tgl].summaryTargetTarik[jenisKategori] += tgtItem;
+                        }
+
                         tarikanSayaList.forEach(c => {
                             tugasPerHariMap[tgl].summaryTarik[jenisKategori] += (parseInt(c.qty) || 0);
                             tugasPerHariMap[tgl].daftarTarik.push({
@@ -3949,32 +4095,44 @@ loadFormSetorCepat();
                 const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][dObj.getDay()].toUpperCase();
                 const tglFormatTeks = `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}`;
 
-                // --- MERANGKAI SUMMARY CHIPS KIRIM ---
+				// --- MERANGKAI SUMMARY CHIPS KIRIM (DILENGKAPI TARGET) ---
                 const chipsKirim = [];
-                if (dataHari.summaryKirim['B12'] > 0) {
-                    chipsKirim.push(`<span class="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-900/60">B12: <b>${dataHari.summaryKirim['B12']}</b> Bal</span>`);
-                }
-                if (dataHari.summaryKirim['B10'] > 0) {
-                    chipsKirim.push(`<span class="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-900/60">B10: <b>${dataHari.summaryKirim['B10']}</b> Bal</span>`);
-                }
-                if (dataHari.summaryKirim['Oleh-oleh'] > 0) {
-                    chipsKirim.push(`<span class="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-900/60">Oleh: <b>${dataHari.summaryKirim['Oleh-oleh']}</b> Bal</span>`);
-                }
+                ['B12', 'B10', 'Oleh-oleh'].forEach(jenis => {
+                    const kirimQty = dataHari.summaryKirim[jenis];
+                    const targetQty = dataHari.summaryTargetKirim[jenis];
+                    const satuanTgt = jenis === 'Oleh-oleh' ? 'Toros' : 'Bal';
+
+                    if (kirimQty > 0) {
+                        chipsKirim.push(`
+                            <span class="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-900/60 flex items-center gap-1 shadow-2xs">
+                                <span>${jenis}: <b>${kirimQty}</b> Bal</span>
+                                <span class="text-blue-500 dark:text-blue-400 font-medium text-[9px]">(Target: <b>${targetQty}</b> ${satuanTgt})</span>
+                            </span>
+                        `);
+                    }
+                });
                 const htmlSummaryKirim = chipsKirim.length > 0 
                     ? chipsKirim.join('') 
                     : `<span class="text-slate-400 font-semibold">0 Bal</span>`;
 
-                // --- MERANGKAI SUMMARY CHIPS TARIK ---
+// --- MERANGKAI SUMMARY CHIPS TARIK (BERSIH TANPA DOBEL TARGET) ---
                 const chipsTarik = [];
-                if (dataHari.summaryTarik['B12'] > 0) {
-                    chipsTarik.push(`<span class="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60">B12: <b>${dataHari.summaryTarik['B12']}</b> Bal</span>`);
-                }
-                if (dataHari.summaryTarik['B10'] > 0) {
-                    chipsTarik.push(`<span class="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60">B10: <b>${dataHari.summaryTarik['B10']}</b> Bal</span>`);
-                }
-                if (dataHari.summaryTarik['Oleh-oleh'] > 0) {
-                    chipsTarik.push(`<span class="bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-bold px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-900/60">Oleh: <b>${dataHari.summaryTarik['Oleh-oleh']}</b> Toros</span>`);
-                }
+                ['B12', 'B10', 'Oleh-oleh'].forEach(jenis => {
+                    const tarikQty = dataHari.summaryTarik[jenis];
+                    const satuanTgt = jenis === 'Oleh-oleh' ? 'Toros' : 'Bal';
+                    
+                    const badgeColor = jenis === 'Oleh-oleh'
+                        ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900/60'
+                        : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60';
+
+                    if (tarikQty > 0) {
+                        chipsTarik.push(`
+                            <span class="${badgeColor} font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 shadow-2xs">
+                                <span>${jenis}: <b>${tarikQty}</b> ${satuanTgt}</span>
+                            </span>
+                        `);
+                    }
+                });
                 const htmlSummaryTarik = chipsTarik.length > 0 
                     ? chipsTarik.join('') 
                     : `<span class="text-slate-400 font-semibold">0</span>`;
