@@ -309,16 +309,21 @@
                 <div id="loadingData" class="text-center py-10 text-slate-400 hide">
                     <i class="fas fa-circle-notch fa-spin text-2xl text-orange-400"></i>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-slate-200">
-                    <table class="w-full text-left border-collapse whitespace-nowrap">
-                        <thead>
-                            <tr class="bg-slate-800 text-slate-100 text-[10px] uppercase tracking-wider font-bold">
-                                <th class="p-3">No. Invoice</th><th class="p-3">Tanggal</th><th class="p-3">Pelanggan</th><th class="p-3 text-right">Total</th><th class="p-3 text-right">Sisa Piutang</th><th class="p-3 text-center">Status</th><th class="p-3 text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyBody" class="text-sm"></tbody>
-                    </table>
-                </div>
+                <!-- Tambahkan max-w-4xl mx-auto pada div pembungkus -->
+				<div class="overflow-x-auto rounded-xl border border-slate-200 max-w-4xl mx-auto">
+					<table class="w-full text-left border-collapse whitespace-nowrap">
+						<thead>
+							<tr class="bg-slate-800 text-slate-100 text-[10px] uppercase tracking-wider font-bold">
+								<th class="p-3">No. Invoice</th>
+								<th class="p-3">Tanggal</th>
+								<th class="p-3 text-right">Total / Sisa Piutang</th>
+								<th class="p-3 text-center">Status</th>
+								<th class="p-3 text-center">Aksi</th>
+							</tr>
+						</thead>
+						<tbody id="historyBody" class="text-sm"></tbody>
+					</table>
+				</div>
             </div>
         </div>
 		
@@ -355,50 +360,97 @@
             </div>
 
             <div id="dashboardExportArea" class="w-full transition-all relative overflow-hidden">
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
-                    <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-3xl p-5 text-white shadow-lg shadow-red-500/30 relative overflow-hidden flex flex-col justify-between min-h-[120px]">
-                        <div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-file-invoice"></i></div>
-                        <span class="text-red-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Lembar Nota Belum Lunas</span>
-                        <div class="flex items-end gap-1.5 mt-2 relative z-10">
-                            <span id="analyticsUnpaidCount" class="text-3xl font-bold tracking-tight">0</span>
-                            <span class="text-xs font-medium text-red-100 mb-1.5">Nota</span>
-                        </div>
-                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+					<!-- WIDGET 1: TOTAL KESELURUHAN NOTA & NOMINAL -->
+					<div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-3xl p-5 text-white shadow-lg shadow-indigo-500/30 relative overflow-hidden flex flex-col justify-between min-h-[125px]">
+						<div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-receipt"></i></div>
+						<div class="relative z-10 flex justify-between items-start">
+							<span class="text-indigo-100 text-[10px] md:text-xs font-bold uppercase tracking-wider">Total Seluruh Nota</span>
+							
+							<!-- CHIPS TOTAL NOTA: LEBIH BESAR + WARNA KUNING AMBER EYE-CATCHING -->
+							<span id="analyticsTotalInvoicesCount" class="text-sm font-bold bg-amber-400 text-slate-900 px-3 py-1 rounded-full shadow-md shadow-amber-500/30 tracking-wide">
+								0 Nota
+							</span>
+						</div>
+						<div class="mt-2 relative z-10">
+							<div class="text-xl lg:text-2xl font-bold tracking-tight break-words" id="analyticsTotalInvoicesNominal">Rp 0</div>
+							<p class="text-[11px] text-indigo-100/80 mt-0.5">Akumulasi nilai transaksi</p>
+						</div>
+					</div>
 
-                    <div class="bg-gradient-to-br from-orange-400 to-orange-500 rounded-3xl p-5 text-white shadow-lg shadow-orange-500/30 relative overflow-hidden flex flex-col justify-between min-h-[120px]">
-                        <div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-hand-holding-usd"></i></div>
-                        <span class="text-orange-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Total Piutang Berjalan</span>
-                        <div class="mt-2 text-xl lg:text-2xl font-bold tracking-tight relative z-10 break-words" id="analyticsUnpaidSum">Rp 0</div>
-                    </div>
+					<!-- WIDGET 2: TOTAL UANG MASUK (KAS DITERIMA) -->
+					<div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-5 text-white shadow-lg shadow-emerald-500/30 relative overflow-hidden flex flex-col justify-between min-h-[125px]">
+						<div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-wallet"></i></div>
+						<div class="relative z-10 flex justify-between items-start">
+							<span class="text-emerald-100 text-[10px] md:text-xs font-bold uppercase tracking-wider">Total Kas Masuk (Lunas)</span>
+							
+							<!-- CHIPS PERSENTASE: LEBIH BESAR + WARNA PUTIH SOLID KONTRAS TINGGI -->
+							<span id="analyticsPaidPercent" class="text-sm font-bold bg-white text-emerald-800 px-3 py-1 rounded-full shadow-md shadow-emerald-950/20 tracking-wide">
+								0% Terbayar
+							</span>
+						</div>
+						<div class="mt-2 relative z-10">
+							<div class="text-xl lg:text-2xl font-bold tracking-tight break-words" id="analyticsTotalPaidSum">Rp 0</div>
+							<p class="text-[11px] text-emerald-100/80 mt-0.5">Uang riil yang sudah dibayarkan</p>
+						</div>
+					</div>
 
-                    <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-5 text-white shadow-lg shadow-emerald-500/30 relative overflow-hidden flex flex-col justify-between min-h-[120px]">
-                        <div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-wallet"></i></div>
-                        <span class="text-emerald-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Total Omset (Kotor)</span>
-                        <div class="mt-2 text-xl lg:text-2xl font-bold tracking-tight relative z-10 break-words" id="analyticsTotalOmset">Rp 0</div>
-                    </div>
+					<!-- WIDGET 3: TOTAL PIUTANG BERJALAN -->
+					<div class="bg-gradient-to-br from-orange-400 to-orange-500 rounded-3xl p-5 text-white shadow-lg shadow-orange-500/30 relative overflow-hidden flex flex-col justify-between min-h-[125px]">
+						<div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-hand-holding-usd"></i></div>
+						<span class="text-orange-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Total Piutang Berjalan</span>
+						<div class="mt-2 relative z-10">
+							<div class="text-xl lg:text-2xl font-bold tracking-tight break-words" id="analyticsUnpaidSum">Rp 0</div>
+							<p class="text-[11px] text-orange-100/80 mt-0.5">Sisa tagihan yang belum lunas</p>
+						</div>
+					</div>
 
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-5 text-white shadow-lg shadow-blue-500/30 relative overflow-hidden flex flex-col justify-between min-h-[120px]">
-                        <div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-box-open"></i></div>
-                        <span class="text-blue-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Total Barang Keluar</span>
-                        <div class="flex items-end gap-1.5 mt-2 relative z-10">
-                            <span id="analyticsTotalItems" class="text-3xl font-bold tracking-tight">0</span>
-                            <span class="text-xs font-medium text-blue-100 mb-1.5">Item</span>
-                        </div>
-                    </div>
-                </div>
+					<!-- WIDGET 4: LEMBAR NOTA BELUM LUNAS -->
+					<div class="bg-gradient-to-br from-red-500 to-red-600 rounded-3xl p-5 text-white shadow-lg shadow-red-500/30 relative overflow-hidden flex flex-col justify-between min-h-[125px]">
+						<div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-file-invoice"></i></div>
+						<span class="text-red-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Lembar Nota Belum Lunas</span>
+						<div class="flex items-end gap-1.5 mt-2 relative z-10">
+							<span id="analyticsUnpaidCount" class="text-3xl font-bold tracking-tight">0</span>
+							<span class="text-xs font-medium text-red-100 mb-1.5">Nota Menunggak</span>
+						</div>
+					</div>
+
+					<!-- WIDGET 5: TOTAL BARANG KELUAR -->
+					<div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-5 text-white shadow-lg shadow-blue-500/30 relative overflow-hidden flex flex-col justify-between min-h-[125px]">
+						<div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-box-open"></i></div>
+						<span class="text-blue-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Total Barang Keluar</span>
+						<div class="flex items-end gap-1.5 mt-2 relative z-10">
+							<span id="analyticsTotalItems" class="text-3xl font-bold tracking-tight">0</span>
+							<span class="text-xs font-medium text-blue-100 mb-1.5">Item (Non-Ongkir)</span>
+						</div>
+					</div>
+
+					<!-- WIDGET 6: STATUS PELUNASAN / NOTA BERES -->
+					<div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-3xl p-5 text-white shadow-lg shadow-teal-500/30 relative overflow-hidden flex flex-col justify-between min-h-[125px]">
+						<div class="absolute right-0 top-0 opacity-10 text-8xl -mt-2 -mr-2"><i class="fas fa-check-circle"></i></div>
+						<span class="text-teal-100 text-[10px] md:text-xs font-bold uppercase tracking-wider relative z-10">Nota Selesai / Lunas</span>
+						<div class="flex items-end gap-1.5 mt-2 relative z-10">
+							<span id="analyticsSettledCount" class="text-3xl font-bold tracking-tight">0</span>
+							<span class="text-xs font-medium text-teal-100 mb-1.5">Nota Lunas</span>
+						</div>
+					</div>
+				</div>
 
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
-                    <div class="xl:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-                        <h3 class="font-bold text-slate-800 mb-1">Tren Omset Penjualan</h3>
-                        <p class="text-[11px] text-slate-500 mb-4">Pergerakan total penjualan berdasarkan periode yang dipilih</p>
-                        <div id="chartTrend" class="w-full h-[280px] flex-1"></div>
-                    </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-                        <h3 class="font-bold text-slate-800 mb-1">Top 5 Produk</h3>
-                        <p class="text-[11px] text-slate-500 mb-4">Barang paling banyak keluar (berdasarkan Qty)</p>
-                        <div id="chartTopItems" class="w-full h-[280px] flex items-center justify-center flex-1"></div>
-                    </div>
-                </div>
+					<div class="xl:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+						<h3 class="font-bold text-slate-800 mb-1">Tren Omset Penjualan</h3>
+						<p class="text-[11px] text-slate-500 mb-4">Pergerakan total penjualan berdasarkan periode yang dipilih</p>
+						<!-- Hapus flex-1, gunakan min-h-[280px] -->
+						<div id="chartTrend" class="w-full min-h-[280px]"></div>
+					</div>
+					
+					<div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+						<h3 class="font-bold text-slate-800 mb-1">Top 5 Produk</h3>
+						<p class="text-[11px] text-slate-500 mb-4">Barang paling banyak keluar (berdasarkan Qty)</p>
+						<!-- Hapus flex-1, gunakan min-h-[260px] -->
+						<div id="chartTopItems" class="w-full min-h-[260px] flex items-center justify-center"></div>
+					</div>
+				</div>
             </div>
         </div>
 
@@ -1901,44 +1953,57 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             
             const tbody = document.getElementById('historyBody');
             if (filteredData.length === 0) { 
-                tbody.innerHTML = `<tr><td colspan="7" class="p-12 text-center text-slate-400 font-medium">Belum ada nota untuk kategori ini.</td></tr>`; 
+                tbody.innerHTML = `<tr><td colspan="5" class="p-12 text-center text-slate-400 font-medium">Belum ada nota untuk kategori ini.</td></tr>`; 
                 return; 
             }
 
             tbody.innerHTML = filteredData.map(inv => {
-                const isLunas = inv.remaining_amount <= 0;
-                return `
-                <tr class="border-b border-slate-100 hover:bg-slate-50/50">
-                    <td class="p-3">
-                        <button onclick="previewFromHistory('${inv.invoice_number}')" class="font-bold text-orange-500 hover:text-orange-600 hover:underline transition-colors text-left flex items-center gap-1.5" title="Klik untuk Pratinjau Nota">
-                            <i class="fas fa-file-invoice text-xs"></i> ${inv.invoice_number || '-'}
-                        </button>
-                    </td>
-                    <td class="p-3 font-bold text-slate-700" style="font-size: 13.5px;">${formatDateID(inv.invoice_date)}</td>
-                    <td class="p-3 font-normal text-slate-700 uppercase">${inv.customer_name}</td>
-                    <td class="p-3 text-right font-bold text-slate-700">Rp ${formatRupiah(inv.grand_total)}</td>
-                    <td class="p-3 text-right font-bold ${isLunas ? 'text-emerald-500' : 'text-red-500'}">Rp ${formatRupiah(inv.remaining_amount)}</td>
-                    <td class="p-3 text-center">
-                        ${isLunas ? `
-                            <span class="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                LUNAS
-                            </span>
-                        ` : `
-                            <button onclick="openQuickPayModal('${inv.invoice_number}')" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 hover:bg-red-200 hover:scale-105 transition-all shadow-sm cursor-pointer inline-flex items-center gap-1" title="Klik untuk Bayar Cepat">
-                                <i class="fas fa-hand-holding-usd text-[9px]"></i> HUTANG
-                            </button>
-                        `}
-                    </td>
-                    <td class="p-3 text-center">
-                        <div class="flex justify-center gap-1.5">
-                            <button onclick="openActionModal('${inv.invoice_number}')" class="w-8 h-8 flex items-center justify-center rounded-lg border bg-white text-slate-500 border-slate-200 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-colors shadow-sm" title="Opsi Aksi">
-                                <i class="fas fa-pen text-xs"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                `;
-            }).join('');
+				const grand = Number(inv.grand_total) || 0;
+				const remaining = Number(inv.remaining_amount) || 0;
+				
+				const isLunas = remaining <= 0;
+				const isBelumBayarSamaSekali = remaining >= grand;
+
+				// Tentukan warna sisa piutang:
+				let remainingColorClass = 'text-red-500'; // Default: sudah dicicil sebagian
+				if (isLunas) {
+					remainingColorClass = 'text-emerald-500'; // Lunas (Hijau)
+				} else if (isBelumBayarSamaSekali) {
+					remainingColorClass = 'text-orange-500'; // Belum dicicil sama sekali (Oranye)
+				}
+
+				return `
+				<tr class="border-b border-slate-100 hover:bg-slate-50/50">
+					<td class="p-3">
+						<button onclick="previewFromHistory('${inv.invoice_number}')" class="font-bold text-orange-500 hover:text-orange-600 hover:underline transition-colors text-left flex items-center gap-1.5" title="Klik untuk Pratinjau Nota">
+							<i class="fas fa-file-invoice text-xs"></i> ${inv.invoice_number || '-'}
+						</button>
+					</td>
+					<td class="p-3 font-bold text-slate-700" style="font-size: 13.5px;">${formatDateID(inv.invoice_date)}</td>
+					<td class="p-3 text-right font-bold text-slate-700">
+						Rp ${formatRupiah(grand)} / <span class="${remainingColorClass}">${formatRupiah(remaining)}</span>
+					</td>
+					<td class="p-3 text-center">
+						${isLunas ? `
+							<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+								LUNAS
+							</span>
+						` : `
+							<button onclick="openQuickPayModal('${inv.invoice_number}')" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 hover:bg-red-200 hover:scale-105 transition-all shadow-sm cursor-pointer inline-flex items-center gap-1" title="Klik untuk Bayar Cepat">
+								<i class="fas fa-hand-holding-usd text-[9px]"></i> HUTANG
+							</button>
+						`}
+					</td>
+					<td class="p-3 text-center">
+						<div class="flex justify-center gap-1.5">
+							<button onclick="openActionModal('${inv.invoice_number}')" class="w-8 h-8 flex items-center justify-center rounded-lg border bg-white text-slate-500 border-slate-200 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-colors shadow-sm" title="Opsi Aksi">
+								<i class="fas fa-pen text-xs"></i>
+							</button>
+						</div>
+					</td>
+				</tr>
+				`;
+			}).join('');
         }
         
         async function deleteInvoiceFromDB(invNum) {
@@ -2369,6 +2434,12 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                     });
                 }
 
+                // Kalkulasi metrik tambahan
+                const totalInvoicesCount = invoices ? invoices.length : 0;
+                const totalPaidSum = Math.max(0, totalOmset - totalPiutang);
+                const countSettled = Math.max(0, totalInvoicesCount - countNotaGantung);
+                const percentPaid = totalOmset > 0 ? Math.round((totalPaidSum / totalOmset) * 100) : 0;
+
                 let itemsData = [];
                 if (validInvoiceNumbers.length > 0) {
                     const { data: items, error: itemError } = await db.from('invoice_items_jambi')
@@ -2391,10 +2462,17 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                     itemCounts[name] += q;
                 });
 
-                document.getElementById('analyticsUnpaidCount').innerText = countNotaGantung;
+                // Update Nilai ke Widget Dashboard
+                document.getElementById('analyticsTotalInvoicesCount').innerText = `${totalInvoicesCount} Nota`;
+                document.getElementById('analyticsTotalInvoicesNominal').innerText = `Rp ${formatRupiah(totalOmset)}`;
+                
+                document.getElementById('analyticsPaidPercent').innerText = `${percentPaid}% Terbayar`;
+                document.getElementById('analyticsTotalPaidSum').innerText = `Rp ${formatRupiah(totalPaidSum)}`;
+                
                 document.getElementById('analyticsUnpaidSum').innerText = `Rp ${formatRupiah(totalPiutang)}`;
-                document.getElementById('analyticsTotalOmset').innerText = `Rp ${formatRupiah(totalOmset)}`;
+                document.getElementById('analyticsUnpaidCount').innerText = countNotaGantung;
                 document.getElementById('analyticsTotalItems').innerText = formatRupiah(totalBarangKeluar);
+                document.getElementById('analyticsSettledCount').innerText = countSettled;
 
                 renderTrendChart(omsetPerDay);
                 renderTopItemsChart(itemCounts);
@@ -2473,7 +2551,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             }
         }
 
-        function renderTrendChart(dataObj) {
+		function renderTrendChart(dataObj) {
             const isDarkMode = document.body.classList.contains('dark-mode');
             const textColor = isDarkMode ? '#94a3b8' : '#64748b';
 
@@ -2482,7 +2560,13 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             const labels = sortedDates.map(date => formatDateID(date));
 
             const options = {
-                chart: { type: 'area', height: '100%', toolbar: { show: false }, background: 'transparent', fontFamily: 'Inter, sans-serif' },
+                chart: { 
+                    type: 'area', 
+                    height: 280, // UBAH DARI '100%' MENJADI 280 (angka pasti)
+                    toolbar: { show: false }, 
+                    background: 'transparent', 
+                    fontFamily: 'Inter, sans-serif' 
+                },
                 series: [{ name: 'Omset Harian', data: seriesData }],
                 xaxis: { 
                     categories: labels, 
@@ -2517,7 +2601,12 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             const labels = sortedItems.length ? sortedItems.map(i => i[0]) : ['Tidak Ada Data'];
 
             const options = {
-                chart: { type: 'donut', height: '100%', background: 'transparent', fontFamily: 'Inter, sans-serif' },
+                chart: { 
+                    type: 'donut', 
+                    height: 260, // UBAH DARI '100%' MENJADI 260
+                    background: 'transparent', 
+                    fontFamily: 'Inter, sans-serif' 
+                },
                 series: seriesData,
                 labels: labels,
                 dataLabels: { enabled: false },
