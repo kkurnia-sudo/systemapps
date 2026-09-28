@@ -341,23 +341,66 @@
         </div>
     </div>
 
-    <!-- Informasi Supplier & Transaksi -->
-    <div class="card">
-        <div class="card-header-title">
-            <h3>Informasi Supplier & Transaksi</h3>
-            <span style="font-size: 12px; color: var(--text-muted);" id="warningRowInfo">* Otomatis terisi</span>
-        </div>
-        <div class="customer-info-grid">
-            <div class="form-group"><label>Nomor Rekap</label><input type="text" id="invoiceNumber" readonly style="font-weight: 600; letter-spacing: 0.5px; color: var(--primary);"></div>
-            <div class="form-group"><label>Tanggal Kirim</label><input type="date" id="deliveryDate"></div>
-            <div class="form-group">
-                <label>Nama Supplier</label>
-                <select id="custName" onchange="autoFillCustomer()">
-                    <option value="">-- Pilih Supplier --</option>
-                </select>
-            </div>
-        </div>
-    </div>
+	<!-- Informasi Supplier & Transaksi (Ultra Compact / Tanpa Label Teks) -->
+	<div class="card">
+		<div class="card-header-title">
+			<h3>Informasi Supplier & Transaksi</h3>
+			<span style="font-size: 12px; color: var(--text-muted);" id="warningRowInfo">* Otomatis terisi</span>
+		</div>
+		
+		<!-- Grid Utama 3 Kolom Sejajar -->
+		<div class="customer-info-compact-grid">
+			
+			<!-- Kolom 1: Nomor Rekap & Tanggal Kirim (Tanpa Label Teks) -->
+			<div style="display: flex; flex-direction: column; gap: 8px;">
+				<div class="form-group">
+					<input type="text" id="invoiceNumber" readonly title="Nomor Rekap" style="font-weight: 600; letter-spacing: 0.5px; color: var(--primary); padding: 8px 10px !important;">
+				</div>
+				<div class="form-group">
+					<input type="date" id="deliveryDate" title="Tanggal Kirim" style="padding: 8px 10px !important;">
+				</div>
+			</div>
+
+			<!-- Kolom 2: Nama Supplier (Tanpa Label Teks) -->
+			<div class="form-group">
+				<select id="custName" onchange="autoFillCustomer()" style="padding: 8px 10px !important;">
+					<option value="">-- Pilih Supplier --</option>
+				</select>
+			</div>
+
+			<!-- Kolom 3: Opsi Sisa Tagihan Sebelumnya (Hanya muncul jika ada sisa tagihan) -->
+			<div class="form-group" id="containerOpsiSisa" style="display: none;">
+				<div style="display: flex; flex-direction: column; gap: 6px;">
+					<label style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; user-select: none;">
+						<input type="radio" name="sisaNotaMode" value="gabung" checked onchange="onSisaNotaModeChange()" style="width: auto !important; height: auto !important; margin: 0; cursor: pointer;">
+						<span style="font-size: 12px; font-weight: 500;">🔗 Gabungkan Sisa Nota</span>
+					</label>
+					<label style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; user-select: none;">
+						<input type="radio" name="sisaNotaMode" value="pisah" onchange="onSisaNotaModeChange()" style="width: auto !important; height: auto !important; margin: 0; cursor: pointer;">
+						<span style="font-size: 12px; font-weight: 500;">📌 Simpan di Nota Lama</span>
+					</label>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<!-- Gaya CSS Layout Compact -->
+	<style>
+		.customer-info-compact-grid {
+			display: grid;
+			grid-template-columns: 1fr 1.2fr 1.4fr;
+			gap: 14px;
+			align-items: start;
+		}
+
+		@media (max-width: 768px) {
+			.customer-info-compact-grid {
+				grid-template-columns: 1fr;
+				gap: 10px;
+			}
+		}
+	</style>
 
     <!-- Tabel Rincian Pemesanan Baru -->
     <div class="card" style="margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none;">
@@ -477,42 +520,54 @@
     </div>
 </div>
 
-<!-- Modal Bayar Cepat Tagihan -->
-<div class="modal" id="quickPayModal" style="z-index: 1250;">
-    <div class="modal-content" style="max-width: 420px;">
-        <div class="modal-header">
-            <h3 style="font-size: 16px; font-weight: 600;">⚡ Bayar Cepat Tagihan</h3>
-            <button class="close-modal" onclick="toggleModal('quickPayModal')">&times;</button>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 14px;">
-            <label>Pilih Supplier</label>
-            <select id="qpSupplierSelect" onchange="onQuickPaySupplierChange()">
-                <option value="">-- Pilih Supplier --</option>
-            </select>
-        </div>
+	<!-- Modal Bayar Cepat Tagihan (Dengan Dropdown Pilihan Nota) -->
+	<div class="modal" id="quickPayModal" style="z-index: 1250;">
+		<div class="modal-content" style="max-width: 440px;">
+			<div class="modal-header">
+				<h3 style="font-size: 16px; font-weight: 600;">⚡ Bayar Cepat Tagihan</h3>
+				<button class="close-modal" onclick="toggleModal('quickPayModal')">&times;</button>
+			</div>
+			
+			<!-- Pilihan Supplier -->
+			<div class="form-group" style="margin-bottom: 12px;">
+				<label style="font-size: 12px;">Pilih Supplier</label>
+				<select id="qpSupplierSelect" onchange="onQuickPaySupplierChange()">
+					<option value="">-- Pilih Supplier --</option>
+				</select>
+			</div>
 
-        <div class="alert" style="display: block; background-color: #eff6ff; color: #1e3a8a; border-color: #bfdbfe; margin-bottom: 14px; padding: 12px;">
-            Sisa Hutang: <b id="qpCurrentDebt">Pilih supplier terlebih dahulu</b>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 12px;">
-            <label>Keterangan Pembayaran</label>
-            <input type="text" id="qpKet" value="TRF Tgl = ">
-        </div>
-        <div class="form-group">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <label>Nominal Bayar (Rp)</label>
-                <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; color: var(--primary); border-color: var(--primary); border-radius: 6px;" onclick="setBayarLunas()">⚡ Lunasi Semua</button>
-            </div>
-            <input type="text" id="qpNom" placeholder="0" oninput="formatRibuanInput(this)">
-        </div>
-        <div style="margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px;">
-            <button class="btn btn-outline" style="flex: 1;" onclick="toggleModal('quickPayModal')">Batal</button>
-            <button class="btn btn-primary" style="flex: 2;" onclick="prosesQuickPay()">Proses & Cetak Nota</button>
-        </div>
-    </div>
-</div>
+			<!-- Pilihan Nota Tagihan (Muncul Otomatis Setelah Supplier Dipilih) -->
+			<div class="form-group" id="qpInvoiceContainer" style="margin-bottom: 12px; display: none;">
+				<label style="font-size: 12px; font-weight: 600; color: var(--primary);">Pilih Nota yang Akan Dibayar</label>
+				<select id="qpInvoiceSelect" onchange="onQuickPayInvoiceChange()">
+					<option value="">-- Pilih Nota --</option>
+				</select>
+			</div>
+
+			<!-- Info Sisa Hutang Nota Terpilih -->
+			<div class="alert" style="display: block; background-color: #eff6ff; color: #1e3a8a; border-color: #bfdbfe; margin-bottom: 14px; padding: 10px 12px;">
+				Sisa Hutang: <b id="qpCurrentDebt">Pilih supplier terlebih dahulu</b>
+			</div>
+			
+			<!-- Keterangan & Nominal -->
+			<div class="form-group" style="margin-bottom: 12px;">
+				<label style="font-size: 12px;">Keterangan Pembayaran</label>
+				<input type="text" id="qpKet" value="TRF Tgl = ">
+			</div>
+			<div class="form-group">
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+					<label style="font-size: 12px;">Nominal Bayar (Rp)</label>
+					<button type="button" class="btn btn-outline" style="padding: 3px 8px; font-size: 11px; color: var(--primary); border-color: var(--primary); border-radius: 6px;" onclick="setBayarLunas()">⚡ Lunasi Semua</button>
+				</div>
+				<input type="text" id="qpNom" placeholder="0" oninput="formatRibuanInput(this)">
+			</div>
+
+			<div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+				<button class="btn btn-outline" style="flex: 1;" onclick="toggleModal('quickPayModal')">Batal</button>
+				<button class="btn btn-primary" style="flex: 2;" onclick="prosesQuickPay()">Proses & Cetak Nota</button>
+			</div>
+		</div>
+	</div>
 
 <!-- Modal Riwayat Rekap -->
 <div class="modal" id="historyModal">
@@ -662,6 +717,7 @@
     let depositList = [];
     let editingDepositIndex = -1;
     let currentPiutang = 0;
+    let rawPreviousBalance = 0; // TAMBAHKAN INI: Menampung saldo asli dari DB
     let currentLastInvoiceNo = null;
 
     let isEditingMode = false;
@@ -707,7 +763,12 @@
         originalEditingInvoiceNo = null; 
         depositList = []; 
         currentPiutang = 0;
+        rawPreviousBalance = 0;
         
+        // Sembunyikan container radio button
+        const containerOpsi = document.getElementById('containerOpsiSisa');
+        if (containerOpsi) containerOpsi.style.display = 'none';
+
         document.getElementById('editModeBanner').style.display = 'none'; 
         document.getElementById('btnSaveInvoiceMain').innerHTML = `<svg class="humbleicons hi-save" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-1.828-1.828A2 2 0 0 0 16.172 4H15M8 4v4a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4M8 4h7M7 17v-3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"/></svg> Simpan Rekap`;
 
@@ -1474,31 +1535,61 @@
 
     // --- LOGIKA FORM TRANSAKSI & RINCIAN BARANG ---
 	async function autoFillCustomer() {
-		const select = document.getElementById('custName');
-		currentCustomerId = parseInt(select.value) || null;
-		const customer = customers.find(c => c.id === currentCustomerId);
-		
-		if (customer) {
-			document.getElementById('warningRow').style.color = 'var(--primary)'; 
-			document.getElementById('warningRow').innerText = '✓ Supplier aktif, silakan masukkan barang kiriman baru';
-		} else {
-			document.getElementById('warningRow').style.color = 'var(--text-muted)'; 
-			document.getElementById('warningRow').innerText = 'Pilih supplier terlebih dahulu untuk menambah barang';
-		}
+        const select = document.getElementById('custName');
+        currentCustomerId = parseInt(select.value) || null;
+        const customer = customers.find(c => c.id === currentCustomerId);
+        
+        if (customer) {
+            document.getElementById('warningRow').style.color = 'var(--primary)'; 
+            document.getElementById('warningRow').innerText = '✓ Supplier aktif, silakan masukkan barang kiriman baru';
+        } else {
+            document.getElementById('warningRow').style.color = 'var(--text-muted)'; 
+            document.getElementById('warningRow').innerText = 'Pilih supplier terlebih dahulu untuk menambah barang';
+        }
 
-		if(!isEditingMode) {
-			document.getElementById('itemsBody').innerHTML = ''; 
-			depositList = []; 
-			currentPiutang = 0;
-			
-			if(currentCustomerId && customer) {
-				const prevBalance = await fetchPreviousBalance(customer.name);
-				currentPiutang = prevBalance;
-				addRow(); 
-			}
-			calculate();
-		}
-	}
+        if(!isEditingMode) {
+            document.getElementById('itemsBody').innerHTML = ''; 
+            depositList = []; 
+            currentPiutang = 0;
+            rawPreviousBalance = 0;
+            
+            if(currentCustomerId && customer) {
+                const prevBalance = await fetchPreviousBalance(customer.name);
+                rawPreviousBalance = prevBalance; // Simpan nilai asli dari DB
+                currentPiutang = prevBalance;
+
+                // Tampilkan opsi radio button HANYA jika supplier memiliki sisa tagihan
+                const containerOpsi = document.getElementById('containerOpsiSisa');
+                if (containerOpsi) {
+                    containerOpsi.style.display = (prevBalance !== 0) ? 'block' : 'none';
+                }
+
+                // Reset pilihan radio ke 'gabung' setiap kali ganti supplier
+                const radioGabung = document.querySelector('input[name="sisaNotaMode"][value="gabung"]');
+                if (radioGabung) radioGabung.checked = true;
+
+                addRow(); 
+            } else {
+                // Sembunyikan opsi jika belum pilih supplier
+                const containerOpsi = document.getElementById('containerOpsiSisa');
+                if (containerOpsi) containerOpsi.style.display = 'none';
+            }
+            calculate();
+        }
+    }
+	// Fungsi merespons perubahan pilihan radio button
+    function onSisaNotaModeChange() {
+        const radioSelected = document.querySelector('input[name="sisaNotaMode"]:checked');
+        const selectedMode = radioSelected ? radioSelected.value : 'gabung';
+        
+        if (selectedMode === 'pisah') {
+            currentPiutang = 0; // Kosongkan sisa tagihan untuk invoice baru ini
+        } else {
+            currentPiutang = rawPreviousBalance; // Gunakan kembali saldo lama
+        }
+        
+        calculate(); // Hitung ulang tampilan ringkasan
+    }
     function getAvailableProductsForCurrentAgent() {
         return [...products].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(p => ({ 
             id: p.id, 
@@ -2005,13 +2096,19 @@
 				}]);
 				await supabaseClient.from('supplier_recap_items').insert(itemsPayload);
 
-				// 2. Otomatis lunaskan nota lama jika saldonya dialihkan
-				if (currentLastInvoiceNo && currentPiutang !== 0) {
+				// ================= BAGIAN YANG DIPERBARUI =================
+				// Membaca status pilihan radio button ('gabung' atau 'pisah')
+				const radioSelected = document.querySelector('input[name="sisaNotaMode"]:checked');
+				const selectedMode = radioSelected ? radioSelected.value : 'gabung';
+
+				// 2. Otomatis lunaskan nota lama HANYA JIKA opsi yang dipilih adalah 'gabung'
+				if (selectedMode === 'gabung' && currentLastInvoiceNo && rawPreviousBalance !== 0) {
 					await supabaseClient
 						.from('supplier_recaps')
 						.update({ balance_due: 0 })
 						.eq('invoice_no', currentLastInvoiceNo);
 				}
+				// ==========================================================
 
 				customerBalances[customer.name] = balanceDueDB;
 				
@@ -2075,64 +2172,120 @@
         await onQuickPaySupplierChange();
     }
 
+    // Global penampung daftar nota yang belum lunas milik supplier aktif
+    let qpUnpaidInvoices = [];
+
+	// Fungsi ketika Supplier dipilih di Modal Bayar Cepat (Dengan Pembatasan Jumlah Nota)
     async function onQuickPaySupplierChange() {
         const qpSelect = document.getElementById('qpSupplierSelect');
         const selectedId = qpSelect ? (parseInt(qpSelect.value) || null) : currentCustomerId;
         const qpDebtEl = document.getElementById('qpCurrentDebt');
+        const qpInvContainer = document.getElementById('qpInvoiceContainer');
+        const qpInvSelect = document.getElementById('qpInvoiceSelect');
+
+        // BISA DIUBAH: Atur jumlah maksimal nota yang ingin ditampilkan di dropdown (misal: 3 atau 4)
+        const maxInvoicesShow = 4; 
+
+        qpSelectedDebt = 0;
+        qpTargetInvoiceNo = null;
+        qpUnpaidInvoices = [];
 
         if (!selectedId) {
-            qpSelectedDebt = 0;
-            qpTargetInvoiceNo = null;
             if (qpDebtEl) qpDebtEl.innerText = "Pilih supplier terlebih dahulu";
+            if (qpInvContainer) qpInvContainer.style.display = 'none';
             return;
         }
 
         const customer = customers.find(c => c.id === selectedId);
         if (!customer) return;
 
-        if (qpDebtEl) qpDebtEl.innerText = "Memeriksa sisa hutang...";
+        if (qpDebtEl) qpDebtEl.innerText = "Memeriksa daftar nota tagihan...";
 
-        const hutang = await fetchPreviousBalance(customer.name);
-        qpSelectedDebt = hutang;
-
-        qpTargetInvoiceNo = null;
+        // Ambil nota milik supplier ini yang masih memilki sisa hutang, dibatasi sebanyak maxInvoicesShow
         if (isSupabaseConnected) {
             try {
-                const { data } = await supabaseClient
+                const { data, error } = await supabaseClient
                     .from('supplier_recaps')
-                    .select('invoice_no')
+                    .select('invoice_no, balance_due, created_at, subtotal')
                     .eq('customer_name', customer.name)
-                    .gt('subtotal', 0)
+                    .gt('balance_due', 0)
                     .order('created_at', { ascending: false })
-                    .limit(1);
+                    .limit(maxInvoicesShow); // <<== MENAMBAHKAN BATAS MAKSIMAL NOTA DARI DATABASE
 
-                if (data && data.length > 0) {
-                    qpTargetInvoiceNo = data[0].invoice_no;
+                if (!error && data) {
+                    qpUnpaidInvoices = data;
                 }
             } catch (err) {
-                console.error("Gagal memeriksa nomor nota:", err);
+                console.error("Gagal mengambil daftar nota:", err);
             }
         }
 
-        if (!qpDebtEl) return;
+        // Render Dropdown Pilihan Nota
+        if (qpUnpaidInvoices.length > 0) {
+            let options = '<option value="">-- Pilih Nota yang Akan Dibayar --</option>';
+            let totalHutangKeseluruhan = 0;
 
-        if (hutang > 0) {
-            if (qpTargetInvoiceNo) {
-                qpDebtEl.innerHTML = `
-                    <span style="display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                        <a href="javascript:void(0)" onclick="previewFromQuickPay()" title="Klik untuk memeriksa rincian nota ${qpTargetInvoiceNo}" style="color: #dc2626; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 2px 0;">
-                            ${formatMoney(hutang)}
-                        </a>
-                        <span style="font-size: 11px; color: #2563eb; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 2px 4px;" onclick="previewFromQuickPay()">(Lihat Nota ↗)</span>
-                    </span>
-                `;
-            } else {
-                qpDebtEl.innerHTML = `<span style="color: #dc2626; font-weight: 700;">${formatMoney(hutang)}</span>`;
-            }
-        } else if (hutang < 0) {
-            qpDebtEl.innerHTML = `<span style="color: #2563eb; font-weight: 700;">Deposit: ${formatMoney(Math.abs(hutang))}</span>`;
+            // Hitung Total Akumulasi dari nota yang ditampilkan
+            qpUnpaidInvoices.forEach(inv => {
+                totalHutangKeseluruhan += (parseFloat(inv.balance_due) || 0);
+            });
+
+            // Opsi 1: Pilihan Bayar Semua Total Akumulasi
+            options += `<option value="ALL" data-balance="${totalHutangKeseluruhan}">⚡ LUNASI KESELURUHAN (Total: ${formatMoney(totalHutangKeseluruhan)})</option>`;
+            options += `<option disabled>────────── PER NOTA (MAX ${maxInvoicesShow} TERBARU) ──────────</option>`;
+
+            // Opsi 2: Pilihan Per Nota Spesifik (Maksimal sebanyak maxInvoicesShow)
+            qpUnpaidInvoices.forEach(inv => {
+                const bal = parseFloat(inv.balance_due) || 0;
+                const ketNota = (inv.subtotal > 0 && bal > inv.subtotal) ? ' [Gabungan]' : '';
+                options += `<option value="${inv.invoice_no}" data-balance="${bal}">${inv.invoice_no}${ketNota} — Sisa: ${formatMoney(bal)}</option>`;
+            });
+
+            qpInvSelect.innerHTML = options;
+            qpInvContainer.style.display = 'block';
+
+            // Default pilih opsi "ALL" (Pelunasan Total)
+            qpInvSelect.value = "ALL";
+            onQuickPayInvoiceChange();
+
         } else {
-            qpDebtEl.innerHTML = `<span style="color: #10b981; font-weight: 700;">Lunas (Rp 0)</span>`;
+            // Jika tidak ada nota aktif di DB
+            qpInvContainer.style.display = 'none';
+            const hutang = await fetchPreviousBalance(customer.name);
+            qpSelectedDebt = hutang;
+
+            if (hutang > 0) {
+                qpDebtEl.innerHTML = `<span style="color: #dc2626; font-weight: 700;">${formatMoney(hutang)}</span>`;
+            } else if (hutang < 0) {
+                qpDebtEl.innerHTML = `<span style="color: #2563eb; font-weight: 700;">Deposit: ${formatMoney(Math.abs(hutang))}</span>`;
+            } else {
+                qpDebtEl.innerHTML = `<span style="color: #10b981; font-weight: 700;">Lunas (Rp 0)</span>`;
+            }
+        }
+    }
+
+    // 2. Ketika Pilihan Nota Berubah dari Dropdown
+    function onQuickPayInvoiceChange() {
+        const qpInvSelect = document.getElementById('qpInvoiceSelect');
+        const qpDebtEl = document.getElementById('qpCurrentDebt');
+        const selectedOption = qpInvSelect.options[qpInvSelect.selectedIndex];
+
+        if (qpInvSelect.value !== "") {
+            qpTargetInvoiceNo = qpInvSelect.value;
+            qpSelectedDebt = parseFloat(selectedOption.getAttribute('data-balance')) || 0;
+
+            qpDebtEl.innerHTML = `
+                <span style="display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <a href="javascript:void(0)" onclick="previewFromQuickPay()" title="Lihat rincian nota ${qpTargetInvoiceNo}" style="color: #dc2626; font-weight: 700; text-decoration: underline; cursor: pointer;">
+                        ${formatMoney(qpSelectedDebt)}
+                    </a>
+                    <span style="font-size: 11px; color: #2563eb; font-weight: 600; cursor: pointer; text-decoration: underline;" onclick="previewFromQuickPay()">(Lihat Nota ↗)</span>
+                </span>
+            `;
+        } else {
+            qpTargetInvoiceNo = null;
+            qpSelectedDebt = 0;
+            qpDebtEl.innerText = "Pilih salah satu nota di atas";
         }
     }
 
