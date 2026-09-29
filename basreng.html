@@ -145,6 +145,33 @@
             </div>
         </div>
     </div>
+	
+	
+	<!-- MODAL KONFIRMASI MODERN (AKSI / PEMBAYARAN) -->
+    <div id="modalKonfirmasiAksi" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-[95] p-4 transition-all">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 w-full max-w-sm overflow-hidden p-6 text-center space-y-4 animate-[fadeIn_0.2s_ease-out_forwards]">
+            <!-- Ikon Centang / Pembayaran Berwarna Teal -->
+            <div class="w-16 h-16 bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            
+            <div class="space-y-1">
+                <h4 class="text-base font-bold text-gray-800 dark:text-gray-100" id="konfirmasiAksiTitle">Konfirmasi Pembayaran</h4>
+                <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed" id="konfirmasiAksiDesc">Apakah Anda yakin ingin menyelesaikan pembayaran ini?</p>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="toggleModal('modalKonfirmasiAksi')" class="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 font-bold py-2.5 rounded-xl text-sm transition">
+                    Batal
+                </button>
+                <button type="button" onclick="eksekusiModalAksi()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg shadow-teal-600/20">
+					Ya, Selesaikan
+				</button>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL PIN SECURITY -->
     <div id="modalPin" class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm hidden items-center justify-center z-[95] p-4">
@@ -329,6 +356,17 @@
 				<button onclick="toggleModal('modalRiwayatInvoice')" class="w-full text-left bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center">
 					<svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> 
 					<span class="truncate">Riwayat Invoice</span>
+				</button>
+				<button onclick="toggleModal('modalHitungFee')" class="w-full text-left bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/30 text-teal-800 dark:text-teal-300 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center col-span-2 lg:col-span-1">
+					<svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 
+					<span class="truncate">Hitung Fee / Bonus</span>
+				</button>
+				<!-- TOMBOL MENU: FEE PLASTIK -->
+				<button onclick="toggleModal('modalFeePlastik')" class="w-full text-left bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center col-span-2 lg:col-span-1">
+					<svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+					</svg> 
+					<span class="truncate">Fee Plastik</span>
 				</button>
 			</div>
 			<!-- KOLOM CATATAN / NOTE (MEREGANG SEJAJAR KE BAWAH) -->
@@ -1290,6 +1328,180 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
         </div>
     </div>
 	
+	<!-- MODAL PERHITUNGAN FEE / BONUS -->
+    <div id="modalHitungFee" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+			<button type="button" 
+			onclick="tutupModalHitungFee()" 
+			class="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 hover:bg-teal-100/60 dark:hover:bg-slate-700 dark:hover:text-gray-200 text-xl font-bold transition cursor-pointer shrink-0" 
+			title="Tutup Modal">
+			&times;
+		</button>
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[92vh] border border-gray-100 dark:border-slate-800">
+            <!-- Header Modal & Tab Navigasi -->
+            <div class="px-6 py-4 flex justify-between items-center border-b bg-teal-50 dark:bg-slate-800">
+                <div class="flex items-center gap-4">
+                    <h3 class="text-base lg:text-lg font-bold text-teal-800 dark:text-teal-300 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Perhitungan Fee & Bonus Kiriman
+                    </h3>
+                    <div class="flex gap-1 bg-white/70 dark:bg-slate-900/60 p-1 rounded-xl border border-teal-200 dark:border-slate-700 text-xs">
+                        <button onclick="gantiTabFee('hitung')" id="tabBtnFeeHitung" class="px-3 py-1 font-bold rounded-lg bg-teal-600 text-white transition">Kalkulator Fee</button>
+                        <button onclick="gantiTabFee('riwayat')" id="tabBtnFeeRiwayat" class="px-3 py-1 font-bold rounded-lg text-gray-500 hover:text-teal-600 transition">Riwayat Terbayar</button>
+                    </div>
+                </div>
+                <button onclick="toggleModal('modalHitungFee')" class="text-2xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">&times;</button>
+            </div>
+
+            <!-- Konten Modal -->
+            <div class="p-6 overflow-y-auto flex-1 space-y-5 bg-white dark:bg-slate-900">
+                
+                <!-- TAB 1: KALKULATOR FEE BARU -->
+                <div id="viewFeeHitung" class="space-y-5">
+                    <!-- Panel Filter Periode & Tarif -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-gray-200 dark:border-slate-700">
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block mb-1">Tgl Mulai Periode</label>
+                            <input type="date" id="feeTglMulai" class="w-full border dark:border-slate-700 p-2 text-xs rounded-xl bg-white dark:bg-slate-900 outline-none focus:border-teal-500 font-semibold">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block mb-1">Tgl Akhir Periode</label>
+                            <input type="date" id="feeTglAkhir" class="w-full border dark:border-slate-700 p-2 text-xs rounded-xl bg-white dark:bg-slate-900 outline-none focus:border-teal-500 font-semibold">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block mb-1">Tarif Fee per Ball</label>
+                            <input type="number" id="feeTarifPerBal" value="3000" class="w-full border dark:border-slate-700 p-2 text-xs rounded-xl bg-white dark:bg-slate-900 outline-none focus:border-teal-500 font-bold text-teal-600" oninput="kalkulasiTotalFee()">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="tarikDataKirimanFee()" class="w-full bg-teal-600 hover:bg-teal-700 text-white p-2.5 rounded-xl text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Tarik Data Kiriman
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kartu Ringkasan (KPI) -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+						<div class="bg-orange-50 dark:bg-slate-800 p-3.5 rounded-2xl border border-orange-200 dark:border-orange-900/50 text-center shadow-sm">
+							<p class="text-[10px] font-bold uppercase text-orange-500 dark:text-orange-400">Total Ball Jambi</p>
+							<p class="text-base font-poppins-custom font-extrabold text-orange-600 dark:text-orange-400 mt-0.5" id="feeSumJambi">0 Ball</p>
+						</div>
+                        <div class="bg-purple-50 dark:bg-slate-800 p-3.5 rounded-2xl border border-purple-100 dark:border-purple-900 text-center">
+                            <p class="text-[10px] font-bold uppercase text-purple-500">Ball Jakarta (Dipilih)</p>
+                            <p class="text-base font-poppins-custom text-purple-700 dark:text-purple-300 mt-0.5" id="feeSumJakarta">0 Ball</p>
+                        </div>
+                        <!-- SESUDAH (TEMA MERAH MUDA / PINK): -->
+						<div class="bg-pink-50 dark:bg-slate-800 p-3.5 rounded-2xl border border-pink-200 dark:border-pink-900/50 text-center shadow-sm">
+							<p class="text-[10px] font-bold uppercase text-pink-500 dark:text-pink-400">Total Keseluruhan Ball</p>
+							<p class="text-base font-poppins-custom font-extrabold text-pink-600 dark:text-pink-300 mt-0.5" id="feeSumTotalBal">0 Ball</p>
+						</div>
+                        <div class="bg-teal-50 dark:bg-slate-800 p-3.5 rounded-2xl border border-teal-200 dark:border-teal-900 text-center shadow-sm">
+                            <p class="text-[10px] font-bold uppercase text-teal-600 dark:text-teal-400">Estimasi Nominal Fee</p>
+                            <p class="text-lg font-poppins-custom font-extrabold text-teal-700 dark:text-teal-300 mt-0.5" id="feeSumTotalNominal">Rp 0</p>
+                        </div>
+                    </div>
+
+                    <!-- Petunjuk Singkat -->
+                    <div class="flex items-center justify-between text-xs text-gray-500 px-1">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 
+                            *Jambi otomatis tercentang semua. Centang kiriman Jakarta yang berhak mendapatkan fee.
+                        </span>
+                        <span class="text-[11px] font-bold" id="feeTerpilihInfo">0 nota terpilih</span>
+                    </div>
+
+                    <!-- Tabel Daftar Kiriman -->
+                    <div class="overflow-y-auto max-h-[300px] border border-gray-100 dark:border-slate-700 rounded-2xl">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 uppercase sticky top-0 z-10 font-bold">
+                                <tr>
+                                    <th class="p-3 w-10 text-center">Pilih</th>
+                                    <th class="p-3">Tanggal</th>
+                                    <th class="p-3">Agen & Kurir</th>
+                                    <th class="p-3">Varian & Jumlah Ball</th>
+                                    <th class="p-3 text-right">Fee (Rp)</th>
+                                    <th class="p-3 text-center">Status Klaim</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feeTableBody" class="divide-y divide-gray-100 dark:divide-slate-700 font-medium text-gray-700 dark:text-gray-300">
+                                <tr>
+                                    <td colspan="6" class="p-6 text-center text-gray-400 italic">Pilih tanggal periode di atas lalu klik "Tarik Data Kiriman".</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Form Penyelesaian Pembayaran -->
+					<div class="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-slate-700 space-y-3">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+							<div>
+								<label class="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block mb-1">Dihitung Oleh</label>
+								<input type="text" id="feePenerima" value="Admin" class="w-full border dark:border-slate-700 p-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 outline-none font-semibold text-gray-700 dark:text-gray-200">
+							</div>
+							<!-- SESUDAH (DATE PICKER DENGAN FORMAT DD/MMM/YY): -->
+							<div>
+								<label class="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block mb-1">Pada Tanggal</label>
+								<div class="relative cursor-pointer">
+									<!-- Input Teks Tampilan (Menampilkan format 29/Sep/26) -->
+									<input type="text" id="feeCatatan" readonly placeholder="Pilih Tanggal..." 
+										class="w-full border border-gray-200 dark:border-slate-700 p-2.5 pr-9 text-xs rounded-xl bg-white dark:bg-slate-900 outline-none font-semibold text-gray-700 dark:text-gray-200 cursor-pointer shadow-sm">
+									
+									<!-- Native Date Picker Transparan (Muncul saat diklik di mana saja pada kotak) -->
+									<input type="date" id="pickerFeeCatatan" 
+										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+										onchange="setPilihTanggalCatatan(this.value)">
+									
+									<!-- Ikon Kalender Mini -->
+									<div class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+										</svg>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+                </div>
+
+                <!-- TAB 2: RIWAYAT FEE TERBAYAR -->
+                <div id="viewFeeRiwayat" class="hidden space-y-4">
+                    <p class="text-xs text-gray-500">Daftar pencairan fee atau bonus pengiriman yang sudah pernah Anda bayarkan:</p>
+                    <div class="overflow-y-auto max-h-[420px] border border-gray-100 dark:border-slate-700 rounded-2xl">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 uppercase sticky top-0 font-bold">
+                                <tr>
+                                    <th class="p-3">Tgl Bayar</th>
+                                    <th class="p-3">Penerima & Catatan</th>
+                                    <th class="p-3">Periode Kiriman</th>
+                                    <th class="p-3 text-center">Rincian Ball</th>
+                                    <th class="p-3 text-right">Total Fee</th>
+                                    <th class="p-3 text-center">Status</th>
+                                    <th class="p-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="riwayatFeeTableBody" class="divide-y divide-gray-100 dark:divide-slate-700 font-medium text-gray-700 dark:text-gray-300">
+                                <tr>
+                                    <td colspan="7" class="p-6 text-center text-gray-400 italic">Belum ada riwayat fee yang terbayar.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Tombol Aksi -->
+            <div class="p-4 px-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 flex justify-between items-center flex-wrap gap-2">
+                <button onclick="toggleModal('modalHitungFee')" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 transition">Tutup</button>
+                <div id="footerAksiHitung" class="flex gap-2">
+                    <button onclick="simpanPembayaranFee()" class="px-6 py-2.5 rounded-xl text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 shadow-md transition flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Simpan & Tandai Terbayar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+	
 	<!-- MODAL REKAP KESELURUHAN -->
     <div id="modalRekapTotal" class="fixed inset-0 bg-gray-900/80 backdrop-blur-md hidden items-center justify-center z-[80] p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[95vh] border border-gray-100">
@@ -1465,6 +1677,38 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 			currentPageBerjalan += arah;
 			loadDataMasuk();
 		}
+		
+		
+		let aksiKonfirmasiCallback = null;
+        function bukaModalKonfirmasiAksi(judul, deskripsi, onConfirm) {
+            const elJudul = document.getElementById('konfirmasiAksiTitle');
+            const elDesc = document.getElementById('konfirmasiAksiDesc');
+            if (elJudul) elJudul.innerText = judul;
+            if (elDesc) elDesc.innerText = deskripsi;
+            
+            aksiKonfirmasiCallback = onConfirm;
+
+            const modal = document.getElementById('modalKonfirmasiAksi');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else if (onConfirm) {
+                onConfirm(); // Langsung jalankan jika elemen modal tidak ada
+            }
+        }
+
+        // Pemasangan event tombol eksekusi konfirmasi yang aman
+        function eksekusiModalAksi() {
+            const modal = document.getElementById('modalKonfirmasiAksi');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            if (typeof aksiKonfirmasiCallback === 'function') {
+                aksiKonfirmasiCallback();
+                aksiKonfirmasiCallback = null;
+            }
+        }
 
         // --- GLOBAL VARIABLES UNTUK DATA MASTER DARI SUPABASE ---
         let globalMasterVarian = [];
@@ -1614,6 +1858,25 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 				alert("Terjadi kesalahan saat menyimpan PNG."); tutupModalStatus(); 
 			});
 		}
+		
+		
+		function setPeriodeDefaultFee() {
+			const now = new Date();
+			const yyyy = now.getFullYear();
+			const mm = String(now.getMonth() + 1).padStart(2, '0');
+			const dd = String(now.getDate()).padStart(2, '0');
+
+			// Set tanggal periode
+			document.getElementById('feeTglMulai').value = `${yyyy}-${mm}-01`;
+			document.getElementById('feeTglAkhir').value = `${yyyy}-${mm}-${dd}`;
+
+			// Set default kolom "Pada Tanggal" ke hari ini (Format: dd/Mmm/yy)
+			const picker = document.getElementById('pickerFeeCatatan');
+			if (picker) {
+				picker.value = `${yyyy}-${mm}-${dd}`;
+				setPilihTanggalCatatan(`${yyyy}-${mm}-${dd}`);
+			}
+		}
 
         function kembaliDariInvoice() {
             document.getElementById('modalInvoice').classList.add('hidden'); document.getElementById('modalInvoice').classList.remove('flex');
@@ -1717,6 +1980,12 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 					muatRiwayatInvoice();
 				}
                 if(id==='modalRekapKustom') initModalRekapKustom();
+				if(id==='modalHitungFee') {
+				setPeriodeDefaultFee();
+				}
+				if(id==='modalFeePlastik') {
+					setPeriodeDefaultFeePlastik();
+				}
             } else { m.classList.add('hidden'); m.classList.remove('flex'); renderDropdowns(); }
         }
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('sidebar-hidden'); }
@@ -3496,12 +3765,1587 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
         
         // Panggil fungsi pemuatan catatan di sini
         muatCatatanSidebar();
+		setPeriodeDefaultFee(); //
+		setPeriodeDefaultFeePlastik(); //
 
         fetchMasterData().then(() => {
             terapkanPengaturanWidget();
             loadWidgets();
             loadDataMasuk();
         });
+		
+		// ==========================================
+        // FITUR PERHITUNGAN FEE (TERHUBUNG KE SUPABASE)
+        // ==========================================
+        let listDataKirimanFee = [];
+        let globalRiwayatFee = [];
+
+        function gantiTabFee(tab) {
+            const isHitung = tab === 'hitung';
+            document.getElementById('viewFeeHitung').classList.toggle('hidden', !isHitung);
+            document.getElementById('viewFeeRiwayat').classList.toggle('hidden', isHitung);
+            document.getElementById('footerAksiHitung').classList.toggle('hidden', !isHitung);
+
+            const btnHitung = document.getElementById('tabBtnFeeHitung');
+            const btnRiwayat = document.getElementById('tabBtnFeeRiwayat');
+            if (isHitung) {
+                btnHitung.className = "px-3 py-1 font-bold rounded-lg bg-teal-600 text-white transition";
+                btnRiwayat.className = "px-3 py-1 font-bold rounded-lg text-gray-500 hover:text-teal-600 transition";
+            } else {
+                btnRiwayat.className = "px-3 py-1 font-bold rounded-lg bg-teal-600 text-white transition";
+                btnHitung.className = "px-3 py-1 font-bold rounded-lg text-gray-500 hover:text-teal-600 transition";
+                renderRiwayatFee();
+            }
+        }
+		
+		
+		// Fungsi mengubah hasil pilihan date picker (YYYY-MM-DD) menjadi DD/Mmm/YY
+		function setPilihTanggalCatatan(val) {
+			if (!val) return;
+			const parts = val.split('-');
+			if (parts.length === 3) {
+				const y = parts[0].slice(2); // Ambil 2 digit tahun terakhir
+				const mIdx = parseInt(parts[1], 10) - 1;
+				const d = parts[2].padStart(2, '0');
+				const mos = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+				
+				// Masukkan hasil format dd/mmm/yy ke input
+				document.getElementById('feeCatatan').value = `${d}/${mos[mIdx]}/${y}`;
+			}
+		}
+
+        // Ambil ID kiriman yang sudah pernah dibayar langsung dari Supabase
+        async function ambilDaftarIdFeeSudahCair() {
+            const { data } = await supabaseClient.from('riwayat_fee').select('item_ids');
+            const ids = new Set();
+            (data || []).forEach(r => {
+                let items = r.item_ids || [];
+                if (typeof items === 'string') {
+                    try { items = JSON.parse(items); } catch(e) { items = []; }
+                }
+                items.forEach(id => ids.add(String(id)));
+            });
+            return ids;
+        }
+
+        async function tarikDataKirimanFee() {
+            const tglMulai = document.getElementById('feeTglMulai').value;
+            const tglAkhir = document.getElementById('feeTglAkhir').value;
+
+            if (!tglMulai || !tglAkhir) {
+                alert("Silakan tentukan Tanggal Mulai dan Tanggal Akhir periode!");
+                return;
+            }
+
+            tampilkanStatusLoading("Menarik Data Kiriman", "Mengambil data pengiriman dari server...");
+
+            const [resKiriman, idsSudahCair] = await Promise.all([
+                supabaseClient.from('pencatatan_basreng')
+                    .select('*')
+                    .gte('tanggal', tglMulai)
+                    .lte('tanggal', tglAkhir)
+                    .order('tanggal', { ascending: true }),
+                ambilDaftarIdFeeSudahCair()
+            ]);
+
+            tutupModalStatus();
+
+            if (resKiriman.error) {
+                alert("Gagal menarik data: " + resKiriman.error.message);
+                return;
+            }
+
+            listDataKirimanFee = resKiriman.data || [];
+            const tarif = Number(document.getElementById('feeTarifPerBal').value) || 3000;
+
+            if (listDataKirimanFee.length === 0) {
+                document.getElementById('feeTableBody').innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400 italic">Tidak ada transaksi kiriman pada rentang periode ini.</td></tr>`;
+                kalkulasiTotalFee();
+                return;
+            }
+
+            document.getElementById('feeTableBody').innerHTML = listDataKirimanFee.map((r, i) => {
+                const bal = Number(r.qty_bal) || 0;
+                const isJambi = r.agen === 'Jambi';
+                const sudahCair = idsSudahCair.has(String(r.id));
+
+                const isChecked = (isJambi && !sudahCair) ? 'checked' : '';
+                const isDisabled = sudahCair ? 'disabled' : '';
+
+                const badgeStatus = sudahCair 
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">Sudah Cair</span>`
+                    : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">Belum Diklaim</span>`;
+
+                const bgAgen = isJambi ? 'text-orange-600 dark:text-orange-400 font-bold' : 'text-purple-600 dark:text-purple-400 font-bold';
+
+                return `
+                <tr class="hover:bg-gray-50/80 dark:hover:bg-slate-800/60 transition ${sudahCair ? 'opacity-60 bg-gray-50/50' : ''}">
+                    <td class="p-3 text-center">
+                        <input type="checkbox" class="cb-fee w-4 h-4 text-teal-600 rounded cursor-pointer" 
+                            data-index="${i}" 
+                            data-agen="${r.agen}" 
+                            data-bal="${bal}" 
+                            data-id="${r.id}"
+                            ${isChecked} ${isDisabled} 
+                            onchange="kalkulasiTotalFee()">
+                    </td>
+                    <td class="p-3">${formatTgl(r.tanggal)}</td>
+                    <td class="p-3">
+                        <span class="${bgAgen}">${r.agen}</span>
+                        <span class="text-[10px] text-gray-400 block">${r.keterangan_kurir || '-'}</span>
+                    </td>
+                    <td class="p-3">
+                        <span>${r.varian}</span>
+                        <span class="font-bold text-teal-600 ml-1">(${bal} Ball)</span>
+                    </td>
+                    <td class="p-3 text-right font-bold font-poppins-custom text-teal-600" id="feeRowNominal_${i}">
+                        ${formatRupiah(bal * tarif)}
+                    </td>
+                    <td class="p-3 text-center">${badgeStatus}</td>
+                </tr>`;
+            }).join('');
+
+            kalkulasiTotalFee();
+        }
+
+        function kalkulasiTotalFee() {
+            const tarif = Number(document.getElementById('feeTarifPerBal').value) || 3000;
+            const checkboxes = document.querySelectorAll('.cb-fee:checked');
+
+            let balJambi = 0;
+            let balJakarta = 0;
+
+            checkboxes.forEach(cb => {
+                const agen = cb.getAttribute('data-agen');
+                const bal = Number(cb.getAttribute('data-bal')) || 0;
+                if (agen === 'Jambi') balJambi += bal;
+                else balJakarta += bal;
+            });
+
+            const totalBal = balJambi + balJakarta;
+            const totalNominal = totalBal * tarif;
+
+            document.getElementById('feeSumJambi').innerText = `${balJambi} Ball`;
+            document.getElementById('feeSumJakarta').innerText = `${balJakarta} Ball`;
+            document.getElementById('feeSumTotalBal').innerText = `${totalBal} Ball`;
+            document.getElementById('feeSumTotalNominal').innerText = formatRupiah(totalNominal);
+            document.getElementById('feeTerpilihInfo').innerText = `${checkboxes.length} nota terpilih`;
+        }
+
+        // Fungsi Simpan Pembayaran Fee (Versi Kebal Error & Terhubung ke Supabase)
+        async function simpanPembayaranFee() {
+            try {
+                // 1. Validasi centang nota
+                const checkboxes = document.querySelectorAll('.cb-fee:checked');
+                if (checkboxes.length === 0) {
+                    alert("Pilih minimal satu transaksi kiriman untuk dibayarkan fee-nya!");
+                    return;
+                }
+
+                // 2. Ambil nilai input secara aman (tidak akan crash jika ada input yang hilang)
+                const elPenerima = document.getElementById('feePenerima');
+                const elCatatan = document.getElementById('feeCatatan');
+                const elTglMulai = document.getElementById('feeTglMulai');
+                const elTglAkhir = document.getElementById('feeTglAkhir');
+                const elTarif = document.getElementById('feeTarifPerBal');
+
+                const penerima = elPenerima ? elPenerima.value.trim() || 'Umum' : 'Umum';
+                const catatan = elCatatan ? elCatatan.value.trim() || '-' : '-';
+                const tglMulai = elTglMulai ? elTglMulai.value : '';
+                const tglAkhir = elTglAkhir ? elTglAkhir.value : '';
+                const tarif = elTarif ? Number(elTarif.value) || 3000 : 3000;
+
+                let balJambi = 0, balJakarta = 0;
+                const itemIds = [];
+
+                checkboxes.forEach(cb => {
+                    const agen = cb.getAttribute('data-agen');
+                    const bal = Number(cb.getAttribute('data-bal')) || 0;
+                    const id = cb.getAttribute('data-id');
+                    if (agen === 'Jambi') balJambi += bal;
+                    else balJakarta += bal;
+                    if (id) itemIds.push(id);
+                });
+
+                const totalBal = balJambi + balJakarta;
+                const totalFee = totalBal * tarif;
+
+                // 3. Prosedur eksekusi simpan ke Supabase
+                const eksekusiSimpan = async () => {
+                    tampilkanStatusLoading("Menyimpan Fee", "Mengunggah data ke server Supabase...");
+
+                    const dataFeeBaru = {
+                        tgl_bayar: new Date().toISOString(),
+                        penerima: penerima,
+                        catatan: catatan,
+                        periode_mulai: tglMulai,
+                        periode_akhir: tglAkhir,
+                        tarif_per_bal: tarif,
+                        bal_jambi: balJambi,
+                        bal_jakarta: balJakarta,
+                        total_bal: totalBal,
+                        total_fee: totalFee,
+                        item_ids: itemIds
+                    };
+
+                    const { data, error } = await supabaseClient
+                        .from('riwayat_fee')
+                        .insert([dataFeeBaru])
+                        .select()
+                        .single();
+
+                    tutupModalStatus();
+
+                    if (error) {
+                        alert("Gagal menyimpan ke server Supabase: " + error.message);
+                        return;
+                    }
+
+                    // Reset kolom input setelah berhasil
+                    if (elPenerima) elPenerima.value = '';
+                    if (elCatatan) elCatatan.value = '';
+
+                    // Segarkan data tabel kiriman
+                    if (typeof tarikDataKirimanFee === 'function') {
+                        await tarikDataKirimanFee();
+                    }
+
+                    // Tampilkan notifikasi berhasil
+                    tampilkanStatusSukses("Pembayaran Fee berhasil dicatat ke server!");
+
+                    // Buka Pratinjau Slip A5 Landscape
+                    setTimeout(() => {
+                        if (typeof bukaPreviewSlipFee === 'function') {
+                            bukaPreviewSlipFee(data || dataFeeBaru);
+                        }
+                    }, 400);
+                };
+
+                // 4. Cek apakah modal konfirmasi modern tersedia
+                const modalAksi = document.getElementById('modalKonfirmasiAksi');
+                if (modalAksi && typeof bukaModalKonfirmasiAksi === 'function') {
+                    bukaModalKonfirmasiAksi(
+                        "Selesaikan Pembayaran Fee?",
+                        `Total nominal ${formatRupiah(totalFee)} (${totalBal} Ball) untuk ${penerima}. Data akan disimpan ke server Supabase.`,
+                        eksekusiSimpan
+                    );
+                } else {
+                    // Fallback langsung simpan jika modal konfirmasi tidak ada di HTML
+                    eksekusiSimpan();
+                }
+
+            } catch (err) {
+                console.error("Gagal simpan fee:", err);
+                alert("Terjadi kendala teknis: " + err.message);
+            }
+        }
+
+		// ==========================================
+        // FUNGSI RIWAYAT & PRATINJAU SLIP FEE (AMBIL LANGSUNG DARI BARIS)
+        // ==========================================
+        window.globalRiwayatFee = [];
+
+        // 1. Muat & Render Riwayat (Mendukung Supabase + Data Sesi Sebelumnya)
+        async function renderRiwayatFee() {
+            const tbody = document.getElementById('riwayatFeeTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Mengambil data riwayat...</td></tr>`;
+
+            let dataList = [];
+
+            // A. Coba tarik data dari Supabase
+            try {
+                const { data, error } = await supabaseClient
+                    .from('riwayat_fee')
+                    .select('*')
+                    .order('tgl_bayar', { ascending: false });
+                
+                if (!error && data && data.length > 0) {
+                    dataList = data;
+                }
+            } catch (err) {
+                console.warn("Koneksi tabel Supabase riwayat_fee belum siap, mengecek cache lokal:", err);
+            }
+
+            // B. Jika di Supabase belum ada / kosong, ambil dari data yang sudah tersimpan sebelumnya
+            if (dataList.length === 0) {
+                const localData = JSON.parse(localStorage.getItem('sbr_riwayat_fee') || '[]');
+                if (localData.length > 0) {
+                    dataList = localData;
+                }
+            }
+
+            // Simpan ke memori global window agar selalu siap diakses instan
+            window.globalRiwayatFee = dataList;
+
+            if (dataList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Belum ada riwayat fee yang terbayar.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = dataList.map((r, i) => `
+                <tr class="border-b dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition">
+                    <td class="p-3 font-bold">${formatTgl(r.tgl_bayar)}</td>
+                    <td class="p-3">
+                        <span class="font-bold text-gray-800 dark:text-gray-100 block">${r.penerima || 'Umum'}</span>
+                        <span class="text-[10px] text-gray-400 italic">${r.catatan || '-'}</span>
+                    </td>
+                    <td class="p-3 text-[11px]">${formatTgl(r.periode_mulai)} s/d ${formatTgl(r.periode_akhir)}</td>
+                    <td class="p-3 text-center">
+                        <span class="text-[11px] block">
+                            <span class="text-orange-600 dark:text-orange-400 font-semibold">Jambi:</span> <strong>${r.bal_jambi || 0}</strong> | 
+                            <span class="text-purple-600 dark:text-purple-400 font-semibold">Jkt:</span> <strong>${r.bal_jakarta || 0}</strong>
+                        </span>
+                        <span class="text-[10px] text-pink-600 font-bold">Total: ${r.total_bal || 0} Ball</span>
+                    </td>
+                    <td class="p-3 text-right font-bold font-poppins-custom text-teal-600">${formatRupiah(r.total_fee || 0)}</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">LUNAS</span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <!-- Menggunakan index baris (${i}) sehingga 100% instan dan tidak mungkin gagal pencarian -->
+                            <button type="button" onclick="bukaPreviewSlipFeeByIndex(${i})" class="p-1.5 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 rounded-lg transition" title="Lihat & Cetak Slip Fee">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                            <button type="button" onclick="hapusRiwayatFee('${r.id}', ${i})" class="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition" title="Hapus Riwayat">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 2. Fungsi Pembuka Pratinjau berdasarkan Index Baris
+        function bukaPreviewSlipFeeByIndex(idx) {
+            if (!window.globalRiwayatFee || !window.globalRiwayatFee[idx]) {
+                alert("Data slip fee tidak ditemukan!");
+                return;
+            }
+            bukaPreviewSlipFee(window.globalRiwayatFee[idx]);
+        }
+
+        // 3. Render Lembar Slip Fee A5 Landscape
+        async function bukaPreviewSlipFee(target) {
+            if (!target) return;
+
+            let dataFee = null;
+
+            if (typeof target === 'object' && target !== null) {
+                dataFee = target;
+            } else if (typeof target === 'number' && window.globalRiwayatFee && window.globalRiwayatFee[target]) {
+                dataFee = window.globalRiwayatFee[target];
+            } else if (typeof target === 'string') {
+                if (window.globalRiwayatFee) {
+                    dataFee = window.globalRiwayatFee.find(x => String(x.id) === String(target));
+                }
+                if (!dataFee) {
+                    const localData = JSON.parse(localStorage.getItem('sbr_riwayat_fee') || '[]');
+                    dataFee = localData.find(x => String(x.id) === String(target));
+                }
+            }
+
+            if (!dataFee) {
+                alert("Data slip fee tidak ditemukan!");
+                return;
+            }
+
+            const modal = document.getElementById('modalPreviewFee');
+            if (!modal) {
+                alert("Elemen modal 'modalPreviewFee' belum terpasang di HTML!");
+                return;
+            }
+
+            const setTxt = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = val;
+            };
+
+            const slipId = dataFee.id ? String(dataFee.id).replace('fee_', '') : Date.now();
+
+            // Isi Data Dokumen
+            setTxt('pvFeeTglBayar', formatTgl(dataFee.tgl_bayar));
+            setTxt('pvFeePenerima', dataFee.penerima || 'Umum');
+            setTxt('pvFeePeriode', `${formatTgl(dataFee.periode_mulai)} s/d ${formatTgl(dataFee.periode_akhir)}`);
+
+            // Isi Perhitungan Volume & Nominal
+            const tarif = Number(dataFee.tarif_per_bal) || 3000;
+            const subJambi = (Number(dataFee.bal_jambi) || 0) * tarif;
+            const subJakarta = (Number(dataFee.bal_jakarta) || 0) * tarif;
+
+            setTxt('pvFeeBalJambi', `${dataFee.bal_jambi || 0} Ball`);
+            setTxt('pvFeeTarifJambi', formatRupiah(tarif));
+            setTxt('pvFeeSubtotalJambi', formatRupiah(subJambi));
+
+            setTxt('pvFeeBalJakarta', `${dataFee.bal_jakarta || 0} Ball`);
+            setTxt('pvFeeTarifJakarta', formatRupiah(tarif));
+            setTxt('pvFeeSubtotalJakarta', formatRupiah(subJakarta));
+
+            setTxt('pvFeeTotalBal', `${dataFee.total_bal || 0} Ball`);
+            setTxt('pvFeeGrandTotal', formatRupiah(dataFee.total_fee || 0));
+            setTxt('pvFeeNominalBesar', formatRupiah(dataFee.total_fee || 0));
+
+            setTxt('pvFeeSignPenerima', `( ${dataFee.penerima || 'Penerima'} )`);
+
+            // Tampilkan Modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // 4. Hapus Riwayat (Aman untuk Supabase & Data Lokal)
+        function hapusRiwayatFee(id, idx) {
+            bukaModalKonfirmasiHapus("Hapus Riwayat Fee?", "Riwayat pembayaran fee ini akan dihapus permanen.", async () => {
+                tampilkanStatusLoading("Menghapus Data", "Menghapus riwayat fee...");
+
+                // Hapus dari Supabase jika ada ID
+                if (id) {
+                    try {
+                        await supabaseClient.from('riwayat_fee').delete().eq('id', id);
+                    } catch(e) {}
+                }
+
+                // Hapus dari LocalStorage jika ada
+                let localData = JSON.parse(localStorage.getItem('sbr_riwayat_fee') || '[]');
+                localData = localData.filter(x => String(x.id) !== String(id));
+                localStorage.setItem('sbr_riwayat_fee', JSON.stringify(localData));
+
+                tutupModalStatus();
+                await renderRiwayatFee();
+            });
+        }
+		
+		
+		// ==========================================
+        // FUNGSI POPUP PRATINJAU SLIP FEE (A5 LANDSCAPE)
+        // ==========================================
+        function bukaPreviewSlipFee(target) {
+			if (!target) return;
+
+			let dataFee = target;
+
+			// Jika yang dikirim adalah ID (string), cari di memori LocalStorage
+			if (typeof target === 'string') {
+				const riwayat = JSON.parse(localStorage.getItem('sbr_riwayat_fee') || '[]');
+				dataFee = riwayat.find(x => String(x.id) === String(target));
+			}
+
+			if (!dataFee) {
+				alert("Data slip fee tidak ditemukan!");
+				return;
+			}
+
+			const modal = document.getElementById('modalPreviewFee');
+			if (!modal) {
+				alert("Peringatan: Elemen modal 'modalPreviewFee' belum terpasang di HTML!");
+				return;
+			}
+
+			const setTxt = (id, val) => {
+				const el = document.getElementById(id);
+				if (el) el.innerText = val;
+			};
+
+			// 1. Isi Kop & Dokumen
+			setTxt('pvFeeTglBayar', formatTgl(dataFee.tgl_bayar));
+			setTxt('pvFeePenerima', dataFee.penerima || 'Umum');
+			setTxt('pvFeeCatatan', dataFee.catatan || '-');
+			setTxt('pvFeePeriode', `${formatTgl(dataFee.periode_mulai)} s/d ${formatTgl(dataFee.periode_akhir)}`);
+			
+			// 2. Kalkulasi Rincian
+			const tarif = dataFee.tarif_per_bal || 3000;
+			const subJambi = (dataFee.bal_jambi || 0) * tarif;
+			const subJakarta = (dataFee.bal_jakarta || 0) * tarif;
+
+			setTxt('pvFeeBalJambi', `${dataFee.bal_jambi || 0} Ball`);
+			setTxt('pvFeeTarifJambi', formatRupiah(tarif));
+			setTxt('pvFeeSubtotalJambi', formatRupiah(subJambi));
+
+			setTxt('pvFeeBalJakarta', `${dataFee.bal_jakarta || 0} Ball`);
+			setTxt('pvFeeTarifJakarta', formatRupiah(tarif));
+			setTxt('pvFeeSubtotalJakarta', formatRupiah(subJakarta));
+
+			setTxt('pvFeeTotalBal', `${dataFee.total_bal || 0} Ball`);
+			setTxt('pvFeeGrandTotal', formatRupiah(dataFee.total_fee || 0));
+			setTxt('pvFeeNominalBesar', formatRupiah(dataFee.total_fee || 0));
+
+			// 3. Tanda Tangan
+			setTxt('pvFeeSignPenerima', `( ${dataFee.penerima || 'Penerima'} )`);
+
+			// 4. Buka Modal Pratinjau
+			modal.classList.remove('hidden');
+			modal.classList.add('flex');
+		}
+
+		function tutupPreviewFee() {
+			const modal = document.getElementById('modalPreviewFee');
+			if (modal) {
+				modal.classList.add('hidden');
+				modal.classList.remove('flex');
+			}
+		}
+
+        function tutupPreviewFee() {
+            const modal = document.getElementById('modalPreviewFee');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Export PDF khusus ukuran A5 Landscape
+        function exportSlipFeePDF() {
+            tampilkanStatusLoading("Menyiapkan PDF Slip Fee", "Membuat dokumen format A5 Landscape...");
+            const el = document.getElementById('areaPrintSlipFee');
+            const opt = {
+                margin: 0.2,
+                filename: `Slip_Fee_${Date.now()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                jsPDF: { unit: 'in', format: 'a5', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(el).save().then(() => {
+                tampilkanStatusSukses("Slip Fee PDF (A5 Landscape) berhasil disimpan.");
+            }).catch(err => {
+                alert("Gagal menyimpan PDF slip fee: " + err.message);
+                tutupModalStatus();
+            });
+        }
+
+       // Export PNG Khusus Lembar Kertas Slip Fee (Bersih & Tajam HD)
+		function exportSlipFeePNG() {
+			tampilkanStatusLoading("Merender PNG Slip Fee", "Memproses dokumen slip ke resolusi tinggi...");
+
+			// 1. Matikan mode gelap sementara agar kertas tetap putih bersih
+			const isDark = document.documentElement.classList.contains('dark');
+			if (isDark) document.documentElement.classList.remove('dark');
+
+			const el = document.getElementById('areaPrintSlipFee');
+			if (!el) {
+				alert("Elemen slip fee tidak ditemukan!");
+				tutupModalStatus();
+				return;
+			}
+
+			// 2. Render dengan isolasi khusus lembar kertas
+			html2canvas(el, {
+				scale: 3, // Kualitas HD tajam 3x lipat, tidak pecah/buram
+				useCORS: true,
+				backgroundColor: '#ffffff', // Latar belakang dipaksa putih murni (tidak transparan)
+				scrollY: 0,
+				scrollX: 0,
+				onclone: (clonedDoc) => {
+					// Modifikasi salinan elemen sesaat sebelum difoto
+					const targetSlip = clonedDoc.getElementById('areaPrintSlipFee');
+					if (targetSlip) {
+						targetSlip.style.boxShadow = 'none'; // Hilangkan bayangan luar modal
+						targetSlip.style.borderRadius = '0px'; // Sudut rata presisi seperti kertas cetak A5
+						targetSlip.style.border = '1px solid #e5e7eb'; // Garis tepi dokumen yang rapi
+						targetSlip.style.margin = '0 auto';
+						targetSlip.style.width = '780px';
+						targetSlip.style.maxWidth = '780px';
+					}
+				}
+			}).then(canvas => {
+				// Kembalikan mode gelap jika sebelumnya aktif
+				if (isDark) document.documentElement.classList.add('dark');
+
+				const link = document.createElement('a');
+				link.download = `Slip_Fee_SBR_${Date.now()}.png`;
+				link.href = canvas.toDataURL('image/png', 1.0);
+				link.click();
+				tampilkanStatusSukses("File gambar slip fee berhasil diunduh.");
+			}).catch(err => {
+				if (isDark) document.documentElement.classList.add('dark');
+				console.error("Gagal export PNG:", err);
+				alert("Terjadi kesalahan saat menyimpan PNG: " + err.message);
+				tutupModalStatus();
+			});
+		}
+
+        // Cetak Langsung (Print)
+        function cetakSlipFee() {
+            const content = document.getElementById('areaPrintSlipFee').innerHTML;
+            const printWin = window.open('', '', 'width=900,height=600');
+            printWin.document.write(`
+                <html>
+                <head>
+                    <title>Cetak Slip Fee</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+                    <style>
+                        @page { size: A5 landscape; margin: 10mm; }
+                        body { font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        .font-poppins-custom { font-family: 'Poppins', sans-serif; font-weight: 600; }
+                    </style>
+                </head>
+                <body class="p-4" onload="window.print(); window.close();">
+                    <div style="width: 100%; max-width: 760px; margin: 0 auto;">
+                        ${content}
+                    </div>
+                </body>
+                </html>
+            `);
+            printWin.document.close();
+        }
+		
+		// ==========================================
+        // FITUR PERHITUNGAN FEE PLASTIK (BARANG KELUAR)
+        // ==========================================
+        let listDataKirimanFeePlastik = [];
+        window.globalRiwayatFeePlastik = [];
+
+        function setPeriodeDefaultFeePlastik() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+
+            const tglMulai = document.getElementById('feePlastikTglMulai');
+            const tglAkhir = document.getElementById('feePlastikTglAkhir');
+            if (tglMulai) tglMulai.value = `${yyyy}-${mm}-01`;
+            if (tglAkhir) tglAkhir.value = `${yyyy}-${mm}-${dd}`;
+
+            const picker = document.getElementById('pickerFeePlastikCatatan');
+            if (picker) {
+                picker.value = `${yyyy}-${mm}-${dd}`;
+                setPilihTanggalCatatanPlastik(`${yyyy}-${mm}-${dd}`);
+            }
+        }
+
+        function setPilihTanggalCatatanPlastik(val) {
+            if (!val) return;
+            const parts = val.split('-');
+            if (parts.length === 3) {
+                const y = parts[0].slice(2);
+                const mIdx = parseInt(parts[1], 10) - 1;
+                const d = parts[2].padStart(2, '0');
+                const mos = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+                const input = document.getElementById('feePlastikCatatan');
+                if (input) input.value = `${d}/${mos[mIdx]}/${y}`;
+            }
+        }
+
+        function tutupModalFeePlastik() {
+            const modal = document.getElementById('modalFeePlastik');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function tutupPreviewFeePlastik() {
+            const modal = document.getElementById('modalPreviewFeePlastik');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function gantiTabFeePlastik(tab) {
+            const isHitung = tab === 'hitung';
+            document.getElementById('viewFeePlastikHitung').classList.toggle('hidden', !isHitung);
+            document.getElementById('viewFeePlastikRiwayat').classList.toggle('hidden', isHitung);
+            document.getElementById('footerAksiHitungPlastik').classList.toggle('hidden', !isHitung);
+
+            const btnHitung = document.getElementById('tabBtnFeePlastikHitung');
+            const btnRiwayat = document.getElementById('tabBtnFeePlastikRiwayat');
+            if (isHitung) {
+                btnHitung.className = "px-3 py-1 font-bold rounded-lg bg-emerald-600 text-white transition";
+                btnRiwayat.className = "px-3 py-1 font-bold rounded-lg text-gray-500 hover:text-emerald-600 transition";
+            } else {
+                btnRiwayat.className = "px-3 py-1 font-bold rounded-lg bg-emerald-600 text-white transition";
+                btnHitung.className = "px-3 py-1 font-bold rounded-lg text-gray-500 hover:text-emerald-600 transition";
+                renderRiwayatFeePlastik();
+            }
+        }
+
+        // Ambil ID nota keluar yang sudah pernah diklaim fee-nya
+        async function ambilDaftarIdFeePlastikSudahCair() {
+            const ids = new Set();
+            try {
+                const { data } = await supabaseClient.from('riwayat_fee_plastik').select('item_ids');
+                (data || []).forEach(r => {
+                    let items = r.item_ids || [];
+                    if (typeof items === 'string') {
+                        try { items = JSON.parse(items); } catch(e) { items = []; }
+                    }
+                    items.forEach(id => ids.add(String(id)));
+                });
+            } catch (err) {}
+
+            // Tambahkan juga dari cache lokal jika ada
+            const localData = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
+            localData.forEach(r => {
+                (r.item_ids || []).forEach(id => ids.add(String(id)));
+            });
+
+            return ids;
+        }
+
+		// Tarik data nota keluar dengan rincian sub-barang & tarif editable
+        async function tarikDataKirimanFeePlastik() {
+            const tglMulai = document.getElementById('feePlastikTglMulai').value;
+            const tglAkhir = document.getElementById('feePlastikTglAkhir').value;
+
+            if (!tglMulai || !tglAkhir) {
+                alert("Silakan tentukan Tanggal Mulai dan Tanggal Akhir periode!");
+                return;
+            }
+
+            tampilkanStatusLoading("Menarik Data Barang Keluar", "Mengambil nota pengeluaran dari server...");
+
+            const [resNota, idsSudahCair] = await Promise.all([
+                supabaseClient.from('nota_keluar')
+                    .select('*')
+                    .gte('tanggal', tglMulai)
+                    .lte('tanggal', tglAkhir)
+                    .order('tanggal', { ascending: true }),
+                ambilDaftarIdFeePlastikSudahCair()
+            ]);
+
+            tutupModalStatus();
+
+            if (resNota.error) {
+                alert("Gagal menarik data barang keluar: " + resNota.error.message);
+                return;
+            }
+
+            listDataKirimanFeePlastik = resNota.data || [];
+            const defaultTarif = Number(document.getElementById('feePlastikTarifPerQty').value) || 1000;
+            const tbody = document.getElementById('feePlastikTableBody');
+
+            if (listDataKirimanFeePlastik.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400 italic">Tidak ada nota barang keluar pada rentang periode ini.</td></tr>`;
+                kalkulasiTotalFeePlastik();
+                return;
+            }
+
+            let htmlBaris = '';
+
+            listDataKirimanFeePlastik.forEach((nota, nIdx) => {
+                let rincianArr = nota.rincian || [];
+                if (typeof rincianArr === 'string') {
+                    try { rincianArr = JSON.parse(rincianArr); } catch(e) { rincianArr = []; }
+                }
+
+                const sudahCair = idsSudahCair.has(String(nota.id));
+                const badgeStatus = sudahCair 
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">Sudah Cair</span>`
+                    : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">Belum Diklaim</span>`;
+
+                const judulNota = nota.judul_nota || 'Nota Barang Keluar';
+
+                // Sub-item rincian barang di dalam nota
+                const subItemsHtml = rincianArr.map((it, itIdx) => {
+                    const qty = Number(it.qty) || 0;
+                    const isChecked = !sudahCair ? 'checked' : '';
+                    const isDisabled = sudahCair ? 'disabled' : '';
+
+                    return `
+                    <div class="flex items-center justify-between gap-2 p-1.5 bg-gray-50/80 dark:bg-slate-800/80 rounded-lg border border-gray-200/60 dark:border-slate-700 text-xs">
+                        <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                            <input type="checkbox" 
+                                class="cb-sub-barang w-3.5 h-3.5 text-emerald-600 rounded cursor-pointer" 
+                                data-nota-id="${nota.id}"
+                                data-nama="${it.nama}" 
+                                data-qty="${qty}" 
+                                data-unit="${it.unit || ''}"
+                                data-nota-index="${nIdx}"
+                                data-item-index="${itIdx}"
+                                ${isChecked} ${isDisabled}
+                                onchange="kalkulasiTotalFeePlastik()">
+                            <span class="truncate font-medium text-gray-800 dark:text-gray-200">${it.nama}</span>
+                        </label>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="font-bold text-pink-600 font-poppins-custom">${qty} ${it.unit || ''}</span>
+                            <span class="text-gray-400 text-[10px]">× Rp</span>
+                            <!-- Input tarif yang bisa diubah-ubah bebas per barang -->
+                            <input type="number" 
+                                class="input-tarif-barang w-20 p-1 text-right text-xs font-bold text-emerald-600 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-md outline-none focus:border-emerald-500" 
+                                id="tarif_${nIdx}_${itIdx}" 
+                                value="${defaultTarif}" 
+                                ${isDisabled} 
+                                oninput="kalkulasiTotalFeePlastik()">
+                            <span class="font-bold font-poppins-custom text-gray-800 dark:text-gray-100 w-24 text-right" id="subtotal_${nIdx}_${itIdx}">
+                                ${formatRupiah(qty * defaultTarif)}
+                            </span>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                htmlBaris += `
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-800/40 transition border-b dark:border-slate-800 ${sudahCair ? 'opacity-60' : ''}">
+                    <td class="p-3 align-top text-center">
+                        <span class="text-[10px] font-mono text-gray-400">#${nota.id}</span>
+                    </td>
+                    <td class="p-3 align-top whitespace-nowrap">
+                        <span class="font-bold block">${formatTgl(nota.tanggal)}</span>
+                    </td>
+                    <td class="p-3 align-top">
+                        <span class="font-bold text-gray-800 dark:text-gray-100 block mb-1.5">${judulNota}</span>
+                        <div class="space-y-1.5">${subItemsHtml}</div>
+                    </td>
+                    <td class="p-3 align-top text-right font-bold text-emerald-600 font-poppins-custom text-sm whitespace-nowrap" id="totalFeeNota_${nIdx}">
+                        Rp 0
+                    </td>
+                    <td class="p-3 align-top text-center whitespace-nowrap">${badgeStatus}</td>
+                </tr>`;
+            });
+
+            tbody.innerHTML = htmlBaris;
+            kalkulasiTotalFeePlastik();
+        }
+
+		function kalkulasiTotalFeePlastik() {
+            const checkboxes = document.querySelectorAll('.cb-sub-barang:checked');
+
+            let totalQty = 0;
+            let grandTotalFee = 0;
+            const notaTotalMap = {};
+
+            checkboxes.forEach(cb => {
+                const nIdx = cb.getAttribute('data-nota-index');
+                const itIdx = cb.getAttribute('data-item-index');
+                const qty = Number(cb.getAttribute('data-qty')) || 0;
+
+                // Ambil tarif khusus dari input barang tersebut
+                const inputTarif = document.getElementById(`tarif_${nIdx}_${itIdx}`);
+                const tarif = inputTarif ? (Number(inputTarif.value) || 0) : 0;
+                const subtotal = qty * tarif;
+
+                // Perbarui teks subtotal pada baris barang tersebut
+                const lblSub = document.getElementById(`subtotal_${nIdx}_${itIdx}`);
+                if (lblSub) lblSub.innerText = formatRupiah(subtotal);
+
+                totalQty += qty;
+                grandTotalFee += subtotal;
+
+                notaTotalMap[nIdx] = (notaTotalMap[nIdx] || 0) + subtotal;
+            });
+
+            // Perbarui total fee per nota di kolom tabel sebelah kanan
+            listDataKirimanFeePlastik.forEach((_, nIdx) => {
+                const lblNota = document.getElementById(`totalFeeNota_${nIdx}`);
+                if (lblNota) {
+                    lblNota.innerText = formatRupiah(notaTotalMap[nIdx] || 0);
+                }
+            });
+
+            // Ambil jumlah nota unik yang tercentang
+            const uniqueNotas = new Set();
+            checkboxes.forEach(cb => uniqueNotas.add(cb.getAttribute('data-nota-id')));
+
+            document.getElementById('feePlastikSumNota').innerText = `${uniqueNotas.size} Nota`;
+            document.getElementById('feePlastikSumTotalQty').innerText = `${totalQty} Qty`;
+            document.getElementById('feePlastikSumTotalNominal').innerText = formatRupiah(grandTotalFee);
+            document.getElementById('feePlastikTerpilihInfo').innerText = `${checkboxes.length} item barang terpilih (${uniqueNotas.size} nota)`;
+        }
+
+		async function simpanPembayaranFeePlastik() {
+            const checkboxes = document.querySelectorAll('.cb-sub-barang:checked');
+            if (checkboxes.length === 0) {
+                alert("Pilih minimal satu item barang untuk dicairkan fee-nya!");
+                return;
+            }
+
+            const penerima = document.getElementById('feePlastikPenerima').value.trim() || 'Admin';
+            const catatan = document.getElementById('feePlastikCatatan').value.trim() || '-';
+            const tglMulai = document.getElementById('feePlastikTglMulai').value;
+            const tglAkhir = document.getElementById('feePlastikTglAkhir').value;
+
+            let totalQty = 0;
+            let totalFee = 0;
+            const itemIds = [];
+            const rincianFeeItems = [];
+
+            checkboxes.forEach(cb => {
+                const nIdx = cb.getAttribute('data-nota-index');
+                const itIdx = cb.getAttribute('data-item-index');
+                const notaId = cb.getAttribute('data-nota-id');
+                const nama = cb.getAttribute('data-nama');
+                const unit = cb.getAttribute('data-unit');
+                const qty = Number(cb.getAttribute('data-qty')) || 0;
+
+                const inputTarif = document.getElementById(`tarif_${nIdx}_${itIdx}`);
+                const tarif = inputTarif ? (Number(inputTarif.value) || 0) : 0;
+                const subtotal = qty * tarif;
+
+                totalQty += qty;
+                totalFee += subtotal;
+
+                if (!itemIds.includes(notaId)) itemIds.push(notaId);
+
+                rincianFeeItems.push({
+                    nota_id: notaId,
+                    nama: nama,
+                    qty: qty,
+                    unit: unit,
+                    tarif: tarif,
+                    subtotal: subtotal
+                });
+            });
+
+            bukaModalKonfirmasiAksi(
+                "Selesaikan Pembayaran Fee Plastik?",
+                `Total nominal ${formatRupiah(totalFee)} (${totalQty} Qty dari ${rincianFeeItems.length} item barang) untuk ${penerima}.`,
+                async function() {
+                    tampilkanStatusLoading("Menyimpan Fee Plastik", "Mengunggah data ke server...");
+
+                    const dataBaru = {
+                        tgl_bayar: new Date().toISOString(),
+                        penerima: penerima,
+                        catatan: catatan,
+                        periode_mulai: tglMulai,
+                        periode_akhir: tglAkhir,
+                        tarif_per_qty: 0, // 0 karena multi-tarif
+                        total_qty: totalQty,
+                        total_fee: totalFee,
+                        item_ids: itemIds,
+                        rincian_barang: rincianFeeItems // Menyimpan rincian item & tarif masing-masing
+                    };
+
+                    let dataTersimpan = dataBaru;
+
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from('riwayat_fee_plastik')
+                            .insert([dataBaru])
+                            .select()
+                            .single();
+                        
+                        if (!error && data) {
+                            dataTersimpan = data;
+                        }
+                    } catch(err) {
+                        console.warn("Gagal simpan ke Supabase, menggunakan cache lokal:", err);
+                    }
+
+                    const riwayatLokal = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
+                    riwayatLokal.unshift(dataTersimpan);
+                    localStorage.setItem('sbr_riwayat_fee_plastik', JSON.stringify(riwayatLokal));
+
+                    tutupModalStatus();
+
+                    document.getElementById('feePlastikPenerima').value = '';
+                    await tarikDataKirimanFeePlastik();
+
+                    bukaPreviewSlipFeePlastik(dataTersimpan);
+                }
+            );
+        }
+
+        // Render Riwayat Fee Plastik
+        async function renderRiwayatFeePlastik() {
+            const tbody = document.getElementById('riwayatFeePlastikTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Mengambil data riwayat fee plastik...</td></tr>`;
+
+            let dataList = [];
+            try {
+                const { data, error } = await supabaseClient
+                    .from('riwayat_fee_plastik')
+                    .select('*')
+                    .order('tgl_bayar', { ascending: false });
+                
+                if (!error && data && data.length > 0) {
+                    dataList = data;
+                }
+            } catch(e) {}
+
+            if (dataList.length === 0) {
+                dataList = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
+            }
+
+            window.globalRiwayatFeePlastik = dataList;
+
+            if (dataList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Belum ada riwayat fee plastik yang terbayar.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = dataList.map((r, i) => `
+                <tr class="border-b dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition">
+                    <td class="p-3 font-bold">${formatTgl(r.tgl_bayar)}</td>
+                    <td class="p-3">
+                        <span class="font-bold text-gray-800 dark:text-gray-100 block">${r.penerima || 'Admin'}</span>
+                        <span class="text-[10px] text-gray-400 italic">${r.catatan || '-'}</span>
+                    </td>
+                    <td class="p-3 text-[11px]">${formatTgl(r.periode_mulai)} s/d ${formatTgl(r.periode_akhir)}</td>
+                    <td class="p-3 text-center font-extrabold text-pink-600 font-poppins-custom">
+                        ${r.total_qty || 0} Qty
+                    </td>
+                    <td class="p-3 text-right font-bold font-poppins-custom text-emerald-600">${formatRupiah(r.total_fee || 0)}</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">LUNAS</span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button type="button" onclick="bukaPreviewSlipFeePlastikByIndex(${i})" class="p-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-lg transition" title="Lihat & Cetak Slip Fee Plastik">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                            <button type="button" onclick="hapusRiwayatFeePlastik('${r.id}', ${i})" class="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition" title="Hapus Riwayat">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function bukaPreviewSlipFeePlastikByIndex(idx) {
+            if (!window.globalRiwayatFeePlastik || !window.globalRiwayatFeePlastik[idx]) {
+                alert("Data slip fee plastik tidak ditemukan!");
+                return;
+            }
+            bukaPreviewSlipFeePlastik(window.globalRiwayatFeePlastik[idx]);
+        }
+
+        // Tampilkan Lembar Slip A5 Landscape
+        function bukaPreviewSlipFeePlastik(target) {
+            if (!target) return;
+
+            let dataFee = target;
+            if (typeof target === 'number' && window.globalRiwayatFeePlastik) {
+                dataFee = window.globalRiwayatFeePlastik[target];
+            }
+
+            const modal = document.getElementById('modalPreviewFeePlastik');
+            if (!modal) return;
+
+            const setTxt = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = val;
+            };
+
+            const slipId = dataFee.id ? String(dataFee.id).replace('fee_', '') : Date.now();
+            const tarif = Number(dataFee.tarif_per_qty) || 1000;
+
+            setTxt('pvFeePlastikTglBayar', formatTgl(dataFee.tgl_bayar));
+            setTxt('pvFeePlastikNoSlip', `NO: FPLS-${slipId}`);
+            setTxt('pvFeePlastikPenerima', dataFee.penerima || 'Admin');
+            setTxt('pvFeePlastikCatatan', dataFee.catatan || '-');
+            setTxt('pvFeePlastikPeriode', `${formatTgl(dataFee.periode_mulai)} s/d ${formatTgl(dataFee.periode_akhir)}`);
+
+            setTxt('pvFeePlastikTotalQty', `${dataFee.total_qty || 0} Qty`);
+            setTxt('pvFeePlastikTarif', formatRupiah(tarif));
+            setTxt('pvFeePlastikSubtotal', formatRupiah(dataFee.total_fee || 0));
+            setTxt('pvFeePlastikGrandTotal', formatRupiah(dataFee.total_fee || 0));
+            setTxt('pvFeePlastikNominalBesar', formatRupiah(dataFee.total_fee || 0));
+
+            setTxt('pvFeePlastikSignPenerima', `( ${dataFee.penerima || 'Penerima'} )`);
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // Hapus Riwayat Fee Plastik
+        function hapusRiwayatFeePlastik(id, idx) {
+            bukaModalKonfirmasiHapus("Hapus Riwayat Fee Plastik?", "Data pencairan fee plastik ini akan dihapus permanen.", async () => {
+                tampilkanStatusLoading("Menghapus Data", "Menghapus riwayat fee plastik...");
+
+                if (id) {
+                    try {
+                        await supabaseClient.from('riwayat_fee_plastik').delete().eq('id', id);
+                    } catch(e) {}
+                }
+
+                let localData = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
+                localData = localData.filter(x => String(x.id) !== String(id));
+                localStorage.setItem('sbr_riwayat_fee_plastik', JSON.stringify(localData));
+
+                tutupModalStatus();
+                await renderRiwayatFeePlastik();
+            });
+        }
+
+        // Export PDF A5 Landscape Khusus Fee Plastik
+        function exportSlipFeePlastikPDF() {
+            tampilkanStatusLoading("Menyiapkan PDF Slip", "Membuat dokumen format A5 Landscape...");
+            const el = document.getElementById('areaPrintSlipFeePlastik');
+            const opt = {
+                margin: 0.2,
+                filename: `Slip_Fee_Plastik_${Date.now()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                jsPDF: { unit: 'in', format: 'a5', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(el).save().then(() => {
+                tampilkanStatusSukses("Slip Fee Plastik PDF (A5 Landscape) berhasil disimpan.");
+            }).catch(err => {
+                alert("Gagal menyimpan PDF: " + err.message);
+                tutupModalStatus();
+            });
+        }
+
+        // Export PNG HD Khusus Lembar Kertas Slip Fee Plastik
+        function exportSlipFeePlastikPNG() {
+            tampilkanStatusLoading("Merender PNG Slip", "Memproses dokumen ke resolusi tinggi...");
+
+            const isDark = document.documentElement.classList.contains('dark');
+            if (isDark) document.documentElement.classList.remove('dark');
+
+            const el = document.getElementById('areaPrintSlipFeePlastik');
+            html2canvas(el, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                scrollY: 0,
+                scrollX: 0,
+                onclone: (clonedDoc) => {
+                    const targetSlip = clonedDoc.getElementById('areaPrintSlipFeePlastik');
+                    if (targetSlip) {
+                        targetSlip.style.boxShadow = 'none';
+                        targetSlip.style.borderRadius = '0px';
+                        targetSlip.style.border = '1px solid #e5e7eb';
+                        targetSlip.style.margin = '0 auto';
+                        targetSlip.style.width = '780px';
+                        targetSlip.style.maxWidth = '780px';
+                    }
+                }
+            }).then(canvas => {
+                if (isDark) document.documentElement.classList.add('dark');
+
+                const link = document.createElement('a');
+                link.download = `Slip_Fee_Plastik_SBR_${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+                tampilkanStatusSukses("File gambar slip fee plastik berhasil diunduh.");
+            }).catch(err => {
+                if (isDark) document.documentElement.classList.add('dark');
+                alert("Gagal menyimpan PNG: " + err.message);
+                tutupModalStatus();
+            });
+        }
+
+        // Cetak Langsung A5 Landscape
+        function cetakSlipFeePlastik() {
+            const content = document.getElementById('areaPrintSlipFeePlastik').innerHTML;
+            const printWin = window.open('', '', 'width=900,height=600');
+            printWin.document.write(`
+                <html>
+                <head>
+                    <title>Cetak Slip Fee Plastik</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+                    <style>
+                        @page { size: A5 landscape; margin: 10mm; }
+                        body { font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        .font-poppins-custom { font-family: 'Poppins', sans-serif; font-weight: 600; }
+                    </style>
+                </head>
+                <body class="p-4" onload="window.print(); window.close();">
+                    <div style="width: 100%; max-width: 760px; margin: 0 auto;">
+                        ${content}
+                    </div>
+                </body>
+                </html>
+            `);
+            printWin.document.close();
+        }
+		
     </script>
+	<!-- MODAL PRATINJAU SLIP FEE (A5 LANDSCAPE) -->
+    <div id="modalPreviewFee" class="fixed inset-0 bg-gray-900/80 backdrop-blur-md hidden items-center justify-center z-[85] p-3 sm:p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[96vh] border border-gray-100 dark:border-slate-800">
+            
+            <!-- Area Scroll Pratinjau Kertas -->
+            <div class="overflow-y-auto flex-1 bg-gray-100 dark:bg-slate-950 p-4 sm:p-6 flex justify-center">
+                
+                <!-- LEMBAR SLIP A5 LANDSCAPE (Proporsional ~210mm x 148mm) -->
+                <div id="areaPrintSlipFee" class="bg-white text-gray-900 w-full max-w-[780px] p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-md relative flex flex-col justify-between" style="min-height: 480px; font-family: 'Inter', sans-serif;">
+                    
+                    <!-- Watermark Tipis LUNAS / TERBAYAR -->
+                    <div class="absolute inset-0 flex items-center justify-center opacity-[0.035] pointer-events-none select-none">
+                        <h1 class="text-8xl font-black tracking-widest text-teal-600 rotate-[-15deg]">TERBAYAR</h1>
+                    </div>
+
+                    <!-- 1. KOP HEADER SLIP -->
+                    <div class="relative z-10 border-b-2 border-gray-800 pb-3 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/831781eec1c40a9ab82217921961088e1075e044/sbr_logo.png" alt="SBR Logo" class="w-12 h-12 object-contain">
+                            <div>
+                                <h2 class="text-xl font-extrabold text-indigo-900 tracking-tight font-poppins-custom uppercase leading-tight">SBR Putra Food</h2>
+                                <p class="text-[11px] text-gray-500 font-medium">Slip Perhitungan & Pencairan Fee Kiriman</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-teal-100 text-teal-800 border border-teal-200">SLIP PERHITUNGAN FEE</span>
+                            <p class="text-base font-bold text-gray-800 mt-1" id="pvFeeTglBayar">-</p>
+                        </div>
+                    </div>
+
+                    <!-- 2. DATA IDENTITAS & PERIODE -->
+                    <div class="relative z-10 grid grid-cols-2 gap-4 py-3 text-xs border-b border-gray-100">
+                        <div class="space-y-1">
+                            <div class="flex"><span class="w-28 text-gray-500 font-medium">Dihitung Oleh</span><span class="font-bold text-gray-900">: <span id="pvFeePenerima">-</span></span></div>
+                            <div class="flex"><span class="w-28 text-gray-500 font-medium">Periode</span><span class="font-bold text-gray-900">: <span id="pvFeePeriode">-</span></span></div>
+                        </div>
+                    </div>
+
+                    <!-- 3. TABEL SUMMARY PERHITUNGAN -->
+                    <div class="relative z-10 my-3">
+                        <table class="w-full text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-700 text-sm border-y border-gray-300 italic">
+                                    <th class="py-2 px-3 text-left font-bold">Rincian Wilayah Pengiriman</th>
+                                    <th class="py-2 px-3 text-center font-bold">Banyaknya</th>
+                                    <th class="py-2 px-3 text-right font-bold">Fee / Ball</th>
+                                    <th class="py-2 px-3 text-center font-bold">Fee Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr>
+                                    <td class="py-2 px-3 font-semibold text-gray-800">
+                                        <span class="inline-block w-2 h-2 rounded-full bg-orange-500 mr-1.5"></span>
+                                        Kiriman Wilayah Jambi (Semua Nota)
+                                    </td>
+                                    <td class="py-2 px-3 text-center font-bold text-orange-600 font-poppins-custom" id="pvFeeBalJambi">0 Ball</td>
+                                    <td class="py-2 px-3 text-right text-gray-500" id="pvFeeTarifJambi">Rp 3.000</td>
+                                    <td class="py-2 px-3 text-right font-bold text-gray-800 text-base font-poppins-custom" id="pvFeeSubtotalJambi">Rp 0</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 font-semibold text-gray-800">
+                                        <span class="inline-block w-2 h-2 rounded-full bg-purple-500 mr-1.5"></span>
+                                        Kiriman Wilayah Jakarta (Item Terpilih)
+                                    </td>
+                                    <td class="py-2 px-3 text-center font-bold text-purple-600 font-poppins-custom" id="pvFeeBalJakarta">0 Ball</td>
+                                    <td class="py-2 px-3 text-right text-gray-500" id="pvFeeTarifJakarta">Rp 3.000</td>
+                                    <td class="py-2 px-3 text-right font-bold text-gray-800 text-base font-poppins-custom" id="pvFeeSubtotalJakarta">Rp 0</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="border-t-2 border-gray-800 bg-gray-50">
+                                    <td class="py-2.5 px-3 font-bold text-gray-800 uppercase text-[12px] italic">Total Akumulasi Kiriman</td>
+                                    <td class="py-2.5 px-3 text-center font-extrabold text-pink-600 text-base font-poppins-custom" id="pvFeeTotalBal">0 Ball</td>
+                                    <td class="py-2.5 px-3 text-right font-bold text-gray-600 text-[13px]">Total Bersih:</td>
+                                    <td class="py-2.5 px-3 text-right font-extrabold text-base font-poppins-custom text-teal-700" id="pvFeeGrandTotal">Rp 0</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- 4. TOTAL BLOK BESAR & TANDA TANGAN -->
+                    <div class="relative z-10 pt-2 grid grid-cols-2 items-end gap-6">
+                        <!-- Tanda Tangan Ringkas -->
+                        <div class="grid grid-cols-2 gap-4 text-center text-[10px]">
+                            <div>
+                                <p class="text-gray-500 mb-10">Penerima</p>
+                                <p class="font-bold border-t border-gray-400 pt-1 text-gray-800">( ______________ )</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 mb-10">Admin</p>
+                                <p class="font-bold border-t border-gray-400 pt-1 text-gray-800">( SBR Putra Food )</p>
+                            </div>
+                        </div>
+
+                        <!-- Highlight Kotak Total Fee Diterima -->
+                        <div class="bg-teal-50 border border-teal-200 rounded-xl p-3 text-right">
+                            <span class="text-[12px] font-bold uppercase text-black tracking-wider block">Total Pencairan Fee</span>
+                            <span class="text-2xl font-black font-poppins-custom text-teal-700 block leading-tight italic" id="pvFeeNominalBesar">Rp 0</span>
+                            <span class="text-[11px] text-black italic">*Dana fee telah dicairkan & tercatat di sistem</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- FOOTER TOMBOL AKSI MODAL -->
+            <div class="p-4 px-6 border-t border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center flex-wrap gap-2">
+                <div class="flex gap-2">
+                    <button onclick="exportSlipFeePDF()" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100 transition shadow-sm flex items-center gap-1.5">
+                        📄 Simpan PDF A5
+                    </button>
+                    <button onclick="exportSlipFeePNG()" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100 transition shadow-sm flex items-center gap-1.5">
+                        🖼️ Simpan PNG
+                    </button>
+                    <button onclick="cetakSlipFee()" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition shadow-sm flex items-center gap-1.5">
+                        🖨️ Cetak
+                    </button>
+                </div>
+                <button onclick="tutupPreviewFee()" class="px-6 py-2 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 transition">
+                    Tutup Pratinjau
+                </button>
+            </div>
+        </div>
+    </div>
+	
+	<!-- MODAL PERHITUNGAN FEE PLASTIK -->
+	<div id="modalFeePlastik" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+		<div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[92vh] border border-gray-100 dark:border-slate-800">
+			
+			<!-- Header Modal & Tab Navigasi -->
+			<div class="px-6 py-4 flex justify-between items-center border-b bg-emerald-50 dark:bg-slate-800">
+				<div class="flex items-center gap-4">
+					<h3 class="text-base lg:text-lg font-bold text-emerald-800 dark:text-emerald-300 flex items-center">
+						<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+						</svg>
+						Perhitungan Fee Plastik (Barang Keluar)
+					</h3>
+					<div class="flex gap-1 bg-white/70 dark:bg-slate-900/60 p-1 rounded-xl border border-emerald-200 dark:border-slate-700 text-xs">
+						<button onclick="gantiTabFeePlastik('hitung')" id="tabBtnFeePlastikHitung" class="px-3 py-1 font-bold rounded-lg bg-emerald-600 text-white transition">Kalkulator Fee</button>
+						<button onclick="gantiTabFeePlastik('riwayat')" id="tabBtnFeePlastikRiwayat" class="px-3 py-1 font-bold rounded-lg text-gray-500 hover:text-emerald-600 transition">Riwayat Terbayar</button>
+					</div>
+				</div>
+				<button type="button" onclick="tutupModalFeePlastik()" class="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 hover:bg-emerald-100/60 dark:hover:bg-slate-700 text-xl font-bold transition shrink-0">&times;</button>
+			</div>
+
+			<!-- Konten Modal -->
+			<div class="p-6 overflow-y-auto flex-1 space-y-5 bg-white dark:bg-slate-900">
+				
+				<!-- TAB 1: KALKULATOR -->
+				<div id="viewFeePlastikHitung" class="space-y-5">
+					<!-- Panel Filter Periode & Tarif -->
+					<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-gray-200 dark:border-slate-700">
+						<div>
+							<label class="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block mb-1">Tgl Mulai Periode</label>
+							<input type="date" id="feePlastikTglMulai" class="w-full border dark:border-slate-700 p-2 text-xs rounded-xl bg-white dark:bg-slate-900 outline-none focus:border-emerald-500 font-semibold">
+						</div>
+						<div>
+							<label class="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block mb-1">Tgl Akhir Periode</label>
+							<input type="date" id="feePlastikTglAkhir" class="w-full border dark:border-slate-700 p-2 text-xs rounded-xl bg-white dark:bg-slate-900 outline-none focus:border-emerald-500 font-semibold">
+						</div>
+						<div>
+							<label class="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block mb-1">Tarif Fee per Qty</label>
+							<input type="number" id="feePlastikTarifPerQty" value="2000" class="w-full border dark:border-slate-700 p-2 text-xs rounded-xl bg-white dark:bg-slate-900 outline-none focus:border-emerald-500 font-bold text-emerald-600" oninput="kalkulasiTotalFeePlastik()">
+						</div>
+						<div class="flex items-end">
+							<button onclick="tarikDataKirimanFeePlastik()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-xl text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5">
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+								Tarik Data Nota Keluar
+							</button>
+						</div>
+					</div>
+
+					<!-- Kartu KPI -->
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+						<div class="bg-indigo-50 dark:bg-slate-800 p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900 text-center">
+							<p class="text-[10px] font-bold uppercase text-indigo-500">Jumlah Nota Terpilih</p>
+							<p class="text-base font-poppins-custom text-indigo-700 dark:text-indigo-300 mt-0.5" id="feePlastikSumNota">0 Nota</p>
+						</div>
+						<div class="bg-pink-50 dark:bg-slate-800 p-3.5 rounded-2xl border border-pink-200 dark:border-pink-900/50 text-center shadow-sm">
+							<p class="text-[10px] font-bold uppercase text-pink-500 dark:text-pink-400">Total Akumulasi Qty</p>
+							<p class="text-base font-poppins-custom font-extrabold text-pink-600 dark:text-pink-300 mt-0.5" id="feePlastikSumTotalQty">0 Qty</p>
+						</div>
+						<div class="bg-emerald-50 dark:bg-slate-800 p-3.5 rounded-2xl border border-emerald-200 dark:border-emerald-900 text-center shadow-sm">
+							<p class="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Estimasi Nominal Fee</p>
+							<p class="text-lg font-poppins-custom font-extrabold text-emerald-700 dark:text-emerald-300 mt-0.5" id="feePlastikSumTotalNominal">Rp 0</p>
+						</div>
+					</div>
+
+					<!-- Petunjuk & Info -->
+					<div class="flex items-center justify-between text-xs text-gray-500 px-1">
+						<span class="flex items-center gap-1.5">
+							<span class="w-2 h-2 rounded-full bg-emerald-500"></span> 
+							*Semua nota barang keluar otomatis tercentang. Hilangkan centang jika ada nota yang tidak dihitung fee.
+						</span>
+						<span class="text-[11px] font-bold" id="feePlastikTerpilihInfo">0 nota terpilih</span>
+					</div>
+
+					<!-- Tabel Data Nota Keluar -->
+					<div class="overflow-y-auto max-h-[300px] border border-gray-100 dark:border-slate-700 rounded-2xl">
+						<table class="w-full text-xs text-left">
+							<thead class="bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 uppercase sticky top-0 z-10 font-bold">
+								<tr>
+									<th class="p-3 w-10 text-center">Pilih</th>
+									<th class="p-3">Tanggal</th>
+									<th class="p-3">Judul & Rincian Barang</th>
+									<th class="p-3 text-center">Total Qty</th>
+									<th class="p-3 text-right">Fee (Rp)</th>
+									<th class="p-3 text-center">Status Klaim</th>
+								</tr>
+							</thead>
+							<tbody id="feePlastikTableBody" class="divide-y divide-gray-100 dark:divide-slate-700 font-medium text-gray-700 dark:text-gray-300">
+								<tr>
+									<td colspan="6" class="p-6 text-center text-gray-400 italic">Pilih tanggal periode di atas lalu klik "Tarik Data Nota Keluar".</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<!-- Form Identitas Penyelesaian -->
+					<div class="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-slate-700 space-y-3">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+							<div>
+								<label class="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block mb-1">Dihitung Oleh</label>
+								<input type="text" id="feePlastikPenerima" placeholder="Contoh: Admin Kk" class="w-full border dark:border-slate-700 p-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 outline-none font-semibold text-gray-700 dark:text-gray-200">
+							</div>
+							<div>
+								<label class="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 block mb-1">Pada Tanggal</label>
+								<div class="relative cursor-pointer">
+									<input type="text" id="feePlastikCatatan" readonly placeholder="Pilih Tanggal..." 
+										class="w-full border border-gray-200 dark:border-slate-700 p-2.5 pr-9 text-xs rounded-xl bg-white dark:bg-slate-900 outline-none font-semibold text-gray-700 dark:text-gray-200 cursor-pointer shadow-sm">
+									<input type="date" id="pickerFeePlastikCatatan" 
+										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+										onchange="setPilihTanggalCatatanPlastik(this.value)">
+									<div class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+										</svg>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- TAB 2: RIWAYAT TERBAYAR -->
+				<div id="viewFeePlastikRiwayat" class="hidden space-y-4">
+					<p class="text-xs text-gray-500">Daftar pencairan fee plastik / barang keluar yang sudah pernah Anda bayarkan:</p>
+					<div class="overflow-y-auto max-h-[420px] border border-gray-100 dark:border-slate-700 rounded-2xl">
+						<table class="w-full text-xs text-left">
+							<thead class="bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 uppercase sticky top-0 font-bold">
+								<tr>
+									<th class="p-3">Tgl Bayar</th>
+									<th class="p-3">Dihitung Oleh / Tanggal</th>
+									<th class="p-3">Periode Kiriman</th>
+									<th class="p-3 text-center">Total Qty</th>
+									<th class="p-3 text-right">Total Fee</th>
+									<th class="p-3 text-center">Status</th>
+									<th class="p-3 text-center">Aksi</th>
+								</tr>
+							</thead>
+							<tbody id="riwayatFeePlastikTableBody" class="divide-y divide-gray-100 dark:divide-slate-700 font-medium text-gray-700 dark:text-gray-300">
+								<tr>
+									<td colspan="7" class="p-6 text-center text-gray-400 italic">Belum ada riwayat fee plastik yang terbayar.</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+			</div>
+
+			<!-- Footer Tombol Aksi -->
+			<div class="p-4 px-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 flex justify-between items-center flex-wrap gap-2">
+				<button onclick="tutupModalFeePlastik()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 transition">Tutup</button>
+				<div id="footerAksiHitungPlastik" class="flex gap-2">
+					<button onclick="simpanPembayaranFeePlastik()" class="px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition flex items-center gap-1.5">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+						Simpan & Tandai Terbayar
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- MODAL PRATINJAU SLIP FEE PLASTIK (A5 LANDSCAPE) -->
+	<div id="modalPreviewFeePlastik" class="fixed inset-0 bg-gray-900/80 backdrop-blur-md hidden items-center justify-center z-[110] p-3 sm:p-4">
+		<div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[96vh] border border-gray-100 dark:border-slate-800">
+			
+			<div class="overflow-y-auto flex-1 bg-gray-100 dark:bg-slate-950 p-4 sm:p-6 flex justify-center">
+				
+				<!-- LEMBAR SLIP A5 LANDSCAPE -->
+				<div id="areaPrintSlipFeePlastik" class="bg-white text-gray-900 w-full max-w-[780px] p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-md relative flex flex-col justify-between" style="min-height: 480px; font-family: 'Inter', sans-serif;">
+					
+					<!-- Watermark -->
+					<div class="absolute inset-0 flex items-center justify-center opacity-[0.035] pointer-events-none select-none">
+						<h1 class="text-8xl font-black tracking-widest text-emerald-600 rotate-[-15deg]">TERBAYAR</h1>
+					</div>
+
+					<!-- Kop Header -->
+					<div class="relative z-10 border-b-2 border-gray-800 pb-3 flex justify-between items-center">
+						<div class="flex items-center gap-3">
+							<img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/831781eec1c40a9ab82217921961088e1075e044/sbr_logo.png" alt="SBR Logo" class="w-12 h-12 object-contain">
+							<div>
+								<h2 class="text-xl font-extrabold text-indigo-900 tracking-tight font-poppins-custom uppercase leading-tight">SBR Putra Food</h2>
+								<p class="text-[11px] text-gray-500 font-medium">Slip Perhitungan & Pencairan Fee Plastik</p>
+							</div>
+						</div>
+						<div class="text-right">
+							<span class="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">SLIP FEE PLASTIK</span>
+							<p class="text-xs font-bold text-gray-800 mt-1" id="pvFeePlastikTglBayar">-</p>
+							<p class="text-[10px] text-gray-400 font-mono" id="pvFeePlastikNoSlip">-</p>
+						</div>
+					</div>
+
+					<!-- Data Identitas -->
+					<div class="relative z-10 grid grid-cols-2 gap-4 py-3 text-xs border-b border-gray-100">
+						<div class="space-y-1">
+							<div class="flex"><span class="w-28 text-gray-500 font-medium">Dihitung Oleh</span><span class="font-bold text-gray-900">: <span id="pvFeePlastikPenerima">-</span></span></div>
+							<div class="flex"><span class="w-28 text-gray-500 font-medium">Catatan / Tanggal</span><span class="font-medium text-gray-700">: <span id="pvFeePlastikCatatan">-</span></span></div>
+						</div>
+						<div class="space-y-1 text-right sm:text-left sm:pl-10">
+							<div class="flex"><span class="w-28 text-gray-500 font-medium">Periode Transaksi</span><span class="font-bold text-gray-900">: <span id="pvFeePlastikPeriode">-</span></span></div>
+							<div class="flex"><span class="w-28 text-gray-500 font-medium">Status Pembayaran</span><span class="font-bold text-emerald-600">: Lunas / Terbayar</span></div>
+						</div>
+					</div>
+
+					<!-- Tabel Summary -->
+					<div class="relative z-10 my-3">
+						<table class="w-full text-xs border-collapse">
+							<thead>
+								<tr class="bg-gray-100 text-gray-700 border-y border-gray-300">
+									<th class="py-2 px-3 text-left font-bold">Kategori / Keterangan</th>
+									<th class="py-2 px-3 text-center font-bold">Total Qty Keluar</th>
+									<th class="py-2 px-3 text-right font-bold">Tarif Fee / Qty</th>
+									<th class="py-2 px-3 text-right font-bold">Subtotal Fee</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-gray-100">
+								<tr>
+									<td class="py-3 px-3 font-semibold text-gray-800">
+										<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>
+										Akumulasi Barang Keluar (Plastik / Pengeluaran Lainnya)
+									</td>
+									<td class="py-3 px-3 text-center font-extrabold text-pink-600 text-sm font-poppins-custom" id="pvFeePlastikTotalQty">0 Qty</td>
+									<td class="py-3 px-3 text-right text-gray-500" id="pvFeePlastikTarif">Rp 1.000</td>
+									<td class="py-3 px-3 text-right font-bold text-gray-800 font-poppins-custom" id="pvFeePlastikSubtotal">Rp 0</td>
+								</tr>
+							</tbody>
+							<tfoot>
+								<tr class="border-t-2 border-gray-800 bg-gray-50">
+									<td colspan="2" class="py-2.5 px-3 font-bold text-gray-800 uppercase text-[11px]">Total Bersih Fee Plastik</td>
+									<td class="py-2.5 px-3 text-right font-bold text-gray-600">Total:</td>
+									<td class="py-2.5 px-3 text-right font-extrabold text-base font-poppins-custom text-emerald-700" id="pvFeePlastikGrandTotal">Rp 0</td>
+								</tr>
+							</tfoot>
+						</table>
+					</div>
+
+					<!-- Tanda Tangan & Total Besar -->
+					<div class="relative z-10 pt-2 grid grid-cols-2 items-end gap-6">
+						<div class="grid grid-cols-2 gap-4 text-center text-[10px]">
+							<div>
+								<p class="text-gray-500 mb-10">Penerima / Kurir</p>
+								<p class="font-bold border-t border-gray-400 pt-1 text-gray-800" id="pvFeePlastikSignPenerima">( .................... )</p>
+							</div>
+							<div>
+								<p class="text-gray-500 mb-10">Admin / Penanggung Jawab</p>
+								<p class="font-bold border-t border-gray-400 pt-1 text-gray-800">( SBR Putra Food )</p>
+							</div>
+						</div>
+
+						<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-right">
+							<span class="text-[10px] font-extrabold uppercase text-emerald-600 tracking-wider block">Total Pencairan Fee Plastik</span>
+							<span class="text-2xl font-black font-poppins-custom text-emerald-700 block leading-tight" id="pvFeePlastikNominalBesar">Rp 0</span>
+							<span class="text-[9px] text-emerald-600/80 italic">*Fee resmi dicairkan dari transaksi barang keluar</span>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+			<!-- Footer Tombol Aksi -->
+			<div class="p-4 px-6 border-t border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center flex-wrap gap-2">
+				<div class="flex gap-2">
+					<button onclick="exportSlipFeePlastikPDF()" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100 transition shadow-sm flex items-center gap-1.5">
+						📄 Simpan PDF A5
+					</button>
+					<button onclick="exportSlipFeePlastikPNG()" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100 transition shadow-sm flex items-center gap-1.5">
+						🖼️ Simpan PNG
+					</button>
+					<button onclick="cetakSlipFeePlastik()" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition shadow-sm flex items-center gap-1.5">
+						🖨️ Cetak
+					</button>
+				</div>
+				<button onclick="tutupPreviewFeePlastik()" class="px-6 py-2 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 transition">
+					Tutup Pratinjau
+				</button>
+			</div>
+		</div>
+	</div>	
 </body>
 </html>
