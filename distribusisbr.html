@@ -5,11 +5,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBR Putra Food - Logistik & Gaji</title>
+    <title>SBR Putra Food - Logistik & Gaji V8.3</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' };
+        // Deteksi & terapkan tema tersimpan segera sebelum rendering body (Cegah kedip/flash putih)
+        (function () {
+            try {
+                const savedTheme = localStorage.getItem('sbr_tema') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                if (savedTheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) { }
+        })();
     </script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -39,50 +49,464 @@
         input[type="number"] {
             -moz-appearance: textfield !important;
         }
+
+        /* ========================================================
+           SISTEM TEMA: TERANG (LIGHT), GELAP (DARK), KALEM (CALM)
+           ======================================================== */
+
+        /* Transisi halus saat ganti tema */
+        body, header, main, div, nav, button, input, select, textarea, table, th, td, tr {
+            transition: background-color 0.22s ease, border-color 0.22s ease, color 0.18s ease;
+        }
+
+        /* Tombol Pill Switcher Tema di Header */
+        .theme-pill-btn {
+            cursor: pointer;
+            user-select: none;
+            outline: none;
+            border: 1px solid transparent;
+        }
+
+        .theme-icon {
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .theme-pill-btn:hover .theme-icon {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        /* Mode Terang (Default) Pill Styles */
+        html:not([data-theme="dark"]):not([data-theme="calm"]) .theme-pill-active,
+        html[data-theme="light"] .theme-pill-active {
+            background-color: #ffffff !important;
+            color: #4338ca !important;
+            border-color: #e5e7eb !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        html:not([data-theme="dark"]):not([data-theme="calm"]) .theme-pill-inactive,
+        html[data-theme="light"] .theme-pill-inactive {
+            color: #6b7280 !important;
+        }
+
+        html:not([data-theme="dark"]):not([data-theme="calm"]) .theme-pill-inactive:hover,
+        html[data-theme="light"] .theme-pill-inactive:hover {
+            color: #111827 !important;
+        }
+
+        /* ==========================================
+           1. MODE GELAP (DARK THEME)
+           ========================================== */
+        html[data-theme="dark"] body {
+            background-color: #0b0f19 !important;
+            color: #f1f5f9 !important;
+        }
+
+        html[data-theme="dark"] header {
+            background-color: #111827 !important;
+            border-bottom: 1px solid #1e293b !important;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45) !important;
+        }
+
+        html[data-theme="dark"] header h1 {
+            color: #ffffff !important;
+        }
+
+        /* Container Tab Nav & Theme Switcher */
+        html[data-theme="dark"] header .bg-gray-100,
+        html[data-theme="dark"] .theme-switcher-container {
+            background-color: #0d1527 !important;
+            border-color: #1e293b !important;
+        }
+
+        /* Tombol Tab Nav Aktif di Dark Mode */
+        html[data-theme="dark"] header button.bg-white {
+            background-color: #1e293b !important;
+            color: #a5b4fc !important;
+            border: 1px solid #334155 !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        /* Tombol Tab Nav Nonaktif di Dark Mode */
+        html[data-theme="dark"] header button.text-gray-500 {
+            color: #94a3b8 !important;
+        }
+
+        html[data-theme="dark"] header button.text-gray-500:hover {
+            color: #f8fafc !important;
+        }
+
+        /* Pill Tema Aktif & Inaktif di Dark Mode */
+        html[data-theme="dark"] .theme-pill-active {
+            background-color: #1e293b !important;
+            color: #a5b4fc !important;
+            border-color: #334155 !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        html[data-theme="dark"] .theme-pill-inactive {
+            color: #64748b !important;
+        }
+
+        html[data-theme="dark"] .theme-pill-inactive:hover {
+            color: #cbd5e1 !important;
+        }
+
+        /* Card, Panel, Modal Backgrounds (Kecuali Kertas Slip) */
+        html[data-theme="dark"] .bg-white:not(#kertasSlip):not(#kertasSlip *) {
+            background-color: #151e32 !important;
+            color: #f1f5f9 !important;
+        }
+
+        /* Background Abu-abu Standar Tailwind */
+        html[data-theme="dark"] .bg-gray-50:not(#kertasSlip *) {
+            background-color: #0f1626 !important;
+        }
+
+        html[data-theme="dark"] .bg-gray-100:not(#kertasSlip *) {
+            background-color: #192236 !important;
+        }
+
+        html[data-theme="dark"] .bg-gray-200:not(#kertasSlip *) {
+            background-color: #243048 !important;
+        }
+
+        /* Border Garis */
+        html[data-theme="dark"] .border-gray-100,
+        html[data-theme="dark"] .border-gray-200,
+        html[data-theme="dark"] .border-gray-300,
+        html[data-theme="dark"] .border-b:not(#kertasSlip *),
+        html[data-theme="dark"] .border-t:not(#kertasSlip *),
+        html[data-theme="dark"] .border-l:not(#kertasSlip *),
+        html[data-theme="dark"] .border-r:not(#kertasSlip *),
+        html[data-theme="dark"] .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+        html[data-theme="dark"] .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+            border-color: #222f47 !important;
+        }
+
+        /* Input Form, Select, & Textarea */
+        html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not(#kertasSlip *),
+        html[data-theme="dark"] select:not(#kertasSlip *),
+        html[data-theme="dark"] textarea:not(#kertasSlip *) {
+            background-color: #0d1527 !important;
+            color: #f8fafc !important;
+            border-color: #283750 !important;
+        }
+
+        html[data-theme="dark"] input::placeholder,
+        html[data-theme="dark"] textarea::placeholder {
+            color: #64748b !important;
+        }
+
+        html[data-theme="dark"] input:focus,
+        html[data-theme="dark"] select:focus,
+        html[data-theme="dark"] textarea:focus {
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
+        }
+
+        /* Tabel Data */
+        html[data-theme="dark"] table:not(#kertasSlip *) thead th {
+            background-color: #0f1626 !important;
+            color: #94a3b8 !important;
+            border-color: #222f47 !important;
+        }
+
+        html[data-theme="dark"] table:not(#kertasSlip *) tbody tr {
+            border-color: #222f47 !important;
+        }
+
+        html[data-theme="dark"] table:not(#kertasSlip *) tbody tr:hover {
+            background-color: rgba(30, 41, 59, 0.45) !important;
+        }
+
+        html[data-theme="dark"] table:not(#kertasSlip *) td {
+            border-color: #222f47 !important;
+        }
+
+        /* Teks Elemen Abu-Abu */
+        html[data-theme="dark"] .text-gray-900:not(#kertasSlip *) { color: #f8fafc !important; }
+        html[data-theme="dark"] .text-gray-800:not(#kertasSlip *) { color: #f1f5f9 !important; }
+        html[data-theme="dark"] .text-gray-700:not(#kertasSlip *) { color: #cbd5e1 !important; }
+        html[data-theme="dark"] .text-gray-600:not(#kertasSlip *) { color: #94a3b8 !important; }
+        html[data-theme="dark"] .text-gray-500:not(#kertasSlip *) { color: #64748b !important; }
+        html[data-theme="dark"] .text-gray-400:not(#kertasSlip *) { color: #475569 !important; }
+
+        /* Badge & Kotak Aksen Transparan Elegan di Dark */
+        html[data-theme="dark"] .bg-indigo-50:not(#kertasSlip *) { background-color: rgba(99, 102, 241, 0.15) !important; }
+        html[data-theme="dark"] .bg-emerald-50:not(#kertasSlip *) { background-color: rgba(16, 185, 129, 0.15) !important; }
+        html[data-theme="dark"] .bg-amber-50:not(#kertasSlip *) { background-color: rgba(245, 158, 11, 0.15) !important; }
+        html[data-theme="dark"] .bg-rose-50:not(#kertasSlip *) { background-color: rgba(244, 63, 94, 0.15) !important; }
+        html[data-theme="dark"] .bg-red-50:not(#kertasSlip *) { background-color: rgba(239, 68, 68, 0.15) !important; }
+        html[data-theme="dark"] .bg-blue-50:not(#kertasSlip *) { background-color: rgba(59, 130, 246, 0.15) !important; }
+
+        html[data-theme="dark"] .text-indigo-600, html[data-theme="dark"] .text-indigo-700 { color: #a5b4fc !important; }
+        html[data-theme="dark"] .text-emerald-600, html[data-theme="dark"] .text-emerald-700 { color: #6ee7b7 !important; }
+        html[data-theme="dark"] .text-amber-600, html[data-theme="dark"] .text-amber-700 { color: #fcd34d !important; }
+        html[data-theme="dark"] .text-rose-600, html[data-theme="dark"] .text-rose-700 { color: #fda4af !important; }
+        html[data-theme="dark"] .text-red-600, html[data-theme="dark"] .text-red-700 { color: #fca5a5 !important; }
+
+        /* Kolom Bonus & Kasbon Slip di Dark */
+        html[data-theme="dark"] #slipInputBonus {
+            background-color: rgba(16, 185, 129, 0.12) !important;
+            border-color: rgba(16, 185, 129, 0.35) !important;
+            color: #6ee7b7 !important;
+        }
+
+        html[data-theme="dark"] #slipInputKasbon {
+            background-color: rgba(244, 63, 94, 0.12) !important;
+            border-color: rgba(244, 63, 94, 0.35) !important;
+            color: #fda4af !important;
+        }
+
+        /* ==========================================
+           2. MODE KALEM (CALM / WARM EYE-CARE)
+           ========================================== */
+        html[data-theme="calm"] body {
+            background-color: #f4f0e8 !important;
+            color: #2d3748 !important;
+        }
+
+        html[data-theme="calm"] header {
+            background-color: #fbf9f4 !important;
+            border-bottom: 1px solid #e2dcd0 !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04) !important;
+        }
+
+        html[data-theme="calm"] header h1 {
+            color: #1a202c !important;
+        }
+
+        /* Container Tab Nav & Theme Switcher */
+        html[data-theme="calm"] header .bg-gray-100,
+        html[data-theme="calm"] .theme-switcher-container {
+            background-color: #e8e3d8 !important;
+            border-color: #ded7c9 !important;
+        }
+
+        /* Tombol Tab Nav Aktif di Calm Mode */
+        html[data-theme="calm"] header button.bg-white {
+            background-color: #ffffff !important;
+            color: #4338ca !important;
+            border: 1px solid #ded7ca !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+        }
+
+        /* Tombol Tab Nav Nonaktif di Calm Mode */
+        html[data-theme="calm"] header button.text-gray-500 {
+            color: #6b7280 !important;
+        }
+
+        html[data-theme="calm"] header button.text-gray-500:hover {
+            color: #1f2937 !important;
+        }
+
+        /* Pill Tema Aktif & Inaktif di Calm Mode */
+        html[data-theme="calm"] .theme-pill-active {
+            background-color: #ffffff !important;
+            color: #065f46 !important;
+            border-color: #d1d5db !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        html[data-theme="calm"] .theme-pill-inactive {
+            color: #718096 !important;
+        }
+
+        html[data-theme="calm"] .theme-pill-inactive:hover {
+            color: #2d3748 !important;
+        }
+
+        /* Card, Panel, Modal Backgrounds di Calm */
+        html[data-theme="calm"] .bg-white:not(#kertasSlip):not(#kertasSlip *) {
+            background-color: #fdfcf9 !important;
+            color: #2d3748 !important;
+        }
+
+        /* Background Abu-abu Standar Tailwind di Calm */
+        html[data-theme="calm"] .bg-gray-50:not(#kertasSlip *) {
+            background-color: #efebe2 !important;
+        }
+
+        html[data-theme="calm"] .bg-gray-100:not(#kertasSlip *) {
+            background-color: #e7e2d6 !important;
+        }
+
+        html[data-theme="calm"] .bg-gray-200:not(#kertasSlip *) {
+            background-color: #ddd6c8 !important;
+        }
+
+        /* Border Garis di Calm */
+        html[data-theme="calm"] .border-gray-100,
+        html[data-theme="calm"] .border-gray-200,
+        html[data-theme="calm"] .border-gray-300,
+        html[data-theme="calm"] .border-b:not(#kertasSlip *),
+        html[data-theme="calm"] .border-t:not(#kertasSlip *),
+        html[data-theme="calm"] .border-l:not(#kertasSlip *),
+        html[data-theme="calm"] .border-r:not(#kertasSlip *),
+        html[data-theme="calm"] .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+        html[data-theme="calm"] .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+            border-color: #e2dcd0 !important;
+        }
+
+        /* Input Form, Select, & Textarea di Calm */
+        html[data-theme="calm"] input:not([type="checkbox"]):not([type="radio"]):not(#kertasSlip *),
+        html[data-theme="calm"] select:not(#kertasSlip *),
+        html[data-theme="calm"] textarea:not(#kertasSlip *) {
+            background-color: #ffffff !important;
+            color: #2d3748 !important;
+            border-color: #dcd4c5 !important;
+        }
+
+        html[data-theme="calm"] input::placeholder,
+        html[data-theme="calm"] textarea::placeholder {
+            color: #8c97a5 !important;
+        }
+
+        html[data-theme="calm"] input:focus,
+        html[data-theme="calm"] select:focus,
+        html[data-theme="calm"] textarea:focus {
+            border-color: #059669 !important;
+            box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2) !important;
+        }
+
+        /* Tabel Data di Calm */
+        html[data-theme="calm"] table:not(#kertasSlip *) thead th {
+            background-color: #eae5d9 !important;
+            color: #5a6676 !important;
+            border-color: #e2dcd0 !important;
+        }
+
+        html[data-theme="calm"] table:not(#kertasSlip *) tbody tr {
+            border-color: #e8e2d6 !important;
+        }
+
+        html[data-theme="calm"] table:not(#kertasSlip *) tbody tr:hover {
+            background-color: #f7f4ed !important;
+        }
+
+        html[data-theme="calm"] table:not(#kertasSlip *) td {
+            border-color: #e8e2d6 !important;
+        }
+
+        /* Teks Elemen Abu-Abu di Calm */
+        html[data-theme="calm"] .text-gray-900:not(#kertasSlip *) { color: #1a202c !important; }
+        html[data-theme="calm"] .text-gray-800:not(#kertasSlip *) { color: #2d3748 !important; }
+        html[data-theme="calm"] .text-gray-700:not(#kertasSlip *) { color: #4a5568 !important; }
+        html[data-theme="calm"] .text-gray-600:not(#kertasSlip *) { color: #5e6b7d !important; }
+        html[data-theme="calm"] .text-gray-500:not(#kertasSlip *) { color: #788597 !important; }
+        html[data-theme="calm"] .text-gray-400:not(#kertasSlip *) { color: #9aa5b4 !important; }
+
+        /* Badge Aksen di Calm */
+        html[data-theme="calm"] .bg-indigo-50:not(#kertasSlip *) { background-color: #edeef8 !important; }
+        html[data-theme="calm"] .bg-emerald-50:not(#kertasSlip *) { background-color: #ebf5ee !important; }
+        html[data-theme="calm"] .bg-amber-50:not(#kertasSlip *) { background-color: #faf4e6 !important; }
+        html[data-theme="calm"] .bg-rose-50:not(#kertasSlip *) { background-color: #fbf0f0 !important; }
+
+        /* ========================================================
+           KERTAS STRUK SLIP GAJI: TETAP PUTIH ASLI STANDAR THERMAL
+           ======================================================== */
+        #kertasSlip {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        #kertasSlip * {
+            color: inherit !important;
+            border-color: #9ca3af !important;
+        }
     </style>
 </head>
 
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen pb-10">
 
     <!-- HEADER & TAB NAVIGATION -->
-    <header class="bg-white shadow-sm sticky top-0 z-40">
+    <!-- HEADER & TAB NAVIGATION -->
+    <header class="bg-white shadow-sm sticky top-0 z-40 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 pt-4 flex flex-col md:flex-row justify-between items-center gap-4 pb-3">
-            <div class="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start">
-                <div class="bg-indigo-600 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-sm">
-                    <i class="fa-solid fa-box-open"></i>
+            <div class="flex items-center justify-between w-full md:w-auto">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-sm">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-extrabold text-gray-900 tracking-tight leading-tight">SBR Putra Food</h1>
+                        <p class="text-xs font-semibold text-indigo-600 tracking-wide uppercase">Distribusi Aromanis V8.3
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="text-xl font-extrabold text-gray-900 tracking-tight leading-tight">SBR Putra Food</h1>
-                    <p class="text-xs font-semibold text-indigo-600 tracking-wide uppercase">Distribusi Aromanis</p>
+
+                <!-- Theme Switcher for mobile (visible on small screens) -->
+                <div class="md:hidden flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200/80 shadow-2xs theme-switcher-container">
+                    <button type="button" onclick="setTema('light')" id="btnTemaMobile_light"
+                        class="theme-pill-btn p-1.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center"
+                        title="Mode Terang (Light)">
+                        <i class="fa-solid fa-sun text-amber-500 theme-icon"></i>
+                    </button>
+                    <button type="button" onclick="setTema('dark')" id="btnTemaMobile_dark"
+                        class="theme-pill-btn p-1.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center"
+                        title="Mode Gelap (Dark)">
+                        <i class="fa-solid fa-moon text-indigo-400 theme-icon"></i>
+                    </button>
+                    <button type="button" onclick="setTema('calm')" id="btnTemaMobile_calm"
+                        class="theme-pill-btn p-1.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center"
+                        title="Mode Kalem (Calm)">
+                        <i class="fa-solid fa-leaf text-emerald-500 theme-icon"></i>
+                    </button>
                 </div>
             </div>
 
-            <div class="flex bg-gray-100 p-1.5 rounded-xl w-full md:w-auto justify-between md:justify-start gap-1">
-                <button onclick="switchTab('logistik')" id="tabBtnLogistik"
-                    class="flex-1 md:flex-none px-3.5 py-2 rounded-lg text-sm font-bold bg-white text-indigo-700 shadow-sm smooth-transition flex justify-center items-center">
-                    <i class="fa-solid fa-truck-fast"></i>
-                    <span class="hidden md:inline-block ml-1.5 whitespace-nowrap">Input & Logistik</span>
-                </button>
-                <button onclick="switchTab('penarikan')" id="tabBtnPenarikan"
-                    class="flex-1 md:flex-none px-3.5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-gray-700 smooth-transition flex justify-center items-center">
-                    <i class="fa-solid fa-boxes-packing"></i>
-                    <span class="hidden md:inline-block ml-1.5 whitespace-nowrap">Penarikan & Validasi</span>
-                </button>
-                <button onclick="switchTab('rekap')" id="tabBtnRekap"
-                    class="flex-1 md:flex-none px-3.5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-gray-700 smooth-transition flex justify-center items-center">
-                    <i class="fa-solid fa-wallet"></i>
-                    <span class="hidden md:inline-block ml-1.5 whitespace-nowrap">Rekap Gaji</span>
-                </button>
-                <button onclick="switchTab('riwayat')" id="tabBtnRiwayat"
-                    class="flex-1 md:flex-none px-3.5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-gray-700 smooth-transition flex justify-center items-center">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                    <span class="hidden md:inline-block ml-1.5 whitespace-nowrap">Riwayat</span>
-                </button>
-                <button onclick="switchTab('setting')" id="tabBtnSetting"
-                    class="flex-1 md:flex-none px-3.5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-gray-700 smooth-transition flex justify-center items-center">
-                    <i class="fa-solid fa-sliders"></i>
-                    <span class="hidden md:inline-block ml-1.5 whitespace-nowrap">Tarif Upah</span>
-                </button>
+            <div class="flex items-center gap-2.5 w-full md:w-auto justify-between md:justify-end flex-wrap sm:flex-nowrap">
+                <div class="flex bg-gray-100 p-1.5 rounded-xl w-full sm:w-auto justify-between md:justify-start gap-1">
+                    <button onclick="switchTab('logistik')" id="tabBtnLogistik"
+                        class="flex-1 md:flex-none px-3.5 py-2 rounded-lg text-sm font-bold bg-white text-indigo-700 shadow-sm smooth-transition flex justify-center items-center">
+                        <i class="fa-solid fa-truck-fast"></i>
+                        <span class="hidden md:inline-block ml-1.5 whitespace-nowrap">Input & Logistik</span>
+                    </button>
+                    <button onclick="switchTab('penarikan')" id="tabBtnPenarikan"
+                        class="flex-1 md:flex-none px-3.5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-gray-700 smooth-transition flex justify-center items-center">
+                        <i class="fa-solid fa-boxes-packing"></i>
+                        <span class="hidden md:inline-block ml-1.5 whitespace-nowrap">Penarikan & Validasi</span>
+                    </button>
+                    <button onclick="switchTab('rekap')" id="tabBtnRekap"
+                        class="flex-1 md:flex-none px-3.5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-gray-700 smooth-transition flex justify-center items-center">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span class="hidden md:inline-block ml-1.5 whitespace-nowrap">Rekap Gaji</span>
+                    </button>
+                    <button onclick="switchTab('riwayat')" id="tabBtnRiwayat"
+                        class="flex-1 md:flex-none px-3.5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-gray-700 smooth-transition flex justify-center items-center">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span class="hidden md:inline-block ml-1.5 whitespace-nowrap">Riwayat</span>
+                    </button>
+                    <button onclick="switchTab('setting')" id="tabBtnSetting"
+                        class="flex-1 md:flex-none px-3.5 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:text-gray-700 smooth-transition flex justify-center items-center">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span class="hidden md:inline-block ml-1.5 whitespace-nowrap">Tarif Upah</span>
+                    </button>
+                </div>
+
+                <!-- Theme Switcher for Desktop -->
+                <div class="hidden md:flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200/80 shadow-2xs theme-switcher-container">
+                    <button type="button" onclick="setTema('light')" id="btnTema_light"
+                        class="theme-pill-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200"
+                        title="Mode Terang (Light)">
+                        <i class="fa-solid fa-sun text-amber-500 theme-icon"></i>
+                        <span class="text-[11px]">Terang</span>
+                    </button>
+                    <button type="button" onclick="setTema('dark')" id="btnTema_dark"
+                        class="theme-pill-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200"
+                        title="Mode Gelap (Dark)">
+                        <i class="fa-solid fa-moon text-indigo-400 theme-icon"></i>
+                        <span class="text-[11px]">Gelap</span>
+                    </button>
+                    <button type="button" onclick="setTema('calm')" id="btnTema_calm"
+                        class="theme-pill-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200"
+                        title="Mode Kalem (Calm / Eye-Care)">
+                        <i class="fa-solid fa-leaf text-emerald-500 theme-icon"></i>
+                        <span class="text-[11px]">Calm</span>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -251,9 +675,14 @@
 
                 <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="px-5 py-3.5 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between">
-                        <span class="text-xs font-extrabold text-gray-700 uppercase tracking-wide">
-                            Daftar Pekerja Terdaftar Tanggal Ini
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-extrabold text-gray-700 uppercase tracking-wide">
+                                Daftar Pekerja
+                            </span>
+                            <span id="labelLogistikTanggalTerpilih"
+                                class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">
+                            </span>
+                        </div>
                         <span id="badgeJumlahPekerjaLogistik"
                             class="text-[10px] font-bold px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full">
                             0 Karyawan
@@ -290,8 +719,10 @@
                                 <i class="fa-solid fa-bolt"></i>
                             </div>
                             <div>
-							<h2 class="text-sm font-black text-gray-900 leading-tight">Setor Cepat (Direct Entry)</h2>
-							<p class="text-[11px] text-gray-400">Langsung dicatat ke kiriman hari ini / aktif.</p>                            </div>
+                                <h2 class="text-sm font-black text-gray-900 leading-tight">Setor Cepat (Direct Entry)
+                                </h2>
+                                <p class="text-[11px] text-gray-400">Langsung dicatat ke kiriman hari ini / aktif.</p>
+                            </div>
                         </div>
                         <span
                             class="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-extrabold text-[10px] rounded-full hidden sm:inline-block">
@@ -365,9 +796,10 @@
                                 </select>
                             </div>
 
-                            <button type="button" id="btnEksekusiSetorDesktop" onclick="simpanSetorFIFODesktop()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                            <button type="button" id="btnEksekusiSetorDesktop" onclick="simpanSetorFIFODesktop()"
+                                class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
                                 <i class="fa-solid fa-check-double"></i> SIMPAN SETORAN
-                            </button>                        
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -473,11 +905,16 @@
                         class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none font-medium bg-gray-50 focus:ring-2 focus:ring-emerald-500 text-sm">
                 </div>
 
-                <div class="flex items-center w-full md:w-auto">
+                <div class="flex items-center w-full md:w-auto gap-2">
                     <button type="button" id="btnFilterRekap" onclick="loadRekapGaji()"
                         class="w-full md:w-auto bg-gray-900 hover:bg-gray-800 active:scale-95 text-white font-bold px-6 py-2 rounded-xl smooth-transition h-[42px] flex items-center justify-center text-sm shadow-sm gap-2">
                         <i class="fa-solid fa-rotate-right text-emerald-400" id="iconRefreshRekap"></i>
                         <span>Tampilkan Data</span>
+                    </button>
+                    <button type="button" onclick="bukaModalKelolaKasbon()"
+                        class="w-full md:w-auto bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 active:scale-95 text-white font-extrabold px-5 py-2 rounded-xl smooth-transition h-[42px] flex items-center justify-center text-sm shadow-md shadow-rose-200 gap-2">
+                        <i class="fa-solid fa-wallet text-white text-base"></i>
+                        <span>Kelola Kasbon</span>
                     </button>
                 </div>
             </div>
@@ -531,6 +968,10 @@
                                 <th class="px-4 py-4 text-center border-l border-gray-700 bg-red-900/50">Gantung (Netto)
                                 </th>
                                 <th class="px-4 py-4 text-center border-l border-gray-700 bg-amber-900/40">Uang Makan
+                                </th>
+                                <th class="px-3 py-4 text-center border-l border-gray-700 bg-rose-950/40">Kasbon
+                                </th>
+                                <th class="px-3 py-4 text-center border-l border-gray-700 bg-emerald-950/40">Bonus
                                 </th>
                                 <th class="px-5 py-4 text-right border-l border-gray-700 text-emerald-400 text-sm">TOTAL
                                     GAJI</th>
@@ -892,7 +1333,7 @@
     <div id="modalPratinjau"
         class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
         <div
-            class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-all duration-300">
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform scale-95 transition-all duration-300">
             <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 class="text-sm font-extrabold text-gray-800 flex items-center">
                     <i class="fa-solid fa-receipt text-indigo-600 mr-2"></i> Pratinjau Slip Gaji
@@ -903,7 +1344,68 @@
                 </button>
             </div>
 
-            <div class="p-4 bg-gray-100 max-h-[60vh] overflow-y-auto flex justify-center">
+            <!-- PANEL PENYESUAIAN SLIP: BONUS & POTONGAN KASBON -->
+            <div id="panelPenyesuaianSlip"
+                class="px-4 py-3 bg-gradient-to-r from-indigo-50/90 to-purple-50/70 border-b border-indigo-100 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-indigo-900 uppercase tracking-wide flex items-center gap-1.5">
+                        <i class="fa-solid fa-sliders text-indigo-600"></i> Penyesuaian Gaji
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <span id="badgeInfoKasbonWorker" onclick="bukaModalKasbonDariSlip()"
+                            title="Klik untuk kelola kasbon karyawan ini"
+                            class="cursor-pointer hover:bg-rose-200 transition-colors text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1">
+                            <i class="fa-solid fa-receipt text-[9px]"></i> <span id="labelTeksUtangKasbon">Utang Kasbon:
+                                Rp 0</span>
+                        </span>
+                        <button type="button" onclick="bukaModalKasbonDariSlip()" title="Input / Bayar Kasbon Baru"
+                            class="px-2 py-0.5 rounded-full bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-[10px] font-extrabold transition-all shadow-xs flex items-center gap-1">
+                            <i class="fa-solid fa-plus text-[9px]"></i> Kasbon
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <!-- Input Bonus -->
+                    <div class="bg-white p-2.5 rounded-2xl border border-emerald-100 shadow-2xs">
+                        <label class="block font-black text-[11px] text-emerald-700 mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-gift text-emerald-500"></i> Tambah Bonus
+                        </label>
+                        <input type="text" inputmode="numeric" id="slipInputBonus" placeholder="0"
+                            oninput="formatInputRibuan(this); updatePenyesuaianSlip();"
+                            class="w-full px-2.5 py-1.5 border border-emerald-200 rounded-xl text-xs font-black text-emerald-800 bg-emerald-50/20 outline-none focus:ring-2 focus:ring-emerald-400">
+                        <input type="text" id="slipKetBonus" placeholder="Ket: Bonus Target / Lembur"
+                            oninput="updatePenyesuaianSlip()"
+                            class="w-full px-2.5 py-1 border border-gray-200 rounded-lg text-[10px] font-medium text-gray-700 mt-1 outline-none focus:ring-1 focus:ring-emerald-400 placeholder:text-gray-400">
+                    </div>
+
+                    <!-- Input Potong Kasbon -->
+                    <div class="bg-white p-2.5 rounded-2xl border border-rose-100 shadow-2xs">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="font-black text-[11px] text-rose-700 flex items-center gap-1">
+                                <i class="fa-solid fa-hand-holding-dollar text-rose-500"></i> Potong Kasbon
+                            </label>
+                            <div class="flex gap-1">
+                                <button type="button" onclick="setKasbonSlip('semua')"
+                                    class="text-[9px] font-black px-1.5 py-0.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded border border-rose-200 cursor-pointer"
+                                    title="Potong lunas sesuai saldo kasbon">Semua</button>
+                                <button type="button" onclick="setKasbonSlip('nol')"
+                                    class="text-[9px] font-black px-1.5 py-0.5 bg-gray-50 text-gray-500 hover:bg-gray-100 rounded border border-gray-200 cursor-pointer"
+                                    title="Reset potong kasbon ke 0">0</button>
+                            </div>
+                        </div>
+                        <input type="text" inputmode="numeric" id="slipInputKasbon" placeholder="0"
+                            oninput="formatInputRibuan(this); updatePenyesuaianSlip();"
+                            class="w-full px-2.5 py-1.5 border border-rose-200 rounded-xl text-xs font-black text-rose-800 bg-rose-50/20 outline-none focus:ring-2 focus:ring-rose-400">
+                        <div class="text-[10px] text-gray-400 mt-1 flex justify-between" id="slipTeksSisaKasbon">
+                            <span>Sisa Kasbon:</span>
+                            <span class="font-bold text-gray-700" id="valSisaKasbonTeks">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-100 max-h-[55vh] overflow-y-auto flex justify-center">
                 <div id="kertasSlip"
                     class="bg-white w-[290px] p-4 rounded-lg shadow-sm border border-gray-200 font-mono text-xs text-gray-800 space-y-2 leading-tight">
                 </div>
@@ -927,54 +1429,327 @@
             </div>
         </div>
     </div>
-	
-	
-	<!-- MODAL KEPUTUSAN GANTUNGAN SAAT PELUNASAN -->
-	<div id="modalKeputusanGantung"
-		class="fixed inset-0 z-[80] flex items-center justify-center bg-gray-900/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-		<div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4 transform scale-95 transition-all duration-300 border border-amber-100 text-center">
-			<div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner">
-				<i class="fa-solid fa-triangle-exclamation"></i>
-			</div>
-			<div>
-				<h3 class="font-extrabold text-gray-900 text-base leading-snug">Masih Ada Sisa Gantungan!</h3>
-				<p class="text-xs text-gray-600 mt-1 leading-relaxed" id="pesanKeputusanGantung">
-					Karyawan ini masih memiliki tanggungan gantung fisik. Silakan tentukan tindakan selanjutnya:
-				</p>
-			</div>
 
-			<div class="space-y-2 pt-1 text-left">
-				<!-- Pilihan 1: Kelola Aksi Pelunasan -->
-				<button type="button" onclick="eksekusiPilihanGantung('kelola')"
-					class="w-full p-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100 transition flex items-center gap-3 active:scale-95 shadow-2xs">
-					<div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm font-black shrink-0">
-						<i class="fa-solid fa-sliders"></i>
-					</div>
-					<div>
-						<div class="text-xs font-black text-gray-900">Kelola Aksi Pelunasan</div>
-						<div class="text-[10px] font-semibold text-indigo-700">Buka modal aksi (Cicil, Setor Penuh, Potong Gaji, Pemutihan)</div>
-					</div>
-				</button>
 
-				<!-- Pilihan 2: Gantung ke Kiriman Selanjutnya -->
-				<button type="button" onclick="eksekusiPilihanGantung('gantung_lanjut')"
-					class="w-full p-3 rounded-2xl border border-amber-200 bg-amber-50/60 hover:bg-amber-100 transition flex items-center gap-3 active:scale-95 shadow-2xs">
-					<div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center text-sm font-black shrink-0">
-						<i class="fa-solid fa-forward"></i>
-					</div>
-					<div>
-						<div class="text-xs font-black text-gray-900">Gantung ke Kiriman Selanjutnya</div>
-						<div class="text-[10px] font-semibold text-amber-700">Tandai lunas kiriman beres & biarkan gantung tetap aktif di sistem</div>
-					</div>
-				</button>
-			</div>
+    <!-- MODAL KELOLA KASBON & PINJAMAN KARYAWAN (SIMPLE & ELEGAN) -->
+    <div id="modalKelolaKasbon"
+        class="fixed inset-0 z-[85] flex items-center justify-center bg-gray-900/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div id="contentKelolaKasbon"
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform scale-95 transition-all duration-300 border border-gray-100 flex flex-col max-h-[90vh]">
 
-			<button type="button" onclick="tutupModalKeputusanGantung()"
-				class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition">
-				Batal
-			</button>
-		</div>
-	</div>
+            <!-- Header Modal -->
+            <div
+                class="px-5 py-3.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div
+                        class="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white text-sm">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black tracking-wide leading-tight">Kelola Kasbon Karyawan</h3>
+                        <p class="text-[11px] text-rose-100 font-medium leading-none mt-0.5">Input Pinjaman Baru
+                            Karyawan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="tutupModalKelolaKasbon()"
+                    class="text-white/80 hover:text-white bg-black/15 hover:bg-black/25 rounded-full w-7 h-7 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Body Modal (Simpel & Praktis) -->
+            <div class="p-5 space-y-3.5 overflow-y-auto text-xs">
+
+                <!-- 1. Pilih Karyawan & Status Utang -->
+                <div class="bg-gray-50/90 p-3 rounded-2xl border border-gray-200/80 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                            Pilih Karyawan
+                        </label>
+                        <span id="kasbonBadgeStatus"
+                            class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-200">
+                            Utang: Rp 0
+                        </span>
+                    </div>
+                    <div class="relative">
+                        <select id="kasbonSelectKaryawan" onchange="gantiKaryawanKasbon(this.value)"
+                            class="w-full pl-3 pr-9 py-2 bg-white border border-gray-200 rounded-xl font-bold text-gray-800 outline-none focus:ring-2 focus:ring-rose-500 transition text-xs appearance-none cursor-pointer">
+                            <option value="">-- Memuat Karyawan --</option>
+                        </select>
+                        <i
+                            class="fa-solid fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none text-xs"></i>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] pt-1 border-t border-gray-200/60">
+                        <span class="text-gray-500 font-medium">Sisa Utang Saat Ini:</span>
+                        <span id="kasbonTeksSaldoLama" class="font-black text-rose-700 text-xs">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- 2. Nominal Pinjaman Kasbon & Quick Chips -->
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-1">
+                        Nominal Pinjaman (Rp)
+                    </label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-2.5 font-black text-gray-400 text-sm">Rp</div>
+                        <input type="text" inputmode="numeric" id="kasbonInputNominal" placeholder="0"
+                            oninput="formatInputRibuanKasbon(this); hitungSimulasiKasbon();"
+                            class="w-full pl-11 pr-3 py-2 bg-white border border-gray-200 rounded-xl font-black text-gray-900 text-base outline-none focus:ring-2 focus:ring-rose-500 transition shadow-xs">
+                    </div>
+                    <!-- Quick Nominal Chips (+200rb, +500rb, +1jt, Reset) -->
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        <button type="button" onclick="tambahNominalKasbonCepat(200000)"
+                            class="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-[10px] transition active:scale-95 border border-rose-200">+200rb</button>
+                        <button type="button" onclick="tambahNominalKasbonCepat(500000)"
+                            class="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-[10px] transition active:scale-95 border border-rose-200">+500rb</button>
+                        <button type="button" onclick="tambahNominalKasbonCepat(1000000)"
+                            class="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-[10px] transition active:scale-95 border border-rose-200">+1jt</button>
+                        <button type="button" onclick="resetNominalKasbon()"
+                            class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-[10px] transition active:scale-95 border border-gray-200">Reset</button>
+                    </div>
+                </div>
+
+                <!-- 3. Keterangan Pinjaman -->
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-1">
+                        Keterangan (Opsional)
+                    </label>
+                    <input type="text" id="kasbonInputKeterangan" placeholder="Contoh: Kasbon mingguan / bensin"
+                        class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl font-medium text-gray-800 text-xs outline-none focus:ring-2 focus:ring-rose-500 transition">
+                    <!-- Quick Suggestion Chips -->
+                    <div class="flex flex-wrap gap-1.5 mt-1.5">
+                        <button type="button" onclick="setKetKasbonCepat('Kasbon Mingguan')"
+                            class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-600 hover:text-rose-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Kasbon
+                            Mingguan</button>
+                        <button type="button" onclick="setKetKasbonCepat('Keperluan Mendesak')"
+                            class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-600 hover:text-rose-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Keperluan
+                            Mendesak</button>
+                        <button type="button" onclick="setKetKasbonCepat('Bensin / Operasional')"
+                            class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-600 hover:text-rose-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Bensin/Ops</button>
+                    </div>
+                </div>
+
+                <!-- Hidden Input Tanggal -->
+                <input type="hidden" id="kasbonInputTanggal">
+
+                <!-- 4. Estimasi Saldo Baru -->
+                <div
+                    class="p-2.5 bg-rose-50/60 rounded-xl border border-rose-100 flex items-center justify-between text-[11px]">
+                    <span class="text-rose-900 font-medium">Estimasi Saldo Setelah Pinjaman:</span>
+                    <span id="kasbonEstimasiSaldoBaru" class="font-black text-sm text-rose-700">Rp 0</span>
+                </div>
+
+                <!-- 5. Riwayat 3 Transaksi Kasbon Terakhir (Ringkas) -->
+                <div class="pt-1">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                            <i class="fa-solid fa-clock-rotate-left mr-1"></i> 3 Transaksi Terakhir
+                        </span>
+                        <span id="kasbonLoadingRiwayat" class="text-[10px] text-gray-400 hidden">
+                            <i class="fa-solid fa-circle-notch fa-spin mr-1"></i>
+                        </span>
+                    </div>
+                    <div id="kasbonContainerRiwayat" class="space-y-1 max-h-24 overflow-y-auto pr-0.5 text-xs">
+                        <div class="text-center py-2 text-gray-400 text-[11px]">Belum ada riwayat transaksi.</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2 shrink-0">
+                <button type="button" onclick="tutupModalKelolaKasbon()"
+                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl text-xs transition active:scale-95">
+                    Tutup
+                </button>
+                <button type="button" id="btnSimpanTransaksiKasbon" onclick="simpanTransaksiKasbon()"
+                    class="px-5 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black rounded-xl text-xs transition shadow-sm shadow-rose-200 flex items-center gap-1.5 active:scale-95">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Pinjaman Kasbon
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- MODAL KELOLA BONUS KARYAWAN -->
+    <div id="modalKelolaBonus"
+        class="fixed inset-0 z-[85] flex items-center justify-center bg-gray-900/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div id="contentKelolaBonus"
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform scale-95 transition-all duration-300 border border-gray-100 flex flex-col max-h-[92vh]">
+
+            <!-- Header Modal -->
+            <div
+                class="px-5 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div
+                        class="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white text-base">
+                        <i class="fa-solid fa-gift"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black tracking-wide leading-tight">Atur Bonus Karyawan</h3>
+                        <p class="text-[11px] text-emerald-100 font-medium leading-none mt-0.5">Tambahan Bonus
+                            Pembayaran Penggajian</p>
+                    </div>
+                </div>
+                <button type="button" onclick="tutupModalKelolaBonus()"
+                    class="text-white/80 hover:text-white bg-black/15 hover:bg-black/25 rounded-full w-8 h-8 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Body Modal -->
+            <div class="p-5 space-y-4 text-xs overflow-y-auto">
+                <input type="hidden" id="bonusInputKaryawanId" value="">
+
+                <!-- 1. Display Nama Karyawan -->
+                <div>
+                    <label class="block text-[11px] font-black text-gray-500 uppercase tracking-wider mb-1.5">
+                        Nama Karyawan
+                    </label>
+                    <div
+                        class="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div
+                                class="w-8 h-8 rounded-xl bg-emerald-200/70 text-emerald-800 flex items-center justify-center font-black text-xs">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div>
+                                <div id="bonusNamaKaryawan" class="text-sm font-black text-emerald-900 uppercase">
+                                    Karyawan</div>
+                                <div class="text-[10px] text-emerald-700 font-semibold">Penerima Bonus Penggajian</div>
+                            </div>
+                        </div>
+                        <span
+                            class="px-2.5 py-1 rounded-xl text-[10px] font-black bg-white text-emerald-800 border border-emerald-200 shadow-2xs">
+                            Gaji Aktif
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 2. Input Nominal Bonus (Pemisah Ribuan) -->
+                <div>
+                    <label class="block text-[11px] font-black text-gray-500 uppercase tracking-wider mb-1.5">
+                        Nominal Bonus (Rp)
+                    </label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-2.5 font-black text-gray-400 text-sm">Rp</div>
+                        <input type="text" id="bonusInputNominal" placeholder="0" oninput="formatInputRibuanBonus(this)"
+                            class="w-full pl-11 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl font-black text-gray-900 text-base outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                    </div>
+                    <!-- Quick Nominal Chips -->
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        <button type="button" onclick="tambahNominalBonusCepat(20000)"
+                            class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-700 font-extrabold text-[10px] transition active:scale-95 border border-gray-200">+20rb</button>
+                        <button type="button" onclick="tambahNominalBonusCepat(50000)"
+                            class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-700 font-extrabold text-[10px] transition active:scale-95 border border-gray-200">+50rb</button>
+                        <button type="button" onclick="tambahNominalBonusCepat(100000)"
+                            class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-700 font-extrabold text-[10px] transition active:scale-95 border border-gray-200">+100rb</button>
+                        <button type="button" onclick="tambahNominalBonusCepat(200000)"
+                            class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-700 font-extrabold text-[10px] transition active:scale-95 border border-gray-200">+200rb</button>
+                        <button type="button" onclick="resetNominalBonus()"
+                            class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 font-bold text-[10px] transition active:scale-95">Reset</button>
+                    </div>
+                </div>
+
+                <!-- 3. Keterangan Bonus -->
+                <div>
+                    <label class="block text-[11px] font-black text-gray-500 uppercase tracking-wider mb-1.5">
+                        Keterangan Bonus
+                    </label>
+                    <input type="text" id="bonusInputKeterangan" placeholder="Contoh: Bonus Target / Lembur / Kerajinan"
+                        class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 text-xs outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition">
+                    <!-- Quick Suggestions -->
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        <button type="button" onclick="setKetBonusCepat('Bonus Target')"
+                            class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] transition active:scale-95 border border-emerald-200">Bonus
+                            Target</button>
+                        <button type="button" onclick="setKetBonusCepat('Lembur')"
+                            class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] transition active:scale-95 border border-emerald-200">Lembur</button>
+                        <button type="button" onclick="setKetBonusCepat('Kerajinan')"
+                            class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] transition active:scale-95 border border-emerald-200">Kerajinan</button>
+                        <button type="button" onclick="setKetBonusCepat('Bonus Mingguan')"
+                            class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] transition active:scale-95 border border-emerald-200">Bonus
+                            Mingguan</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="px-5 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between shrink-0">
+                <button type="button" onclick="hapusBonusKaryawan()" id="btnHapusBonusModal"
+                    class="px-3.5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl text-xs transition active:scale-95 border border-red-200 flex items-center gap-1.5 hidden">
+                    <i class="fa-solid fa-trash-can text-[11px]"></i> Hapus Bonus
+                </button>
+                <div class="flex items-center gap-2 ml-auto">
+                    <button type="button" onclick="tutupModalKelolaBonus()"
+                        class="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl text-xs transition active:scale-95">
+                        Tutup
+                    </button>
+                    <button type="button" onclick="simpanBonusKaryawan()"
+                        class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-xl text-xs transition shadow-md shadow-emerald-200 flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-check"></i> Simpan Bonus
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- MODAL KEPUTUSAN GANTUNGAN SAAT PELUNASAN -->
+    <div id="modalKeputusanGantung"
+        class="fixed inset-0 z-[80] flex items-center justify-center bg-gray-900/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4 transform scale-95 transition-all duration-300 border border-amber-100 text-center">
+            <div
+                class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-gray-900 text-base leading-snug">Masih Ada Sisa Gantungan!</h3>
+                <p class="text-xs text-gray-600 mt-1 leading-relaxed" id="pesanKeputusanGantung">
+                    Karyawan ini masih memiliki tanggungan gantung fisik. Silakan tentukan tindakan selanjutnya:
+                </p>
+            </div>
+
+            <div class="space-y-2 pt-1 text-left">
+                <!-- Pilihan 1: Kelola Aksi Pelunasan -->
+                <button type="button" onclick="eksekusiPilihanGantung('kelola')"
+                    class="w-full p-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100 transition flex items-center gap-3 active:scale-95 shadow-2xs">
+                    <div
+                        class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm font-black shrink-0">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-black text-gray-900">Kelola Aksi Pelunasan</div>
+                        <div class="text-[10px] font-semibold text-indigo-700">Buka modal aksi (Cicil, Setor Penuh,
+                            Potong Gaji, Pemutihan)</div>
+                    </div>
+                </button>
+
+                <!-- Pilihan 2: Gantung ke Kiriman Selanjutnya -->
+                <button type="button" onclick="eksekusiPilihanGantung('gantung_lanjut')"
+                    class="w-full p-3 rounded-2xl border border-amber-200 bg-amber-50/60 hover:bg-amber-100 transition flex items-center gap-3 active:scale-95 shadow-2xs">
+                    <div
+                        class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center text-sm font-black shrink-0">
+                        <i class="fa-solid fa-forward"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-black text-gray-900">Gantung ke Kiriman Selanjutnya</div>
+                        <div class="text-[10px] font-semibold text-amber-700">Tandai lunas kiriman beres & biarkan
+                            gantung tetap aktif di sistem</div>
+                    </div>
+                </button>
+            </div>
+
+            <button type="button" onclick="tutupModalKeputusanGantung()"
+                class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition">
+                Batal
+            </button>
+        </div>
+    </div>
 
     <!-- MODAL PENARIKAN MANUAL -->
     <div id="modalSetoran"
@@ -1083,87 +1858,98 @@
         </div>
     </div>
 
-	<!-- MODAL TERPADU: RINCIAN LOGISTIK & GANTUNGAN -->
-	<div id="modalRincian"
-		class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-		<div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden transform scale-95 transition-all duration-300 flex flex-col max-h-[90vh]"
-			id="modalContentRincian">
-			<!-- Header Atas -->
-			<div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-				<div>
-					<h3 class="text-base font-black text-gray-900 flex items-center">
-						<i class="fa-solid fa-file-invoice text-indigo-600 mr-2 text-lg"></i> Rincian Kerja & Status Gantungan
-					</h3>
-					<p class="text-xs font-bold text-gray-500 mt-0.5" id="infoRincianPeriode">Periode: -</p>
-				</div>
-				<div class="flex items-center gap-2">
-					<button onclick="simpanRincianPNG()"
-						class="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-extrabold rounded-xl border border-emerald-200 transition flex items-center gap-1.5 shadow-sm active:scale-95">
-						<i class="fa-solid fa-file-arrow-down text-emerald-600"></i> Simpan PNG
-					</button>
-					<button onclick="tutupModalRincian()"
-						class="text-gray-400 hover:text-gray-700 bg-white border border-gray-200 rounded-full w-8 h-8 flex items-center justify-center transition shadow-sm">
-						<i class="fa-solid fa-xmark"></i>
-					</button>
-				</div>
-			</div>
+    <!-- MODAL TERPADU: RINCIAN LOGISTIK & GANTUNGAN -->
+    <div id="modalRincian"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden transform scale-95 transition-all duration-300 flex flex-col max-h-[90vh]"
+            id="modalContentRincian">
+            <!-- Header Atas -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h3 class="text-base font-black text-gray-900 flex items-center">
+                        <i class="fa-solid fa-file-invoice text-indigo-600 mr-2 text-lg"></i> Rincian Kerja & Status
+                        Gantungan
+                    </h3>
+                    <p class="text-xs font-bold text-gray-500 mt-0.5" id="infoRincianPeriode">Periode: -</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="simpanRincianPNG()"
+                        class="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-extrabold rounded-xl border border-emerald-200 transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                        <i class="fa-solid fa-file-arrow-down text-emerald-600"></i> Simpan PNG
+                    </button>
+                    <button onclick="tutupModalRincian()"
+                        class="text-gray-400 hover:text-gray-700 bg-white border border-gray-200 rounded-full w-8 h-8 flex items-center justify-center transition shadow-sm">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
 
-			<!-- Banner Identitas & KPI Terpadu -->
-			<div class="px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
-				<div class="flex items-center gap-2.5">
-					<div class="w-10 h-10 rounded-2xl bg-indigo-500/30 border border-indigo-400/40 flex items-center justify-center text-xl text-indigo-300 font-black">
-						<i class="fa-solid fa-user"></i>
-					</div>
-					<div>
-						<div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Karyawan Packing</div>
-						<div class="font-black text-lg uppercase tracking-wide text-white" id="infoRincianNama">-</div>
-					</div>
-				</div>
-				<div class="flex items-center gap-2 text-xs font-bold flex-wrap">
-					<span class="bg-slate-800 text-blue-300 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5">
-						<i class="fa-solid fa-paper-plane text-blue-400"></i> Kirim: <b class="text-white font-black text-sm" id="infoRincianTotalKirim">0</b> Bal
-					</span>
-					<span class="bg-slate-800 text-emerald-300 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5">
-						<i class="fa-solid fa-box-open text-emerald-400"></i> Setor: <b class="text-white font-black text-sm" id="infoRincianTotalSetor">0</b>
-					</span>
-					<span id="badgeBannerGantung" class="bg-red-950/80 text-red-300 px-3 py-1.5 rounded-xl border border-red-800 flex items-center gap-1.5">
-						<i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> Gantung: <b class="text-yellow-300 font-black text-sm" id="infoRincianTotalGantung">0 Bal</b>
-					</span>
-				</div>
-			</div>
+            <!-- Banner Identitas & KPI Terpadu -->
+            <div class="px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-2.5">
+                    <div
+                        class="w-10 h-10 rounded-2xl bg-indigo-500/30 border border-indigo-400/40 flex items-center justify-center text-xl text-indigo-300 font-black">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Karyawan Packing</div>
+                        <div class="font-black text-lg uppercase tracking-wide text-white" id="infoRincianNama">-</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-xs font-bold flex-wrap">
+                    <span
+                        class="bg-slate-800 text-blue-300 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane text-blue-400"></i> Kirim: <b
+                            class="text-white font-black text-sm" id="infoRincianTotalKirim">0</b> Bal
+                    </span>
+                    <span
+                        class="bg-slate-800 text-emerald-300 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-box-open text-emerald-400"></i> Setor: <b
+                            class="text-white font-black text-sm" id="infoRincianTotalSetor">0</b>
+                    </span>
+                    <span id="badgeBannerGantung"
+                        class="bg-red-950/80 text-red-300 px-3 py-1.5 rounded-xl border border-red-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> Gantung: <b
+                            class="text-yellow-300 font-black text-sm" id="infoRincianTotalGantung">0 Bal</b>
+                    </span>
+                </div>
+            </div>
 
-			<!-- Tabel Tunggal Terpadu -->
-			<div class="overflow-y-auto flex-1 p-0">
-				<table class="w-full text-left border-collapse">
-					<thead class="sticky top-0 bg-gray-100 shadow-sm z-10">
-						<tr class="text-gray-600 text-[10px] font-extrabold uppercase tracking-wider border-b border-gray-200">
-							<th class="px-4 py-3">Hari & Tanggal</th>
-							<th class="px-3 py-3">Produk</th>
-							<th class="px-3 py-3 text-center text-blue-600">Kirim</th>
-							<th class="px-3 py-3 text-center text-indigo-600">Target</th>
-							<th class="px-3 py-3 text-center text-emerald-600">Setor</th>
-							<th class="px-3 py-3 text-center">Status / Selisih</th>
-							<th class="px-4 py-3 text-center">Tindakan</th>
-						</tr>
-					</thead>
-					<tbody id="tableBodyRincian" class="divide-y divide-gray-100 text-sm"></tbody>
-					<tfoot id="tableFootRincian" class="bg-gray-50 border-t-2 border-gray-200 font-bold text-xs"></tfoot>
-				</table>
-			</div>
-		</div>
-	</div>
+            <!-- Tabel Tunggal Terpadu -->
+            <div class="overflow-y-auto flex-1 p-0">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-gray-100 shadow-sm z-10">
+                        <tr
+                            class="text-gray-600 text-[10px] font-extrabold uppercase tracking-wider border-b border-gray-200">
+                            <th class="px-4 py-3">Hari & Tanggal</th>
+                            <th class="px-3 py-3">Produk</th>
+                            <th class="px-3 py-3 text-center text-blue-600">Kirim</th>
+                            <th class="px-3 py-3 text-center text-indigo-600">Target</th>
+                            <th class="px-3 py-3 text-center text-emerald-600">Setor</th>
+                            <th class="px-3 py-3 text-center">Status / Selisih</th>
+                            <th class="px-4 py-3 text-center">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBodyRincian" class="divide-y divide-gray-100 text-sm"></tbody>
+                    <tfoot id="tableFootRincian" class="bg-gray-50 border-t-2 border-gray-200 font-bold text-xs">
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <!-- LOGIKA JAVASCRIPT APLIKASI -->
     <script>
         const supabaseUrl = 'https://uocvuddqhviorebinpva.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvY3Z1ZGRxaHZpb3JlYmlucHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2OTQ0NDAsImV4cCI6MjEwMTI3MDQ0MH0.mWGTOTfHG4Q62S3P4LQi-5bGviMPWgMzo2p2AECquL8';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        let karyawanMap = {};
 
         function hitungTargetProduk(kirim, jenis) {
-            const k = parseInt(kirim) || 0;
-            if (jenis === 'Oleh-oleh') return k * 10;
+            const k = parseFloat(kirim) || 0;
+            if (jenis === 'Oleh-oleh') return Math.round(k * 10);
             if (jenis === 'B10') return Math.round(k * 1.2);
-            return k;
+            return Math.round(k);
         }
 
         function getSatuanTarik(jenis) {
@@ -1177,8 +1963,8 @@
             if (jam >= 15 && jam < 18) return 'Sore';
             return 'Malam';
         }
-		
-		// ==============================================================
+
+        // ==============================================================
         // FUNGSI PEMBANTU: FORMAT JAM & MENIT DIGITAL (HH:mm)
         // ==============================================================
         function getJamMenitSekarang() {
@@ -1207,6 +1993,84 @@
 
         const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
         const formatRpStruk = (angka) => "Rp " + (angka || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+        function formatInputRibuan(el) {
+            if (!el) return;
+            const rawVal = String(el.value || '').replace(/\./g, '').replace(/\D/g, '');
+            if (!rawVal) {
+                el.value = '';
+                return;
+            }
+            const num = parseInt(rawVal, 10);
+            el.value = isNaN(num) ? '' : num.toLocaleString('id-ID');
+        }
+
+        // ==========================================
+        // SISTEM PENGATURAN TEMA (LIGHT, DARK, CALM)
+        // ==========================================
+        const TEMA_LIST = ['light', 'dark', 'calm'];
+
+        function setTema(tema) {
+            if (!TEMA_LIST.includes(tema)) tema = 'light';
+
+            const root = document.documentElement;
+            root.setAttribute('data-theme', tema);
+            if (tema === 'dark') {
+                root.classList.add('dark');
+            } else {
+                root.classList.remove('dark');
+            }
+
+            try {
+                localStorage.setItem('sbr_tema', tema);
+            } catch (e) {
+                console.warn('Gagal menyimpan preferensi tema:', e);
+            }
+
+            updateThemeUI(tema);
+        }
+
+        function toggleTema() {
+            const currentTema = document.documentElement.getAttribute('data-theme') || 'light';
+            const nextIdx = (TEMA_LIST.indexOf(currentTema) + 1) % TEMA_LIST.length;
+            setTema(TEMA_LIST[nextIdx]);
+        }
+
+        function updateThemeUI(tema) {
+            if (!TEMA_LIST.includes(tema)) tema = 'light';
+
+            ['light', 'dark', 'calm'].forEach(t => {
+                const btnDesktop = document.getElementById(`btnTema_${t}`);
+                const btnMobile = document.getElementById(`btnTemaMobile_${t}`);
+                [btnDesktop, btnMobile].forEach(b => {
+                    if (!b) return;
+                    const icon = b.querySelector('.theme-icon');
+                    if (t === tema) {
+                        b.setAttribute('aria-pressed', 'true');
+                        b.classList.add('theme-pill-active');
+                        b.classList.remove('theme-pill-inactive');
+                        if (icon) {
+                            icon.classList.add('scale-125');
+                            setTimeout(() => {
+                                if (icon) icon.classList.remove('scale-125');
+                            }, 300);
+                        }
+                    } else {
+                        b.setAttribute('aria-pressed', 'false');
+                        b.classList.remove('theme-pill-active');
+                        b.classList.add('theme-pill-inactive');
+                    }
+                });
+            });
+        }
+
+        function initTema() {
+            let tema = 'light';
+            try {
+                tema = localStorage.getItem('sbr_tema') || 'light';
+            } catch (e) { }
+            setTema(tema);
+        }
 
         function formatTglIndo(tglStr) {
             if (!tglStr) return "-";
@@ -1414,6 +2278,13 @@
 
             if (data && data.length > 0) {
                 semuaKaryawanList = data;
+                karyawanMap = {};
+                data.forEach(k => {
+                    // Nilai saldo_kasbon utama langsung dari database Supabase (multi-device)
+                    k.saldo_kasbon = (k.saldo_kasbon !== null && k.saldo_kasbon !== undefined) ? Number(k.saldo_kasbon) : 0;
+                    simpanSaldoKasbonLokal(k.id, k.saldo_kasbon);
+                    karyawanMap[k.id] = k;
+                });
                 daftarKaryawanGlobal = data.filter(k => {
                     const role = (k.role || '').toLowerCase().trim();
                     return role === 'packing' || role === 'karyawan';
@@ -1985,7 +2856,7 @@
             document.getElementById('infoPrediksiDesktop').innerHTML = infoText;
         }
 
-		async function simpanSetorFIFODesktop() {
+        async function simpanSetorFIFODesktop() {
             if (!produkTerpilihFIFODesktop) {
                 await showNotice("Pilih produk yang akan disetor!", "Peringatan", "warning");
                 return;
@@ -2009,7 +2880,7 @@
             const kid = document.getElementById('selectPekerjaSetorDesktop').value;
             const namaKaryawan = dataPekerjaFIFODesktopMap[kid]?.nama || 'Pekerja';
             const satuan = produkTerpilihFIFODesktop.satuan;
-            
+
             // Tanggal hari ini lokal
             const now = new Date();
             const yyyy = now.getFullYear();
@@ -2049,8 +2920,8 @@
 
             const jamMenit = getJamMenitSekarang();
             const logBaru = `${penarikNama}: +${inputBaru} ${satuan} (${sesiWaktu} • ${jamMenit} • ${tglHariIni})`;
-            const logGabungan = itemTarget.riwayat_cicilan 
-                ? `${itemTarget.riwayat_cicilan}, ${logBaru}` 
+            const logGabungan = itemTarget.riwayat_cicilan
+                ? `${itemTarget.riwayat_cicilan}, ${logBaru}`
                 : logBaru;
 
             const payloadUpdate = {
@@ -2097,7 +2968,7 @@
             if (info) info.innerHTML = 'Ketik jumlah yang diterima';
         }
 
-	async function loadDataPenarikan() {
+        async function loadDataPenarikan() {
             const container = document.getElementById('containerAccordionPenarikan');
             if (!container) return;
 
@@ -2385,83 +3256,11 @@
         }
 
         function bukaModalGantung(karyawanId) {
-            currentGantungKaryawanId = karyawanId;
-            const data = globalRekapData[karyawanId];
-            if (!data) return;
-
-            document.getElementById('infoGantungNama').innerText = data.nama;
-            const tbody = document.getElementById('tableBodyGantung');
-            tbody.innerHTML = '';
-
-            let totalBallNetto = 0;
-
-            Object.entries(data.tanggunganBersihPerProduk).forEach(([jenis, dataProd]) => {
-                const selisihNetto = dataProd.totalTarget - dataProd.totalTarik;
-                if (selisihNetto > 0) totalBallNetto += selisihNetto;
-            });
-
-            const listGantung = [...(data.daftarGantung || [])].sort((a, b) => {
-                if (a.tanggal !== b.tanggal) return a.tanggal.localeCompare(b.tanggal);
-                return (a.sesi === 'Pagi') ? -1 : 1;
-            });
-
-            listGantung.forEach(row => {
-                const jenis = row.jenis_produk || 'B12';
-                const targetKirim = hitungTargetProduk(row.kirim_produksi, jenis);
-                const setor = row.tarik_jadi || 0;
-                const satuan = getSatuanTarik(jenis);
-                const selisih = (row.koreksi !== null && row.koreksi !== undefined && row.koreksi !== 0)
-                    ? row.koreksi
-                    : (setor - targetKirim);
-
-                let statusTeks = '';
-                let cellWarnaClass = '';
-
-                if (selisih < 0) {
-                    statusTeks = `Kurang ${Math.abs(selisih)} ${satuan}`;
-                    cellWarnaClass = 'text-red-600 bg-red-50/60';
-                } else if (selisih > 0) {
-                    statusTeks = `Lebih +${selisih} ${satuan}`;
-                    cellWarnaClass = 'text-purple-600';
-                } else {
-                    statusTeks = 'Pas';
-                    cellWarnaClass = 'text-emerald-600';
-                }
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-red-50/50 border-b border-gray-100">
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <div class="font-bold text-gray-800 text-xs">${formatTglIndo(row.tanggal)}</div>
-                            <div class="text-[10px] font-semibold text-gray-500">Waktu ${row.sesi}</div>
-                        </td>
-                        <td class="px-3 py-3">
-                            <span class="text-xs font-bold text-indigo-700">${jenis}</span>
-                        </td>
-                        <td class="px-3 py-3 text-center font-bold text-blue-600">${targetKirim}</td>
-                        <td class="px-3 py-3 text-center font-bold text-emerald-600">${setor}</td>
-                        <td class="px-3 py-3 text-center font-black ${cellWarnaClass}">
-                            ${statusTeks}
-                        </td>
-                        <td class="px-4 py-3 text-center whitespace-nowrap">
-                            <button onclick='bukaModalAksiPelunasan(${JSON.stringify(row)})' class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5 mx-auto">
-                                <i class="fa-solid fa-pen-to-square"></i> Kelola
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            document.getElementById('infoGantungTotal').innerText = `${totalBallNetto} Bal`;
-
-            const modal = document.getElementById('modalGantung');
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            document.getElementById('modalContentGantung').classList.remove('scale-95');
+            bukaModalRincian(karyawanId);
         }
 
         function tutupModalGantung() {
-            const modal = document.getElementById('modalGantung');
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            document.getElementById('modalContentGantung').classList.add('scale-95');
+            tutupModalRincian();
         }
 
         function bukaModalAksiPelunasan(row) {
@@ -2575,9 +3374,9 @@
             loadDataPenarikan();
             loadSetorFIFODesktop();
             // Ganti:
-			if (currentRincianKaryawanId) {
-				bukaModalRincian(currentRincianKaryawanId);
-			}
+            if (currentRincianKaryawanId) {
+                bukaModalRincian(currentRincianKaryawanId);
+            }
         }
 
         // ==============================================================
@@ -2608,7 +3407,7 @@
             if (tbody) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="9" class="p-10 text-center text-gray-400">
+                        <td colspan="11" class="p-10 text-center text-gray-400">
                             <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-indigo-600"></i>
                             <br><span class="text-xs font-bold text-gray-500">Mengkalkulasi Rekap Gaji & Potongan...</span>
                         </td>
@@ -2631,7 +3430,7 @@
                 if (elThB10) elThB10.innerHTML = `Aromanis B10<br><span class="text-gray-400 text-[9px]">@ ${formatRp(tarif.b10)}</span>`;
                 if (elThOleh) elThOleh.innerHTML = `Oleh-oleh<br><span class="text-gray-400 text-[9px]">@ ${formatRp(tarif.oleholeh)}</span>`;
 
-                const [resPeriode, resSemuaGantung] = await Promise.all([
+                const [resPeriode, resSemuaGantung, resKaryawanFresh] = await Promise.all([
                     supabaseClient
                         .from('distribusi_packing')
                         .select(`
@@ -2653,10 +3452,22 @@
                             penarik:karyawan!ditarik_oleh(nama)
                         `)
                         .eq('is_lunas', false)
-                        .order('tanggal', { ascending: false })
+                        .order('tanggal', { ascending: false }),
+                    supabaseClient
+                        .from('karyawan')
+                        .select('*')
                 ]);
 
                 if (resPeriode.error) throw resPeriode.error;
+
+                if (resKaryawanFresh && resKaryawanFresh.data && resKaryawanFresh.data.length > 0) {
+                    semuaKaryawanList = resKaryawanFresh.data;
+                    resKaryawanFresh.data.forEach(k => {
+                        k.saldo_kasbon = (k.saldo_kasbon !== null && k.saldo_kasbon !== undefined) ? Number(k.saldo_kasbon) : 0;
+                        simpanSaldoKasbonLokal(k.id, k.saldo_kasbon);
+                        karyawanMap[k.id] = k;
+                    });
+                }
 
                 const data = resPeriode.data || [];
                 const semuaAktif = resSemuaGantung.data || [];
@@ -2669,8 +3480,9 @@
 
                     const kid = row.karyawan_id;
                     if (!rekap[kid]) {
+                        const kInfo = karyawanMap[kid] || semuaKaryawanList.find(k => String(k.id) === String(kid));
                         rekap[kid] = {
-                            nama: row.karyawan?.nama || 'Unknown',
+                            nama: row.karyawan?.nama || kInfo?.nama || 'Unknown',
                             b12: 0,
                             b10: 0,
                             oleholeh: 0,
@@ -2681,32 +3493,18 @@
                             rincianPotongUpah: [],
                             histori: [],
                             tanggunganBersihPerProduk: {},
-                            daftarGantung: []
+                            daftarGantung: [],
+                            saldoKasbon: getSaldoKasbonKaryawan(kid),
+                            bonus: 0,
+                            ketBonus: '',
+                            potongKasbon: 0
                         };
                     }
 
-                    // GANTI BAGIAN PENGHITUNGAN totalKirimMurni MENJADI:
                     rekap[kid].histori.push(row);
-
-				// OPSI 2: Patokan murni bal bahan kiriman dari barang yang disetor
-                    const setorQty = row.tarik_jadi || 0;
-                    let balBahanDisetor = 0;
-
-                    if (row.jenis_produk === 'B10') {
-                        balBahanDisetor = Math.round(setorQty / 1.2);
-                    } else if (row.jenis_produk === 'Oleh-oleh') {
-                        balBahanDisetor = Math.floor(setorQty / 10);
-                    } else {
-                        balBahanDisetor = setorQty;
-                    }
-
-                    rekap[kid].totalKirimMurni += balBahanDisetor;
 
                     const qty = row.tarik_jadi || 0;
 
-                    // ==============================================================
-                    // TAMBAHKAN KEMBALI BLOK DI BAWAH INI (PENGHITUNGAN GAJI POKOK)
-                    // ==============================================================
                     if (row.jenis_produk === 'B12') {
                         rekap[kid].b12 += qty;
                         rekap[kid].gajiDasar += (qty * tarif.b12);
@@ -2739,6 +3537,23 @@
                     }
                 });
 
+                // HITUNG UANG MAKAN AKUMULATIF BERDASARKAN BAHAN DISERAHKAN YANG SUDAH DISETOR:
+                // - B12: 1:1 -> r.b12 bal bahan
+                // - B10: 1 Bal bahan = 1.2 Bal jadi (kirim 10 -> jadi 12) -> r.b10 / 1.2
+                // - Oleh-oleh: 1 Bal bahan = 10 Toros (kirim 1 -> jadi 10) -> r.oleholeh / 10
+                Object.keys(rekap).forEach(kid => {
+                    const r = rekap[kid];
+                    const balBahanRaw = (r.b12 || 0) + ((r.b10 || 0) / 1.2) + ((r.oleholeh || 0) / 10);
+                    r.totalKirimMurni = Math.round(balBahanRaw);
+                    r.totalKirimMurniDesimal = Number(balBahanRaw.toFixed(1));
+
+                    // Hubungkan info kasbon pekerja dari database & lokal
+                    r.saldoKasbon = getSaldoKasbonKaryawan(kid);
+                    r.bonus = r.bonus || 0;
+                    r.ketBonus = r.ketBonus || '';
+                    r.potongKasbon = r.potongKasbon || 0;
+                });
+
                 semuaAktif.forEach(row => {
                     masterDistribusiMap[row.id] = row;
                     const kid = row.karyawan_id;
@@ -2747,12 +3562,15 @@
                     const tarik = row.tarik_jadi || 0;
 
                     if (!rekap[kid]) {
+                        const kInfo = karyawanMap[kid] || semuaKaryawanList.find(k => String(k.id) === String(kid));
                         rekap[kid] = {
-                            nama: row.karyawan?.nama || 'Unknown',
+                            nama: row.karyawan?.nama || kInfo?.nama || 'Unknown',
                             b12: 0, b10: 0, oleholeh: 0, gajiDasar: 0,
                             totalKirimMurni: 0, dapatUangMakan: false,
                             totalPotonganNominal: 0, rincianPotongUpah: [],
-                            histori: [], tanggunganBersihPerProduk: {}, daftarGantung: []
+                            histori: [], tanggunganBersihPerProduk: {}, daftarGantung: [],
+                            saldoKasbon: getSaldoKasbonKaryawan(kid),
+                            bonus: 0, ketBonus: '', potongKasbon: 0
                         };
                     }
 
@@ -2765,35 +3583,6 @@
                     rekap[kid].tanggunganBersihPerProduk[jenis].totalTarget += target;
                     rekap[kid].tanggunganBersihPerProduk[jenis].totalTarik += tarik;
 
-                    // Pastikan transaksi ini tercatat di histori pelunasan jika belum ada
-                    if (!rekap[kid].histori.some(it => String(it.id) === String(row.id))) {
-						rekap[kid].histori.push(row);
-
-						// Hitung proporsi bal bahan sesuai Opsi 2
-						const setorQtyLama = row.tarik_jadi || 0;
-						let balDisetorLama = 0;
-						if (row.jenis_produk === 'B10') {
-							balDisetorLama = Math.round(setorQtyLama / 1.2);
-						} else if (row.jenis_produk === 'Oleh-oleh') {
-							balDisetorLama = Math.floor(setorQtyLama / 10);
-						} else {
-							balDisetorLama = setorQtyLama;
-						}
-						rekap[kid].totalKirimMurni += balDisetorLama;
-
-						const qty = row.tarik_jadi || 0;
-                        if (row.jenis_produk === 'B12') {
-                            rekap[kid].b12 += qty;
-                            rekap[kid].gajiDasar += (qty * tarif.b12);
-                        } else if (row.jenis_produk === 'B10') {
-                            rekap[kid].b10 += qty;
-                            rekap[kid].gajiDasar += (qty * tarif.b10);
-                        } else if (row.jenis_produk === 'Oleh-oleh') {
-                            rekap[kid].oleholeh += qty;
-                            rekap[kid].gajiDasar += (qty * tarif.oleholeh);
-                        }
-                    }
-
                     if (!rekap[kid].daftarGantung.some(it => String(it.id) === String(row.id))) {
                         rekap[kid].daftarGantung.push(row);
                     }
@@ -2805,7 +3594,7 @@
             } catch (err) {
                 console.error("Gagal memuat rekap:", err);
                 if (tbody) {
-                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-red-500 font-bold text-xs">Gagal memuat data: ${err.message}</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-red-500 font-bold text-xs">Gagal memuat data: ${err.message}</td></tr>`;
                 }
             } finally {
                 if (btnFilter) {
@@ -2825,7 +3614,7 @@
 
             const keys = Object.keys(globalRekapData);
             if (keys.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-gray-400">Tidak ada data setoran yang belum dibayar pada periode ini.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" class="p-8 text-center text-gray-400">Tidak ada data setoran yang belum dibayar pada periode ini.</td></tr>`;
                 if (tfoot) tfoot.innerHTML = '';
                 return;
             }
@@ -2849,10 +3638,12 @@
 
                 const nominalUangMakan = r.dapatUangMakan ? (r.totalKirimMurni * tarif.makan) : 0;
                 const totalDenda = r.totalPotonganNominal || 0;
-                const totalGajiAkhir = r.gajiDasar + nominalUangMakan - totalDenda;
+                const bonus = r.bonus || 0;
+                const potongKasbon = r.potongKasbon || 0;
+                const totalGajiAkhir = Math.max(0, r.gajiDasar + nominalUangMakan + bonus - totalDenda - potongKasbon);
                 grandTotalGaji += totalGajiAkhir;
 
-				let gantungUI = `<span class="text-gray-400 font-bold">-</span>`;
+                let gantungUI = `<span class="text-gray-400 font-bold">-</span>`;
                 if (totalGantungNetto > 0) {
                     gantungUI = `
                         <button onclick="bukaModalRincian('${k}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-extrabold text-xs transition border border-red-200 shadow-sm group" title="Klik untuk rincian & kelola gantungan">
@@ -2881,15 +3672,43 @@
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-semibold text-amber-700">${r.oleholeh ? r.oleholeh + ' T' : '-'}</td>
                         <td class="px-4 py-3 text-center border-l border-gray-100 font-black text-red-600 bg-red-50/30">${gantungUI}</td>
 						<td class="px-4 py-3 text-center border-l border-gray-100">
-							<label class="inline-flex items-center gap-1.5 cursor-pointer bg-amber-50 px-2 py-1 rounded border border-amber-200">
+							<label class="inline-flex items-center gap-1.5 cursor-pointer bg-amber-50 px-2 py-1 rounded border border-amber-200" title="Bahan disetor: B12=${r.b12}, B10=${r.b10}/1.2, Oleh=${r.oleholeh}/10">
                                 <input type="checkbox" onchange="toggleUangMakan('${k}', this.checked)" ${r.dapatUangMakan ? 'checked' : ''} class="rounded text-indigo-600 focus:ring-0">
                                 <span class="text-[11px] font-bold text-amber-900">${r.totalKirimMurni} Bal Bahan</span>
                             </label>
                             <div class="text-[10px] text-gray-400 mt-0.5">${formatRp(nominalUangMakan)}</div>
                         </td>
+                        <!-- Kolom 1: Kasbon Karyawan -->
+                        <td class="px-3 py-3 text-center border-l border-gray-100 text-xs">
+                            <button type="button" onclick="bukaModalKelolaKasbon('${k}')" title="Klik untuk kelola kasbon ${r.nama}"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black transition-all ${r.saldoKasbon > 0
+                        ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 shadow-2xs'
+                        : 'bg-gray-50 hover:bg-gray-100 text-gray-400 border border-gray-200'
+                    }">
+                                <i class="fa-solid fa-wallet text-[9px]"></i>
+                                ${r.saldoKasbon > 0 ? `Utang: ${formatRp(r.saldoKasbon)}` : '+ Kasbon'}
+                            </button>
+                            ${potongKasbon > 0 ? `
+                                <div class="text-[10px] font-extrabold text-rose-600 mt-0.5 whitespace-nowrap">Potong: -${formatRp(potongKasbon)}</div>
+                            ` : ''}
+                        </td>
+                        <!-- Kolom 2: Bonus Karyawan Interaktif -->
+                        <td class="px-3 py-3 text-center border-l border-gray-100 text-xs">
+                            <button type="button" onclick="bukaModalKelolaBonus('${k}')" title="Klik untuk atur bonus ${r.nama}"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black transition-all ${bonus > 0
+                        ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 shadow-2xs'
+                        : 'bg-gray-50 hover:bg-gray-100 text-gray-400 border border-gray-200'
+                    }">
+                                <i class="fa-solid fa-gift text-[9px]"></i>
+                                ${bonus > 0 ? `+${formatRp(bonus)}` : '+ Bonus'}
+                            </button>
+                            ${bonus > 0 && r.ketBonus ? `
+                                <div class="text-[9px] font-semibold text-emerald-600 mt-0.5 truncate max-w-[90px] mx-auto" title="${r.ketBonus}">${r.ketBonus}</div>
+                            ` : ''}
+                        </td>
                         <td class="px-5 py-3 text-right border-l border-gray-100">
                             <div class="font-black text-lg text-emerald-600">${formatRp(totalGajiAkhir)}</div>
-                            ${totalDenda > 0 ? `<div class="text-[10px] font-bold text-red-600 tracking-tight">Dipotong: -${formatRp(totalDenda)}</div>` : ''}
+                            ${totalDenda > 0 ? `<div class="text-[10px] font-bold text-red-600 tracking-tight">Denda: -${formatRp(totalDenda)}</div>` : ''}
                         </td>
                         <td class="px-5 py-3 text-center border-l border-gray-100">
                             <button onclick="bukaPratinjauSlip('${k}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded flex items-center justify-center text-[10px] font-bold w-full transition shadow-sm">
@@ -2903,7 +3722,7 @@
             if (tfoot) {
                 tfoot.innerHTML = `
                     <tr>
-                        <td colspan="7" class="px-5 py-4 text-right uppercase tracking-wider text-xs font-bold">Total Pembayaran Gaji Packing</td>
+                        <td colspan="9" class="px-5 py-4 text-right uppercase tracking-wider text-xs font-bold">Total Pembayaran Gaji Packing</td>
                         <td class="px-5 py-4 text-right text-xl text-gray-900 border-l border-gray-200 bg-emerald-100/50 font-black">${formatRp(grandTotalGaji)}</td>
                         <td class="bg-emerald-100/50 border-l border-gray-200"></td>
                     </tr>
@@ -2970,10 +3789,14 @@
 
                 const nominalMakan = r.dapatUangMakan ? (r.totalKirimMurni * tarif.makan) : 0;
                 const totalDenda = r.totalPotonganNominal || 0;
-                const totalGaji = r.gajiDasar + nominalMakan - totalDenda;
+                const bonus = r.bonus || 0;
+                const potongKasbon = r.potongKasbon || 0;
+                const sisaKasbon = Math.max(0, (r.saldoKasbon || 0) - potongKasbon);
+                const totalGaji = Math.max(0, r.gajiDasar + nominalMakan + bonus - totalDenda - potongKasbon);
 
                 const berhasil = await kirimPerintahCetakBluetooth(
-                    r.nama, r.b12, r.b10, (r.oleholeh || 0), totalGaji, totalGantungNetto, r.totalKirimMurni, r.dapatUangMakan, start, end, totalDenda, r.rincianPotongUpah
+                    r.nama, r.b12, r.b10, (r.oleholeh || 0), totalGaji, totalGantungNetto, r.totalKirimMurni, r.dapatUangMakan, start, end, totalDenda, r.rincianPotongUpah,
+                    bonus, r.ketBonus || '', potongKasbon, sisaKasbon
                 );
 
                 if (berhasil) {
@@ -3004,7 +3827,7 @@
             await prosesPelunasanDatabase(listKid);
         }
 
-		function bukaModalRincian(karyawanId) {
+        function bukaModalRincian(karyawanId) {
             const data = globalRekapData[karyawanId];
             if (!data) return;
 
@@ -3054,7 +3877,7 @@
                 return (a.sesi === 'Pagi') ? -1 : 1;
             });
 
-			listGabungan.forEach(row => {
+            listGabungan.forEach(row => {
                 const jenis = row.jenis_produk || 'B12';
                 const kirimAsli = row.kirim_produksi || 0;
                 const targetKirim = hitungTargetProduk(kirimAsli, jenis);
@@ -3092,7 +3915,7 @@
                             <i class="fa-solid fa-sliders text-[10px]"></i> Kelola
                         </button>
                     `;
-                } 
+                }
                 // KONDISI 2: SUDAH ADA PENARIKAN TETAPI MASIH KURANG (GANTUNG)
                 else if (selisih < 0) {
                     // Tombol setor warna merah
@@ -3116,7 +3939,7 @@
                             <i class="fa-solid fa-sliders text-[10px]"></i> Kelola
                         </button>
                     `;
-                } 
+                }
                 // KONDISI 3: LEBIH TARGET (SURPLUS)
                 else if (selisih > 0) {
                     // Tombol setor warna ungu
@@ -3136,7 +3959,7 @@
                         </span>
                     `;
                     tombolKelola = `<span class="text-[10px] font-bold text-purple-600"><i class="fa-solid fa-check text-purple-500"></i> Surplus</span>`;
-                } 
+                }
                 // KONDISI 4: PAS / LUNAS
                 else {
                     // Tombol setor warna hijau
@@ -3195,7 +4018,7 @@
             document.getElementById('modalContentRincian').classList.remove('scale-95');
         }
 
-		function lihatRincianPenarikBarang(rowId) {
+        function lihatRincianPenarikBarang(rowId) {
             // 1. Cari data baris transaksi dari masterDistribusiMap atau histori rekap
             let row = masterDistribusiMap[rowId];
             const dataRekap = globalRekapData[currentRincianKaryawanId];
@@ -3217,7 +4040,7 @@
 
             // 2. Olah riwayat cicilan penarikan
             let isiRiwayat = '';
-			if (row.riwayat_cicilan) {
+            if (row.riwayat_cicilan) {
                 const list = parseRiwayatCicilan(row.riwayat_cicilan);
                 if (list.length > 0) {
                     isiRiwayat = list.map(c => {
@@ -3240,10 +4063,10 @@
 
             const targetKirim = hitungTargetProduk(row.kirim_produksi, jenis);
             const pesan = `Pekerja: ${namaKaryawan.toUpperCase()}\n` +
-                          `Tanggal: ${tglText}\n` +
-                          `Produk: ${jenis} (Target: ${targetKirim} ${satuan})\n` +
-                          `Total Masuk: ${row.tarik_jadi || 0} ${satuan}\n\n` +
-                          `📋 Rincian Penarik:\n${isiRiwayat}`;
+                `Tanggal: ${tglText}\n` +
+                `Produk: ${jenis} (Target: ${targetKirim} ${satuan})\n` +
+                `Total Masuk: ${row.tarik_jadi || 0} ${satuan}\n\n` +
+                `📋 Rincian Penarik:\n${isiRiwayat}`;
 
             showNotice(pesan, "Rincian Penarikan Barang");
         }
@@ -3292,10 +4115,14 @@
                 end = document.getElementById('filterEnd').value;
                 const nominalMakan = r.dapatUangMakan ? (r.totalKirimMurni * tarif.makan) : 0;
                 const totalDenda = r.totalPotonganNominal || 0;
-                const totalGaji = r.gajiDasar + nominalMakan - totalDenda;
+                const bonus = r.bonus || 0;
+                const potongKasbon = r.potongKasbon || 0;
+                const saldoKasbon = r.saldoKasbon || 0;
+                const sisaKasbon = Math.max(0, saldoKasbon - potongKasbon);
+                const totalGaji = Math.max(0, r.gajiDasar + nominalMakan + bonus - totalDenda - potongKasbon);
 
                 let totalGantungNetto = 0;
-                Object.values(r.tanggunganBersihPerProduk).forEach(dataProd => {
+                Object.values(r.tanggunganBersihPerProduk || {}).forEach(dataProd => {
                     const selisihNetto = dataProd.totalTarget - dataProd.totalTarik;
                     if (selisihNetto > 0) totalGantungNetto += selisihNetto;
                 });
@@ -3306,102 +4133,50 @@
                     b12: r.b12,
                     b10: r.b10,
                     oleholeh: r.oleholeh || 0,
+                    gajiDasar: r.gajiDasar,
                     nominalMakan,
                     totalPotonganNominal: totalDenda,
                     rincianPotongUpah: r.rincianPotongUpah || [],
+                    bonus,
+                    ketBonus: r.ketBonus || '',
+                    potongKasbon,
+                    saldoKasbon,
+                    sisaKasbon,
                     totalGaji,
                     totalGantung: totalGantungNetto,
                     totalKirimMurni: r.totalKirimMurni,
                     dapatUangMakan: r.dapatUangMakan,
                     start,
                     end,
-                    histori: r.histori || []
+                    histori: r.histori || [],
+                    isDariRiwayat: false
                 };
             }
 
-            const tarif = getTarif();
+            // Atur visibilitas Panel Penyesuaian Slip (Bonus & Kasbon)
+            const panelPenyesuaian = document.getElementById('panelPenyesuaianSlip');
+            if (panelPenyesuaian) {
+                if (isDariRiwayat) {
+                    panelPenyesuaian.classList.add('hidden');
+                } else {
+                    panelPenyesuaian.classList.remove('hidden');
+                    const inputBonus = document.getElementById('slipInputBonus');
+                    const inputKetBonus = document.getElementById('slipKetBonus');
+                    const inputKasbon = document.getElementById('slipInputKasbon');
+                    const badgeKasbon = document.getElementById('badgeInfoKasbonWorker');
+                    const elSisaKasbon = document.getElementById('valSisaKasbonTeks');
 
-            const strukHTML = `
-                <div class="text-center pb-2 border-b border-dashed border-gray-400">
-                    <div class="font-extrabold text-sm tracking-wider">SBR PUTRA FOOD</div>
-                    <div class="text-[10px] text-gray-500 uppercase">Packing Aromanis</div>
-                </div>
-                
-                <div class="py-2 border-b border-dashed border-gray-400 space-y-1 text-[11px]">
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Nama:</span>
-                        <span class="font-black uppercase">${slipAktif.nama}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Periode:</span>
-                        <span>${formatTglIndo(start)} - ${formatTglIndo(end)}</span>
-                    </div>
-                </div>
+                    if (inputBonus) inputBonus.value = slipAktif.bonus ? Number(slipAktif.bonus).toLocaleString('id-ID') : '';
+                    if (inputKetBonus) inputKetBonus.value = slipAktif.ketBonus || '';
+                    if (inputKasbon) inputKasbon.value = slipAktif.potongKasbon ? Number(slipAktif.potongKasbon).toLocaleString('id-ID') : '';
+                    const elTeksKasbon = document.getElementById('labelTeksUtangKasbon');
+                    if (elTeksKasbon) elTeksKasbon.innerText = `Utang Kasbon: ${formatRp(slipAktif.saldoKasbon || 0)}`;
+                    else if (badgeKasbon) badgeKasbon.innerText = `Utang Kasbon: ${formatRp(slipAktif.saldoKasbon || 0)}`;
+                    if (elSisaKasbon) elSisaKasbon.innerText = formatRp(slipAktif.sisaKasbon || 0);
+                }
+            }
 
-                <div class="py-2 border-b border-dashed border-gray-400 space-y-1.5 text-[11px]">
-                    ${slipAktif.b12 > 0 ? `
-                        <div>
-                            <div>Aromanis B12 (${slipAktif.b12} x ${tarif.b12.toLocaleString('id-ID')})</div>
-                            <div class="text-right text-gray-700">${formatRpStruk(slipAktif.b12 * tarif.b12)}</div>
-                        </div>
-                    ` : ''}
-
-                    ${slipAktif.b10 > 0 ? `
-                        <div>
-                            <div>Aromanis B10 (${slipAktif.b10} x ${tarif.b10.toLocaleString('id-ID')})</div>
-                            <div class="text-right text-gray-700">${formatRpStruk(slipAktif.b10 * tarif.b10)}</div>
-                        </div>
-                    ` : ''}
-
-                    ${slipAktif.oleholeh > 0 ? `
-                        <div>
-                            <div>Oleh-oleh (${slipAktif.oleholeh} x ${tarif.oleholeh.toLocaleString('id-ID')})</div>
-                            <div class="text-right text-gray-700">${formatRpStruk(slipAktif.oleholeh * tarif.oleholeh)}</div>
-                        </div>
-                    ` : ''}
-
-                    ${slipAktif.dapatUangMakan && slipAktif.nominalMakan > 0 ? `
-                        <div>
-                            <div>Uang Makan (${slipAktif.totalKirimMurni} Bal Bahan x ${tarif.makan.toLocaleString('id-ID')})</div>
-                            <div class="text-right text-gray-700">${formatRpStruk(slipAktif.nominalMakan)}</div>
-                        </div>
-                    ` : ''}
-
-                    ${slipAktif.totalPotonganNominal > 0 ? `
-                        <div class="pt-1.5 border-t border-dashed border-red-300 text-red-600">
-                            <div class="font-bold flex items-center gap-1">
-                                <i class="fa-solid fa-circle-minus text-[10px]"></i> Potongan Ganti Rugi:
-                            </div>
-                            <div class="space-y-0.5 mt-0.5">
-                                ${slipAktif.rincianPotongUpah.map(item => `
-                                    <div class="flex justify-between pl-3 text-[10px]">
-                                        <span>Ganti ${item.jenis} (${item.qty} ${item.satuan})</span>
-                                        <span class="font-black text-red-700">-${formatRpStruk(item.nominal)}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-
-                <div class="py-2 border-b border-dashed border-gray-400 flex justify-between items-center text-xs font-black">
-                    <span>TOTAL GAJI</span>
-                    <span class="text-emerald-700 text-sm font-black">${formatRpStruk(slipAktif.totalGaji)}</span>
-                </div>
-
-                <div class="pt-2 text-center text-[10px]">
-                    ${slipAktif.totalGantung > 0 ? `
-                        <div class="text-red-600 font-black p-1 bg-red-50 rounded border border-red-200">
-                            (!) TANGGUNGAN GANTUNG (!)<br>
-                            Sisa ${slipAktif.totalGantung} Bal Belum Setor!
-                        </div>
-                    ` : `
-                        <div class="text-gray-500 font-medium">Kerjaan Beres. Terima Kasih!</div>
-                    `}
-                </div>
-            `;
-
-            document.getElementById('kertasSlip').innerHTML = strukHTML;
+            renderKertasSlipHTML();
 
             const btnLunas = document.getElementById('btnTandaiLunas');
             if (btnLunas) {
@@ -3414,11 +4189,774 @@
             modal.firstElementChild.classList.remove('scale-95');
         }
 
-		   function tutupPratinjau() {
-			  const modal = document.getElementById('modalPratinjau');
-			  modal.classList.add('opacity-0', 'pointer-events-none');
-			  modal.firstElementChild?.classList.add('scale-95');
-		  }
+        function renderKertasSlipHTML() {
+            if (!slipAktif) return;
+            const tarif = getTarif();
+            const s = slipAktif;
+            const sisaGantung = s.totalGantung || 0;
+
+            const strukHTML = `
+                <div class="text-center pb-2 border-b border-dashed border-gray-400">
+                    <div class="font-extrabold text-sm tracking-wider">SBR PUTRA FOOD</div>
+                    <div class="text-[10px] text-gray-500 uppercase">Packing Aromanis</div>
+                </div>
+                
+                <div class="py-2 border-b border-dashed border-gray-400 space-y-1 text-[11px]">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Nama:</span>
+                        <span class="font-black uppercase">${s.nama}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Periode:</span>
+                        <span>${formatTglIndo(s.start)} - ${formatTglIndo(s.end)}</span>
+                    </div>
+                </div>
+
+                <div class="py-2 border-b border-dashed border-gray-400 space-y-1.5 text-[11px]">
+                    ${s.b12 > 0 ? `
+                        <div>
+                            <div>Aromanis B12 (${s.b12} x ${tarif.b12.toLocaleString('id-ID')})</div>
+                            <div class="text-right text-gray-700">${formatRpStruk(s.b12 * tarif.b12)}</div>
+                        </div>
+                    ` : ''}
+
+                    ${s.b10 > 0 ? `
+                        <div>
+                            <div>Aromanis B10 (${s.b10} x ${tarif.b10.toLocaleString('id-ID')})</div>
+                            <div class="text-right text-gray-700">${formatRpStruk(s.b10 * tarif.b10)}</div>
+                        </div>
+                    ` : ''}
+
+                    ${s.oleholeh > 0 ? `
+                        <div>
+                            <div>Oleh-oleh (${s.oleholeh} x ${tarif.oleholeh.toLocaleString('id-ID')})</div>
+                            <div class="text-right text-gray-700">${formatRpStruk(s.oleholeh * tarif.oleholeh)}</div>
+                        </div>
+                    ` : ''}
+
+                    ${s.dapatUangMakan && s.nominalMakan > 0 ? `
+                        <div>
+                            <div>Uang Makan (${s.totalKirimMurni} Bal Bahan x ${tarif.makan.toLocaleString('id-ID')})</div>
+                            <div class="text-right text-gray-700">${formatRpStruk(s.nominalMakan)}</div>
+                        </div>
+                    ` : ''}
+
+                    ${s.bonus > 0 ? `
+                        <div class="text-emerald-700 font-medium">
+                            <div>Bonus${s.ketBonus ? ` (${s.ketBonus})` : ''}</div>
+                            <div class="text-right font-black text-emerald-800">+${formatRpStruk(s.bonus)}</div>
+                        </div>
+                    ` : ''}
+
+                    ${s.totalPotonganNominal > 0 ? `
+                        <div class="pt-1.5 border-t border-dashed border-red-300 text-red-600">
+                            <div class="font-bold flex items-center gap-1">
+                                <i class="fa-solid fa-circle-minus text-[10px]"></i> Potongan Ganti Rugi:
+                            </div>
+                            <div class="space-y-0.5 mt-0.5">
+                                ${s.rincianPotongUpah.map(item => `
+                                    <div class="flex justify-between pl-3 text-[10px]">
+                                        <span>Ganti ${item.jenis} (${item.qty} ${item.satuan})</span>
+                                        <span class="font-black text-red-700">-${formatRpStruk(item.nominal)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${s.potongKasbon > 0 ? `
+                        <div class="pt-1.5 border-t border-dashed border-rose-300 text-rose-700">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold flex items-center gap-1">
+                                    <i class="fa-solid fa-hand-holding-dollar text-[10px]"></i> Potongan Kasbon:
+                                </span>
+                                <span class="font-black text-rose-800">-${formatRpStruk(s.potongKasbon)}</span>
+                            </div>
+                            ${s.saldoKasbon > 0 ? `
+                                <div class="text-[10px] text-gray-500 pl-3">
+                                    Sisa Pinjaman Kasbon: ${formatRpStruk(s.sisaKasbon)}
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="py-2 border-b border-dashed border-gray-400 flex justify-between items-center text-xs font-black">
+                    <span>TOTAL DITERIMA</span>
+                    <span class="text-emerald-700 text-sm font-black">${formatRpStruk(s.totalGaji)}</span>
+                </div>
+
+                <div class="pt-2 text-center text-[10px]">
+                    ${sisaGantung > 0 ? `
+                        <div class="text-red-600 font-black p-1 bg-red-50 rounded border border-red-200">
+                            (!) TANGGUNGAN GANTUNG (!)<br>
+                            Sisa ${sisaGantung} Bal Belum Setor!
+                        </div>
+                    ` : `
+                        <div class="text-gray-500 font-medium">Kerjaan Beres. Terima Kasih!</div>
+                    `}
+                </div>
+            `;
+
+            document.getElementById('kertasSlip').innerHTML = strukHTML;
+        }
+
+        function updatePenyesuaianSlip() {
+            if (!slipAktif || slipAktif.isDariRiwayat) return;
+
+            const inputBonus = document.getElementById('slipInputBonus');
+            const inputKetBonus = document.getElementById('slipKetBonus');
+            const inputKasbon = document.getElementById('slipInputKasbon');
+            const elSisaKasbon = document.getElementById('valSisaKasbonTeks');
+
+            const rawBonus = String(inputBonus?.value || '').replace(/\./g, '').replace(/\D/g, '');
+            const bonus = Math.max(0, parseFloat(rawBonus) || 0);
+            const ketBonus = (inputKetBonus?.value || '').trim();
+
+            const rawKasbon = String(inputKasbon?.value || '').replace(/\./g, '').replace(/\D/g, '');
+            let potongKasbon = Math.max(0, parseFloat(rawKasbon) || 0);
+
+            const saldoKasbon = slipAktif.saldoKasbon || 0;
+            if (saldoKasbon > 0 && potongKasbon > saldoKasbon) {
+                potongKasbon = saldoKasbon;
+                if (inputKasbon) inputKasbon.value = potongKasbon > 0 ? potongKasbon.toLocaleString('id-ID') : '';
+            }
+
+            const sisaKasbon = Math.max(0, saldoKasbon - potongKasbon);
+            if (elSisaKasbon) {
+                elSisaKasbon.innerText = formatRp(sisaKasbon);
+            }
+
+            const totalGajiNetto = Math.max(0, slipAktif.gajiDasar + slipAktif.nominalMakan + bonus - slipAktif.totalPotonganNominal - potongKasbon);
+
+            slipAktif.bonus = bonus;
+            slipAktif.ketBonus = ketBonus;
+            slipAktif.potongKasbon = potongKasbon;
+            slipAktif.sisaKasbon = sisaKasbon;
+            slipAktif.totalGaji = totalGajiNetto;
+
+            if (globalRekapData[slipAktif.karyawanId]) {
+                globalRekapData[slipAktif.karyawanId].bonus = bonus;
+                globalRekapData[slipAktif.karyawanId].ketBonus = ketBonus;
+                globalRekapData[slipAktif.karyawanId].potongKasbon = potongKasbon;
+            }
+
+            renderKertasSlipHTML();
+            renderTabelRekap();
+        }
+
+        function setKasbonSlip(tipe) {
+            if (!slipAktif || slipAktif.isDariRiwayat) return;
+            const inputKasbon = document.getElementById('slipInputKasbon');
+            if (!inputKasbon) return;
+
+            const saldoKasbon = slipAktif.saldoKasbon || 0;
+            if (tipe === 'semua') {
+                const gajiKotor = slipAktif.gajiDasar + slipAktif.nominalMakan + (slipAktif.bonus || 0) - slipAktif.totalPotonganNominal;
+                const maxBisaDipotong = Math.min(saldoKasbon, Math.max(0, gajiKotor));
+                inputKasbon.value = maxBisaDipotong > 0 ? maxBisaDipotong.toLocaleString('id-ID') : '0';
+            } else if (tipe === 'nol') {
+                inputKasbon.value = '0';
+            }
+            updatePenyesuaianSlip();
+        }
+
+        function tutupPratinjau() {
+            const modal = document.getElementById('modalPratinjau');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.firstElementChild?.classList.add('scale-95');
+        }
+
+        // ==========================================
+        // FITUR KELOLA KASBON & PINJAMAN KARYAWAN (RESILIENT & MODERN)
+        // ==========================================
+        let jenisTransaksiKasbonDipilih = 'pinjam';
+        let idKaryawanKasbonAktif = null;
+
+        // Penyimpanan Lokal Cadangan (Fallback & Offline Resilient)
+        function getSaldoKasbonLokal(kid) {
+            if (!kid) return 0;
+            try {
+                const map = JSON.parse(localStorage.getItem('sbr_saldo_kasbon') || '{}');
+                const val = map[String(kid)];
+                return (val !== undefined && val !== null) ? (Number(val) || 0) : 0;
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        function simpanSaldoKasbonLokal(kid, saldo) {
+            if (!kid) return;
+            try {
+                const map = JSON.parse(localStorage.getItem('sbr_saldo_kasbon') || '{}');
+                map[String(kid)] = Math.max(0, Number(saldo) || 0);
+                localStorage.setItem('sbr_saldo_kasbon', JSON.stringify(map));
+            } catch (e) {
+                console.warn("Gagal simpan saldo kasbon lokal:", e);
+            }
+        }
+
+        function getRiwayatKasbonLokal(kid) {
+            if (!kid) return [];
+            try {
+                const map = JSON.parse(localStorage.getItem('sbr_riwayat_kasbon') || '{}');
+                return Array.isArray(map[String(kid)]) ? map[String(kid)] : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function tambahRiwayatKasbonLokal(kid, item) {
+            if (!kid) return;
+            try {
+                const map = JSON.parse(localStorage.getItem('sbr_riwayat_kasbon') || '{}');
+                const list = Array.isArray(map[String(kid)]) ? map[String(kid)] : [];
+                list.unshift(item);
+                if (list.length > 20) list.length = 20; // simpan 20 riwayat terakhir
+                map[String(kid)] = list;
+                localStorage.setItem('sbr_riwayat_kasbon', JSON.stringify(map));
+            } catch (e) {
+                console.warn("Gagal simpan riwayat kasbon lokal:", e);
+            }
+        }
+
+        function getSaldoKasbonKaryawan(kid) {
+            if (!kid) return 0;
+            const kInfo = karyawanMap[kid] || semuaKaryawanList.find(k => String(k.id) === String(kid));
+            if (kInfo && kInfo.saldo_kasbon !== null && kInfo.saldo_kasbon !== undefined) {
+                return Number(kInfo.saldo_kasbon) || 0;
+            }
+            return 0;
+        }
+
+        function formatInputRibuanKasbon(el) {
+            if (!el) return;
+            const rawVal = el.value.replace(/\./g, '').replace(/\D/g, '');
+            if (!rawVal) {
+                el.value = '';
+                return;
+            }
+            const num = parseInt(rawVal, 10);
+            el.value = num.toLocaleString('id-ID');
+        }
+
+        function setKetKasbonCepat(teks) {
+            const inputKet = document.getElementById('kasbonInputKeterangan');
+            if (inputKet) {
+                inputKet.value = teks;
+            }
+        }
+
+        async function bukaModalKelolaKasbon(karyawanId = null) {
+            const modal = document.getElementById('modalKelolaKasbon');
+            const content = document.getElementById('contentKelolaKasbon');
+            const select = document.getElementById('kasbonSelectKaryawan');
+            const inputTgl = document.getElementById('kasbonInputTanggal');
+            const inputNom = document.getElementById('kasbonInputNominal');
+            const inputKet = document.getElementById('kasbonInputKeterangan');
+
+            if (!modal) return;
+
+            // 1. Isi daftar karyawan
+            if (select) {
+                select.innerHTML = '';
+                const listSorted = [...daftarKaryawanGlobal].sort((a, b) => a.nama.localeCompare(b.nama));
+                listSorted.forEach(k => {
+                    select.innerHTML += `<option value="${k.id}">${k.nama.toUpperCase()}</option>`;
+                });
+            }
+
+            // 2. Tentukan karyawan yang dipilih
+            if (karyawanId) {
+                idKaryawanKasbonAktif = String(karyawanId);
+            } else if (daftarKaryawanGlobal.length > 0) {
+                idKaryawanKasbonAktif = String(daftarKaryawanGlobal[0].id);
+            }
+
+            if (select && idKaryawanKasbonAktif) {
+                select.value = idKaryawanKasbonAktif;
+            }
+
+            // 3. Reset form
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            if (inputTgl) inputTgl.value = `${yyyy}-${mm}-${dd}`;
+            if (inputNom) inputNom.value = '';
+            if (inputKet) inputKet.value = '';
+
+            pilihJenisTransaksiKasbon('pinjam');
+            gantiKaryawanKasbon(idKaryawanKasbonAktif);
+
+            // 4. Buka modal
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            if (content) content.classList.remove('scale-95');
+
+            // 5. Ambil data saldo kasbon terbaru langsung dari Supabase untuk multi-device
+            if (idKaryawanKasbonAktif) {
+                try {
+                    const { data: karDb } = await supabaseClient
+                        .from('karyawan')
+                        .select('id, saldo_kasbon')
+                        .eq('id', parseInt(idKaryawanKasbonAktif))
+                        .single();
+                    if (karDb && String(idKaryawanKasbonAktif) === String(karDb.id)) {
+                        const valDb = (karDb.saldo_kasbon !== null && karDb.saldo_kasbon !== undefined) ? Number(karDb.saldo_kasbon) : 0;
+                        if (karyawanMap[idKaryawanKasbonAktif]) karyawanMap[idKaryawanKasbonAktif].saldo_kasbon = valDb;
+                        simpanSaldoKasbonLokal(idKaryawanKasbonAktif, valDb);
+                        const elSaldo = document.getElementById('kasbonTeksSaldoLama');
+                        const elBadge = document.getElementById('kasbonBadgeStatus');
+                        if (elSaldo) elSaldo.innerText = formatRp(valDb);
+                        if (elBadge) {
+                            if (valDb > 0) {
+                                elBadge.className = "px-2.5 py-1 rounded-xl text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-300";
+                                elBadge.innerText = "Ada Tagihan Kasbon";
+                            } else {
+                                elBadge.className = "px-2.5 py-1 rounded-xl text-[10px] font-black bg-emerald-100 text-emerald-700 border border-emerald-300";
+                                elBadge.innerText = "Bersih / Tidak Ada Utang";
+                            }
+                        }
+                        hitungSimulasiKasbon();
+                    }
+                } catch (eDb) {
+                    console.warn("Gagal refresh saldo kasbon dari cloud:", eDb);
+                }
+            }
+        }
+
+        function bukaModalKasbonDariSlip() {
+            if (slipAktif && slipAktif.karyawanId) {
+                bukaModalKelolaKasbon(slipAktif.karyawanId);
+            } else {
+                bukaModalKelolaKasbon();
+            }
+        }
+
+        function tutupModalKelolaKasbon() {
+            const modal = document.getElementById('modalKelolaKasbon');
+            const content = document.getElementById('contentKelolaKasbon');
+            if (modal) {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                if (content) content.classList.add('scale-95');
+            }
+        }
+
+        async function gantiKaryawanKasbon(kid) {
+            idKaryawanKasbonAktif = String(kid);
+            let saldo = getSaldoKasbonKaryawan(kid);
+
+            const elSaldo = document.getElementById('kasbonTeksSaldoLama');
+            const elBadge = document.getElementById('kasbonBadgeStatus');
+
+            if (elSaldo) elSaldo.innerText = formatRp(saldo);
+            if (elBadge) {
+                if (saldo > 0) {
+                    elBadge.className = "px-2.5 py-1 rounded-xl text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-300";
+                    elBadge.innerText = "Ada Tagihan Kasbon";
+                } else {
+                    elBadge.className = "px-2.5 py-1 rounded-xl text-[10px] font-black bg-emerald-100 text-emerald-700 border border-emerald-300";
+                    elBadge.innerText = "Bersih / Tidak Ada Utang";
+                }
+            }
+
+            hitungSimulasiKasbon();
+            muatRiwayatKasbonKaryawan(kid);
+
+            // Fetch realtime dari database Supabase (Multi-Device)
+            try {
+                const { data: karDb } = await supabaseClient
+                    .from('karyawan')
+                    .select('id, saldo_kasbon')
+                    .eq('id', parseInt(kid))
+                    .single();
+                if (karDb && String(idKaryawanKasbonAktif) === String(kid)) {
+                    saldo = (karDb.saldo_kasbon !== null && karDb.saldo_kasbon !== undefined) ? Number(karDb.saldo_kasbon) : 0;
+                    if (karyawanMap[kid]) karyawanMap[kid].saldo_kasbon = saldo;
+                    simpanSaldoKasbonLokal(kid, saldo);
+                    if (elSaldo) elSaldo.innerText = formatRp(saldo);
+                    if (elBadge) {
+                        if (saldo > 0) {
+                            elBadge.className = "px-2.5 py-1 rounded-xl text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-300";
+                            elBadge.innerText = "Ada Tagihan Kasbon";
+                        } else {
+                            elBadge.className = "px-2.5 py-1 rounded-xl text-[10px] font-black bg-emerald-100 text-emerald-700 border border-emerald-300";
+                            elBadge.innerText = "Bersih / Tidak Ada Utang";
+                        }
+                    }
+                    hitungSimulasiKasbon();
+                }
+            } catch (e) { }
+        }
+
+        function pilihJenisTransaksiKasbon(tipe = 'pinjam') {
+            jenisTransaksiKasbonDipilih = 'pinjam';
+            hitungSimulasiKasbon();
+        }
+
+        function tambahNominalKasbonCepat(amount) {
+            const inputNom = document.getElementById('kasbonInputNominal');
+            if (!inputNom) return;
+            const rawVal = (inputNom.value || '').replace(/\./g, '').replace(/\D/g, '');
+            const current = parseInt(rawVal, 10) || 0;
+            const nextVal = current + amount;
+            inputNom.value = nextVal > 0 ? nextVal.toLocaleString('id-ID') : '';
+            hitungSimulasiKasbon();
+        }
+
+        function resetNominalKasbon() {
+            const inputNom = document.getElementById('kasbonInputNominal');
+            if (inputNom) inputNom.value = '';
+            hitungSimulasiKasbon();
+        }
+
+        function hitungSimulasiKasbon() {
+            const inputNom = document.getElementById('kasbonInputNominal');
+            const elSimulasi = document.getElementById('kasbonEstimasiSaldoBaru');
+            if (!elSimulasi || !idKaryawanKasbonAktif) return;
+
+            const saldoLama = getSaldoKasbonKaryawan(idKaryawanKasbonAktif);
+            const rawNom = (inputNom?.value || '').replace(/\./g, '').replace(/\D/g, '');
+            const nominal = parseInt(rawNom, 10) || 0;
+
+            const saldoBaru = saldoLama + nominal;
+
+            elSimulasi.innerText = formatRp(saldoBaru);
+            if (saldoBaru > 0) {
+                elSimulasi.className = "font-black text-sm text-rose-700";
+            } else {
+                elSimulasi.className = "font-black text-sm text-emerald-600";
+            }
+        }
+
+        async function muatRiwayatKasbonKaryawan(kid) {
+            const container = document.getElementById('kasbonContainerRiwayat');
+            const loading = document.getElementById('kasbonLoadingRiwayat');
+            if (!container) return;
+
+            // 1. Ambil dari lokal terlebih dahulu
+            let listRiwayat = getRiwayatKasbonLokal(kid);
+
+            // 2. Coba ambil dari Supabase jika tersedia
+            if (loading) loading.classList.remove('hidden');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('riwayat_kasbon')
+                    .select('*')
+                    .eq('id_kar', parseInt(kid))
+                    .order('tgl', { ascending: false })
+                    .limit(3);
+
+                if (!error && Array.isArray(data) && data.length > 0) {
+                    listRiwayat = data;
+                }
+            } catch (e) {
+                console.warn("Info riwayat_kasbon remote:", e?.message);
+            } finally {
+                if (loading) loading.classList.add('hidden');
+            }
+
+            if (!listRiwayat || listRiwayat.length === 0) {
+                container.innerHTML = '<div class="text-center py-2.5 text-gray-400 text-[11px] font-medium">Belum ada riwayat transaksi kasbon untuk karyawan ini.</div>';
+                return;
+            }
+
+            // Tampilkan maksimal 3 transaksi terakhir
+            const itemRender = listRiwayat.slice(0, 3);
+            container.innerHTML = itemRender.map(item => {
+                const isPinjam = item.jenis === 'pinjam';
+                const icon = isPinjam ? 'fa-arrow-up text-rose-600' : 'fa-arrow-down text-emerald-600';
+                const badgeClass = isPinjam ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                const tanda = isPinjam ? '+' : '-';
+                let tglFormat = '-';
+                if (item.tgl) {
+                    try {
+                        tglFormat = formatTglIndo(item.tgl.split('T')[0]);
+                    } catch (e) {
+                        tglFormat = item.tgl;
+                    }
+                }
+
+                return `
+                    <div class="p-2 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between text-xs hover:bg-gray-100 transition">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-lg ${badgeClass} border flex items-center justify-center text-[10px]">
+                                <i class="fa-solid ${icon}"></i>
+                            </span>
+                            <div>
+                                <div class="font-bold text-gray-800 text-[11px] leading-tight">${item.keterangan || (isPinjam ? 'Pinjam Kasbon' : 'Bayar Kasbon')}</div>
+                                <div class="text-[9px] text-gray-400 mt-0.5">${tglFormat}</div>
+                            </div>
+                        </div>
+                        <div class="font-black text-right ${isPinjam ? 'text-rose-700' : 'text-emerald-600'} text-xs">
+                            ${tanda}${formatRp(item.nominal || 0)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function simpanTransaksiKasbon() {
+            if (!idKaryawanKasbonAktif) {
+                await showError("Pilih karyawan terlebih dahulu!");
+                return;
+            }
+
+            const inputNom = document.getElementById('kasbonInputNominal');
+            const inputKet = document.getElementById('kasbonInputKeterangan');
+            const inputTgl = document.getElementById('kasbonInputTanggal');
+            const btnSimpan = document.getElementById('btnSimpanTransaksiKasbon');
+
+            const rawNom = (inputNom?.value || '').replace(/\./g, '').replace(/\D/g, '');
+            const nominal = parseInt(rawNom, 10) || 0;
+            if (nominal <= 0) {
+                await showError("Masukkan nominal pinjaman kasbon yang valid!");
+                return;
+            }
+
+            const kInfo = karyawanMap[idKaryawanKasbonAktif] || semuaKaryawanList.find(k => String(k.id) === String(idKaryawanKasbonAktif));
+            const namaKar = kInfo?.nama || 'Karyawan';
+            const saldoLama = getSaldoKasbonKaryawan(idKaryawanKasbonAktif);
+            const saldoBaru = saldoLama + nominal;
+
+            const ketUser = (inputKet?.value || '').trim();
+            const ketFinal = ketUser || 'Pinjaman Kasbon Baru';
+            const tglPilih = inputTgl?.value || new Date().toISOString().split('T')[0];
+            const tglISO = new Date(tglPilih + 'T12:00:00').toISOString();
+
+            const konfirmasi = await showConfirm(
+                `Simpan pinjaman kasbon untuk ${namaKar}?\n\n` +
+                `• Nominal: ${formatRp(nominal)}\n` +
+                `• Keterangan: ${ketFinal}\n\n` +
+                `Saldo utang kasbon ${namaKar} akan bertambah dari ${formatRp(saldoLama)} menjadi ${formatRp(saldoBaru)}.\n` +
+                `Data akan langsung disimpan ke database Supabase (Multi-Device).`,
+                "Konfirmasi Pinjaman Kasbon"
+            );
+            if (!konfirmasi) return;
+
+            const teksAsli = btnSimpan ? btnSimpan.innerHTML : 'Simpan Pinjaman Kasbon';
+            if (btnSimpan) {
+                btnSimpan.disabled = true;
+                btnSimpan.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Menyimpan ke Cloud...';
+            }
+
+            try {
+                // 1. Simpan LANGSUNG ke Database Supabase (Cloud Utama Multi-Device)
+                const { error: errKar } = await supabaseClient
+                    .from('karyawan')
+                    .update({ saldo_kasbon: saldoBaru })
+                    .eq('id', parseInt(idKaryawanKasbonAktif));
+
+                if (errKar) {
+                    console.error("Gagal update saldo_kasbon di Supabase:", errKar);
+                    throw new Error("Gagal menyimpan ke database Supabase: " + errKar.message);
+                }
+
+                // 2. Simpan cache lokal & riwayat transaksi
+                simpanSaldoKasbonLokal(idKaryawanKasbonAktif, saldoBaru);
+                tambahRiwayatKasbonLokal(idKaryawanKasbonAktif, {
+                    id_kar: parseInt(idKaryawanKasbonAktif),
+                    jenis: 'pinjam',
+                    nominal: nominal,
+                    keterangan: ketFinal,
+                    tgl: tglISO
+                });
+
+                // Coba simpan ke tabel riwayat_kasbon di Supabase jika ada
+                try {
+                    await supabaseClient
+                        .from('riwayat_kasbon')
+                        .insert([{
+                            id_kar: parseInt(idKaryawanKasbonAktif),
+                            jenis: 'pinjam',
+                            nominal: nominal,
+                            keterangan: ketFinal,
+                            tgl: tglISO
+                        }]);
+                } catch (eLog) {
+                    // Abaikan jika tabel riwayat_kasbon belum dibuat
+                }
+
+                // 3. Update data di memori aplikasi
+                if (karyawanMap[idKaryawanKasbonAktif]) {
+                    karyawanMap[idKaryawanKasbonAktif].saldo_kasbon = saldoBaru;
+                }
+                const karObj = semuaKaryawanList.find(k => String(k.id) === String(idKaryawanKasbonAktif));
+                if (karObj) karObj.saldo_kasbon = saldoBaru;
+
+                if (globalRekapData[idKaryawanKasbonAktif]) {
+                    globalRekapData[idKaryawanKasbonAktif].saldoKasbon = saldoBaru;
+                }
+
+                // 4. Sinkronkan dengan slip aktif jika sedang terbuka
+                if (slipAktif && String(slipAktif.karyawanId) === String(idKaryawanKasbonAktif)) {
+                    slipAktif.saldoKasbon = saldoBaru;
+                    const badgeKasbon = document.getElementById('badgeInfoKasbonWorker');
+                    const elTeksKasbon = document.getElementById('labelTeksUtangKasbon');
+                    if (elTeksKasbon) elTeksKasbon.innerText = `Utang Kasbon: ${formatRp(saldoBaru)}`;
+                    else if (badgeKasbon) badgeKasbon.innerText = `Utang Kasbon: ${formatRp(saldoBaru)}`;
+
+                    updatePenyesuaianSlip();
+                }
+
+                renderTabelRekap();
+                gantiKaryawanKasbon(idKaryawanKasbonAktif);
+                if (inputNom) inputNom.value = '';
+                if (inputKet) inputKet.value = '';
+
+                tutupModalKelolaKasbon();
+                await showSuccess(`Pinjaman kasbon untuk ${namaKar} berhasil disimpan ke database cloud Supabase!\nSaldo utang kasbon saat ini: ${formatRp(saldoBaru)}`);
+
+            } catch (err) {
+                console.error(err);
+                await showError("Gagal menyimpan pinjaman kasbon: " + err.message);
+            } finally {
+                if (btnSimpan) {
+                    btnSimpan.disabled = false;
+                    btnSimpan.innerHTML = teksAsli;
+                }
+            }
+        }
+
+        // ==========================================
+        // FITUR KELOLA BONUS KARYAWAN (SEDERHANA)
+        // ==========================================
+        let idKaryawanBonusAktif = null;
+
+        function formatInputRibuanBonus(el) {
+            const rawVal = el.value.replace(/\./g, '').replace(/\D/g, '');
+            if (!rawVal) {
+                el.value = '';
+                return;
+            }
+            const num = parseInt(rawVal, 10);
+            el.value = num.toLocaleString('id-ID');
+        }
+
+        function bukaModalKelolaBonus(karyawanId) {
+            const modal = document.getElementById('modalKelolaBonus');
+            const content = document.getElementById('contentKelolaBonus');
+            const inputId = document.getElementById('bonusInputKaryawanId');
+            const elNama = document.getElementById('bonusNamaKaryawan');
+            const inputNom = document.getElementById('bonusInputNominal');
+            const inputKet = document.getElementById('bonusInputKeterangan');
+            const btnHapus = document.getElementById('btnHapusBonusModal');
+
+            if (!modal) return;
+
+            idKaryawanBonusAktif = String(karyawanId);
+            const r = globalRekapData[karyawanId];
+            const kInfo = karyawanMap[karyawanId] || semuaKaryawanList.find(k => String(k.id) === String(karyawanId));
+            const nama = r?.nama || kInfo?.nama || 'Karyawan';
+
+            if (inputId) inputId.value = idKaryawanBonusAktif;
+            if (elNama) elNama.innerText = nama.toUpperCase();
+
+            const bonusSaatIni = r?.bonus || 0;
+            const ketSaatIni = r?.ketBonus || '';
+
+            if (inputNom) inputNom.value = bonusSaatIni > 0 ? bonusSaatIni.toLocaleString('id-ID') : '';
+            if (inputKet) inputKet.value = ketSaatIni;
+
+            if (btnHapus) {
+                if (bonusSaatIni > 0) btnHapus.classList.remove('hidden');
+                else btnHapus.classList.add('hidden');
+            }
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            if (content) content.classList.remove('scale-95');
+            setTimeout(() => {
+                if (inputNom) inputNom.focus();
+            }, 100);
+        }
+
+        function tutupModalKelolaBonus() {
+            const modal = document.getElementById('modalKelolaBonus');
+            const content = document.getElementById('contentKelolaBonus');
+            if (modal) {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                if (content) content.classList.add('scale-95');
+            }
+        }
+
+        function tambahNominalBonusCepat(amount) {
+            const inputNom = document.getElementById('bonusInputNominal');
+            if (!inputNom) return;
+            const curVal = parseInt(inputNom.value.replace(/\./g, '').replace(/\D/g, ''), 10) || 0;
+            const total = curVal + amount;
+            inputNom.value = total.toLocaleString('id-ID');
+        }
+
+        function resetNominalBonus() {
+            const inputNom = document.getElementById('bonusInputNominal');
+            if (inputNom) inputNom.value = '';
+        }
+
+        function setKetBonusCepat(teks) {
+            const inputKet = document.getElementById('bonusInputKeterangan');
+            if (inputKet) inputKet.value = teks;
+        }
+
+        function hapusBonusKaryawan() {
+            if (!idKaryawanBonusAktif) return;
+            if (globalRekapData[idKaryawanBonusAktif]) {
+                globalRekapData[idKaryawanBonusAktif].bonus = 0;
+                globalRekapData[idKaryawanBonusAktif].ketBonus = '';
+            }
+            if (slipAktif && String(slipAktif.karyawanId) === String(idKaryawanBonusAktif)) {
+                slipAktif.bonus = 0;
+                slipAktif.ketBonus = '';
+                const inputSlipBonus = document.getElementById('slipInputBonus');
+                const inputSlipKet = document.getElementById('slipKetBonus');
+                if (inputSlipBonus) inputSlipBonus.value = '';
+                if (inputSlipKet) inputSlipKet.value = '';
+                renderKertasSlipHTML();
+            }
+            renderTabelRekap();
+            tutupModalKelolaBonus();
+            showNotice("Bonus berhasil dihapus.", "Informasi");
+        }
+
+        function simpanBonusKaryawan() {
+            if (!idKaryawanBonusAktif) return;
+
+            const inputNom = document.getElementById('bonusInputNominal');
+            const inputKet = document.getElementById('bonusInputKeterangan');
+
+            const nominal = parseInt((inputNom?.value || '').replace(/\./g, '').replace(/\D/g, ''), 10) || 0;
+            const keterangan = (inputKet?.value || '').trim();
+
+            if (nominal < 0) {
+                showError("Nominal bonus tidak boleh negatif!");
+                return;
+            }
+
+            if (globalRekapData[idKaryawanBonusAktif]) {
+                globalRekapData[idKaryawanBonusAktif].bonus = nominal;
+                globalRekapData[idKaryawanBonusAktif].ketBonus = keterangan;
+            }
+
+            if (slipAktif && String(slipAktif.karyawanId) === String(idKaryawanBonusAktif)) {
+                slipAktif.bonus = nominal;
+                slipAktif.ketBonus = keterangan;
+                const inputSlipBonus = document.getElementById('slipInputBonus');
+                const inputSlipKet = document.getElementById('slipKetBonus');
+                if (inputSlipBonus) inputSlipBonus.value = nominal > 0 ? Number(nominal).toLocaleString('id-ID') : '';
+                if (inputSlipKet) inputSlipKet.value = keterangan;
+                renderKertasSlipHTML();
+            }
+
+            renderTabelRekap();
+            tutupModalKelolaBonus();
+
+            const r = globalRekapData[idKaryawanBonusAktif];
+            const nama = r?.nama || 'Karyawan';
+            if (nominal > 0) {
+                showSuccess(`Bonus sebesar ${formatRp(nominal)} untuk ${nama} berhasil disimpan!`);
+            } else {
+                showNotice(`Bonus untuk ${nama} telah direset ke Rp 0.`, "Bonus Direset");
+            }
+        }
 
         async function unduhSlipPNG() {
             if (!slipAktif) return;
@@ -3435,7 +4973,39 @@
             }
         }
 
-		async function eksekusiPrintBluetooth() {
+        async function tandaiLunasManual() {
+            if (!slipAktif) return;
+            const kid = slipAktif.karyawanId;
+            const r = globalRekapData[kid];
+            let sisaGantung = 0;
+            if (r && r.tanggunganBersihPerProduk) {
+                Object.values(r.tanggunganBersihPerProduk).forEach(p => {
+                    const def = p.totalTarget - p.totalTarik;
+                    if (def > 0) sisaGantung += def;
+                });
+            }
+
+            if (sisaGantung > 0) {
+                bukaModalKeputusanGantung(kid, sisaGantung, async () => {
+                    await gantungKeKirimanSelanjutnya(kid);
+                });
+            } else {
+                const infoKasbon = (slipAktif.potongKasbon > 0)
+                    ? `\n(Potongan kasbon: ${formatRp(slipAktif.potongKasbon)}, Sisa kasbon: ${formatRp(slipAktif.sisaKasbon)})`
+                    : '';
+                const konfirmasi = await showConfirm(
+                    `Tandai lunas gaji untuk ${slipAktif.nama}?\n` +
+                    `Total Diterima: ${formatRp(slipAktif.totalGaji)}${infoKasbon}`,
+                    "Konfirmasi Pelunasan Gaji"
+                );
+                if (konfirmasi) {
+                    await prosesPelunasanDatabase([kid]);
+                    tutupPratinjau();
+                }
+            }
+        }
+
+        async function eksekusiPrintBluetooth() {
             if (!slipAktif) return;
             const berhasil = await kirimPerintahCetakBluetooth(
                 slipAktif.nama,
@@ -3449,7 +5019,11 @@
                 slipAktif.start,
                 slipAktif.end,
                 slipAktif.totalPotonganNominal,
-                slipAktif.rincianPotongUpah
+                slipAktif.rincianPotongUpah,
+                slipAktif.bonus || 0,
+                slipAktif.ketBonus || '',
+                slipAktif.potongKasbon || 0,
+                slipAktif.sisaKasbon || 0
             );
 
             const btnLunas = document.getElementById('btnTandaiLunas');
@@ -3457,7 +5031,7 @@
 
             if (berhasil && !isDariRiwayat) {
                 const konfirmasi = await showConfirm(
-                    `Slip gaji untuk ${slipAktif.nama} berhasil dicetak! Tandai lunas sekarang?`, 
+                    `Slip gaji untuk ${slipAktif.nama} berhasil dicetak! Tandai lunas sekarang?`,
                     "Pelunasan Slip"
                 );
                 if (konfirmasi) {
@@ -3473,12 +5047,10 @@
                     }
 
                     if (sisaGantung > 0) {
-                        // Jika ada gantungan, langsung buka dialog pilihan
                         bukaModalKeputusanGantung(kid, sisaGantung, async () => {
                             await gantungKeKirimanSelanjutnya(kid);
                         });
                     } else {
-                        // Jika bersih/tidak ada gantung, langsung lunasi
                         await prosesPelunasanDatabase([kid]);
                         tutupPratinjau();
                     }
@@ -3486,7 +5058,11 @@
             }
         }
 
-        async function kirimPerintahCetakBluetooth(nama, b12, b10, oleholeh, totalGaji, gantung, totalKirimMurni, dapatUangMakan, start, end, totalDenda = 0, rincianPotong = []) {
+        async function kirimPerintahCetakBluetooth(
+            nama, b12, b10, oleholeh, totalGaji, gantung, totalKirimMurni, dapatUangMakan,
+            start, end, totalDenda = 0, rincianPotong = [], bonus = 0, ketBonus = '',
+            potongKasbon = 0, sisaKasbon = 0
+        ) {
             try {
                 if (!navigator.bluetooth) {
                     throw new Error("Fitur Web Bluetooth tidak didukung pada browser ini.");
@@ -3575,10 +5151,15 @@
                     struk += barisTeks(`Oleh-oleh (${oleholeh} Toros)`);
                     struk += barisKiriKanan(`@ ${tarif.oleholeh.toLocaleString('id-ID')}`, formatRpStruk(oleholeh * tarif.oleholeh));
                 }
-				if (dapatUangMakan && totalKirimMurni > 0) {
+                if (dapatUangMakan && totalKirimMurni > 0) {
                     const nominalMakan = totalKirimMurni * tarif.makan;
                     struk += barisTeks(`Uang Makan (${totalKirimMurni} Bal Bahan)`);
                     struk += barisKiriKanan(`@ ${tarif.makan.toLocaleString('id-ID')}`, formatRpStruk(nominalMakan));
+                }
+
+                if (bonus > 0) {
+                    struk += barisTeks(`Bonus${ketBonus ? ` (${ketBonus})` : ''}`);
+                    struk += barisKiriKanan("", `+${formatRpStruk(bonus)}`);
                 }
 
                 if (totalDenda > 0 && rincianPotong && rincianPotong.length > 0) {
@@ -3589,8 +5170,15 @@
                     });
                 }
 
+                if (potongKasbon > 0) {
+                    struk += barisTeks(garisPemisah);
+                    struk += barisTeks(boldOn + "* POTONGAN KASBON:" + boldOff);
+                    struk += barisKiriKanan("Bayar Kasbon", `-${formatRpStruk(potongKasbon)}`);
+                    struk += barisKiriKanan("Sisa Kasbon", formatRpStruk(sisaKasbon));
+                }
+
                 struk += barisTeks(garisPemisah);
-                struk += barisTeks(boldOn + "TOTAL GAJI:" + boldOff);
+                struk += barisTeks(boldOn + "TOTAL DITERIMA:" + boldOff);
                 struk += barisKiriKanan("", boldOn + doubleHeight + formatRpStruk(totalGaji) + normalSize + boldOff);
                 struk += barisTeks(garisPemisah);
 
@@ -3624,34 +5212,34 @@
             }
         }
 
-		let pendingPelunasanData = null;
+        let pendingPelunasanData = null;
 
-		function bukaModalKeputusanGantung(karyawanId, sisaBal, callbackLanjut) {
-			pendingPelunasanData = {
-				karyawanId: karyawanId,
-				sisaBal: sisaBal,
-				callbackLanjut: callbackLanjut
-			};
+        function bukaModalKeputusanGantung(karyawanId, sisaBal, callbackLanjut) {
+            pendingPelunasanData = {
+                karyawanId: karyawanId,
+                sisaBal: sisaBal,
+                callbackLanjut: callbackLanjut
+            };
 
-			const pesanEl = document.getElementById('pesanKeputusanGantung');
-			const nama = globalRekapData[karyawanId]?.nama || 'Karyawan';
-			if (pesanEl) {
-				pesanEl.innerText = `${nama} masih memiliki sisa gantung ${sisaBal} Bal/Toros. Silakan pilih perlakuan sisa gantungan tersebut:`;
-			}
+            const pesanEl = document.getElementById('pesanKeputusanGantung');
+            const nama = globalRekapData[karyawanId]?.nama || 'Karyawan';
+            if (pesanEl) {
+                pesanEl.innerText = `${nama} masih memiliki sisa gantung ${sisaBal} Bal/Toros. Silakan pilih perlakuan sisa gantungan tersebut:`;
+            }
 
-			const modal = document.getElementById('modalKeputusanGantung');
-			modal.classList.remove('opacity-0', 'pointer-events-none');
-			modal.firstElementChild.classList.remove('scale-95');
-		}
+            const modal = document.getElementById('modalKeputusanGantung');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.firstElementChild.classList.remove('scale-95');
+        }
 
-		function tutupModalKeputusanGantung() {
-			pendingPelunasanData = null;
-			const modal = document.getElementById('modalKeputusanGantung');
-			modal.classList.add('opacity-0', 'pointer-events-none');
-			modal.firstElementChild.classList.add('scale-95');
-		}
+        function tutupModalKeputusanGantung() {
+            pendingPelunasanData = null;
+            const modal = document.getElementById('modalKeputusanGantung');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.firstElementChild.classList.add('scale-95');
+        }
 
-		async function eksekusiPilihanGantung(pilihan) {
+        async function eksekusiPilihanGantung(pilihan) {
             if (!pendingPelunasanData) return;
             const { karyawanId, callbackLanjut } = pendingPelunasanData;
             tutupModalKeputusanGantung();
@@ -3670,155 +5258,329 @@
             }
         }
 
-		
-	async function gantungKeKirimanSelanjutnya(karyawanId) {
-		const r = globalRekapData[karyawanId];
-		if (!r) return;
 
-		// 1. Ambil data akumulasi sisa gantung bersih per produk
-		const ringkasanGantung = [];
-		let totalBalGantung = 0;
+        async function gantungKeKirimanSelanjutnya(karyawanId) {
+            const r = globalRekapData[karyawanId];
+            if (!r) return;
 
-		Object.entries(r.tanggunganBersihPerProduk || {}).forEach(([jenis, prod]) => {
-			const sisaNetto = prod.totalTarget - prod.totalTarik;
-			if (sisaNetto > 0) {
-				totalBalGantung += sisaNetto;
-				ringkasanGantung.push(`${jenis}: ${sisaNetto} ${prod.satuan}`);
-			}
-		});
+            // 1. Ambil data akumulasi sisa gantung bersih per produk
+            const ringkasanGantung = [];
+            let totalBalGantung = 0;
 
-		if (ringkasanGantung.length === 0) {
-			await prosesPelunasanDatabase([karyawanId]);
-			tutupPratinjau();
-			return;
-		}
+            Object.entries(r.tanggunganBersihPerProduk || {}).forEach(([jenis, prod]) => {
+                const sisaNetto = prod.totalTarget - prod.totalTarik;
+                if (sisaNetto > 0) {
+                    totalBalGantung += sisaNetto;
+                    ringkasanGantung.push(`${jenis}: ${sisaNetto} ${prod.satuan}`);
+                }
+            });
 
-		const tglSekarang = new Date().toISOString().split('T')[0];
-		const tglIndoHariIni = formatTglIndo(tglSekarang);
+            if (ringkasanGantung.length === 0) {
+                await prosesPelunasanDatabase([karyawanId]);
+                tutupPratinjau();
+                return;
+            }
 
-		const konfirmasi = await showConfirm(
-			`Akumulasi sisa gantungan milik ${r.nama}:\n` +
-			`• ${ringkasanGantung.join('\n• ')}\n\n` +
-			`Semua transaksi periode lama akan DITUTUP LUNAS.\n` +
-			`Total sisa di atas akan otomatis digabung menjadi antrean baru pada tanggal ${tglIndoHariIni}.`,
-			"Kalkulasi & Oper Gantungan"
-		);
-		if (!konfirmasi) return;
+            const elEnd = document.getElementById('filterEnd');
+            const tglSekarang = new Date().toISOString().split('T')[0];
+            const endTgl = elEnd?.value || tglSekarang;
 
-		try {
-			const updateLunasPromises = [];
-			const catatanOperRiwayat = `Gantung ${totalBalGantung} Bal dioper ke gajian ${tglIndoHariIni}`;
+            // Hitung tanggal antrean periode berikutnya: H+1 setelah endTgl
+            const dEnd = new Date(endTgl + 'T00:00:00');
+            dEnd.setDate(dEnd.getDate() + 1);
+            const yyyy = dEnd.getFullYear();
+            const mm = String(dEnd.getMonth() + 1).padStart(2, '0');
+            const dd = String(dEnd.getDate()).padStart(2, '0');
+            const tglAntreanBaru = `${yyyy}-${mm}-${dd}`;
+            const tglIndoHariIni = formatTglIndo(tglSekarang);
+            const tglIndoBaru = formatTglIndo(tglAntreanBaru);
 
-		// 2. Tutup SEMUA nota lama milik karyawan & bubuhkan catatan gantung dioper
-			(r.histori || []).forEach(row => {
-				const logLama = row.riwayat_cicilan || '';
-				const logBaru = logLama ? `${logLama}, ${catatanOperRiwayat}` : catatanOperRiwayat;
+            const konfirmasi = await showConfirm(
+                `Akumulasi sisa gantungan milik ${r.nama}:\n` +
+                `• ${ringkasanGantung.join('\n• ')}\n\n` +
+                `Semua transaksi periode s/d ${formatTglIndo(endTgl)} akan DITUTUP LUNAS.\n` +
+                `Total sisa di atas akan otomatis digabung menjadi antrean kiriman baru untuk periode berikutnya (mulai ${tglIndoBaru}).\n\n` +
+                `Ketika disetor pada hari Senin/Selasa dan digaji di periode baru (misal Rabu), data tidak akan mengotori rekap sebelumnya.`,
+                "Kalkulasi & Oper Gantungan"
+            );
+            if (!konfirmasi) return;
 
-				updateLunasPromises.push(
-					supabaseClient
-						.from('distribusi_packing')
-						.update({ 
-							is_lunas: true, 
-							tgl_lunas: tglSekarang,
-							riwayat_cicilan: logBaru,
-							koreksi: 0
-						})
-						.eq('id', row.id)
-				);
-			});
+            try {
+                // Potong saldo kasbon jika ada
+                const potong = r.potongKasbon || 0;
+                if (potong > 0) {
+                    const saldoLama = getSaldoKasbonKaryawan(karyawanId);
+                    const saldoBaru = Math.max(0, saldoLama - potong);
 
-			if (updateLunasPromises.length > 0) {
-				const resUpdate = await Promise.all(updateLunasPromises);
-				const errUpd = resUpdate.find(res => res.error);
-				if (errUpd) throw errUpd.error;
-			}
+                    simpanSaldoKasbonLokal(karyawanId, saldoBaru);
+                    tambahRiwayatKasbonLokal(karyawanId, {
+                        id_kar: parseInt(karyawanId),
+                        jenis: 'bayar',
+                        nominal: potong,
+                        keterangan: `Potong gaji packing (gantung dioper ke periode baru ${tglIndoBaru})`,
+                        tgl: new Date().toISOString()
+                    });
 
-			// 3. Buat 1 baris akumulasi per jenis produk pada HARI INI
-			const barisAkumulasiBaru = [];
+                    try {
+                        await supabaseClient
+                            .from('karyawan')
+                            .update({ saldo_kasbon: saldoBaru })
+                            .eq('id', parseInt(karyawanId));
+                    } catch (eDb) {
+                        console.warn("Gagal update saldo_kasbon di supabase:", eDb);
+                    }
 
-			Object.entries(r.tanggunganBersihPerProduk || {}).forEach(([jenis, prod]) => {
-				const sisaNetto = prod.totalTarget - prod.totalTarik;
-				if (sisaNetto > 0) {
-					let balKirimAkumulasi = sisaNetto;
-					if (jenis === 'Oleh-oleh') {
-						balKirimAkumulasi = Math.ceil(sisaNetto / 10);
-					} else if (jenis === 'B10') {
-						balKirimAkumulasi = Math.ceil(sisaNetto / 1.2);
-					}
+                    try {
+                        await supabaseClient
+                            .from('riwayat_kasbon')
+                            .insert([{
+                                id_kar: parseInt(karyawanId),
+                                jenis: 'bayar',
+                                nominal: potong,
+                                keterangan: `Potong gaji packing (gantung dioper ke periode baru ${tglIndoBaru})`,
+                                tgl: new Date().toISOString()
+                            }]);
+                    } catch (eLog) {
+                        console.warn("Gagal log riwayat_kasbon di supabase:", eLog);
+                    }
 
-					const targetAkumulasi = hitungTargetProduk(balKirimAkumulasi, jenis);
+                    if (karyawanMap[karyawanId]) karyawanMap[karyawanId].saldo_kasbon = saldoBaru;
+                    r.saldoKasbon = saldoBaru;
+                    r.potongKasbon = 0;
+                }
 
-					barisAkumulasiBaru.push({
-						tanggal: tglSekarang,
-						sesi: 'Pagi',
-						dikirim_oleh: null,
-						karyawan_id: parseInt(karyawanId),
-						kirim_produksi: balKirimAkumulasi,
-						jenis_produk: jenis,
-						tarik_jadi: 0,
-						koreksi: -targetAkumulasi,
-						is_lunas: false,
-						is_lembur: false,
-						riwayat_cicilan: `Akumulasi Gantungan Periode Lalu (Gajian ${tglIndoHariIni})`
-					});
-				}
-			});
+                // 2. Kumpulkan SEMUA nota lama milik karyawan (baik di histori periode maupun daftarGantung sebelumnya)
+                const mapSemuaNotaLama = new Map();
+                (r.histori || []).forEach(row => mapSemuaNotaLama.set(row.id, row));
+                (r.daftarGantung || []).forEach(row => mapSemuaNotaLama.set(row.id, row));
 
-			// 4. Simpan baris saldo akumulasi ke database
-			if (barisAkumulasiBaru.length > 0) {
-				const { error: errInsert } = await supabaseClient
-					.from('distribusi_packing')
-					.insert(barisAkumulasiBaru);
+                const updateLunasPromises = [];
+                const catatanOperRiwayat = `Gantung ${totalBalGantung} Bal dioper ke antrean ${tglIndoBaru}`;
+                const bns = r.bonus || 0;
+                const ketBns = encodeURIComponent(r.ketBonus || '');
+                const potKasbon = potong;
+                const sisaKasbon = r.saldoKasbon !== undefined ? r.saldoKasbon : 0;
+                const makan = r.dapatUangMakan ? 1 : 0;
+                const balMakan = r.totalKirimMurni || 0;
+                const metaTag = `[SLIP_META:bns=${bns}|ketBonus=${ketBns}|potKasbon=${potKasbon}|sisaKasbon=${sisaKasbon}|makan=${makan}|balMakan=${balMakan}|gtg=${totalBalGantung || 1}]`;
 
-				if (errInsert) throw errInsert;
-			}
+                mapSemuaNotaLama.forEach(row => {
+                    const logLama = row.riwayat_cicilan || '';
+                    const logBaru = `${logLama ? logLama + ', ' : ''}${catatanOperRiwayat} ${metaTag}`;
 
-			tutupPratinjau();
-			await showSuccess(
-				`Semua nota periode ini telah DITANDAI LUNAS!\n\n` +
-				`Sisa ${ringkasanGantung.join(', ')} telah digabungkan menjadi 1 saldo antrean pada hari ini (${tglIndoHariIni}).`
-			);
+                    updateLunasPromises.push(
+                        supabaseClient
+                            .from('distribusi_packing')
+                            .update({
+                                is_lunas: true,
+                                tgl_lunas: tglSekarang,
+                                riwayat_cicilan: logBaru,
+                                koreksi: 0
+                            })
+                            .eq('id', row.id)
+                    );
+                });
 
-			loadRekapGaji();
-			loadDataLogistik();
-			loadDataPenarikan();
-			loadSetorFIFODesktop();
+                if (updateLunasPromises.length > 0) {
+                    const resUpdate = await Promise.all(updateLunasPromises);
+                    const errUpd = resUpdate.find(res => res.error);
+                    if (errUpd) throw errUpd.error;
+                }
 
-		} catch (err) {
-			console.error(err);
-			await showError("Gagal memproses akumulasi gantungan: " + err.message);
-		}
-	}
+                // Pengaman menyeluruh: pastikan semua baris pekerja ini s/d endTgl tertutup lunas
+                await supabaseClient
+                    .from('distribusi_packing')
+                    .update({
+                        is_lunas: true,
+                        tgl_lunas: tglSekarang,
+                        koreksi: 0
+                    })
+                    .eq('karyawan_id', parseInt(karyawanId))
+                    .eq('is_lunas', false)
+                    .lte('tanggal', endTgl);
 
-		// Kembalikan prosesPelunasanDatabase standar (Semua transaksi aktif milik pekerja dilunasi tuntas)
-		async function prosesPelunasanDatabase(listKaryawanId) {
-			if (!listKaryawanId || listKaryawanId.length === 0) return;
+                // 3. Buat 1 baris akumulasi per jenis produk bertanggal tglAntreanBaru (H+1)
+                const barisAkumulasiBaru = [];
 
-			const tglSekarang = new Date().toISOString().split('T')[0];
+                Object.entries(r.tanggunganBersihPerProduk || {}).forEach(([jenis, prod]) => {
+                    const sisaNetto = prod.totalTarget - prod.totalTarik;
+                    if (sisaNetto > 0) {
+                        let balKirimAkumulasi = sisaNetto;
+                        if (jenis === 'Oleh-oleh') {
+                            balKirimAkumulasi = Number((sisaNetto / 10).toFixed(2));
+                        } else if (jenis === 'B10') {
+                            balKirimAkumulasi = Number((sisaNetto / 1.2).toFixed(2));
+                        }
 
-			// Update langsung berdasarkan karyawan_id yang is_lunas masih false
-			const { error } = await supabaseClient
-				.from('distribusi_packing')
-				.update({ 
-					is_lunas: true, 
-					tgl_lunas: tglSekarang,
-					koreksi: 0 //
-				})
-				.eq('is_lunas', false)
-				.in('karyawan_id', listKaryawanId);
+                        const targetAkumulasi = hitungTargetProduk(balKirimAkumulasi, jenis);
 
-			if (error) {
-				await showError("Gagal memperbarui status lunas: " + error.message);
-			} else {
-				await showSuccess("Sukses! Semua data transaksi pekerja telah ditandai lunas.");
-				loadRekapGaji();
-				loadDataLogistik();
-				loadDataPenarikan();
-				loadSetorFIFODesktop();
-			}
-		}
+                        barisAkumulasiBaru.push({
+                            tanggal: tglAntreanBaru,
+                            sesi: 'Pagi',
+                            dikirim_oleh: null,
+                            karyawan_id: parseInt(karyawanId),
+                            kirim_produksi: balKirimAkumulasi,
+                            jenis_produk: jenis,
+                            tarik_jadi: 0,
+                            koreksi: -targetAkumulasi,
+                            is_lunas: false,
+                            is_lembur: false,
+                            riwayat_cicilan: `Akumulasi Gantungan dari Periode Lalu (Gajian ${tglIndoHariIni})`
+                        });
+                    }
+                });
 
-	async function loadRiwayatLunas(page = 1) {
+                // 4. Simpan baris saldo akumulasi ke database
+                if (barisAkumulasiBaru.length > 0) {
+                    const { error: errInsert } = await supabaseClient
+                        .from('distribusi_packing')
+                        .insert(barisAkumulasiBaru);
+
+                    if (errInsert) throw errInsert;
+                }
+
+                tutupPratinjau();
+                await showSuccess(
+                    `Semua nota periode s/d ${formatTglIndo(endTgl)} telah DITANDAI LUNAS!\n\n` +
+                    `Sisa ${ringkasanGantung.join(', ')} telah digabungkan menjadi antrean kiriman baru bertanggal ${tglIndoBaru}.\n` +
+                    `Saat disetor di hari Senin/Selasa dan digaji di periode baru, data otomatis masuk ke rekap baru dan tidak mengotori rekap sebelumnya.`
+                );
+
+                loadRekapGaji();
+                loadDataLogistik();
+                loadDataPenarikan();
+                loadSetorFIFODesktop();
+
+            } catch (err) {
+                console.error(err);
+                await showError("Gagal memproses akumulasi gantungan: " + err.message);
+            }
+        }
+
+        // Kembalikan prosesPelunasanDatabase standar (Semua transaksi aktif milik pekerja dilunasi tuntas)
+        async function prosesPelunasanDatabase(listKaryawanId) {
+            if (!listKaryawanId || listKaryawanId.length === 0) return;
+
+            const tglSekarang = new Date().toISOString().split('T')[0];
+            const elStart = document.getElementById('filterStart');
+            const elEnd = document.getElementById('filterEnd');
+            const startTgl = elStart ? elStart.value : tglSekarang;
+            const endTgl = elEnd ? elEnd.value : tglSekarang;
+            const periodeTeks = `${formatTglIndo(startTgl)} - ${formatTglIndo(endTgl)}`;
+
+            try {
+                const mapPotongPerKid = {};
+                // 1. Eksekusi pemotongan saldo kasbon jika ada
+                for (const kid of listKaryawanId) {
+                    const r = globalRekapData[kid];
+                    const potong = r?.potongKasbon || 0;
+                    mapPotongPerKid[kid] = potong;
+                    if (potong > 0) {
+                        const saldoLama = getSaldoKasbonKaryawan(kid);
+                        const saldoBaru = Math.max(0, saldoLama - potong);
+
+                        simpanSaldoKasbonLokal(kid, saldoBaru);
+                        tambahRiwayatKasbonLokal(kid, {
+                            id_kar: parseInt(kid),
+                            jenis: 'bayar',
+                            nominal: potong,
+                            keterangan: `Potong gaji packing periode ${periodeTeks}`,
+                            tgl: new Date().toISOString()
+                        });
+
+                        try {
+                            await supabaseClient
+                                .from('karyawan')
+                                .update({ saldo_kasbon: saldoBaru })
+                                .eq('id', parseInt(kid));
+                        } catch (eDb) {
+                            console.warn("Gagal update saldo_kasbon di supabase:", eDb);
+                        }
+
+                        try {
+                            await supabaseClient
+                                .from('riwayat_kasbon')
+                                .insert([{
+                                    id_kar: parseInt(kid),
+                                    jenis: 'bayar',
+                                    nominal: potong,
+                                    keterangan: `Potong gaji packing periode ${periodeTeks}`,
+                                    tgl: new Date().toISOString()
+                                }]);
+                        } catch (eLog) {
+                            console.warn("Gagal log riwayat_kasbon di supabase:", eLog);
+                        }
+
+                        if (karyawanMap[kid]) karyawanMap[kid].saldo_kasbon = saldoBaru;
+                        if (r) {
+                            r.saldoKasbon = saldoBaru;
+                            r.potongKasbon = 0;
+                        }
+                    }
+                }
+
+                // 2. Update status lunas serta simpan metadata slip (bonus, potong kasbon, uang makan, status tuntas)
+                for (const kid of listKaryawanId) {
+                    const r = globalRekapData[kid];
+                    const bns = r?.bonus || 0;
+                    const ketBns = encodeURIComponent(r?.ketBonus || '');
+                    const potKasbon = mapPotongPerKid[kid] || 0;
+                    const sisaKasbon = r?.saldoKasbon !== undefined ? r.saldoKasbon : 0;
+                    const makan = r?.dapatUangMakan ? 1 : 0;
+                    const balMakan = r?.totalKirimMurni || 0;
+                    const metaTag = `[SLIP_META:bns=${bns}|ketBonus=${ketBns}|potKasbon=${potKasbon}|sisaKasbon=${sisaKasbon}|makan=${makan}|balMakan=${balMakan}|gtg=0]`;
+
+                    const { data: rowsAktif, error: errSelect } = await supabaseClient
+                        .from('distribusi_packing')
+                        .select('id, riwayat_cicilan')
+                        .eq('is_lunas', false)
+                        .lte('tanggal', endTgl)
+                        .eq('karyawan_id', parseInt(kid));
+
+                    if (errSelect) throw errSelect;
+
+                    if (rowsAktif && rowsAktif.length > 0) {
+                        for (const row of rowsAktif) {
+                            const cicilanLama = row.riwayat_cicilan || '';
+                            const cicilanBaru = cicilanLama ? `${cicilanLama} ${metaTag}` : metaTag;
+                            const { error: errUpd } = await supabaseClient
+                                .from('distribusi_packing')
+                                .update({
+                                    is_lunas: true,
+                                    tgl_lunas: tglSekarang,
+                                    riwayat_cicilan: cicilanBaru,
+                                    koreksi: 0
+                                })
+                                .eq('id', row.id);
+                            if (errUpd) throw errUpd;
+                        }
+                    } else {
+                        const { error: errUpdAll } = await supabaseClient
+                            .from('distribusi_packing')
+                            .update({
+                                is_lunas: true,
+                                tgl_lunas: tglSekarang,
+                                koreksi: 0
+                            })
+                            .eq('is_lunas', false)
+                            .lte('tanggal', endTgl)
+                            .eq('karyawan_id', parseInt(kid));
+                        if (errUpdAll) throw errUpdAll;
+                    }
+                }
+
+                await showSuccess("Sukses! Semua data transaksi pekerja telah ditandai lunas.");
+                loadRekapGaji();
+                loadDataLogistik();
+                loadDataPenarikan();
+                loadSetorFIFODesktop();
+            } catch (err) {
+                console.error("Gagal pelunasan database:", err);
+                await showError("Gagal memperbarui status lunas: " + err.message);
+            }
+        }
+
+        async function loadRiwayatLunas(page = 1) {
             currentPageRiwayat = page;
             const elKaryawan = document.getElementById('riwayatKaryawan');
             const elTanggal = document.getElementById('riwayatTanggal');
@@ -3842,7 +5604,7 @@
                 .eq('is_lunas', true);
 
             if (karyawanId) query = query.eq('karyawan_id', karyawanId);
-			if (tglCari) query = query.eq('tgl_lunas', tglCari);
+            if (tglCari) query = query.eq('tgl_lunas', tglCari);
             const { data, error } = await query.order('tanggal', { ascending: false });
             if (error || !data || data.length === 0) {
                 container.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border">Tidak ada arsip yang sesuai.</div>`;
@@ -3867,20 +5629,44 @@
                     perKaryawan[kid].paketSlip[tglCetak] = {
                         groupKey: groupKey, karyawanId: kid, nama: nama, tglCetak: tglCetak,
                         b12: 0, b10: 0, oleholeh: 0, gaji: 0, totalPotonganNominal: 0,
-                        rincianPotongUpah: [], daftarId: [], histori: [], adaGantungDioper: false
+                        rincianPotongUpah: [], daftarId: [], histori: [], adaGantungDioper: false,
+                        totalGantungDioper: 0, bonus: 0, ketBonus: '', potongKasbon: 0, sisaKasbon: 0,
+                        dapatUangMakan: false, totalKirimMurni: 0, nominalMakan: 0
                     };
                 }
 
-				// Deteksi dan ekstrak jumlah bal gantung yang dioper
+                // Deteksi dan ekstrak metadata slip yang tersimpan (Bonus, Kasbon, Uang Makan, Status Gantung)
                 if (item.riwayat_cicilan) {
+                    const matchMeta = item.riwayat_cicilan.match(/\[SLIP_META:([^\]]+)\]/);
+                    if (matchMeta) {
+                        const pObj = {};
+                        matchMeta[1].split('|').forEach(p => {
+                            const idx = p.indexOf('=');
+                            if (idx !== -1) {
+                                const k = p.substring(0, idx);
+                                const v = p.substring(idx + 1);
+                                pObj[k] = v;
+                            }
+                        });
+                        const slipRef = perKaryawan[kid].paketSlip[tglCetak];
+                        if (pObj.bns && !slipRef.bonus) slipRef.bonus = parseFloat(pObj.bns) || 0;
+                        if (pObj.ketBonus && !slipRef.ketBonus) slipRef.ketBonus = decodeURIComponent(pObj.ketBonus);
+                        if (pObj.potKasbon && !slipRef.potongKasbon) slipRef.potongKasbon = parseFloat(pObj.potKasbon) || 0;
+                        if (pObj.sisaKasbon !== undefined && !slipRef.sisaKasbon) slipRef.sisaKasbon = parseFloat(pObj.sisaKasbon) || 0;
+                        if (pObj.makan === '1') slipRef.dapatUangMakan = true;
+                        if (pObj.balMakan && !slipRef.totalKirimMurni) slipRef.totalKirimMurni = parseFloat(pObj.balMakan) || 0;
+                        if (parseFloat(pObj.gtg) > 0) {
+                            slipRef.adaGantungDioper = true;
+                            slipRef.totalGantungDioper = parseFloat(pObj.gtg);
+                        }
+                    }
+
                     const strCicilan = item.riwayat_cicilan;
-                    // Mencocokkan berbagai format: "Gantung 1 Bal dioper", "Sisa 1 dioper", atau "Akumulasi Gantungan"
+                    // Deteksi fallback format lama jika ada
                     const matchGantung = strCicilan.match(/(?:Gantung|Sisa)\s+(\d+)\s*(?:Bal)?\s*dioper/i);
-                    
                     if (matchGantung) {
                         const jmlBal = parseInt(matchGantung[1], 10);
                         perKaryawan[kid].paketSlip[tglCetak].adaGantungDioper = true;
-                        // Mengambil nilai terbesar dari nota yang digantung agar tidak terduplikasi per baris transaksi
                         if (!perKaryawan[kid].paketSlip[tglCetak].totalGantungDioper || jmlBal > perKaryawan[kid].paketSlip[tglCetak].totalGantungDioper) {
                             perKaryawan[kid].paketSlip[tglCetak].totalGantungDioper = jmlBal;
                         }
@@ -3896,16 +5682,12 @@
                 perKaryawan[kid].paketSlip[tglCetak].daftarId.push(item.id);
                 perKaryawan[kid].paketSlip[tglCetak].histori.push(item);
 
-                let nominal = 0;
                 if (item.jenis_produk === 'B12') {
                     perKaryawan[kid].paketSlip[tglCetak].b12 += qty;
-                    nominal = qty * tarif.b12;
                 } else if (item.jenis_produk === 'B10') {
                     perKaryawan[kid].paketSlip[tglCetak].b10 += qty;
-                    nominal = qty * tarif.b10;
                 } else if (item.jenis_produk === 'Oleh-oleh') {
                     perKaryawan[kid].paketSlip[tglCetak].oleholeh += qty;
-                    nominal = qty * tarif.oleholeh;
                 }
 
                 if (item.riwayat_cicilan && item.riwayat_cicilan.includes('Ganti Potong Upah')) {
@@ -3924,13 +5706,24 @@
                             satuan: m[2],
                             nominal: dendaSubtotal
                         });
-                        nominal -= dendaSubtotal;
                     });
                 }
+            });
 
-                perKaryawan[kid].paketSlip[tglCetak].gaji += nominal;
-                perKaryawan[kid].totalGajiSemua += nominal;
-                globalRiwayatData[groupKey] = perKaryawan[kid].paketSlip[tglCetak];
+            // Hitung kalkulasi akhir gaji bersih untuk setiap slip di riwayat
+            Object.values(perKaryawan).forEach(karyawan => {
+                karyawan.totalGajiSemua = 0;
+                Object.values(karyawan.paketSlip).forEach(slip => {
+                    const gajiDasarProduk = (slip.b12 * tarif.b12) + (slip.b10 * tarif.b10) + ((slip.oleholeh || 0) * tarif.oleholeh);
+                    const balMurniEst = slip.totalKirimMurni || Math.round((slip.b12 || 0) + ((slip.b10 || 0) / 1.2) + ((slip.oleholeh || 0) / 10));
+                    const nominalMakanSlip = slip.dapatUangMakan ? (balMurniEst * tarif.makan) : 0;
+                    slip.gajiDasar = gajiDasarProduk;
+                    slip.nominalMakan = nominalMakanSlip;
+                    slip.totalKirimMurni = balMurniEst;
+                    slip.gaji = Math.max(0, gajiDasarProduk + nominalMakanSlip + (slip.bonus || 0) - (slip.totalPotonganNominal || 0) - (slip.potongKasbon || 0));
+                    karyawan.totalGajiSemua += slip.gaji;
+                    globalRiwayatData[slip.groupKey] = slip;
+                });
             });
 
             const daftarKaryawanLunasGroup = Object.values(perKaryawan).sort((a, b) => a.nama.localeCompare(b.nama));
@@ -3943,7 +5736,7 @@
                     // Badge Pengingat Khusus Status Gantungan
                     const badgeGantungPengingat = slip.adaGantungDioper
                         ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 ml-1.5" title="Gaji dicairkan dengan membawa sisa gantungan yang dioper">
-                               <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Ada Gantungan
+                               <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Ada Gantungan (${slip.totalGantungDioper || 1} Bal)
                            </span>`
                         : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 ml-1.5">
                                <i class="fa-solid fa-check text-emerald-600"></i> Tuntas
@@ -3958,7 +5751,14 @@
                             <td class="px-3 py-3 text-center font-bold text-xs">${slip.b12 || '-'}</td>
                             <td class="px-3 py-3 text-center font-bold text-xs">${slip.b10 || '-'}</td>
                             <td class="px-3 py-3 text-center font-bold text-xs text-amber-700">${slip.oleholeh ? slip.oleholeh + ' T' : '-'}</td>
-                            <td class="px-4 py-3 text-right font-black text-emerald-600 text-sm">${formatRp(slip.gaji)}</td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="font-black text-emerald-600 text-sm">${formatRp(slip.gaji)}</div>
+                                <div class="flex flex-col items-end gap-0.5 mt-1 text-[10px]">
+                                    ${slip.dapatUangMakan ? `<span class="text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-bold border border-amber-200">Makan: +${formatRp(slip.nominalMakan)}</span>` : ''}
+                                    ${slip.bonus > 0 ? `<span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-bold border border-emerald-200" title="${slip.ketBonus || ''}">Bonus: +${formatRp(slip.bonus)}</span>` : ''}
+                                    ${slip.potongKasbon > 0 ? `<span class="text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded font-bold border border-rose-200">Kasbon: -${formatRp(slip.potongKasbon)}</span>` : ''}
+                                </div>
+                            </td>
                             <td class="px-4 py-3 text-center space-x-1.5 whitespace-nowrap">
                                 <button onclick="cetakUlangSlipRiwayat('${slip.groupKey}')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-2.5 py-1 rounded-lg border border-emerald-200 text-xs transition">
                                     Cetak Ulang
@@ -4005,37 +5805,46 @@
             }
         }
 
-	function cetakUlangSlipRiwayat(groupKey) {
-				const data = globalRiwayatData[groupKey];
-				if (!data) return;
+        function cetakUlangSlipRiwayat(groupKey) {
+            const data = globalRiwayatData[groupKey];
+            if (!data) return;
 
-				const tarif = getTarif();
-				const gajiDasar = (data.b12 * tarif.b12) + (data.b10 * tarif.b10) + ((data.oleholeh || 0) * tarif.oleholeh);
-				const nominalMakan = data.gaji + (data.totalPotonganNominal || 0) - gajiDasar;
+            const tarif = getTarif();
+            const gajiDasar = (data.b12 * tarif.b12) + (data.b10 * tarif.b10) + ((data.oleholeh || 0) * tarif.oleholeh);
+            const balBahanRaw = (data.b12 || 0) + ((data.b10 || 0) / 1.2) + ((data.oleholeh || 0) / 10);
+            const balBahanEst = data.totalKirimMurni || Math.round(balBahanRaw);
+            const nominalMakan = data.nominalMakan !== undefined ? data.nominalMakan : (data.dapatUangMakan ? (balBahanEst * tarif.makan) : 0);
 
-				// Hitung nilai total gantung dari data riwayat yang tersimpan
-				const totalGantungArsip = data.adaGantungDioper ? (data.totalGantungDioper || 1) : 0;
+            // Hitung nilai total gantung dari data riwayat yang tersimpan
+            const totalGantungArsip = data.adaGantungDioper ? (data.totalGantungDioper || 1) : 0;
 
-				const customSlip = {
-					karyawanId: data.karyawanId,
-					nama: data.nama,
-					b12: data.b12,
-					b10: data.b10,
-					oleholeh: data.oleholeh || 0,
-					nominalMakan: nominalMakan > 0 ? nominalMakan : 0,
-					totalPotonganNominal: data.totalPotonganNominal || 0,
-					rincianPotongUpah: data.rincianPotongUpah || [],
-					totalGaji: data.gaji,
-					totalGantung: totalGantungArsip, // <-- SEBELUMNYA BERNILAI 0
-					totalKirimMurni: 0,
-					dapatUangMakan: nominalMakan > 0,
-					start: data.tglCetak,
-					end: data.tglCetak,
-					histori: data.histori || []
-				};
+            const customSlip = {
+                karyawanId: data.karyawanId,
+                nama: data.nama,
+                b12: data.b12,
+                b10: data.b10,
+                oleholeh: data.oleholeh || 0,
+                gajiDasar: gajiDasar,
+                nominalMakan: nominalMakan,
+                totalPotonganNominal: data.totalPotonganNominal || 0,
+                rincianPotongUpah: data.rincianPotongUpah || [],
+                bonus: data.bonus || 0,
+                ketBonus: data.ketBonus || '',
+                potongKasbon: data.potongKasbon || 0,
+                saldoKasbon: (data.sisaKasbon || 0) + (data.potongKasbon || 0),
+                sisaKasbon: data.sisaKasbon || 0,
+                totalGaji: data.gaji,
+                totalGantung: totalGantungArsip,
+                totalKirimMurni: balBahanEst,
+                dapatUangMakan: data.dapatUangMakan ?? (nominalMakan > 0),
+                start: data.tglCetak,
+                end: data.tglCetak,
+                histori: data.histori || [],
+                isDariRiwayat: true
+            };
 
-				bukaPratinjauSlip(data.karyawanId, customSlip);
-			}
+            bukaPratinjauSlip(data.karyawanId, customSlip);
+        }
 
         async function batalkanPaketLunas(groupKey, namaKaryawan, tglCetak) {
             const data = globalRiwayatData[groupKey];
@@ -4075,7 +5884,7 @@
                 btnSubmit.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> MENYIMPAN...';
                 btnSubmit.disabled = true;
 
-				try {
+                try {
                     const idPetugasInt = petugasKirimId ? parseInt(petugasKirimId) : null;
 
                     if (dataId) {
@@ -4469,11 +6278,11 @@
                     loadDataLogistik();
                     loadDataPenarikan();
                     loadSetorFIFODesktop();
-					// Tambahkan ini agar jika modal rincian sedang terbuka, angkanya langsung ter-refresh:
+                    // Tambahkan ini agar jika modal rincian sedang terbuka, angkanya langsung ter-refresh:
                     if (currentRincianKaryawanId) {
                         await loadRekapGaji();
                         bukaModalRincian(currentRincianKaryawanId);
-					}
+                    }
                 }
 
                 btn.innerHTML = teksAsli;
@@ -4531,6 +6340,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", async () => {
+            initTema();
             await loadKaryawan();
             loadDataLogistik();
         });
