@@ -652,12 +652,12 @@
                                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
                             </path>
                         </svg>
-                        <span class="truncate">Hitung Fee / Bonus</span>
+                        <span class="truncate">Fee Basreng</span>
                     </button>
                     <!-- TOMBOL MENU: FEE PLASTIK -->
                     <button onclick="toggleModal('modalFeePlastik')"
-                        class="w-full text-left bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center col-span-2 lg:col-span-1">
-                        <svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0 text-emerald-600 dark:text-emerald-400"
+                        class="w-full text-left bg-red-50 hover:bg-green-100 dark:bg-red-950/30 text-red-800 dark:text-red-300 px-3 py-2.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center col-span-2 lg:col-span-1">
+                        <svg class="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 shrink-0 text-red-600 dark:text-red-400"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
@@ -1391,7 +1391,13 @@ SELECT setval(pg_get_serial_sequence('pencatatan_basreng', 'id'), COALESCE((SELE
 SELECT setval(pg_get_serial_sequence('nota_keluar', 'id'), COALESCE((SELECT MAX(id) FROM nota_keluar), 0) + 1, false);
 
 -- Reset urutan ID untuk Riwayat Invoice
-SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT MAX(id) FROM riwayat_invoice), 0) + 1, false);</code></pre>
+SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT MAX(id) FROM riwayat_invoice), 0) + 1, false);
+
+-- Reset urutan ID untuk Riwayat Fee Kiriman
+SELECT setval(pg_get_serial_sequence('riwayat_fee', 'id'), COALESCE((SELECT MAX(id) FROM riwayat_fee), 0) + 1, false);
+
+-- Reset urutan ID untuk Riwayat Fee Plastik
+SELECT setval(pg_get_serial_sequence('riwayat_fee_plastik', 'id'), COALESCE((SELECT MAX(id) FROM riwayat_fee_plastik), 0) + 1, false);</code></pre>
 
                             <!-- Tombol Copy -->
                             <button onclick="salinScriptSQL()"
@@ -4460,13 +4466,15 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 
             try {
                 // Tarik semua data secara paralel agar prosesnya cepat
-                const [tbMasuk, tbKeluar, tbInvoice, tbVarian, tbKurir, tbMap] = await Promise.all([
+                const [tbMasuk, tbKeluar, tbInvoice, tbVarian, tbKurir, tbMap, tbFee, tbFeePls] = await Promise.all([
                     supabaseClient.from('pencatatan_basreng').select('*'),
                     supabaseClient.from('nota_keluar').select('*'),
                     supabaseClient.from('riwayat_invoice').select('*'),
                     supabaseClient.from('master_varian').select('*'),
                     supabaseClient.from('master_kurir').select('*'),
-                    supabaseClient.from('agen_varian_map').select('*')
+                    supabaseClient.from('agen_varian_map').select('*'),
+                    supabaseClient.from('riwayat_fee').select('*'),
+                    supabaseClient.from('riwayat_fee_plastik').select('*')
                 ]);
 
                 // Satukan ke dalam satu format objek
@@ -4477,7 +4485,9 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                     riwayat_invoice: tbInvoice.data || [],
                     master_varian: tbVarian.data || [],
                     master_kurir: tbKurir.data || [],
-                    agen_varian_map: tbMap.data || []
+                    agen_varian_map: tbMap.data || [],
+                    riwayat_fee: tbFee ? (tbFee.data || []) : [],
+                    riwayat_fee_plastik: tbFeePls ? (tbFeePls.data || []) : []
                 };
 
                 // Buat file JSON dan paksa browser untuk mendownloadnya
@@ -4559,6 +4569,8 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                         { key: 'pencatatan_basreng', label: 'Barang Masuk / Tagihan' },
                         { key: 'nota_keluar', label: 'Nota Keluar / Retur' },
                         { key: 'riwayat_invoice', label: 'Riwayat Invoice' },
+                        { key: 'riwayat_fee', label: 'Riwayat Fee Kiriman' },
+                        { key: 'riwayat_fee_plastik', label: 'Riwayat Fee Plastik' },
                         { key: 'master_varian', label: 'Master Varian' },
                         { key: 'master_kurir', label: 'Master Kurir' },
                         { key: 'agen_varian_map', label: 'Mapping Agen' }
@@ -5357,6 +5369,11 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                 picker.value = `${yyyy}-${mm}-${dd}`;
                 setPilihTanggalCatatanPlastik(`${yyyy}-${mm}-${dd}`);
             }
+
+            // Otomatis cek dan sinkronkan data lokal jika ada
+            if (typeof sinkronisasiFeePlastikLokalKeDatabase === 'function') {
+                sinkronisasiFeePlastikLokalKeDatabase();
+            }
         }
 
         function setPilihTanggalCatatanPlastik(val) {
@@ -5406,25 +5423,98 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
             }
         }
 
-        // Ambil ID nota keluar yang sudah pernah diklaim fee-nya
+        // Otomatis sinkronkan riwayat lokal (jika ada data offline/sebelumnya) ke database Supabase
+        async function sinkronisasiFeePlastikLokalKeDatabase() {
+            let localData = [];
+            try {
+                localData = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
+            } catch (e) { return; }
+
+            const unsynced = localData.filter(r => String(r.id).startsWith('fee_pls_'));
+            if (unsynced.length === 0) return;
+
+            let adaPerubahan = false;
+            for (let r of unsynced) {
+                try {
+                    let itemIdsObj = r.item_ids || [];
+                    let rincian = r.rincian_barang || [];
+                    if ((!rincian || rincian.length === 0) && typeof itemIdsObj === 'object' && !Array.isArray(itemIdsObj)) {
+                        rincian = itemIdsObj.rincian || [];
+                    }
+                    let notaIds = Array.isArray(itemIdsObj) ? itemIdsObj : (itemIdsObj.nota_ids || itemIdsObj.ids || []);
+
+                    const payload = {
+                        tgl_bayar: r.tgl_bayar || new Date().toISOString(),
+                        penerima: r.penerima || 'Admin',
+                        catatan: r.catatan || '-',
+                        periode_mulai: r.periode_mulai || null,
+                        periode_akhir: r.periode_akhir || null,
+                        tarif_per_qty: Number(r.tarif_per_qty) || 0,
+                        total_qty: Number(r.total_qty) || 0,
+                        total_fee: Number(r.total_fee) || 0,
+                        item_ids: {
+                            nota_ids: notaIds,
+                            rincian: rincian
+                        }
+                    };
+
+                    const { data, error } = await supabaseClient
+                        .from('riwayat_fee_plastik')
+                        .insert([payload])
+                        .select()
+                        .single();
+
+                    if (!error && data) {
+                        r.id = data.id; // Update ke ID database Supabase asli
+                        adaPerubahan = true;
+                    }
+                } catch (e) {
+                    console.warn("Gagal sinkron data lokal fee plastik ke Supabase:", e);
+                }
+            }
+
+            if (adaPerubahan) {
+                localStorage.setItem('sbr_riwayat_fee_plastik', JSON.stringify(localData));
+            }
+        }
+
+        // Ambil ID nota keluar yang sudah pernah diklaim fee-nya dari database Supabase
         async function ambilDaftarIdFeePlastikSudahCair() {
             const ids = new Set();
+            const extractIds = (items) => {
+                if (!items) return;
+                if (typeof items === 'string') {
+                    try { items = JSON.parse(items); } catch (e) { return; }
+                }
+                if (Array.isArray(items)) {
+                    items.forEach(it => {
+                        if (typeof it === 'object' && it !== null) {
+                            if (it.nota_id) ids.add(String(it.nota_id));
+                            else if (it.id) ids.add(String(it.id));
+                        } else if (it !== undefined && it !== null) {
+                            ids.add(String(it));
+                        }
+                    });
+                } else if (typeof items === 'object' && items !== null) {
+                    const arr = items.nota_ids || items.ids || items.item_ids || [];
+                    if (Array.isArray(arr)) {
+                        arr.forEach(id => ids.add(String(id)));
+                    }
+                }
+            };
+
             try {
                 const { data } = await supabaseClient.from('riwayat_fee_plastik').select('item_ids');
-                (data || []).forEach(r => {
-                    let items = r.item_ids || [];
-                    if (typeof items === 'string') {
-                        try { items = JSON.parse(items); } catch (e) { items = []; }
-                    }
-                    items.forEach(id => ids.add(String(id)));
-                });
-            } catch (err) { }
+                (data || []).forEach(r => extractIds(r.item_ids));
+            } catch (err) {
+                console.warn("Gagal ambil item_ids fee plastik dari Supabase:", err);
+            }
 
-            // Tambahkan juga dari cache lokal jika ada
-            const localData = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
-            localData.forEach(r => {
-                (r.item_ids || []).forEach(id => ids.add(String(id)));
-            });
+            // Tambahkan juga dari cache lokal jika ada data pending
+            try {
+                const localData = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
+                localData.forEach(r => extractIds(r.item_ids));
+            } catch (e) { }
 
             return ids;
         }
@@ -5880,15 +5970,15 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
 
             bukaModalKonfirmasiAksi(
                 "Selesaikan Pembayaran Fee Plastik?",
-                `Total nominal ${formatRupiah(totalFee)} (${totalQty} Qty dari ${itemIds.length} nota / ${rincianFeeItems.length} item barang) untuk ${penerima}.`,
+                `Total nominal ${formatRupiah(totalFee)} (${totalQty} Qty dari ${itemIds.length} nota / ${rincianFeeItems.length} item barang) untuk ${penerima}. Data akan disimpan ke database server.`,
                 async function () {
-                    tampilkanStatusLoading("Menyimpan Fee Plastik", "Mengunggah data ke server...");
+                    tampilkanStatusLoading("Menyimpan Fee Plastik", "Mengunggah data ke database server...");
 
                     const defaultTarifInput = Number(document.getElementById('feePlastikTarifPerQty').value) || 0;
                     const rataTarif = totalQty > 0 ? Math.round(totalFee / totalQty) : defaultTarifInput;
 
-                    const dataBaru = {
-                        id: 'fee_pls_' + Date.now(),
+                    // Siapkan payload ke tabel riwayat_fee_plastik di Supabase (tanpa id buatan karena auto-increment bigint)
+                    const payloadSupabase = {
                         tgl_bayar: new Date().toISOString(),
                         penerima: penerima,
                         catatan: catatan,
@@ -5897,31 +5987,42 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                         tarif_per_qty: rataTarif,
                         total_qty: totalQty,
                         total_fee: totalFee,
-                        item_ids: itemIds,
+                        item_ids: {
+                            nota_ids: itemIds,
+                            rincian: rincianFeeItems
+                        }
+                    };
+
+                    const { data, error } = await supabaseClient
+                        .from('riwayat_fee_plastik')
+                        .insert([payloadSupabase])
+                        .select()
+                        .single();
+
+                    tutupModalStatus();
+
+                    if (error) {
+                        console.error("Gagal simpan ke Supabase riwayat_fee_plastik:", error);
+                        alert("Gagal menyimpan ke database Supabase: " + error.message);
+                        return;
+                    }
+
+                    // Rekam data tersimpan dengan ID resmi database dan rincian barang
+                    const dataTersimpan = {
+                        ...data,
                         rincian_barang: rincianFeeItems
                     };
 
-                    let dataTersimpan = dataBaru;
-
+                    // Sinkronkan juga ke cache local storage
                     try {
-                        const { data, error } = await supabaseClient
-                            .from('riwayat_fee_plastik')
-                            .insert([dataBaru])
-                            .select()
-                            .single();
-
-                        if (!error && data) {
-                            dataTersimpan = data;
-                        }
-                    } catch (err) {
-                        console.warn("Gagal simpan ke Supabase, menggunakan cache lokal:", err);
+                        const riwayatLokal = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
+                        riwayatLokal.unshift(dataTersimpan);
+                        localStorage.setItem('sbr_riwayat_fee_plastik', JSON.stringify(riwayatLokal));
+                    } catch (e) {
+                        console.warn("Gagal update local storage:", e);
                     }
 
-                    const riwayatLokal = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
-                    riwayatLokal.unshift(dataTersimpan);
-                    localStorage.setItem('sbr_riwayat_fee_plastik', JSON.stringify(riwayatLokal));
-
-                    tutupModalStatus();
+                    tampilkanStatusSukses("Pembayaran Fee Plastik berhasil disimpan ke database!");
 
                     document.getElementById('feePlastikPenerima').value = '';
                     await tarikDataKirimanFeePlastik();
@@ -5931,12 +6032,15 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
             );
         }
 
-        // Render Riwayat Fee Plastik
+        // Render Riwayat Fee Plastik langsung dari Database Supabase
         async function renderRiwayatFeePlastik() {
             const tbody = document.getElementById('riwayatFeePlastikTableBody');
             if (!tbody) return;
 
-            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Mengambil data riwayat fee plastik...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Mengambil data riwayat fee plastik dari database server...</td></tr>`;
+
+            // Sinkronkan data lokal lama yang belum masuk database jika ada
+            await sinkronisasiFeePlastikLokalKeDatabase();
 
             let dataList = [];
             try {
@@ -5945,19 +6049,30 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                     .select('*')
                     .order('tgl_bayar', { ascending: false });
 
-                if (!error && data && data.length > 0) {
+                if (!error && data) {
                     dataList = data;
+                } else if (error) {
+                    console.warn("Gagal ambil riwayat_fee_plastik dari Supabase:", error);
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.warn("Koneksi Supabase riwayat_fee_plastik error:", e);
+            }
 
+            // Jika offline / Supabase kosong, gunakan cache local storage
             if (dataList.length === 0) {
-                dataList = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
+                try {
+                    dataList = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
+                } catch (e) { dataList = []; }
+            } else {
+                try {
+                    localStorage.setItem('sbr_riwayat_fee_plastik', JSON.stringify(dataList));
+                } catch (e) { }
             }
 
             window.globalRiwayatFeePlastik = dataList;
 
             if (dataList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Belum ada riwayat fee plastik yang terbayar.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Belum ada riwayat fee plastik yang terbayar di database.</td></tr>`;
                 return;
             }
 
@@ -5970,7 +6085,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                     </td>
                     <td class="p-3 text-[11px]">${formatTgl(r.periode_mulai)} s/d ${formatTgl(r.periode_akhir)}</td>
                     <td class="p-3 text-center font-extrabold text-pink-600 font-poppins-custom">
-                        ${r.total_qty || 0} Qty
+                        ${r.total_qty || 0} Kg
                     </td>
                     <td class="p-3 text-right font-bold font-poppins-custom text-emerald-600">${formatRupiah(r.total_fee || 0)}</td>
                     <td class="p-3 text-center">
@@ -6028,19 +6143,28 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                 if (el) el.innerText = val;
             };
 
-            const slipId = dataFee.id ? String(dataFee.id).replace('fee_pls_', '').replace('fee_', '') : Date.now();
+            const rawId = dataFee.id ? String(dataFee.id).replace('fee_pls_', '').replace('fee_', '') : Date.now();
+            const noSlip = isNaN(Number(rawId)) ? rawId : String(rawId).padStart(4, '0');
 
             setTxt('pvFeePlastikTglBayar', formatTgl(dataFee.tgl_bayar));
-            setTxt('pvFeePlastikNoSlip', `NO: FPLS-${slipId}`);
+            setTxt('pvFeePlastikNoSlip', `NO: FPLS-${noSlip}`);
             setTxt('pvFeePlastikPenerima', dataFee.penerima || 'Admin');
             setTxt('pvFeePlastikCatatan', dataFee.catatan || '-');
             setTxt('pvFeePlastikPeriode', `${formatTgl(dataFee.periode_mulai)} s/d ${formatTgl(dataFee.periode_akhir)}`);
 
             // Olah rincian barang agar tampil rinci (bukan akumulasi)
-            let rincian = dataFee.rincian_barang || [];
+            let rincian = dataFee.rincian_barang;
+            if (!rincian && dataFee.item_ids) {
+                if (typeof dataFee.item_ids === 'object' && !Array.isArray(dataFee.item_ids)) {
+                    rincian = dataFee.item_ids.rincian;
+                } else if (Array.isArray(dataFee.item_ids) && dataFee.item_ids.length > 0 && typeof dataFee.item_ids[0] === 'object') {
+                    rincian = dataFee.item_ids;
+                }
+            }
             if (typeof rincian === 'string') {
                 try { rincian = JSON.parse(rincian); } catch (e) { rincian = []; }
             }
+            if (!Array.isArray(rincian)) rincian = [];
 
             const tbodySlip = document.getElementById('pvFeePlastikTableBody');
             let totalQtyHitung = 0;
@@ -6122,7 +6246,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                 tarifRingkasan = formatRupiah(Number(dataFee.tarif_per_qty) || 0);
             }
 
-            setTxt('pvFeePlastikTotalQty', `${totalQty} Qty`);
+            setTxt('pvFeePlastikTotalQty', `${totalQty} Kg`);
             setTxt('pvFeePlastikTarif', tarifRingkasan);
             setTxt('pvFeePlastikGrandTotal', formatRupiah(grandTotal));
             setTxt('pvFeePlastikNominalBesar', formatRupiah(grandTotal));
@@ -6133,15 +6257,23 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
             modal.classList.add('flex');
         }
 
-        // Hapus Riwayat Fee Plastik
+        // Hapus Riwayat Fee Plastik langsung dari Database Supabase dan Local Storage
         function hapusRiwayatFeePlastik(id, idx) {
-            bukaModalKonfirmasiHapus("Hapus Riwayat Fee Plastik?", "Data pencairan fee plastik ini akan dihapus permanen.", async () => {
-                tampilkanStatusLoading("Menghapus Data", "Menghapus riwayat fee plastik...");
+            bukaModalKonfirmasiHapus("Hapus Riwayat Fee Plastik?", "Data pencairan fee plastik ini akan dihapus permanen dari database server.", async () => {
+                tampilkanStatusLoading("Menghapus Data", "Menghapus riwayat fee plastik dari database...");
 
                 if (id && !String(id).startsWith('fee_pls_')) {
                     try {
-                        await supabaseClient.from('riwayat_fee_plastik').delete().eq('id', id);
-                    } catch (e) { }
+                        const { error } = await supabaseClient.from('riwayat_fee_plastik').delete().eq('id', id);
+                        if (error) {
+                            console.error("Gagal hapus dari database server:", error);
+                            alert("Peringatan: Gagal menghapus dari database server: " + error.message);
+                            tutupModalStatus();
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn("Koneksi gagal:", e);
+                    }
                 }
 
                 let localData = JSON.parse(localStorage.getItem('sbr_riwayat_fee_plastik') || '[]');
@@ -6153,6 +6285,7 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                 localStorage.setItem('sbr_riwayat_fee_plastik', JSON.stringify(localData));
 
                 tutupModalStatus();
+                tampilkanStatusSukses("Data riwayat fee plastik berhasil dihapus dari database!");
                 await renderRiwayatFeePlastik();
             });
         }
@@ -6679,29 +6812,34 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                             <div class="flex"><span class="w-28 text-gray-500 font-medium">Dihitung Oleh</span><span
                                     class="font-bold text-gray-900">: <span id="pvFeePlastikPenerima">-</span></span>
                             </div>
-                            <div class="flex"><span class="w-28 text-gray-500 font-medium">Catatan / Tanggal</span><span
+                            <!--<div class="flex"><span class="w-28 text-gray-500 font-medium">Catatan / Tanggal</span><span
                                     class="font-medium text-gray-700">: <span id="pvFeePlastikCatatan">-</span></span>
-                            </div>
+                            </div>-->
                         </div>
                         <div class="space-y-1 text-right sm:text-left sm:pl-10">
                             <div class="flex"><span class="w-28 text-gray-500 font-medium">Periode Transaksi</span><span
                                     class="font-bold text-gray-900">: <span id="pvFeePlastikPeriode">-</span></span>
                             </div>
-                            <div class="flex"><span class="w-28 text-gray-500 font-medium">Status Pembayaran</span><span
-                                    class="font-bold text-emerald-600">: Lunas / Terbayar</span></div>
+                            <!--<div class="flex"><span class="w-28 text-gray-500 font-medium">Status Pembayaran</span><span
+                                    class="font-bold text-emerald-600">: Lunas / Terbayar</span></div>-->
                         </div>
                     </div>
 
                     <!-- Tabel Rincian Barang (RINCI, BUKAN AKUMULASI) -->
-                    <div class="relative z-10 my-3 rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+                    <div
+                        class="relative z-10 my-3 rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
                         <table class="w-full text-xs border-separate border-spacing-0">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-700 text-[11px]">
-                                    <th class="py-2.5 px-2.5 text-center font-bold w-10 border-b border-gray-200">No</th>
-                                    <th class="py-2.5 px-3 text-left font-bold border-b border-gray-200">Rincian Barang & Nota</th>
-                                    <th class="py-2.5 px-3 text-center font-bold w-24 border-b border-gray-200">Qty Keluar</th>
-                                    <th class="py-2.5 px-3 text-right font-bold w-28 border-b border-gray-200">Tarif Fee</th>
-                                    <th class="py-2.5 px-3 text-right font-bold w-32 border-b border-gray-200">Subtotal Fee</th>
+                                    <th class="py-2.5 px-2.5 text-center font-bold text-[13px] italic w-10 border-b border-gray-200">No
+                                    </th>
+                                    <th class="py-2.5 px-3 text-left font-bold text-[13px] italic border-b border-gray-200">Rincian Barang
+                                        & Nota</th>
+                                    <th class="py-2.5 px-3 text-center font-bold text-[13px] italic w-24 border-b border-gray-200">Qty</th>
+                                    <th class="py-2.5 px-3 text-right font-bold text-[13px] italic w-28 border-b border-gray-200">Fee
+                                    </th>
+                                    <th class="py-2.5 px-3 text-right font-bold text-[13px] italic w-32 border-b border-gray-200">Subtotal
+                                        Fee</th>
                                 </tr>
                             </thead>
                             <tbody id="pvFeePlastikTableBody">
@@ -6713,10 +6851,12 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                             </tbody>
                             <tfoot class="bg-gray-50">
                                 <tr>
-                                    <td colspan="2" class="pt-3.5 pb-4 px-3.5 text-gray-800 uppercase text-[11px] align-middle tracking-wider font-extrabold border-t-2 border-gray-800 leading-normal">Total
+                                    <td colspan="2"
+                                        class="pt-3.5 pb-4 px-3.5 text-gray-800 uppercase text-[11px] align-middle tracking-wider font-extrabold border-t-2 border-gray-800 leading-normal">
+                                        Total
                                         Rincian Fee Plastik</td>
                                     <td class="pt-3.5 pb-4 px-3 text-center font-extrabold text-pink-600 font-poppins-custom text-xs align-middle whitespace-nowrap border-t-2 border-gray-800 leading-normal"
-                                        id="pvFeePlastikTotalQty">0 Qty</td>
+                                        id="pvFeePlastikTotalQty">0 Kg</td>
                                     <td class="pt-3.5 pb-4 px-3 text-right font-bold text-gray-500 text-[10px] align-middle whitespace-nowrap border-t-2 border-gray-800 leading-normal"
                                         id="pvFeePlastikTarif">-</td>
                                     <td class="pt-3.5 pb-4 px-3.5 text-right font-extrabold text-sm font-poppins-custom text-emerald-700 align-middle whitespace-nowrap border-t-2 border-gray-800 leading-normal"
@@ -6730,23 +6870,23 @@ SELECT setval(pg_get_serial_sequence('riwayat_invoice', 'id'), COALESCE((SELECT 
                     <div class="relative z-10 pt-3 grid grid-cols-2 items-end gap-6">
                         <div class="grid grid-cols-2 gap-4 text-center text-[10px]">
                             <div>
-                                <p class="text-gray-500 mb-10">Penerima / Kurir</p>
+                                <p class="text-gray-500 mb-10">Penerima</p>
                                 <p class="font-bold border-t border-gray-400 pt-1 text-gray-800"
                                     id="pvFeePlastikSignPenerima">( .................... )</p>
                             </div>
                             <div>
-                                <p class="text-gray-500 mb-10">Admin / Penanggung Jawab</p>
+                                <p class="text-gray-500 mb-10">Penanggung Jawab</p>
                                 <p class="font-bold border-t border-gray-400 pt-1 text-gray-800">( SBR Putra Food )</p>
                             </div>
                         </div>
 
                         <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-right">
                             <span
-                                class="text-[10px] font-extrabold uppercase text-emerald-600 tracking-wider block">Total
+                                class="text-[12px] font-bold uppercase text-black tracking-wider block">Total
                                 Pencairan Fee Plastik</span>
                             <span class="text-2xl font-black font-poppins-custom text-emerald-700 block leading-tight"
                                 id="pvFeePlastikNominalBesar">Rp 0</span>
-                            <span class="text-[9px] text-emerald-600/80 italic">*Fee resmi dicairkan dari transaksi
+                            <span class="text-[11px] text-emerald-600/80 italic">*Fee resmi dicairkan dari transaksi
                                 barang keluar</span>
                         </div>
                     </div>
