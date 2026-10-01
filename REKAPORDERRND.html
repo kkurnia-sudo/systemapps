@@ -1,603 +1,2630 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistem Manajemen Order - SBR Putra Food</title>
-    
-    <!-- PWA Web App Meta Tags -->
-    <meta name="theme-color" content="#2563eb">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/49886d2fd32ecb4accd10a8a51dbd4561f8e9d1b/sbr_logo.png">
 
-    <!-- Load Supabase & html2canvas -->
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Supabase, html2canvas, & SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* CSS Variables & Theme Definitions */
         :root {
-            --primary: #3b82f6; --primary-hover: #1d4ed8;
-            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
-            --bg-body: #f1f5f9; --card-bg: rgba(255, 255, 255, 0.9);
-            --border: #e2e8f0; --text-main: #0f172a; --text-muted: #64748b;
-            --input-bg: #f8fafc; --table-hover: #f1f5f9;
-            --badge-green-bg: #d1fae5; --badge-green-txt: #065f46;
-            --badge-red-bg: #fee2e2; --badge-red-txt: #991b1b;
-            --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --primary-ring: rgba(37, 99, 235, 0.18);
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --border-focus: #94a3b8;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --input-bg: #f8fafc;
+            --table-hover: #f1f5f9;
+            --badge-green-bg: #d1fae5;
+            --badge-green-txt: #065f46;
+            --badge-red-bg: #fee2e2;
+            --badge-red-txt: #991b1b;
+            --badge-amber-bg: #fef3c7;
+            --badge-amber-txt: #92400e;
+            --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -2px rgba(15, 23, 42, 0.03);
+            --modal-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --header-bg: rgba(255, 255, 255, 0.88);
         }
 
         body.dark-mode {
-            --primary: #60a5fa; --primary-hover: #3b82f6;
-            --bg-body: #0f172a; --card-bg: rgba(30, 41, 59, 0.9);
-            --border: #334155; --text-main: #f8fafc; --text-muted: #94a3b8;
-            --input-bg: #0f172a; --table-hover: #1e293b;
-            --badge-green-bg: #064e3b; --badge-green-txt: #34d399;
-            --badge-red-bg: #7f1d1d; --badge-red-txt: #fca5a5;
-            --shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --primary-light: rgba(59, 130, 246, 0.15);
+            --primary-ring: rgba(59, 130, 246, 0.28);
+            --success: #10b981;
+            --success-light: rgba(16, 185, 129, 0.15);
+            --danger: #f87171;
+            --danger-light: rgba(239, 68, 68, 0.15);
+            --warning: #fbbf24;
+            --warning-light: rgba(245, 158, 11, 0.15);
+            --bg-body: #090d16;
+            --card-bg: #131b2e;
+            --border: #222f46;
+            --border-focus: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: #0c1220;
+            --table-hover: #1a253c;
+            --badge-green-bg: #064e3b;
+            --badge-green-txt: #34d399;
+            --badge-red-bg: #7f1d1d;
+            --badge-red-txt: #fca5a5;
+            --badge-amber-bg: #78350f;
+            --badge-amber-txt: #fde68a;
+            --card-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.4);
+            --modal-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            --header-bg: rgba(19, 27, 46, 0.88);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-body); color: var(--text-main); padding: 16px; line-height: 1.5; transition: background-color 0.3s, color 0.3s; padding-bottom: 80px; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        /* Header Modern Glassmorphism */
-        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px 16px; background: var(--card-bg); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); }
-        .app-header h1 { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--text-main); }
-        
-        .header-actions { display: flex; align-items: center; gap: 8px; }
-        .connection-status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; padding: 6px 12px; background: var(--input-bg); border-radius: 20px; border: 1px solid var(--border); }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: #fbbf24; }
-        .status-dot.connected { background-color: var(--success); }
-        .status-dot.error { background-color: var(--danger); }
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 16px;
+            line-height: 1.5;
+            transition: background-color 0.25s, color 0.25s;
+            min-height: 100vh;
+        }
 
-        /* Dashboard Grid Layout */
-        .dashboard-grid { display: grid; grid-template-columns: 400px 1fr; gap: 20px; margin-bottom: 20px; }
-        @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+        }
 
-        /* Modern Glass Cards */
-        .card { background: var(--card-bg); backdrop-filter: blur(12px); padding: 20px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); transition: 0.3s ease; }
-        .card-title { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+        /* Modern Glass Header */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--header-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--card-shadow);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
 
-        /* Sleek Form Controls */
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
-        .form-control { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13px; transition: all 0.2s; background: var(--input-bg); color: var(--text-main); }
-        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); }
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-        /* Buttons & Actions */
-        .btn { padding: 10px 16px; border: none; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; color: white; transition: all 0.2s ease; display: inline-flex; justify-content: center; align-items: center; gap: 6px; }
-        .btn-full { width: 100%; }
-        .btn:active { transform: scale(0.96); }
-        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
-        .btn-success { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
-        .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text-main); }
-        .btn-danger { background: var(--badge-red-bg); color: var(--badge-red-txt); }
-        .btn-icon { padding: 8px 10px; border-radius: 10px; background: var(--input-bg); color: var(--text-muted); cursor: pointer; border: 1px solid var(--border); transition: 0.2s; }
+        .brand-logo-wrap {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        }
 
-        /* Table Design */
-        .table-responsive { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
-        table.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        table.history-table th, table.history-table td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-        table.history-table th { background: var(--input-bg); font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 10px; }
-        
-        .status-badge { padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; display: inline-block; text-align: center; }
-        .badge-green { background: var(--badge-green-bg); color: var(--badge-green-txt); }
-        .badge-red { background: var(--badge-red-bg); color: var(--badge-red-txt); }
+        .brand-title-wrap h1 {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
 
-        /* Custom Popup & Toast Modal */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; animation: fadeIn 0.2s ease; }
-        .modal-content { background: var(--card-bg); border-radius: 18px; width: 100%; max-width: 420px; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); color: var(--text-main); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .close-btn { background: transparent; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); }
+        .brand-title-wrap span {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.2px;
+        }
 
-        /* Progress Bar for Image Download */
-        .progress-bar-bg { width: 100%; height: 8px; background: var(--border); border-radius: 10px; overflow: hidden; margin: 15px 0; }
-        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.3s ease; }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
 
-        /* Grid Export 2 Kolom */
-        #export-data-container.rekap-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        #export-container.wide-mode { max-width: 900px !important; }
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text-main);
+        }
 
-        .item-builder { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
-        .qty-wrapper { display: flex; align-items: center; gap: 4px; flex: 1; }
-        .item-list-box { background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; min-height: 50px; margin-bottom: 10px; }
-        .item-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px dashed var(--border); }
-        .remove-item { color: var(--danger); cursor: pointer; font-weight: bold; }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #fbbf24;
+            position: relative;
+        }
 
-        .export-wrapper { display: none; margin-top: 20px; text-align: center; }
-        #export-container { background: #ffffff; padding: 24px; width: 100%; max-width: 550px; margin: 0 auto; color: #0f172a; border-radius: 12px; text-align: left; }
-        .export-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-        .order-card { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
-        .order-row { display: flex; border-bottom: 1px solid #e2e8f0; }
-        .order-row:last-child { border-bottom: none; }
-        .col-label { width: 32%; padding: 6px 10px; background-color: #f1f5f9; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; border-right: 1px solid #e2e8f0; }
-        .col-value { width: 68%; padding: 6px 10px; font-size: 12px; font-weight: 600; color: #0f172a; }
-        .text-red { color: #e11d48 !important; }
+        .status-dot.connected {
+            background-color: var(--success);
+        }
 
-        /* Mobile Bottom Nav */
-        .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); backdrop-filter: blur(12px); border-top: 1px solid var(--border); padding: 8px 16px; justify-content: space-around; z-index: 1000; }
-        @media (max-width: 600px) {
-            .bottom-nav { display: flex; }
-            body { padding-bottom: 90px; }
+        .status-dot.connected::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 2px solid var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            opacity: 0.6;
+        }
+
+        .status-dot.error {
+            background-color: var(--danger);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(2.4);
+                opacity: 0;
+            }
+        }
+
+        /* Layout Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 980px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Modern Card */
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-count {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 13px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--input-bg);
+            color: var(--text-main);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--card-bg);
+            box-shadow: 0 0 0 4px var(--primary-ring);
+        }
+
+        textarea.form-control {
+            min-height: 65px;
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 7px;
+            user-select: none;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        .btn-outline {
+            background-color: var(--input-bg);
+            border: 1.5px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--table-hover);
+            border-color: var(--border-focus);
+        }
+
+        .btn-danger {
+            background-color: var(--badge-red-bg);
+            color: var(--badge-red-txt);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            filter: brightness(0.95);
+        }
+
+        .btn-danger-solid {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+        }
+
+        .btn-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-md);
+            background: var(--input-bg);
+            color: var(--text-muted);
+            cursor: pointer;
+            border: 1px solid var(--border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: var(--table-hover);
+            color: var(--text-main);
+            border-color: var(--border-focus);
+        }
+
+        .btn-action-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-action-circle:active {
+            transform: scale(0.92);
+        }
+
+        .btn-dl {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .btn-close {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        /* Multi-Item Builder */
+        .item-builder {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .item-builder-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .qty-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+        }
+
+        .qty-unit-tag {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: var(--border);
+            padding: 4px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .item-list-box {
+            background: var(--input-bg);
+            border: 1.5px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            min-height: 52px;
+            margin-bottom: 12px;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            padding: 7px 0;
+            border-bottom: 1px dashed var(--border);
+            font-weight: 500;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .remove-item {
+            color: var(--danger);
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 18px;
+            padding: 0 4px;
+            line-height: 1;
+            transition: transform 0.15s;
+        }
+
+        .remove-item:hover {
+            transform: scale(1.2);
+        }
+
+        /* Estimasi Dual Date Picker */
+        .estimasi-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            margin-top: 6px;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .estimasi-picker-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        @media (max-width: 380px) {
+            .estimasi-picker-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Search & Filter Bar */
+        .table-filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .select-all-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            padding: 7px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition-fast);
+            white-space: nowrap;
+        }
+
+        .select-all-pill:hover {
+            color: var(--text-main);
+            border-color: var(--primary);
+        }
+
+        .select-all-pill input[type="checkbox"] {
+            cursor: pointer;
+            width: 15px;
+            height: 15px;
+            accent-color: var(--primary);
+        }
+
+        .search-box-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .search-box-wrap svg {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 10px 8px 32px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            font-size: 13px;
+            background: var(--input-bg);
+            color: var(--text-main);
+        }
+
+        /* Desktop Table */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+        }
+
+        table.history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.history-table th,
+        table.history-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        table.history-table th {
+            background-color: var(--input-bg);
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        table.history-table tr:hover {
+            background-color: var(--table-hover);
+        }
+
+        table.history-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .link-detail {
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .link-detail:hover {
+            text-decoration: underline;
+            color: var(--primary-hover);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            text-align: center;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .badge-green {
+            background: var(--badge-green-bg);
+            color: var(--badge-green-txt);
+        }
+
+        .badge-red {
+            background: var(--badge-red-bg);
+            color: var(--badge-red-txt);
+        }
+
+        .badge-amber {
+            background: var(--badge-amber-bg);
+            color: var(--badge-amber-txt);
+        }
+
+        /* Custom Checkbox */
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .check-kirim {
+            accent-color: var(--success) !important;
+            width: 22px;
+            height: 22px;
+        }
+
+        /* Mobile Cards List */
+        .mobile-order-cards {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .m-order-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+
+        .m-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .m-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .m-card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .m-info-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+        }
+
+        .m-card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border);
+            margin-top: 4px;
+        }
+
+        .m-kirim-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 480px;
+            padding: 22px;
+            box-shadow: var(--modal-shadow);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .modal-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: var(--table-hover);
+            color: var(--danger);
+        }
+
+        /* Export Container & Preview */
+        .export-wrapper {
+            display: none;
+            margin-top: 24px;
+            animation: fadeIn 0.4s ease;
+            text-align: center;
+        }
+
+        .export-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        #export-container {
+            background-color: #ffffff;
+            padding: 24px;
+            width: 100%;
+            max-width: 580px;
+            margin: 0 auto;
+            color: #1e293b;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            position: relative;
+            text-align: left;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        #export-data-container.rekap-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        #export-container.wide-mode {
+            max-width: 920px !important;
+        }
+
+        .export-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 12px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-left img {
+            max-height: 42px;
+            object-fit: contain;
+        }
+
+        .header-left h1 {
+            font-size: 15px;
+            line-height: 1.2;
+            margin: 0;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .header-left h1 strong {
+            font-weight: 800;
+            font-size: 18px;
+            color: #0f172a;
+        }
+
+        .export-date-update {
+            text-align: right;
+        }
+
+        .export-date-update .date-red {
+            color: #e11d48;
+            font-weight: 700;
+            font-size: 11px;
+            margin-bottom: 2px;
+        }
+
+        .export-date-update .update-text {
+            font-weight: 800;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            color: #0f172a;
+        }
+
+        .order-card {
+            background: #fff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        }
+
+        .order-row {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .order-row:last-child {
+            border-bottom: none;
+        }
+
+        .col-label {
+            width: 32%;
+            padding: 7px 10px;
+            background-color: #f8fafc;
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+        }
+
+        .col-value {
+            width: 68%;
+            padding: 7px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+        }
+
+        .text-red {
+            color: #e11d48 !important;
+        }
+
+        /* Master Data Tabs */
+        .tab-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .tab-btn {
+            padding: 7px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-radius: var(--radius-md);
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .master-list {
+            list-style: none;
+            margin-top: 12px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .master-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 12px;
+            background: var(--input-bg);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .swal2-popup {
+            border-radius: 18px !important;
+            padding: 20px !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            border: 1px solid var(--border) !important;
+        }
+
+        body.dark-mode .swal2-popup {
+            background: #131b2e !important;
+            color: #f8fafc !important;
+        }
+
+        body.dark-mode .swal2-title {
+            color: #f8fafc !important;
+        }
+
+        body.dark-mode .swal2-html-container {
+            color: #94a3b8 !important;
+        }
+
+        .swal2-confirm {
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            padding: 10px 22px !important;
+        }
+
+        .swal2-cancel {
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            padding: 10px 20px !important;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 10px 10px 80px;
+            }
+
+            .app-header {
+                padding: 10px 12px;
+                border-radius: 12px;
+                margin-bottom: 14px;
+            }
+
+            .brand-logo-wrap {
+                width: 34px;
+                height: 34px;
+            }
+
+            .brand-title-wrap h1 {
+                font-size: 15px;
+            }
+
+            .card {
+                padding: 16px;
+                border-radius: 14px;
+            }
+
+            .table-responsive {
+                display: none;
+            }
+
+            .mobile-order-cards {
+                display: flex;
+            }
+
+            #export-data-container.rekap-grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 18px;
+                border-radius: 16px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <header class="app-header">
-        <h1>
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-            SBR Order System
-        </h1>
-        <div class="header-actions">
-            <button class="btn-icon" id="btnThemeToggle" onclick="toggleTheme()" title="Mode Gelap/Terang">
-                <svg id="iconSun" style="display:none;" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                <svg id="iconMoon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-            </button>
-            <button class="btn-icon" onclick="openModalMaster()" title="Data Master">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-            </button>
-            <div class="connection-status" id="connStatusBox">
-                <div class="status-dot" id="connDot"></div>
-                <span id="connText">Tersambung</span>
+    <div class="container">
+
+        <!-- HEADER INTERAKTIF -->
+        <header class="app-header">
+            <div class="brand-container">
+                <div class="brand-logo-wrap">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                        </path>
+                    </svg>
+                </div>
+                <div class="brand-title-wrap">
+                    <h1>Dashboard Order</h1>
+                    <span>SBR Putra Food</span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <!-- TEMA TOGGLE -->
+                <button class="btn-icon" id="btnThemeToggle" onclick="toggleTheme()" title="Ganti Mode Gelap/Terang"
+                    aria-label="Ganti Tema">
+                    <svg id="iconSun" style="display:none;" width="18" height="18" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                        </path>
+                    </svg>
+                    <svg id="iconMoon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+                        </path>
+                    </svg>
+                </button>
+                <!-- TOMBOL MANAJEMEN DATA -->
+                <button class="btn-icon" onclick="openModalMaster()" title="Manajemen Data Master"
+                    aria-label="Data Master">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                        </path>
+                    </svg>
+                </button>
+                <div class="connection-status" id="connStatusBox">
+                    <div class="status-dot" id="connDot"></div>
+                    <span id="connText">Menghubungkan...</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- FORM INPUT ORDER -->
+            <div class="card">
+                <div class="card-header-flex">
+                    <h2 class="card-title">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                            </path>
+                        </svg>
+                        1. Input Order Baru
+                    </h2>
+                </div>
+
+                <form id="orderForm" onsubmit="event.preventDefault(); simpanKeSupabase();">
+                    <div class="form-group">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <label style="margin: 0;">Tanggal Order</label>
+                            <label
+                                style="font-size: 11px; font-weight: 700; color: var(--warning); cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                <input type="checkbox" id="checkEstimasi"
+                                    onchange="toggleEstimasiInput('inputTanggal', 'estimasiContainer', this.checked)">
+                                Masih Estimasi?
+                            </label>
+                        </div>
+                        <input type="date" id="inputTanggal" class="form-control">
+
+                        <!-- Estimasi Dual Date Picker & Auto-Generator -->
+                        <div id="estimasiContainer" class="estimasi-box" style="display: none;">
+                            <div
+                                style="font-size: 11px; font-weight: 700; color: var(--warning); display: flex; align-items: center; gap: 5px;">
+                                <span>⏳ Pilih 2 Tanggal Estimasi:</span>
+                            </div>
+                            <div class="estimasi-picker-grid">
+                                <div>
+                                    <label
+                                        style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">Pilihan
+                                        1</label>
+                                    <input type="date" id="inputEstimasi1" class="form-control"
+                                        onchange="generateEstimasiText()">
+                                </div>
+                                <div>
+                                    <label
+                                        style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">Pilihan
+                                        2</label>
+                                    <input type="date" id="inputEstimasi2" class="form-control"
+                                        onchange="generateEstimasiText()">
+                                </div>
+                            </div>
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">Hasil
+                                    Format Estimasi (Otomatis / Bisa Diedit):</label>
+                                <input type="text" id="inputTanggalText" class="form-control"
+                                    placeholder="Contoh: Jumat 2 Oktober / Minggu 4 Oktober 2026">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kepada (Pembeli)</label>
+                        <select id="inputKepada" class="form-control" required>
+                            <option value="">-- Pilih Pembeli --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lokasi Pengiriman</label>
+                        <select id="inputLokasi" class="form-control" required>
+                            <option value="">-- Pilih Lokasi --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Barang & Jumlah</label>
+                        <div class="item-builder">
+                            <select id="pilihBarang" class="form-control" onchange="updateQtyUI()">
+                                <option value="">- Pilih Barang -</option>
+                            </select>
+
+                            <div class="item-builder-inputs">
+                                <div class="qty-wrapper">
+                                    <input type="number" id="inputUnit" class="form-control" placeholder="0"
+                                        oninput="hitungBall()">
+                                    <span class="qty-unit-tag" id="labelUnit">Dus</span>
+                                </div>
+
+                                <div class="qty-wrapper">
+                                    <input type="number" id="inputBall" class="form-control" placeholder="0" readonly
+                                        style="background:var(--table-hover); cursor:not-allowed;">
+                                    <span class="qty-unit-tag">Ball</span>
+                                </div>
+
+                                <button type="button" class="btn btn-outline" style="padding: 10px 14px;"
+                                    onclick="addBarangToList()" title="Tambah Barang">
+                                    <strong>+ Tambah</strong>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="item-list-box" id="listBarangBox">
+                            <em style="font-size: 12px; color: var(--text-muted);">Belum ada barang ditambahkan</em>
+                        </div>
+                        <textarea id="inputBarang" class="form-control" style="display:none;" required></textarea>
+                    </div>
+
+                    <button type="button" class="btn btn-primary btn-full" onclick="simpanKeSupabase()" id="btnSimpan">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                            </path>
+                        </svg>
+                        Simpan Order
+                    </button>
+                </form>
+            </div>
+
+            <!-- RIWAYAT ORDER AKTIF -->
+            <div class="card">
+                <div class="card-header-flex">
+                    <h2 class="card-title">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                            </path>
+                        </svg>
+                        2. Riwayat Order Aktif
+                        <span class="badge-count" id="orderCountBadge">0</span>
+                    </h2>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-outline" style="padding: 7px 12px;" onclick="bukaModalArsip()">
+                            📁 Arsip Selesai
+                        </button>
+                        <button class="btn btn-success" style="padding: 7px 14px;" onclick="generatePreview()">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            Buat Rekapan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search & Quick Selection Bar -->
+                <div class="table-filter-bar">
+                    <label class="select-all-pill" for="checkAll" title="Pilih Semua Order">
+                        <input type="checkbox" id="checkAll" onclick="toggleAll()">
+                        <span>Pilih Semua</span>
+                    </label>
+                    <div class="search-box-wrap">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" id="orderSearchInput" class="search-input"
+                            placeholder="Cari pembeli atau lokasi..." oninput="filterOrderList()">
+                    </div>
+                    <button type="button" class="btn btn-danger" id="btnHapusMassal" onclick="hapusOrderMassal()"
+                        style="padding: 7px 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;"
+                        title="Hapus order terpilih">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                        <span>Hapus Terpilih</span>
+                        <span id="selectedCountBadge" class="badge-count"
+                            style="display:none; background:rgba(255,255,255,0.25); color:#fff; padding:2px 6px; font-size:10px; border-radius:10px;">0</span>
+                    </button>
+                </div>
+
+                <!-- Desktop Table View -->
+                <div class="table-responsive">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 34px; text-align: center;">#</th>
+                                <th>Tanggal</th>
+                                <th>Kepada (Pembeli)</th>
+                                <th>Lokasi</th>
+                                <th style="text-align:center;">Terkirim</th>
+                                <th style="width: 60px; text-align: center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding: 24px; color:var(--text-muted);">
+                                    Memuat data order...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Cards View -->
+                <div class="mobile-order-cards" id="mobileCardsContainer">
+                    <div style="text-align:center; padding: 20px; color:var(--text-muted); font-size:13px;">Memuat
+                        data...</div>
+                </div>
+
+                <small style="display: block; margin-top: 10px; color: var(--text-muted); font-size: 12px;">💡 Ketuk
+                    nama pembeli untuk melihat rincian barang order.</small>
             </div>
         </div>
-    </header>
 
-    <div class="dashboard-grid">
-        <!-- FORM INPUT -->
-        <div class="card">
-            <h2 class="card-title">1. Input Order Baru</h2>
-            <form id="orderForm">
+        <!-- AREA PREVIEW & EXPORT PNG -->
+        <div class="export-wrapper" id="exportWrapper">
+            <div class="export-actions">
+                <button class="btn-action-circle btn-dl" onclick="downloadPNG()" title="Download Gambar PNG">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                </button>
+                <button class="btn-action-circle btn-close" onclick="tutupPreview()" title="Tutup Pratinjau">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="export-container">
+                <div class="export-header">
+                    <div class="header-left">
+                        <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/49886d2fd32ecb4accd10a8a51dbd4561f8e9d1b/sbr_logo.png"
+                            alt="SBR Logo" crossorigin="anonymous">
+                        <h1>REKAP ORDER<br><strong>PAK RACHMAT RND</strong></h1>
+                    </div>
+                    <div class="export-date-update">
+                        <div class="date-red" id="headerDateRed">Memuat Tanggal...</div>
+                        <div class="update-text">UPDATE</div>
+                    </div>
+                </div>
+                <div id="export-data-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Modal Rincian Barang -->
+    <div class="modal-overlay" id="modalDetailOrder">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-header">
+                <h2 id="detailJudul" style="font-size: 15px; color: var(--primary);">Rincian Kiriman</h2>
+                <button class="close-btn" onclick="closeModal('modalDetailOrder')">&times;</button>
+            </div>
+            <div style="background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; font-size: 13px; white-space: pre-line; line-height: 1.6; color: var(--text-main);"
+                id="detailKonten">
+                <!-- Isi rincian -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Manajemen Data Master -->
+    <div class="modal-overlay" id="modalDataMaster">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Manajemen Data Master</h2>
+                <button class="close-btn" onclick="closeModal('modalDataMaster')">&times;</button>
+            </div>
+
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="switchTab('kepada')" id="tab-kepada">Pembeli</button>
+                <button class="tab-btn" onclick="switchTab('lokasi')" id="tab-lokasi">Lokasi</button>
+                <button class="tab-btn" onclick="switchTab('barang')" id="tab-barang">Barang</button>
+            </div>
+
+            <div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="inputMasterBaru" class="form-control" placeholder="Ketik nama data baru...">
+                    <button class="btn btn-primary" onclick="simpanDataMaster()">Tambah</button>
+                </div>
+                <ul class="master-list" id="listDataMaster"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Order -->
+    <div class="modal-overlay" id="modalEditOrder">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Order</h2>
+                <button class="close-btn" onclick="closeModal('modalEditOrder')">&times;</button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                         <label style="margin: 0;">Tanggal Order</label>
-                        <label style="font-size: 11px; color: var(--warning); cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                            <input type="checkbox" id="checkEstimasi" onchange="toggleEstimasiInput('inputTanggal', 'inputTanggalText', this.checked)"> Masih Estimasi?
+                        <label
+                            style="font-size: 11px; font-weight: 700; color: var(--warning); cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                            <input type="checkbox" id="editCheckEstimasi"
+                                onchange="toggleEstimasiInput('editTanggal', 'editEstimasiContainer', this.checked, 'edit')">
+                            Masih Estimasi?
                         </label>
                     </div>
-                    <input type="date" id="inputTanggal" class="form-control">
-                    <input type="text" id="inputTanggalText" class="form-control" placeholder="Contoh: 3 atau 5 Oktober 2026" style="display: none;">
+                    <input type="date" id="editTanggal" class="form-control">
+
+                    <!-- Estimasi Picker Box Edit -->
+                    <div id="editEstimasiContainer" class="estimasi-box" style="display: none;">
+                        <div
+                            style="font-size: 11px; font-weight: 700; color: var(--warning); display: flex; align-items: center; gap: 5px;">
+                            <span>⏳ Pilih 2 Tanggal Estimasi:</span>
+                        </div>
+                        <div class="estimasi-picker-grid">
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">Pilihan
+                                    1</label>
+                                <input type="date" id="editEstimasi1" class="form-control"
+                                    onchange="generateEstimasiText('edit')">
+                            </div>
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">Pilihan
+                                    2</label>
+                                <input type="date" id="editEstimasi2" class="form-control"
+                                    onchange="generateEstimasiText('edit')">
+                            </div>
+                        </div>
+                        <div>
+                            <label
+                                style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">Hasil
+                                Format Estimasi (Otomatis / Bisa Diedit):</label>
+                            <input type="text" id="editTanggalText" class="form-control"
+                                placeholder="Contoh: Jumat 2 Oktober / Minggu 4 Oktober 2026">
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Kepada (Pembeli)</label>
-                    <select id="inputKepada" class="form-control" required><option value="">-- Pilih Pembeli --</option></select>
+                    <select id="editKepada" class="form-control" required></select>
                 </div>
                 <div class="form-group">
                     <label>Lokasi Pengiriman</label>
-                    <select id="inputLokasi" class="form-control" required><option value="">-- Pilih Lokasi --</option></select>
+                    <select id="editLokasi" class="form-control" required></select>
                 </div>
                 <div class="form-group">
                     <label>Barang</label>
                     <div class="item-builder">
-                        <select id="pilihBarang" class="form-control" onchange="updateQtyUI()"><option value="">- Pilih Barang -</option></select>
-                        <div class="qty-wrapper">
-                            <input type="number" id="inputUnit" class="form-control" placeholder="Duz/Krg" oninput="hitungBall()">
-                            <span id="labelUnit" style="font-size:12px; font-weight:700;">Dus</span>
+                        <select id="editPilihBarang" class="form-control" onchange="updateEditQtyUI()">
+                            <option value="">- Pilih Barang -</option>
+                        </select>
+
+                        <div class="item-builder-inputs">
+                            <div class="qty-wrapper">
+                                <input type="number" id="editInputUnit" class="form-control" placeholder="0"
+                                    oninput="hitungEditBall()">
+                                <span class="qty-unit-tag" id="editLabelUnit">Dus</span>
+                            </div>
+
+                            <div class="qty-wrapper">
+                                <input type="number" id="editInputBall" class="form-control" placeholder="0" readonly
+                                    style="background:var(--table-hover); cursor:not-allowed;">
+                                <span class="qty-unit-tag">Ball</span>
+                            </div>
+
+                            <button type="button" class="btn btn-outline" style="padding: 10px 14px;"
+                                onclick="addBarangToEditList()">+</button>
                         </div>
-                        <div class="qty-wrapper">
-                            <input type="number" id="inputBall" class="form-control" placeholder="Ball" readonly style="opacity: 0.7;">
-                            <span style="font-size:12px; font-weight:700;">Ball</span>
-                        </div>
-                        <button type="button" class="btn btn-outline" onclick="addBarangToList('tambah')">+</button>
                     </div>
-                    <div class="item-list-box" id="listBarangBox"><em style="font-size: 11px; color: var(--text-muted);">Belum ada barang ditambahkan</em></div>
-                    <textarea id="inputBarang" class="form-control" style="display:none;" required></textarea>
+
+                    <div class="item-list-box" id="editListBarangBox">
+                        <em style="font-size: 11px; color: var(--text-muted);">Belum ada barang</em>
+                    </div>
+                    <label style="margin-top: 10px;">Keterangan / Edit Manual (Opsional):</label>
+                    <textarea id="editBarang" class="form-control" rows="3"></textarea>
                 </div>
-                <button type="button" class="btn btn-primary btn-full" onclick="simpanKeSupabase()" id="btnSimpan">Simpan Order</button>
+                <div style="display: flex; gap: 10px; margin-top: 18px;">
+                    <button type="button" class="btn btn-primary btn-full" onclick="simpanEdit()">Update Data</button>
+                    <button type="button" class="btn btn-danger-solid" onclick="hapusDariEdit()">Hapus</button>
+                </div>
             </form>
         </div>
+    </div>
 
-        <!-- RIWAYAT ORDER -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 class="card-title" style="margin-bottom: 0;">2. Riwayat Order Aktif</h2>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-outline" style="padding: 6px 12px;" onclick="bukaModalArsip()">📂 Arsip Selesai</button>
-                    <button class="btn btn-success" style="padding: 6px 12px;" onclick="generatePreview()">Buat Rekapan</button>
+    <!-- Modal Arsip Order -->
+    <div class="modal-overlay" id="modalArsipOrder">
+        <div class="modal-content" style="max-width: 640px;">
+            <div class="modal-header">
+                <h2>Riwayat Order Selesai (Terkirim)</h2>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;"
+                        onclick="hapusArsipTerpilih()">Hapus Terpilih</button>
+                    <button class="close-btn" onclick="closeModal('modalArsipOrder')">&times;</button>
                 </div>
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive" style="display: block;">
                 <table class="history-table">
                     <thead>
                         <tr>
-                            <th style="width: 30px; text-align: center;"><input type="checkbox" id="checkAll" onclick="toggleAll()"></th>
+                            <th style="width: 34px; text-align: center;"><input type="checkbox" id="checkAllArsip"
+                                    onclick="toggleAllArsip()"></th>
                             <th>Tanggal</th>
                             <th>Kepada</th>
-                            <th>Lokasi</th>
                             <th style="text-align:center;">Terkirim</th>
-                            <th style="width: 50px; text-align: center;">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody id="historyBody">
-                        <tr><td colspan="6" style="text-align:center; padding: 20px;">Memuat data...</td></tr>
+                    <tbody id="arsipBody">
+                        <tr>
+                            <td colspan="4" style="text-align:center; padding: 20px;">Memuat data...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- AREA PREVIEW EXPORT -->
-    <div class="export-wrapper" id="exportWrapper">
-        <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px;">
-            <button class="btn btn-primary" onclick="downloadPNG()">Download PNG</button>
-            <button class="btn btn-danger" onclick="tutupPreview()">Tutup Pratinjau</button>
-        </div>
-        <div id="export-container">
-            <div class="export-header">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <img src="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/49886d2fd32ecb4accd10a8a51dbd4561f8e9d1b/sbr_logo.png" style="max-height: 38px;">
-                    <h1 style="font-size: 15px; line-height: 1.2;">REKAP ORDER<br><strong>PAK RACHMAT RND</strong></h1>
-                </div>
-                <div style="text-align: right;">
-                    <div class="date-red" id="headerDateRed" style="color: #e11d48; font-weight: 700; font-size: 11px;">Memuat Tanggal...</div>
-                    <div style="font-weight: 800; font-size: 13px;">UPDATE</div>
-                </div>
+    <!-- Modal Fix Tanggal Estimasi -->
+    <div class="modal-overlay" id="modalFixTanggal">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-header">
+                <h2 style="font-size: 15px; color: var(--primary);">Konfirmasi Tanggal Pasti</h2>
+                <button class="close-btn" onclick="closeModal('modalFixTanggal')">&times;</button>
             </div>
-            <div id="export-data-container"></div>
+            <form id="formFixTanggal">
+                <input type="hidden" id="fixOrderId">
+                <div class="form-group">
+                    <label>Tanggal Estimasi Saat Ini:</label>
+                    <div id="txtTanggalEstimasi"
+                        style="font-size: 13px; font-weight: 700; color: var(--warning); padding: 8px 12px; background: var(--warning-light); border-radius: 8px; margin-bottom: 10px;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Pilih Tanggal Pasti (Fix):</label>
+                    <input type="date" id="inputTanggalFix" class="form-control" required>
+                </div>
+                <button type="button" class="btn btn-success btn-full" onclick="simpanTanggalFix()">Simpan Tanggal
+                    Fix</button>
+            </form>
         </div>
     </div>
-</div>
 
-<!-- BOTTOM NAV MOBILE -->
-<div class="bottom-nav">
-    <button class="btn btn-outline" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">⬆️ Input Order</button>
-    <button class="btn btn-success" onclick="generatePreview()">📋 Rekap Order</button>
-</div>
+    <script>
+        const SUPABASE_URL = 'https://acpkdnktanrucyfyhckw.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U';
 
-<!-- MODAL DIALOG CUSTOM (PENGGANTI ALERT & CONFIRM) -->
-<div class="modal-overlay" id="customModalOverlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="customModalTitle" style="font-size: 16px; font-weight: 700;">Konfirmasi</h3>
-            <button class="close-btn" onclick="closeCustomModal()">&times;</button>
-        </div>
-        <p id="customModalMessage" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;"></p>
-        
-        <!-- Progress bar untuk proses unduh -->
-        <div id="downloadProgressBox" style="display: none;">
-            <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBarFill"></div></div>
-            <div id="progressText" style="font-size: 11px; text-align: center; color: var(--text-muted);">Memproses gambar...</div>
-        </div>
+        // Konstanta baris baru aman dari pemecahan auto-formatter
+        const NL = String.fromCharCode(10);
 
-        <div id="customModalActions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
-            <button class="btn btn-outline" id="btnCustomCancel" onclick="resolveCustomModal(false)">Batal</button>
-            <button class="btn btn-primary" id="btnCustomConfirm" onclick="resolveCustomModal(true)">Ya, Lanjutkan</button>
-        </div>
-    </div>
-</div>
+        let sbClient;
+        let globalOrders = [];
+        let tempItems = [];
+        let tempEditItems = [];
 
-<!-- Modal Modals Lain (Fix Tanggal, Master, Arsip) -->
-<div class="modal-overlay" id="modalFixTanggal">
-    <div class="modal-content" style="max-width: 350px;">
-        <div class="modal-header">
-            <h3>Konfirmasi Tanggal Fix</h3>
-            <button class="close-btn" onclick="closeModal('modalFixTanggal')">&times;</button>
-        </div>
-        <input type="hidden" id="fixOrderId">
-        <div class="form-group">
-            <label>Tanggal Estimasi Saat Ini:</label>
-            <div id="txtTanggalEstimasi" style="font-size: 13px; font-weight: 600; color: var(--warning); margin-bottom: 10px;"></div>
-        </div>
-        <div class="form-group">
-            <label>Pilih Tanggal Pasti (Fix):</label>
-            <input type="date" id="inputTanggalFix" class="form-control" required>
-        </div>
-        <button type="button" class="btn btn-success btn-full" onclick="simpanTanggalFix()">Simpan Tanggal Fix</button>
-    </div>
-</div>
+        let masterData = {
+            kepada: ["Lampung - Yeyen", "Pontianak - Devin", "Banjarmasin - Mekar Mulia", "Medan - Acc", "Samarinda - Sumber Lancar", "Makassar - Hansen", "Bangka - Acong"],
+            lokasi: ["Gudang Utama", "Marunda", "Menunggu Konfirmasi"],
+            barang: ["Aromanis", "Basreng Merah (K)", "Basreng Ori (K)", "Basreng Merah (D)", "Basreng Ori (D)"]
+        };
+        let currentMasterTab = 'kepada';
 
-<div class="modal-overlay" id="modalDataMaster">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Manajemen Data Master</h3>
-            <button class="close-btn" onclick="closeModal('modalDataMaster')">&times;</button>
-        </div>
-        <div class="tab-container" style="display:flex; gap:8px; margin-bottom:12px;">
-            <button class="btn btn-outline" onclick="switchTab('kepada')">Pembeli</button>
-            <button class="btn btn-outline" onclick="switchTab('lokasi')">Lokasi</button>
-            <button class="btn btn-outline" onclick="switchTab('barang')">Barang</button>
-        </div>
-        <div style="display: flex; gap: 8px;">
-            <input type="text" id="inputMasterBaru" class="form-control" placeholder="Ketik data baru...">
-            <button class="btn btn-primary" onclick="simpanDataMaster()">Tambah</button>
-        </div>
-        <ul id="listDataMaster" style="list-style: none; margin-top: 10px; max-height: 200px; overflow-y: auto;"></ul>
-    </div>
-</div>
-
-<div class="modal-overlay" id="modalArsipOrder">
-    <div class="modal-content" style="max-width: 600px;">
-        <div class="modal-header">
-            <h3>Riwayat Order Selesai (Terkirim)</h3>
-            <button class="close-btn" onclick="closeModal('modalArsipOrder')">&times;</button>
-        </div>
-        <div class="table-responsive">
-            <table class="history-table">
-                <thead><tr><th>Tanggal</th><th>Kepada</th><th style="text-align:center;">Terkirim</th></tr></thead>
-                <tbody id="arsipBody"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script>
-    const SUPABASE_URL = 'https://acpkdnktanrucyfyhckw.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U';
-    
-    let sbClient, globalOrders = [], tempItems = [], modalPromiseResolve = null;
-    let masterData = {
-        kepada: ["Lampung - Yeyen", "Pontianak - Devin", "Banjarmasin - Mekar Mulia", "Medan - Acc", "Samarinda - Sumber Lancar", "Makassar - Hansen", "Bangka - Acong"],
-        lokasi: ["Gudang Utama", "Marunda", "Menunggu Konfirmasi"],
-        barang: ["Aromanis", "Basreng Merah (K)", "Basreng Ori (K)", "Basreng Merah (D)", "Basreng Ori (D)"]
-    };
-    let currentMasterTab = 'kepada';
-
-    // Custom Alert & Confirm Promises
-    function customAlert(message, title = "Informasi") {
-        return new Promise((resolve) => {
-            document.getElementById('customModalTitle').innerText = title;
-            document.getElementById('customModalMessage').innerText = message;
-            document.getElementById('btnCustomCancel').style.display = 'none';
-            document.getElementById('downloadProgressBox').style.display = 'none';
-            document.getElementById('customModalActions').style.display = 'flex';
-            document.getElementById('customModalOverlay').style.display = 'flex';
-            modalPromiseResolve = resolve;
-        });
-    }
-
-    function customConfirm(message, title = "Konfirmasi") {
-        return new Promise((resolve) => {
-            document.getElementById('customModalTitle').innerText = title;
-            document.getElementById('customModalMessage').innerText = message;
-            document.getElementById('btnCustomCancel').style.display = 'inline-flex';
-            document.getElementById('downloadProgressBox').style.display = 'none';
-            document.getElementById('customModalActions').style.display = 'flex';
-            document.getElementById('customModalOverlay').style.display = 'flex';
-            modalPromiseResolve = resolve;
-        });
-    }
-
-    function resolveCustomModal(value) {
-        closeCustomModal();
-        if (modalPromiseResolve) modalPromiseResolve(value);
-    }
-
-    function closeCustomModal() {
-        document.getElementById('customModalOverlay').style.display = 'none';
-    }
-
-    function toggleTheme() {
-        document.body.classList.toggle('dark-mode');
-        const isDark = document.body.classList.contains('dark-mode');
-        localStorage.setItem('sbr_theme', isDark ? 'dark' : 'light');
-    }
-
-    function setConnectionStatus(isConnected) {
-        const dot = document.getElementById('connDot');
-        const text = document.getElementById('connText');
-        dot.className = 'status-dot ' + (isConnected ? 'connected' : 'error');
-        text.innerText = isConnected ? 'Tersambung' : 'Gagal';
-    }
-
-    function toggleEstimasiInput(dateInputId, textInputId, isEstimasi) {
-        document.getElementById(dateInputId).style.display = isEstimasi ? 'none' : 'block';
-        document.getElementById(textInputId).style.display = isEstimasi ? 'block' : 'none';
-    }
-
-    function openFixTanggalModal(id, tanggalEstimasi) {
-        document.getElementById('fixOrderId').value = id;
-        document.getElementById('txtTanggalEstimasi').innerText = tanggalEstimasi || "Belum ada kepastian tanggal";
-        document.getElementById('modalFixTanggal').style.display = 'flex';
-    }
-
-    async function simpanTanggalFix() {
-        const id = document.getElementById('fixOrderId').value;
-        const tanggalBaru = document.getElementById('inputTanggalFix').value;
-        if (!tanggalBaru) return customAlert("Pilih tanggal pasti terlebih dahulu!");
-
-        try {
-            const { error } = await sbClient.from('list_order').update({ tanggal: tanggalBaru, tanggal_estimasi: null }).eq('id', id);
-            if (error) throw error;
-            closeModal('modalFixTanggal');
-            await loadHistory();
-        } catch (err) { customAlert("Gagal memperbarui tanggal: " + err.message); }
-    }
-
-    function formatTanggal(dateString) {
-        if (!dateString) return "Menunggu informasi lebih lanjut";
-        const d = new Date(dateString);
-        if (isNaN(d.getTime())) return "Menunggu informasi lebih lanjut";
-        return d.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    }
-
-    async function initApp() {
-        try {
-            if (typeof supabase === 'undefined') throw new Error("Gagal memuat database.");
-            sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            document.getElementById('headerDateRed').innerText = formatTanggal(new Date());
-            populateDropdowns();
-            await loadHistory();
-            registerPWA();
-        } catch (error) { setConnectionStatus(false); }
-    }
-
-    function populateDropdowns() {
-        const selects = ['inputKepada', 'inputLokasi', 'pilihBarang'];
-        selects.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                const key = id.replace('input', '').replace('pilih', '').toLowerCase();
-                if (masterData[key]) {
-                    el.innerHTML = `<option value="">-- Pilih --</option>` + masterData[key].map(i => `<option value="${i}">${i}</option>`).join('');
-                }
+        // Modern Toast & Alert Helpers dengan SweetAlert2
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
             }
         });
-    }
 
-    function getMultiplierAndUnit(itemName) {
-        if (!itemName) return { unit: 'Dus', multiplier: 0 };
-        if (itemName.includes('(K)')) return { unit: 'Krg', multiplier: 12 };
-        return { unit: 'Dus', multiplier: 7 }; 
-    }
-
-    function updateQtyUI() {
-        const info = getMultiplierAndUnit(document.getElementById('pilihBarang').value);
-        document.getElementById('labelUnit').innerText = info.unit;
-        hitungBall();
-    }
-
-    function hitungBall() {
-        const unitVal = parseFloat(document.getElementById('inputUnit').value) || 0;
-        const info = getMultiplierAndUnit(document.getElementById('pilihBarang').value);
-        document.getElementById('inputBall').value = (unitVal * info.multiplier) || '';
-    }
-
-    function addBarangToList() {
-        const nama = document.getElementById('pilihBarang').value;
-        const unitVal = document.getElementById('inputUnit').value.trim();
-        const ballVal = document.getElementById('inputBall').value;
-        if(!nama || !unitVal) return customAlert('Isi Qty barang dengan benar!');
-        
-        const info = getMultiplierAndUnit(nama);
-        tempItems.push(`${unitVal} ${info.unit} (${ballVal} Ball) - ${nama}`);
-        renderListBarang();
-    }
-
-    function renderListBarang() {
-        const box = document.getElementById('listBarangBox');
-        box.innerHTML = tempItems.map((item, idx) => `<div class="item-row"><span>• ${item}</span><span class="remove-item" onclick="tempItems.splice(${idx},1);renderListBarang()">&times;</span></div>`).join('') || '<em>Belum ada barang ditambahkan</em>';
-        document.getElementById('inputBarang').value = tempItems.join('\n');
-    }
-
-    async function loadHistory() {
-        const tbody = document.getElementById('historyBody');
-        try {
-            const { data, error } = await sbClient.from('list_order').select('*').eq('status_kirim', false).order('tanggal', { ascending: true });
-            if (error) throw error;
-            setConnectionStatus(true);
-            globalOrders = data;
-            tbody.innerHTML = data.map(order => `
-                <tr>
-                    <td style="text-align:center;"><input type="checkbox" class="order-checkbox" value="${order.id}"></td>
-                    <td>${order.tanggal_estimasi ? `<span style="color:var(--warning); font-weight:600;">⌛ ${order.tanggal_estimasi}</span><br><button class="btn btn-outline" style="padding:2px 6px; font-size:10px;" onclick="openFixTanggalModal(${order.id}, '${order.tanggal_estimasi}')">Fix Tanggal</button>` : formatTanggal(order.tanggal)}</td>
-                    <td>${order.kepada}</td>
-                    <td><span class="status-badge ${order.lokasi.toLowerCase().includes('menunggu') ? 'badge-red' : 'badge-green'}">${order.lokasi}</span></td>
-                    <td style="text-align:center;"><input type="checkbox" class="check-kirim" onchange="updateStatusKirim(${order.id}, this.checked)"></td>
-                    <td style="text-align:center;"><button class="btn-icon" onclick="openFixTanggalModal(${order.id})">✏️</button></td>
-                </tr>
-            `).join('');
-        } catch (error) { setConnectionStatus(false); }
-    }
-
-    async function simpanKeSupabase() {
-        const isEstimasi = document.getElementById('checkEstimasi').checked;
-        const orderData = {
-            tanggal: isEstimasi ? null : document.getElementById('inputTanggal').value,
-            tanggal_estimasi: isEstimasi ? document.getElementById('inputTanggalText').value : null,
-            kepada: document.getElementById('inputKepada').value,
-            lokasi: document.getElementById('inputLokasi').value,
-            barang: document.getElementById('inputBarang').value,
-            status_kirim: false
-        };
-
-        if(!orderData.kepada || !orderData.lokasi || !orderData.barang) return customAlert('Lengkapi data pembeli, lokasi, dan barang!');
-
-        try {
-            const { error } = await sbClient.from('list_order').insert([orderData]);
-            if (error) throw error;
-            document.getElementById('orderForm').reset();
-            tempItems = []; renderListBarang();
-            await loadHistory();
-            customAlert("Order berhasil disimpan!", "Sukses");
-        } catch (err) { customAlert('Gagal menyimpan: ' + err.message); }
-    }
-
-    async function updateStatusKirim(id, isChecked) {
-        const confirmed = await customConfirm(isChecked ? "Pindahkan pesanan ke arsip terkirim?" : "Kembalikan pesanan ke daftar aktif?");
-        if (!confirmed) return loadHistory();
-
-        try {
-            await sbClient.from('list_order').update({ status_kirim: isChecked }).eq('id', id);
-            loadHistory();
-        } catch (err) { customAlert('Gagal update status: ' + err.message); }
-    }
-
-    function generatePreview() {
-        const checkboxes = document.querySelectorAll('.order-checkbox:checked');
-        if (checkboxes.length === 0) return customAlert('Ceklis minimal 1 order untuk direkap.');
-
-        const exportDataContainer = document.getElementById('export-data-container');
-        const exportContainer = document.getElementById('export-container');
-        exportDataContainer.innerHTML = '';
-
-        if (checkboxes.length > 5) {
-            exportDataContainer.classList.add('rekap-grid-2');
-            exportContainer.classList.add('wide-mode');
-        } else {
-            exportDataContainer.classList.remove('rekap-grid-2');
-            exportContainer.classList.remove('wide-mode');
+        function showToast(message, icon = 'success') {
+            Toast.fire({
+                icon: icon,
+                title: message
+            });
         }
 
-        checkboxes.forEach(cb => {
-            const order = globalOrders.find(o => o.id === parseInt(cb.value));
-            if(order) {
-                exportDataContainer.innerHTML += `
-                    <div class="order-card">
-                        <div class="order-row"><div class="col-label">Hari/Tanggal</div><div class="col-value text-red">${order.tanggal_estimasi || formatTanggal(order.tanggal)}</div></div>
-                        <div class="order-row"><div class="col-label">Kepada</div><div class="col-value">${order.kepada}</div></div>
-                        <div class="order-row"><div class="col-label">Lokasi</div><div class="col-value">${order.lokasi}</div></div>
-                        <div class="order-row"><div class="col-label">Barang</div><div class="col-value">${order.barang.replace(/\n/g, '<br>')}</div></div>
-                    </div>`;
+        function showModernAlert(title, text = '', icon = 'info') {
+            return Swal.fire({
+                title: title,
+                text: text,
+                icon: icon,
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Tutup'
+            });
+        }
+
+        function showModernConfirm(title, text = '', confirmText = 'Ya, Lanjutkan', isDanger = false) {
+            return Swal.fire({
+                title: title,
+                text: text,
+                icon: isDanger ? 'warning' : 'question',
+                showCancelButton: true,
+                confirmButtonColor: isDanger ? '#ef4444' : '#2563eb',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: confirmText,
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            });
+        }
+
+        // Theme Switcher
+        function initTheme() {
+            const savedTheme = localStorage.getItem('sbr_theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('iconSun').style.display = 'block';
+                document.getElementById('iconMoon').style.display = 'none';
             }
-        });
+        }
 
-        document.getElementById('exportWrapper').style.display = 'block';
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('sbr_theme', isDark ? 'dark' : 'light');
+            document.getElementById('iconSun').style.display = isDark ? 'block' : 'none';
+            document.getElementById('iconMoon').style.display = isDark ? 'none' : 'block';
+        }
 
-    function downloadPNG() {
-        document.getElementById('customModalTitle').innerText = "Mengunduh Rekapan PNG";
-        document.getElementById('customModalMessage').innerText = "Mohon tunggu, sistem sedang merender gambar...";
-        document.getElementById('customModalActions').style.display = 'none';
-        document.getElementById('downloadProgressBox').style.display = 'block';
-        document.getElementById('customModalOverlay').style.display = 'flex';
+        // Connection Status
+        function setConnectionStatus(isConnected, errMsg = "") {
+            const dot = document.getElementById('connDot');
+            const text = document.getElementById('connText');
+            dot.className = 'status-dot';
+            if (isConnected) {
+                dot.classList.add('connected');
+                text.innerText = 'Tersambung';
+                text.style.color = 'var(--success)';
+            } else {
+                dot.classList.add('error');
+                text.innerText = 'Gagal';
+                text.style.color = 'var(--danger)';
+            }
+        }
 
-        let progress = 0;
-        const fill = document.getElementById('progressBarFill');
-        const interval = setInterval(() => {
-            progress += 20;
-            fill.style.width = progress + '%';
-            if (progress >= 100) {
-                clearInterval(interval);
-                html2canvas(document.getElementById('export-container'), { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
+        const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const NAMA_BULAN = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+
+        function parseLocalDate(dateStr) {
+            if (!dateStr) return null;
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return null;
+            const y = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10) - 1;
+            const d = parseInt(parts[2], 10);
+            const dt = new Date(y, m, d);
+            return isNaN(dt.getTime()) ? null : dt;
+        }
+
+        function generateEstimasiText(prefix = '') {
+            const isEdit = prefix === 'edit';
+            const id1 = isEdit ? 'editEstimasi1' : 'inputEstimasi1';
+            const id2 = isEdit ? 'editEstimasi2' : 'inputEstimasi2';
+            const idTarget = isEdit ? 'editTanggalText' : 'inputTanggalText';
+
+            const el1 = document.getElementById(id1);
+            const el2 = document.getElementById(id2);
+            const targetInput = document.getElementById(idTarget);
+            if (!el1 || !el2 || !targetInput) return;
+
+            const val1 = el1.value;
+            const val2 = el2.value;
+
+            if (!val1 && !val2) return;
+
+            let d1 = parseLocalDate(val1);
+            let d2 = parseLocalDate(val2);
+
+            if (d1 && d2) {
+                if (d1.getTime() > d2.getTime()) {
+                    const temp = d1;
+                    d1 = d2;
+                    d2 = temp;
+                }
+
+                const hari1 = NAMA_HARI[d1.getDay()];
+                const tgl1 = d1.getDate();
+                const bln1 = NAMA_BULAN[d1.getMonth()];
+                const thn1 = d1.getFullYear();
+
+                const hari2 = NAMA_HARI[d2.getDay()];
+                const tgl2 = d2.getDate();
+                const bln2 = NAMA_BULAN[d2.getMonth()];
+                const thn2 = d2.getFullYear();
+
+                if (d1.getTime() === d2.getTime()) {
+                    targetInput.value = `${hari1} ${tgl1} ${bln1} ${thn1}`;
+                } else if (thn1 !== thn2) {
+                    targetInput.value = `${hari1} ${tgl1} ${bln1} ${thn1} / ${hari2} ${tgl2} ${bln2} ${thn2}`;
+                } else {
+                    targetInput.value = `${hari1} ${tgl1} ${bln1} / ${hari2} ${tgl2} ${bln2} ${thn2}`;
+                }
+            } else if (d1) {
+                const hari1 = NAMA_HARI[d1.getDay()];
+                const tgl1 = d1.getDate();
+                const bln1 = NAMA_BULAN[d1.getMonth()];
+                const thn1 = d1.getFullYear();
+                targetInput.value = `${hari1} ${tgl1} ${bln1} ${thn1}`;
+            } else if (d2) {
+                const hari2 = NAMA_HARI[d2.getDay()];
+                const tgl2 = d2.getDate();
+                const bln2 = NAMA_BULAN[d2.getMonth()];
+                const thn2 = d2.getFullYear();
+                targetInput.value = `${hari2} ${tgl2} ${bln2} ${thn2}`;
+            }
+        }
+
+        // Function untuk beralih antara input Tanggal Fix (Date) dan Tanggal Estimasi
+        function toggleEstimasiInput(dateInputId, containerId, isEstimasi, prefix = '') {
+            const dateEl = document.getElementById(dateInputId);
+            const containerEl = document.getElementById(containerId);
+            const isEdit = prefix === 'edit';
+            const id1 = isEdit ? 'editEstimasi1' : 'inputEstimasi1';
+            const id2 = isEdit ? 'editEstimasi2' : 'inputEstimasi2';
+            const idTarget = isEdit ? 'editTanggalText' : 'inputTanggalText';
+
+            if (isEstimasi) {
+                if (dateEl) {
+                    const prevDate = dateEl.value;
+                    dateEl.style.display = 'none';
+                    dateEl.value = '';
+                    if (prevDate && document.getElementById(id1) && !document.getElementById(id1).value) {
+                        document.getElementById(id1).value = prevDate;
+                    }
+                }
+                if (containerEl) {
+                    containerEl.style.display = 'flex';
+                }
+                generateEstimasiText(prefix);
+            } else {
+                if (dateEl) {
+                    dateEl.style.display = 'block';
+                }
+                if (containerEl) {
+                    containerEl.style.display = 'none';
+                }
+                if (document.getElementById(id1)) document.getElementById(id1).value = '';
+                if (document.getElementById(id2)) document.getElementById(id2).value = '';
+                if (document.getElementById(idTarget)) document.getElementById(idTarget).value = '';
+            }
+        }
+
+        // Buka Modal Fix Tanggal
+        function openFixTanggalModal(id, tanggalEstimasi) {
+            document.getElementById('fixOrderId').value = id;
+            document.getElementById('txtTanggalEstimasi').innerText = tanggalEstimasi || "Belum ada kepastian tanggal";
+            document.getElementById('inputTanggalFix').value = '';
+            document.getElementById('modalFixTanggal').style.display = 'flex';
+        }
+
+        // Update Tanggal Pasti ke Supabase
+        async function simpanTanggalFix() {
+            const id = document.getElementById('fixOrderId').value;
+            const tanggalBaru = document.getElementById('inputTanggalFix').value;
+
+            if (!tanggalBaru) {
+                showToast("Pilih tanggal pasti terlebih dahulu!", "warning");
+                return;
+            }
+
+            try {
+                const { error } = await sbClient
+                    .from('list_order')
+                    .update({
+                        tanggal: tanggalBaru,
+                        tanggal_estimasi: null
+                    })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                closeModal('modalFixTanggal');
+                showToast("Tanggal berhasil diperbarui menjadi pasti!");
+                await loadHistory();
+            } catch (err) {
+                showModernAlert("Gagal Memperbarui Tanggal", err.message, "error");
+            }
+        }
+
+        function formatTanggal(dateString) {
+            if (!dateString) return "Menunggu info";
+            const d = new Date(dateString);
+            if (isNaN(d.getTime())) return "Menunggu info";
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return d.toLocaleDateString('id-ID', options);
+        }
+
+        async function initApp() {
+            initTheme();
+            try {
+                if (typeof supabase === 'undefined') throw new Error("Sistem gagal memuat library database.");
+                sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+                document.getElementById('inputTanggal').value = "";
+                document.getElementById('headerDateRed').innerText = formatTanggal(new Date());
+
+                loadDataFromLocalStorage();
+                sortMasterData();
+                populateDropdowns();
+                await loadHistory();
+            } catch (error) {
+                setConnectionStatus(false, error.message);
+            }
+        }
+
+        function sortMasterData() {
+            masterData.kepada.sort((a, b) => a.localeCompare(b));
+            masterData.lokasi.sort((a, b) => a.localeCompare(b));
+            masterData.barang.sort((a, b) => a.localeCompare(b));
+        }
+
+        function loadDataFromLocalStorage() {
+            const savedData = localStorage.getItem('sbr_master_data');
+            if (savedData) masterData = JSON.parse(savedData);
+        }
+
+        function saveMasterData() {
+            sortMasterData();
+            localStorage.setItem('sbr_master_data', JSON.stringify(masterData));
+            populateDropdowns();
+            renderMasterList();
+        }
+
+        function populateDropdowns() {
+            const selects = [
+                { id: 'inputKepada', data: masterData.kepada, placeholder: '-- Pilih Pembeli --' },
+                { id: 'editKepada', data: masterData.kepada, placeholder: '-- Pembeli --' },
+                { id: 'inputLokasi', data: masterData.lokasi, placeholder: '-- Pilih Lokasi --' },
+                { id: 'editLokasi', data: masterData.lokasi, placeholder: '-- Lokasi --' },
+                { id: 'pilihBarang', data: masterData.barang, placeholder: '-- Pilih Barang --' },
+                { id: 'editPilihBarang', data: masterData.barang, placeholder: '-- Pilih Barang --' }
+            ];
+
+            selects.forEach(sel => {
+                const el = document.getElementById(sel.id);
+                if (el) {
+                    el.innerHTML = `<option value="">${sel.placeholder}</option>`;
+                    sel.data.forEach(item => el.innerHTML += `<option value="${item}">${item}</option>`);
+                }
+            });
+            updateQtyUI();
+        }
+
+        function openModalMaster() {
+            document.getElementById('modalDataMaster').style.display = 'flex';
+            switchTab('kepada');
+        }
+
+        function switchTab(tabName) {
+            currentMasterTab = tabName;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            document.getElementById('inputMasterBaru').placeholder = `Ketik ${tabName} baru...`;
+            renderMasterList();
+        }
+
+        function renderMasterList() {
+            const listEl = document.getElementById('listDataMaster');
+            listEl.innerHTML = '';
+            masterData[currentMasterTab].forEach((item, index) => {
+                listEl.innerHTML += `<li><span>${item}</span><span class="remove-item" onclick="hapusDataMaster(${index})" title="Hapus">&times;</span></li>`;
+            });
+        }
+
+        function simpanDataMaster() {
+            const input = document.getElementById('inputMasterBaru');
+            if (input.value.trim()) {
+                masterData[currentMasterTab].push(input.value.trim());
+                saveMasterData();
+                input.value = '';
+                showToast('Data master berhasil ditambahkan');
+            }
+        }
+
+        async function hapusDataMaster(index) {
+            const res = await showModernConfirm('Hapus Item Master?', `Item "${masterData[currentMasterTab][index]}" akan dihapus dari data opsi master.`, 'Hapus', true);
+            if (res.isConfirmed) {
+                masterData[currentMasterTab].splice(index, 1);
+                saveMasterData();
+                showToast('Item berhasil dihapus');
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        window.onclick = function (event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.style.display = 'none';
+            }
+        };
+
+        function getMultiplierAndUnit(itemName) {
+            if (!itemName) return { unit: 'Dus', multiplier: 0 };
+            if (itemName.includes('(K)')) return { unit: 'Krg', multiplier: 12 };
+            return { unit: 'Dus', multiplier: 7 };
+        }
+
+        function updateQtyUI() {
+            const info = getMultiplierAndUnit(document.getElementById('pilihBarang').value);
+            document.getElementById('labelUnit').innerText = info.unit;
+            hitungBall();
+        }
+
+        function hitungBall() {
+            const unitVal = parseFloat(document.getElementById('inputUnit').value) || 0;
+            const info = getMultiplierAndUnit(document.getElementById('pilihBarang').value);
+            const totalBall = unitVal * info.multiplier;
+            document.getElementById('inputBall').value = totalBall > 0 ? totalBall : '';
+        }
+
+        function addBarangToList() {
+            const nama = document.getElementById('pilihBarang').value;
+            const unitVal = document.getElementById('inputUnit').value.trim();
+            const ballVal = document.getElementById('inputBall').value;
+
+            if (!nama || !unitVal || parseFloat(unitVal) <= 0) {
+                showToast('Pilih barang dan isi Qty dengan benar!', 'warning');
+                return;
+            }
+
+            const info = getMultiplierAndUnit(nama);
+            tempItems.push(`${unitVal} ${info.unit} (${ballVal} Ball) - ${nama}`);
+
+            document.getElementById('pilihBarang').value = '';
+            document.getElementById('inputUnit').value = '';
+            document.getElementById('inputBall').value = '';
+            updateQtyUI();
+            renderListBarang();
+            showToast('Barang dimasukkan ke daftar order');
+        }
+
+        function hapusBarangDariList(index) {
+            tempItems.splice(index, 1);
+            renderListBarang();
+        }
+
+        function renderListBarang() {
+            const box = document.getElementById('listBarangBox');
+            const hiddenArea = document.getElementById('inputBarang');
+
+            if (tempItems.length === 0) {
+                box.innerHTML = '<em style="font-size: 12px; color: var(--text-muted);">Belum ada barang ditambahkan</em>';
+                hiddenArea.value = '';
+            } else {
+                box.innerHTML = '';
+                tempItems.forEach((item, idx) => {
+                    box.innerHTML += `<div class="item-row"><span>• ${item}</span><span class="remove-item" onclick="hapusBarangDariList(${idx})" title="Hapus">&times;</span></div>`;
+                });
+                hiddenArea.value = tempItems.join(NL);
+            }
+        }
+
+        function updateEditQtyUI() {
+            const info = getMultiplierAndUnit(document.getElementById('editPilihBarang').value);
+            document.getElementById('editLabelUnit').innerText = info.unit;
+            hitungEditBall();
+        }
+
+        function hitungEditBall() {
+            const unitVal = parseFloat(document.getElementById('editInputUnit').value) || 0;
+            const info = getMultiplierAndUnit(document.getElementById('editPilihBarang').value);
+            const totalBall = unitVal * info.multiplier;
+            document.getElementById('editInputBall').value = totalBall > 0 ? totalBall : '';
+        }
+
+        function addBarangToEditList() {
+            const nama = document.getElementById('editPilihBarang').value;
+            const unitVal = document.getElementById('editInputUnit').value.trim();
+            const ballVal = document.getElementById('editInputBall').value;
+
+            if (!nama || !unitVal || parseFloat(unitVal) <= 0) {
+                showToast('Pilih barang & isi Qty dengan benar!', 'warning');
+                return;
+            }
+
+            const info = getMultiplierAndUnit(nama);
+            tempEditItems.push(`${unitVal} ${info.unit} (${ballVal} Ball) - ${nama}`);
+
+            document.getElementById('editPilihBarang').value = '';
+            document.getElementById('editInputUnit').value = '';
+            document.getElementById('editInputBall').value = '';
+            updateEditQtyUI();
+            renderEditListBarang();
+        }
+
+        function hapusBarangDariEditList(index) {
+            tempEditItems.splice(index, 1);
+            renderEditListBarang();
+        }
+
+        function renderEditListBarang() {
+            const box = document.getElementById('editListBarangBox');
+            const textAreaArea = document.getElementById('editBarang');
+
+            if (tempEditItems.length === 0) {
+                box.innerHTML = '<em style="font-size: 11px; color: var(--text-muted);">Belum ada barang</em>';
+            } else {
+                box.innerHTML = '';
+                tempEditItems.forEach((item, idx) => {
+                    box.innerHTML += `<div class="item-row"><span>• ${item}</span><span class="remove-item" onclick="hapusBarangDariEditList(${idx})">&times;</span></div>`;
+                });
+            }
+            textAreaArea.value = tempEditItems.join(NL);
+        }
+
+        async function loadHistory() {
+            const tbody = document.getElementById('historyBody');
+            const mobileContainer = document.getElementById('mobileCardsContainer');
+            const badgeCount = document.getElementById('orderCountBadge');
+
+            try {
+                const { data, error } = await sbClient.from('list_order')
+                    .select('*')
+                    .eq('status_kirim', false)
+                    .order('tanggal', { ascending: true })
+                    .order('id', { ascending: true });
+
+                if (error) throw error;
+
+                setConnectionStatus(true);
+                globalOrders = data;
+                badgeCount.innerText = data.length;
+
+                renderOrderViews(data);
+            } catch (error) {
+                console.error("Detail Error:", error);
+                setConnectionStatus(false, error.message);
+            }
+        }
+
+        function renderOrderViews(data) {
+            const tbody = document.getElementById('historyBody');
+            const mobileContainer = document.getElementById('mobileCardsContainer');
+
+            tbody.innerHTML = '';
+            mobileContainer.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 24px; color:var(--text-muted);">Tidak ada order aktif saat ini.</td></tr>';
+                mobileContainer.innerHTML = '<div style="text-align:center; padding: 24px; color:var(--text-muted); font-size:13px; background:var(--input-bg); border-radius:12px;">Tidak ada order aktif saat ini.</div>';
+                return;
+            }
+
+            data.forEach((order) => {
+                const lokasiMerah = order.lokasi ? order.lokasi.toLowerCase().includes('menunggu') : false;
+                const badgeClass = lokasiMerah ? 'badge-red' : 'badge-green';
+                const statusKirimChecked = order.status_kirim === true ? 'checked' : '';
+
+                let tampilanTanggal = "";
+                let mobileTanggalText = "";
+                if (order.tanggal_estimasi && order.tanggal_estimasi.trim() !== '') {
+                    tampilanTanggal = `
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: var(--warning, #f59e0b); font-weight: 700; font-size: 11px;">
+                            ⏳ ${order.tanggal_estimasi}
+                        </span>
+                        <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 10px; width: fit-content; border-radius: 4px;" onclick="openFixTanggalModal(${order.id}, '${order.tanggal_estimasi}')">
+                            Fix Tanggal
+                        </button>
+                    </div>
+                `;
+                    mobileTanggalText = `⏳ ${order.tanggal_estimasi}`;
+                } else {
+                    tampilanTanggal = formatTanggal(order.tanggal);
+                    mobileTanggalText = formatTanggal(order.tanggal);
+                }
+
+                // Desktop Table Row
+                tbody.innerHTML += `
+                <tr>
+                    <td style="text-align:center;"><input type="checkbox" class="order-checkbox" value="${order.id}" onchange="onOrderCheckboxChange(this)"></td>
+                    <td style="font-weight: 500;">${tampilanTanggal}</td>
+                    <td>
+                        <a class="link-detail" onclick="lihatRincianOrder(${order.id})">
+                            ${order.kepada}
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </td>
+                    <td><span class="status-badge ${badgeClass}">${order.lokasi}</span></td>
+                    <td style="text-align:center;">
+                        <input type="checkbox" class="check-kirim" ${statusKirimChecked} onchange="updateStatusKirim(${order.id}, this.checked)">
+                    </td>
+                    <td style="text-align:center;">
+                        <button class="btn-icon" style="width:32px; height:32px;" onclick="openEditModal(${order.id})" title="Edit Order">
+                            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                    </td>
+                </tr>
+            `;
+
+                // Mobile Card View
+                const estimasiBtnMobile = (order.tanggal_estimasi && order.tanggal_estimasi.trim() !== '') ? `
+                <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 11px;" onclick="openFixTanggalModal(${order.id}, '${order.tanggal_estimasi}')">Fix Tanggal</button>
+            ` : '';
+
+                mobileContainer.innerHTML += `
+                <div class="m-order-card" data-id="${order.id}">
+                    <div class="m-card-top">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" class="order-checkbox" value="${order.id}" onchange="onOrderCheckboxChange(this)">
+                            <div class="m-card-title" onclick="lihatRincianOrder(${order.id})">${order.kepada}</div>
+                        </div>
+                        <button class="btn-icon" style="width:30px; height:30px;" onclick="openEditModal(${order.id})" title="Edit Order">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="m-card-info">
+                        <div class="m-info-row">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span>${mobileTanggalText}</span>
+                            ${estimasiBtnMobile}
+                        </div>
+                        <div class="m-info-row">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span class="status-badge ${badgeClass}">${order.lokasi}</span>
+                        </div>
+                    </div>
+
+                    <div class="m-card-actions">
+                        <span class="link-detail" style="font-size:12px;" onclick="lihatRincianOrder(${order.id})">🔍 Lihat Rincian</span>
+                        <label class="m-kirim-toggle">
+                            <span>Terkirim</span>
+                            <input type="checkbox" class="check-kirim" ${statusKirimChecked} onchange="updateStatusKirim(${order.id}, this.checked)">
+                        </label>
+                    </div>
+                </div>
+            `;
+            });
+            updateBulkActionState();
+        }
+
+        function filterOrderList() {
+            const query = (document.getElementById('orderSearchInput').value || '').toLowerCase().trim();
+            if (!query) {
+                renderOrderViews(globalOrders);
+                return;
+            }
+            const filtered = globalOrders.filter(o =>
+                (o.kepada && o.kepada.toLowerCase().includes(query)) ||
+                (o.lokasi && o.lokasi.toLowerCase().includes(query)) ||
+                (o.barang && o.barang.toLowerCase().includes(query))
+            );
+            renderOrderViews(filtered);
+        }
+
+        function lihatRincianOrder(id) {
+            const order = globalOrders.find(o => o.id === id);
+            if (order) {
+                document.getElementById('detailJudul').innerText = "Rincian: " + order.kepada;
+                const barangArr = order.barang ? order.barang.split(NL).map(item => "• " + item) : [];
+                document.getElementById('detailKonten').innerText = barangArr.length > 0 ? barangArr.join(NL) : "Tidak ada catatan barang";
+                document.getElementById('modalDetailOrder').style.display = 'flex';
+            }
+        }
+
+        async function simpanKeSupabase() {
+            const btn = document.getElementById('btnSimpan');
+            const isEstimasi = document.getElementById('checkEstimasi').checked;
+            const rawTanggal = document.getElementById('inputTanggal').value;
+            const textEstimasi = (document.getElementById('inputTanggalText').value || '').trim();
+
+            if (isEstimasi && !textEstimasi) {
+                showToast('Silakan pilih minimal 1 tanggal estimasi terlebih dahulu!', 'warning');
+                return;
+            }
+
+            const orderData = {
+                tanggal: isEstimasi ? null : (rawTanggal ? rawTanggal : null),
+                tanggal_estimasi: isEstimasi ? textEstimasi : null,
+                kepada: document.getElementById('inputKepada').value,
+                lokasi: document.getElementById('inputLokasi').value,
+                barang: document.getElementById('inputBarang').value,
+                status_kirim: false
+            };
+
+            if (!orderData.kepada || !orderData.lokasi || !orderData.barang) {
+                showToast('Lengkapi pembeli, lokasi, dan minimal 1 barang!', 'warning');
+                return;
+            }
+
+            btn.innerHTML = 'Menyimpan...';
+            btn.disabled = true;
+
+            try {
+                const { error } = await sbClient.from('list_order').insert([orderData]);
+                if (error) throw error;
+
+                document.getElementById('orderForm').reset();
+                document.getElementById('checkEstimasi').checked = false;
+                toggleEstimasiInput('inputTanggal', 'estimasiContainer', false);
+                tempItems = [];
+                renderListBarang();
+                showToast('Order baru berhasil disimpan!');
+                await loadHistory();
+            } catch (err) {
+                showModernAlert('Gagal Menyimpan Order', err.message, 'error');
+            } finally {
+                btn.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> Simpan Order';
+                btn.disabled = false;
+            }
+        }
+
+        async function updateStatusKirim(id, isChecked) {
+            if (isChecked) {
+                const result = await showModernConfirm(
+                    "Pesanan Selesai Terkirim?",
+                    "Pesanan ini akan dipindahkan ke Riwayat Arsip Selesai.",
+                    "Ya, Tandai Terkirim"
+                );
+                if (!result.isConfirmed) {
+                    loadHistory();
+                    return;
+                }
+            } else {
+                const result = await showModernConfirm(
+                    "Kembalikan ke Order Aktif?",
+                    "Pesanan ini akan dikembalikan ke daftar antrian order aktif.",
+                    "Ya, Kembalikan"
+                );
+                if (!result.isConfirmed) {
+                    bukaModalArsip();
+                    return;
+                }
+            }
+
+            try {
+                const { error } = await sbClient.from('list_order').update({ status_kirim: isChecked }).eq('id', id);
+                if (error) throw error;
+
+                showToast(isChecked ? 'Pesanan dipindahkan ke Arsip' : 'Pesanan dikembalikan ke Aktif');
+                loadHistory();
+                if (!isChecked) bukaModalArsip();
+            } catch (err) {
+                showModernAlert('Gagal Memperbarui Status', err.message, 'error');
+                loadHistory();
+            }
+        }
+
+        function openEditModal(id) {
+            const order = globalOrders.find(o => o.id === id);
+            if (!order) return;
+
+            document.getElementById('editId').value = order.id;
+
+            const isEstimasi = !!(order.tanggal_estimasi && order.tanggal_estimasi.trim() !== '');
+            const editCheck = document.getElementById('editCheckEstimasi');
+            if (editCheck) {
+                editCheck.checked = isEstimasi;
+                toggleEstimasiInput('editTanggal', 'editEstimasiContainer', isEstimasi, 'edit');
+                if (isEstimasi) {
+                    document.getElementById('editTanggalText').value = order.tanggal_estimasi;
+                } else {
+                    document.getElementById('editTanggal').value = order.tanggal || '';
+                }
+            } else {
+                document.getElementById('editTanggal').value = order.tanggal || '';
+            }
+
+            let selKepada = document.getElementById('editKepada');
+            if (![...selKepada.options].some(opt => opt.value === order.kepada)) selKepada.innerHTML += `<option value="${order.kepada}">${order.kepada}</option>`;
+            selKepada.value = order.kepada;
+
+            let selLokasi = document.getElementById('editLokasi');
+            if (![...selLokasi.options].some(opt => opt.value === order.lokasi)) selLokasi.innerHTML += `<option value="${order.lokasi}">${order.lokasi}</option>`;
+            selLokasi.value = order.lokasi;
+
+            if (order.barang) {
+                tempEditItems = order.barang.split(NL).filter(item => item.trim() !== '');
+            } else {
+                tempEditItems = [];
+            }
+            renderEditListBarang();
+
+            document.getElementById('modalEditOrder').style.display = 'flex';
+        }
+
+        async function simpanEdit() {
+            const id = document.getElementById('editId').value;
+            const editCheck = document.getElementById('editCheckEstimasi');
+            const isEstimasi = editCheck ? editCheck.checked : false;
+            const rawTanggal = document.getElementById('editTanggal').value;
+            const textEstimasi = document.getElementById('editTanggalText') ? (document.getElementById('editTanggalText').value || '').trim() : null;
+
+            if (isEstimasi && !textEstimasi) {
+                showToast('Tentukan tanggal estimasi terlebih dahulu!', 'warning');
+                return;
+            }
+
+            const dataEdit = {
+                tanggal: isEstimasi ? null : (rawTanggal ? rawTanggal : null),
+                tanggal_estimasi: isEstimasi ? textEstimasi : null,
+                kepada: document.getElementById('editKepada').value,
+                lokasi: document.getElementById('editLokasi').value,
+                barang: document.getElementById('editBarang').value
+            };
+
+            try {
+                const { error } = await sbClient.from('list_order').update(dataEdit).eq('id', id);
+                if (error) throw error;
+                closeModal('modalEditOrder');
+                showToast('Order berhasil diperbarui!');
+                loadHistory();
+            } catch (err) {
+                showModernAlert('Gagal Update Order', err.message, 'error');
+            }
+        }
+
+        async function hapusDariEdit() {
+            const id = document.getElementById('editId').value;
+            const result = await showModernConfirm(
+                'Hapus Order Ini?',
+                'Data order ini akan dihapus secara permanen dan tidak dapat dipulihkan.',
+                'Ya, Hapus',
+                true
+            );
+
+            if (result.isConfirmed) {
+                try {
+                    const { error } = await sbClient.from('list_order').delete().eq('id', id);
+                    if (error) throw error;
+                    closeModal('modalEditOrder');
+                    showToast('Order telah dihapus permanen');
+                    loadHistory();
+                } catch (err) {
+                    showModernAlert('Gagal Menghapus', err.message, 'error');
+                }
+            }
+        }
+
+        function getSelectedOrderIds() {
+            const checked = Array.from(document.querySelectorAll('.order-checkbox:checked'))
+                .map(cb => parseInt(cb.value))
+                .filter(id => !isNaN(id));
+            return Array.from(new Set(checked));
+        }
+
+        function onOrderCheckboxChange(changedCb) {
+            const id = changedCb.value;
+            const isChecked = changedCb.checked;
+            document.querySelectorAll(`.order-checkbox[value="${id}"]`).forEach(cb => {
+                cb.checked = isChecked;
+            });
+            updateBulkActionState();
+        }
+
+        function toggleAll() {
+            const isChecked = document.getElementById('checkAll').checked;
+            document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = isChecked);
+            updateBulkActionState();
+        }
+
+        function updateBulkActionState() {
+            const selectedIds = getSelectedOrderIds();
+            const count = selectedIds.length;
+            const badge = document.getElementById('selectedCountBadge');
+
+            if (badge) {
+                badge.innerText = count;
+                badge.style.display = count > 0 ? 'inline-block' : 'none';
+            }
+
+            const allUniqueCount = globalOrders ? globalOrders.length : 0;
+            const checkAllBox = document.getElementById('checkAll');
+            if (checkAllBox) {
+                if (count === 0) {
+                    checkAllBox.checked = false;
+                    checkAllBox.indeterminate = false;
+                } else if (count === allUniqueCount && allUniqueCount > 0) {
+                    checkAllBox.checked = true;
+                    checkAllBox.indeterminate = false;
+                } else {
+                    checkAllBox.checked = false;
+                    checkAllBox.indeterminate = true;
+                }
+            }
+        }
+
+        async function hapusOrderMassal() {
+            const selectedIds = getSelectedOrderIds();
+            if (selectedIds.length === 0) {
+                showToast('Ceklis minimal 1 order yang ingin dihapus!', 'warning');
+                return;
+            }
+
+            const result = await showModernConfirm(
+                `Hapus ${selectedIds.length} Order Terpilih?`,
+                `Semua order terpilih (${selectedIds.length} data) akan dihapus secara permanen dari database.`,
+                `Ya, Hapus (${selectedIds.length})`,
+                true
+            );
+
+            if (result.isConfirmed) {
+                try {
+                    const { error } = await sbClient
+                        .from('list_order')
+                        .delete()
+                        .in('id', selectedIds);
+
+                    if (error) throw error;
+
+                    showToast(`${selectedIds.length} order berhasil dihapus`);
+                    const checkAllBox = document.getElementById('checkAll');
+                    if (checkAllBox) checkAllBox.checked = false;
+                    loadHistory();
+                } catch (err) {
+                    showModernAlert('Gagal Menghapus Massal', err.message, 'error');
+                }
+            }
+        }
+
+        function generatePreview() {
+            const selectedIds = getSelectedOrderIds();
+            if (selectedIds.length === 0) {
+                showToast('Ceklis minimal 1 order untuk dibuat rekapan!', 'warning');
+                return;
+            }
+
+            const exportDataContainer = document.getElementById('export-data-container');
+            const exportContainer = document.getElementById('export-container');
+
+            exportDataContainer.innerHTML = '';
+
+            if (selectedIds.length > 5) {
+                exportDataContainer.classList.add('rekap-grid-2');
+                exportContainer.classList.add('wide-mode');
+            } else {
+                exportDataContainer.classList.remove('rekap-grid-2');
+                exportContainer.classList.remove('wide-mode');
+            }
+
+            selectedIds.forEach(id => {
+                const orderData = globalOrders.find(o => o.id === id);
+                if (orderData) {
+                    const lokasiMerah = orderData.lokasi ? orderData.lokasi.toLowerCase().includes('menunggu') : false;
+                    const textLokasiClass = lokasiMerah ? 'text-red' : '';
+                    const barangFormat = orderData.barang ? orderData.barang.split(NL).join('<br>') : '-';
+
+                    const tampilanTanggalRekap = (orderData.tanggal_estimasi && orderData.tanggal_estimasi.trim() !== '')
+                        ? orderData.tanggal_estimasi
+                        : formatTanggal(orderData.tanggal);
+
+                    exportDataContainer.innerHTML += `
+                    <div class="order-card" style="margin-bottom: 0;">
+                        <div class="order-row"><div class="col-label">Hari/Tanggal</div><div class="col-value text-red">${tampilanTanggalRekap}</div></div>
+                        <div class="order-row"><div class="col-label">Kepada</div><div class="col-value">${orderData.kepada}</div></div>
+                        <div class="order-row"><div class="col-label">Lokasi</div><div class="col-value ${textLokasiClass}">${orderData.lokasi}</div></div>
+                        <div class="order-row"><div class="col-label">Barang</div><div class="col-value" style="font-weight: 500;">${barangFormat}</div></div>
+                    </div>`;
+                }
+            });
+
+            document.getElementById('exportWrapper').style.display = 'block';
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            showToast('Pratinjau rekapan gambar siap!');
+        }
+
+        function tutupPreview() {
+            document.getElementById('exportWrapper').style.display = 'none';
+        }
+
+        function downloadPNG() {
+            const element = document.getElementById('export-container');
+            showToast('Memproses gambar PNG...', 'info');
+
+            html2canvas(element, { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: true, logging: false })
+                .then(canvas => {
                     const link = document.createElement('a');
                     link.download = `Rekap_SBR_${new Date().getTime()}.png`;
                     link.href = canvas.toDataURL("image/png");
                     link.click();
-                    closeCustomModal();
+                    showToast('Gambar berhasil diunduh!');
+                }).catch(err => {
+                    showModernAlert('Gagal Memproses Gambar', err.message || err, 'error');
                 });
-            }
-        }, 150);
-    }
-
-    function tutupPreview() { document.getElementById('exportWrapper').style.display = 'none'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function openModalMaster() { document.getElementById('modalDataMaster').style.display = 'flex'; }
-
-    // Register Inline Service Worker for PWA
-    function registerPWA() {
-        if ('serviceWorker' in navigator) {
-            const swCode = `self.addEventListener('fetch', function(e) {});`;
-            const blob = new Blob([swCode], { type: 'text/javascript' });
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
         }
-    }
 
-    window.onload = initApp;
-</script>
+        window.onload = initApp;
+
+        async function bukaModalArsip() {
+            document.getElementById('modalArsipOrder').style.display = 'flex';
+            const tbody = document.getElementById('arsipBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Memuat arsip...</td></tr>';
+
+            try {
+                const { data, error } = await sbClient.from('list_order')
+                    .select('*')
+                    .eq('status_kirim', true)
+                    .order('tanggal', { ascending: false });
+
+                if (error) throw error;
+
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color:var(--text-muted);">Belum ada order selesai.</td></tr>';
+                    return;
+                }
+
+                data.forEach(order => {
+                    tbody.innerHTML += `
+                    <tr style="opacity: 0.85;">
+                        <td style="text-align:center;"><input type="checkbox" class="arsip-checkbox" value="${order.id}"></td>
+                        <td>${order.tanggal_estimasi ? order.tanggal_estimasi : formatTanggal(order.tanggal)}</td>
+                        <td><a class="link-detail" onclick="lihatRincianOrder(${order.id})">${order.kepada}</a></td>
+                        <td style="text-align:center;">
+                            <input type="checkbox" class="check-kirim" checked onchange="updateStatusKirim(${order.id}, this.checked)" title="Klik untuk mengembalikan ke order aktif">
+                        </td>
+                    </tr>
+                `;
+                });
+            } catch (err) {
+                showModernAlert("Gagal Memuat Arsip", err.message, "error");
+            }
+        }
+
+        function toggleAllArsip() {
+            const isChecked = document.getElementById('checkAllArsip').checked;
+            document.querySelectorAll('.arsip-checkbox').forEach(cb => cb.checked = isChecked);
+        }
+
+        async function hapusArsipTerpilih() {
+            const checkboxes = document.querySelectorAll('.arsip-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showToast('Ceklis minimal 1 order arsip yang ingin dihapus.', 'warning');
+                return;
+            }
+
+            const result = await showModernConfirm(
+                'Hapus Arsip Terpilih?',
+                `Yakin ingin menghapus permanen ${checkboxes.length} data arsip ini? Data yang dihapus tidak bisa dikembalikan.`,
+                'Ya, Hapus Permanen',
+                true
+            );
+            if (!result.isConfirmed) return;
+
+            const idsToDelete = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            const btn = document.querySelector('#modalArsipOrder .btn-danger');
+            btn.innerHTML = 'Menghapus...';
+            btn.disabled = true;
+
+            try {
+                const { error } = await sbClient.from('list_order')
+                    .delete()
+                    .in('id', idsToDelete);
+
+                if (error) throw error;
+
+                showToast(`${idsToDelete.length} data arsip berhasil dihapus`);
+                document.getElementById('checkAllArsip').checked = false;
+                bukaModalArsip();
+            } catch (err) {
+                showModernAlert('Gagal Menghapus Arsip', err.message, 'error');
+            } finally {
+                btn.innerHTML = 'Hapus Terpilih';
+                btn.disabled = false;
+            }
+        }
+    </script>
 </body>
+
 </html>
