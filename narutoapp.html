@@ -336,17 +336,40 @@
                 visibility: hidden !important;
             }
 
-            #modalPratinjauA5,
-            #modalPratinjauA5 *,
-            #modalPreviewSlipFee,
-            #modalPreviewSlipFee * {
+            /* Sembunyikan elemen tersembunyi */
+            .hidden,
+            [hidden],
+            .print-hide,
+            #modalPratinjauA5.hidden,
+            #modalPratinjauA5.hidden *,
+            #modalPreviewSlipFee.hidden,
+            #modalPreviewSlipFee.hidden *,
+            #modalNotaSelesaiPopup,
+            #modalNotaSelesaiPopup * {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            /* HANYA TAMPILKAN MODAL NOTA A5 JIKA SEDANG DICETAK */
+            body.printing-nota-a5 #modalPreviewSlipFee,
+            body.printing-nota-a5 #modalPreviewSlipFee *,
+            body:has(#modalPratinjauA5:not(.hidden)) #modalPreviewSlipFee,
+            body:has(#modalPratinjauA5:not(.hidden)) #modalPreviewSlipFee * {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            body.printing-nota-a5 #modalPratinjauA5,
+            body.printing-nota-a5 #modalPratinjauA5 *,
+            body:has(#modalPratinjauA5:not(.hidden)) #modalPratinjauA5,
+            body:has(#modalPratinjauA5:not(.hidden)) #modalPratinjauA5 * {
                 visibility: visible !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
 
-            #modalPratinjauA5,
-            #modalPreviewSlipFee {
+            body.printing-nota-a5 #modalPratinjauA5,
+            body:has(#modalPratinjauA5:not(.hidden)) #modalPratinjauA5 {
                 position: fixed !important;
                 left: 0 !important;
                 top: 0 !important;
@@ -359,8 +382,50 @@
                 z-index: 99999 !important;
             }
 
-            #modalPratinjauA5>div,
-            #modalPreviewSlipFee>div {
+            body.printing-nota-a5 #modalPratinjauA5>div,
+            body:has(#modalPratinjauA5:not(.hidden)) #modalPratinjauA5>div {
+                max-width: none !important;
+                width: 100% !important;
+                height: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+            }
+
+            /* HANYA TAMPILKAN MODAL SLIP FEE JIKA SEDANG DICETAK */
+            body.printing-slip-fee #modalPratinjauA5,
+            body.printing-slip-fee #modalPratinjauA5 *,
+            body:has(#modalPreviewSlipFee:not(.hidden)) #modalPratinjauA5,
+            body:has(#modalPreviewSlipFee:not(.hidden)) #modalPratinjauA5 * {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            body.printing-slip-fee #modalPreviewSlipFee,
+            body.printing-slip-fee #modalPreviewSlipFee *,
+            body:has(#modalPreviewSlipFee:not(.hidden)) #modalPreviewSlipFee,
+            body:has(#modalPreviewSlipFee:not(.hidden)) #modalPreviewSlipFee * {
+                visibility: visible !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            body.printing-slip-fee #modalPreviewSlipFee,
+            body:has(#modalPreviewSlipFee:not(.hidden)) #modalPreviewSlipFee {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+                z-index: 99999 !important;
+            }
+
+            body.printing-slip-fee #modalPreviewSlipFee>div,
+            body:has(#modalPreviewSlipFee:not(.hidden)) #modalPreviewSlipFee>div {
                 max-width: none !important;
                 width: 100% !important;
                 height: 100% !important;
@@ -982,7 +1047,7 @@
                                     <th class="p-3.5 text-right">Total Netto (Lunas)</th>
                                     <th class="p-3.5">Rincian Pembayaran / TF</th>
                                     <th class="p-3.5 text-center">Status</th>
-                                    <th class="p-3.5 text-center pr-5">Aksi Cetak & Detail</th>
+                                    <th class="p-3.5 text-center pr-5">Aksi Cetak & Koreksi</th>
                                 </tr>
                             </thead>
                             <tbody id="arsipNotaTable" class="divide-y divide-slate-100 text-slate-700">
@@ -1862,6 +1927,30 @@
             <div class="p-4 sm:p-5 space-y-4 text-xs">
                 <input type="hidden" id="pembayaranNotaId">
 
+                <!-- Banner Notifikasi Mode Koreksi Nota Lunas -->
+                <div id="modalBayarLunasAlert"
+                    class="hidden p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-900 text-xs shadow-2xs">
+                    <i data-lucide="edit-3" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                    <div class="space-y-1 w-full">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <span
+                                class="font-extrabold uppercase tracking-wide text-[10px] text-amber-800 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300">Mode
+                                Koreksi / Revisi Nota Lunas</span>
+                            <button type="button" onclick="muatUlangPembayaranAsli()"
+                                title="Muat kembali data rincian pembayaran sebelum di-reset"
+                                class="text-[10px] font-bold text-amber-900 hover:text-amber-950 bg-amber-200/80 hover:bg-amber-300/80 px-2 py-0.5 rounded border border-amber-300 inline-flex items-center gap-1 transition active:scale-95">
+                                <i data-lucide="history" class="w-3 h-3 text-amber-700"></i>
+                                <span>Muat Pembayaran Sebelumnya</span>
+                            </button>
+                        </div>
+                        <p class="text-amber-800 text-[11px] leading-relaxed">
+                            Form pembayaran telah otomatis di-reset bersih agar Anda dapat menginput kembali metode
+                            pembayaran dari awal (Bayar 1, Bayar 2, dst). Anda juga dapat merevisi Qty fisik kiriman,
+                            retur, atau potongan ongkir jika ada penyesuaian.
+                        </p>
+                    </div>
+                </div>
+
                 <!-- 1. TABEL RINCIAN BARANG KIRIMAN (BISA DIKOREKSI) -->
                 <div class="space-y-1.5">
                     <div class="flex justify-between items-center">
@@ -2002,6 +2091,12 @@
                                 </p>
                             </div>
                             <div class="flex items-center gap-2">
+                                <button type="button" onclick="resetFormPembayaran()"
+                                    title="Reset / Kosongkan semua baris pembayaran untuk input ulang dari nol"
+                                    class="min-h-[34px] text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-300 px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]">
+                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-rose-600"></i>
+                                    <span>Reset Pembayaran</span>
+                                </button>
                                 <button type="button" onclick="setPayFullAmount()"
                                     title="Otomatis isi pembayaran sesuai sisa tagihan akhir"
                                     class="min-h-[34px] text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]">
@@ -2036,15 +2131,22 @@
             </div>
 
             <!-- Compact Footer -->
-            <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center gap-3">
-                <button type="button" onclick="closeModal('modalBayar')"
-                    class="min-h-[42px] px-5 py-2.5 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-100 transition active:scale-[0.98]">
-                    Batal / Tutup
-                </button>
-                <button type="button" onclick="saveClassicNotaSettlement()"
-                    class="min-h-[42px] px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 active:scale-[0.98]">
-                    <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
-                    <span>Simpan Penyelesaian Nota & Pembayaran</span>
+            <div
+                class="px-5 py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                    <button type="button" onclick="closeModal('modalBayar')"
+                        class="min-h-[42px] px-5 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-[0.98]">
+                        Batal / Tutup
+                    </button>
+                    <div class="hidden md:flex text-[11px] text-slate-500 dark:text-slate-400 items-center gap-1.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                        <span>Tinjau lembar A5 sebelum menyimpan ke sistem.</span>
+                    </div>
+                </div>
+                <button type="button" onclick="pratinjauPenyelesaianNota()" id="btnPratinjauNotaModal"
+                    class="w-full sm:w-auto min-h-[42px] px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center justify-center gap-2 active:scale-[0.98]">
+                    <i data-lucide="eye" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Pratinjau A5</span>
                 </button>
             </div>
 
@@ -2075,7 +2177,7 @@
     <!-- MODAL: PRATINJAU NOTA A5 LANDSCAPE (SIMPAN PNG / PRINT) -->
     <!-- ======================================================== -->
     <div id="modalPratinjauA5"
-        class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex justify-center items-center p-2 sm:p-4 hidden overflow-y-auto">
+        class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-[60] flex justify-center items-center p-2 sm:p-4 hidden overflow-y-auto">
         <div
             class="bg-white rounded-2xl max-w-4xl w-full max-h-[96vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
 
@@ -2089,7 +2191,7 @@
                     <div>
                         <h3 class="font-bold text-xs tracking-tight text-white flex items-center gap-2">
                             Pratinjau Nota A5 Landscape
-                            <span
+                            <span id="a5TopStatusBadge"
                                 class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">Siap
                                 Cetak / Unduh</span>
                         </h3>
@@ -2100,6 +2202,11 @@
                 </div>
 
                 <div class="flex items-center gap-2">
+                    <button type="button" id="btnA5TopSimpanNota" onclick="konfirmasiSimpanNotaSettlementDariModal()"
+                        class="min-h-[40px] px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 active:scale-[0.98] hidden">
+                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-200"></i>
+                        <span>Simpan Nota</span>
+                    </button>
                     <button type="button" onclick="downloadNotaA5PNG()" title="Simpan sebagai file gambar PNG"
                         class="min-h-[40px] px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-2 active:scale-[0.98]">
                         <i data-lucide="download" class="w-4 h-4"></i>
@@ -2114,7 +2221,7 @@
                     <button type="button" onclick="closeModal('modalPratinjauA5')" title="Tutup pratinjau"
                         class="min-h-[40px] px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 active:scale-[0.98]">
                         <i data-lucide="x" class="w-4 h-4"></i>
-                        <span>Tutup</span>
+                        <span id="lblBtnCloseA5">Tutup</span>
                     </button>
                 </div>
             </div>
@@ -2141,8 +2248,7 @@
                                     <p class="text-[10px] text-slate-500 font-medium">Distribusi & Logistik Snack
                                         Makroni
                                     </p>
-                                    <div class="mt-1 text-[11px] font-bold text-slate-800">BUKTI NOTA PEMBELIAN &
-                                        PENYELESAIAN</div>
+                                    <div class="mt-1 text-[11px] font-bold text-slate-800">BUKTI NOTA PEMBAYARAN</div>
                                 </div>
                             </div>
 
@@ -2199,59 +2305,76 @@
                         </div>
                     </div>
 
-                    <!-- Slip Financial & Payment Ledger (Stacked: Kalkulasi -> Rincian Bayar -> Tanda Lunas) -->
-                    <div class="border-t border-b border-slate-300 py-2 text-[11px] space-y-2">
-                        <!-- 1. Kalkulasi Tagihan (Bruto, Retur, Ongkir, Total Netto) -->
-                        <div class="bg-slate-50/80 p-2.5 rounded-lg border border-slate-200">
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 items-center text-[10.5px]">
-                                <div>
-                                    <span class="text-slate-500 block text-[9px] uppercase font-semibold">Total Bruto
-                                        Kiriman</span>
-                                    <span id="a5TotalBruto" class="font-bold text-slate-800 text-xs">Rp 0</span>
+                    <!-- Slip Financial & Payment Ledger (1 Kolom Finansial & Pembayaran di Kanan) -->
+                    <div class="border-t border-b border-slate-300 py-2.5 text-[11px]">
+                        <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                            <!-- Kolom Kiri: Status Dokumen & Stempel Lunas / Belum Lunas -->
+                            <div class="flex-1 w-full flex flex-col justify-between self-stretch pr-2 space-y-3">
+                                <!-- Tanda / Stempel Status Lunas / Belum Lunas -->
+                                <div id="a5LunasStamp" class="self-start">
+                                    <!-- Stempel status lunas tuntas -->
                                 </div>
-                                <div>
-                                    <span class="text-rose-500 block text-[9px] uppercase font-semibold">Potongan Retur
-                                        / BS</span>
-                                    <span id="a5TotalRetur" class="font-bold text-rose-600 text-xs">- Rp 0</span>
-                                </div>
-                                <div id="a5OngkirRow" class="hidden">
-                                    <span class="text-amber-600 block text-[9px] uppercase font-semibold">Potongan
-                                        Ongkir</span>
-                                    <span id="a5PotonganOngkir" class="font-bold text-amber-700 text-xs">- Rp 0</span>
-                                </div>
-                                <div class="sm:col-start-4 text-right">
-                                    <span
-                                        class="text-slate-500 block text-[9px] uppercase font-extrabold tracking-wider">TOTAL
-                                        NETTO
-                                        TAGIHAN</span>
-                                    <span id="a5TotalNetto" class="font-black text-sm text-indigo-700">Rp 0</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- 2. Posisi Rincian Pembayaran / Transfer di bawah Total Netto & Tanda Lunas / Tuntas -->
-                        <div
-                            class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-1 border-t border-slate-100">
-                            <div class="flex-1 w-full space-y-1">
-                                <div
-                                    class="font-bold text-[10px] uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                                    <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
-                                    <span>Rincian Pembayaran / Transfer</span>
-                                </div>
-                                <div id="a5PaymentList" class="space-y-1 max-h-24 overflow-y-auto">
-                                    <!-- Bayar 1 / TF 1, Bayar 2 / TF 2 -->
+                                <!-- Keterangan Dokumen Resmi -->
+                                <div class="text-[9px] text-slate-400 space-y-0.5 mt-auto pt-2">
+                                    <p class="font-semibold text-slate-600">Sbr Putra Food • Dokumen Sah Bukti Pembelian
+                                        & Pelunasan Nota</p>
+                                    <p class="italic text-slate-400">Pembayaran sah jika dana efektif telah diterima dan
+                                        dikonfirmasi admin.</p>
                                 </div>
                             </div>
 
-                            <!-- Tanda Ketika Sudah Lunas / Tuntas Dibayar -->
-                            <div id="a5LunasStamp" class="shrink-0 self-center sm:self-auto sm:ml-4">
-                                <!-- Stempel status lunas tuntas -->
+                            <!-- Kolom Kanan: 1 Kolom Ringkas (Total Bruto s/d Netto + Rincian Pembayaran) -->
+                            <div
+                                class="w-full sm:w-[350px] md:w-[375px] shrink-0 bg-slate-50/80 rounded-xl border border-slate-200/90 p-3 space-y-2.5">
+                                <!-- Kalkulasi Finansial (Bruto, Retur, Ongkir, Total Netto) -->
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between items-center text-[10.5px]">
+                                        <span
+                                            class="text-slate-500 font-semibold text-[9.5px] uppercase tracking-wider">Total
+                                            Bruto Kiriman</span>
+                                        <span id="a5TotalBruto" class="font-bold text-slate-800 text-xs">Rp 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-[10.5px]">
+                                        <span
+                                            class="text-rose-500 font-semibold text-[9.5px] uppercase tracking-wider">Potongan
+                                            Retur / BS</span>
+                                        <span id="a5TotalRetur" class="font-bold text-rose-600 text-xs">- Rp 0</span>
+                                    </div>
+                                    <div id="a5OngkirRow"
+                                        class="flex justify-between items-center text-[10.5px] hidden">
+                                        <span
+                                            class="text-amber-600 font-semibold text-[9.5px] uppercase tracking-wider">Potongan
+                                            Ongkir</span>
+                                        <span id="a5PotonganOngkir" class="font-bold text-amber-700 text-xs">- Rp
+                                            0</span>
+                                    </div>
+                                    <div
+                                        class="border-t border-slate-300 pt-1.5 mt-1 flex justify-between items-center">
+                                        <span
+                                            class="text-slate-800 font-black text-[10px] uppercase tracking-wider">TOTAL
+                                            NETTO TAGIHAN</span>
+                                        <span id="a5TotalNetto" class="font-black text-sm text-indigo-700">Rp 0</span>
+                                    </div>
+                                </div>
+
+                                <!-- Rincian Pembayaran / Transfer -->
+                                <div class="border-t border-dashed border-slate-300 pt-2 space-y-1.5">
+                                    <div
+                                        class="flex items-center gap-1.5 text-slate-600 font-bold text-[9.5px] uppercase tracking-wider">
+                                        <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                        <span>Rincian Pembayaran / Transfer</span>
+                                    </div>
+                                    <div id="a5PaymentList" class="space-y-1 max-h-28 overflow-y-auto">
+                                        <!-- Bayar 1 / TF 1, Bayar 2 / TF 2 -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Slip Footer: Signature & Timestamp -->
-                    <div class="pt-1">
+                    <div class="pt-1.5">
                         <div class="flex justify-between items-end text-[10px]">
                             <div class="text-[8.5px] text-slate-400">
                                 <span>Waktu Cetak: <span id="a5PrintTimestamp"
@@ -2260,7 +2383,7 @@
 
                             <!-- Tanda Tangan: Disiapkan oleh -->
                             <div class="text-center pr-2">
-                                <p class="text-slate-600 font-medium mb-6 text-[10px]">Disiapkan oleh,</p>
+                                <p class="text-slate-600 font-medium mb-5 text-[10px]">Disiapkan oleh,</p>
                                 <div class="border-b border-slate-400 w-36 mx-auto"></div>
                                 <p class="text-[10px] font-bold text-slate-900 mt-1">Sbr Admin</p>
                             </div>
@@ -2271,16 +2394,88 @@
             </div>
 
             <!-- Bottom Modal Bar -->
-            <div class="px-5 py-2.5 bg-slate-50 border-t border-slate-200 flex justify-between items-center print-hide">
-                <span class="text-[11px] text-slate-500">Pratinjau ini dapat dicetak langsung (A5 Landscape) atau
-                    disimpan
-                    sebagai file gambar PNG.</span>
-                <button type="button" onclick="closeModal('modalPratinjauA5')" title="Tutup Modal"
-                    class="min-h-[40px] px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-xl transition active:scale-[0.98]">
-                    Tutup Modal
-                </button>
+            <div
+                class="px-5 py-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-wrap justify-between items-center gap-2 print-hide">
+                <span id="a5BottomInfo" class="text-[11px] text-slate-500 dark:text-slate-400">Pratinjau ini dapat
+                    dicetak langsung (A5 Landscape) atau disimpan sebagai file gambar PNG.</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btnA5BottomSimpanNota" onclick="konfirmasiSimpanNotaSettlementDariModal()"
+                        class="min-h-[40px] px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-2 active:scale-[0.98] hidden">
+                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-200"></i>
+                        <span>Simpan Penyelesaian Nota & Pembayaran</span>
+                    </button>
+                    <button type="button" onclick="closeModal('modalPratinjauA5')" title="Tutup Modal"
+                        class="min-h-[40px] px-5 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-xl transition active:scale-[0.98]">
+                        <span id="lblBtnBottomCloseA5">Tutup Modal</span>
+                    </button>
+                </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL: KONFIRMASI MODERN NOTA SELESAI TERBAYAR & DISIMPAN -->
+    <!-- ======================================================== -->
+    <div id="modalNotaSelesaiPopup"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex justify-center items-center p-4 hidden animate-in fade-in duration-150 print-hide">
+        <div
+            class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full shadow-2xl p-6 sm:p-7 space-y-5 border border-slate-100 dark:border-slate-800 text-center relative animate-in zoom-in-95 duration-200">
+            <!-- Animated Icon Success -->
+            <div
+                class="mx-auto w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-lg shadow-emerald-500/10">
+                <i data-lucide="check-circle" class="w-8 h-8 stroke-[2.5]"></i>
+            </div>
+
+            <!-- Title & Subtitle -->
+            <div class="space-y-1.5">
+                <span
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Transaksi Berhasil Disimpan
+                </span>
+                <h3 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight pt-1">
+                    Nota Selesai Terbayar & Disimpan
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Dokumen telah berhasil dicetak dan seluruh data penyelesaian nota otomatis tersimpan resmi ke
+                    sistem.
+                </p>
+            </div>
+
+            <!-- Ringkasan Nota -->
+            <div
+                class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 text-left space-y-2.5 text-xs">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Nomor Nota:</span>
+                    <span id="popupSuccessNomorNota"
+                        class="font-black text-slate-900 dark:text-white text-xs">NOTA-XXXX</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Supplier / Pelanggan:</span>
+                    <span id="popupSuccessSupplier" class="font-bold text-slate-800 dark:text-slate-200">-</span>
+                </div>
+                <div class="flex justify-between items-center border-t border-slate-200 dark:border-slate-700/60 pt-2">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Total Netto Tagihan:</span>
+                    <span id="popupSuccessTotalNetto" class="font-black text-indigo-600 dark:text-indigo-400 text-sm">Rp
+                        0</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Status Pembayaran:</span>
+                    <span id="popupSuccessStatusBadge"
+                        class="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                        LUNAS / TUNTAS
+                    </span>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi -->
+            <div class="pt-1 flex flex-col sm:flex-row gap-2">
+                <button type="button" onclick="tutupPopupSelesaiDanKembali()"
+                    class="flex-1 min-h-[42px] px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2 active:scale-[0.98]">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>Tutup & Selesai</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -3813,7 +4008,25 @@
         }
 
         function printSlipFee() {
-            window.print();
+            document.body.classList.add('printing-slip-fee');
+            const a5Modal = document.getElementById('modalPratinjauA5');
+            if (a5Modal) {
+                a5Modal.classList.add('hidden');
+                a5Modal.style.setProperty('display', 'none', 'important');
+            }
+            const feeModal = document.getElementById('modalPreviewSlipFee');
+            if (feeModal) {
+                feeModal.classList.remove('hidden');
+                feeModal.style.setProperty('display', 'block', 'important');
+            }
+
+            try {
+                window.print();
+            } finally {
+                document.body.classList.remove('printing-slip-fee');
+                if (a5Modal) a5Modal.style.display = '';
+                if (feeModal) feeModal.style.display = '';
+            }
         }
 
         async function hapusRiwayatFee(id) {
@@ -5092,8 +5305,9 @@
                     <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                     <span>Pratinjau A5</span>
                   </button>
-                  <button onclick="openModalBayar('${n.id}')" class="min-h-[34px] px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl text-xs transition active:scale-[0.98]" title="Lihat / Koreksi Detail">
-                    Detail
+                  <button onclick="openModalBayar('${n.id}', true)" class="min-h-[34px] px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold rounded-xl text-xs transition inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]" title="Koreksi / Revisi Nota Lunas (Qty Fisik, Retur, Ongkir, Pembayaran)">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-amber-600"></i>
+                    <span>Koreksi / Revisi</span>
                   </button>
                 </td>
               </tr>
@@ -5113,7 +5327,7 @@
         let deletedReturIds = [];
         let deletedPaymentIds = [];
 
-        async function openModalBayar(notaId) {
+        async function openModalBayar(notaId, isKoreksiLunas = false) {
             await fetchAllNormalizedNotas();
             const n = cacheNotas.find(x => x.id === notaId);
             if (!n) return;
@@ -5128,6 +5342,8 @@
             document.getElementById('modalBayarSupplier').innerText = n.supplier;
             document.getElementById('modalBayarTanggal').innerText = formatDateIndo(n.tanggal_nota);
 
+            const isLunasMode = Boolean(isKoreksiLunas || n.status === 'Lunas');
+
             // Status Badge
             const badge = document.getElementById('modalNotaStatusBadge');
             const badgeStyle = n.status === 'Lunas'
@@ -5135,6 +5351,16 @@
                 : (n.status === 'Sebagian' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-700 border-slate-200');
             badge.className = `px-2 py-0.5 rounded text-[10px] font-bold border ${badgeStyle}`;
             badge.innerText = n.status;
+
+            // Banner Mode Koreksi / Revisi Nota Lunas
+            const lunasAlert = document.getElementById('modalBayarLunasAlert');
+            if (lunasAlert) {
+                if (isLunasMode) {
+                    lunasAlert.classList.remove('hidden');
+                } else {
+                    lunasAlert.classList.add('hidden');
+                }
+            }
 
             // Render Rincian Barang Kiriman (Bisa Dikoreksi jika fisik tidak sesuai)
             const tbody = document.getElementById('mClassicItemRows');
@@ -5207,7 +5433,16 @@
             // Populate Baris Pembayaran (Dinamis: Bayar 1 / TF 1, Bayar 2 / TF 2, dst)
             const payContainer = document.getElementById('mPaymentRowsContainer');
             payContainer.innerHTML = '';
-            if (n.payments && n.payments.length > 0) {
+            if (isLunasMode) {
+                // RESET FORM PEMBAYARAN: Antrekan semua ID pembayaran lama ke deletedPaymentIds
+                if (n.payments && n.payments.length > 0) {
+                    n.payments.forEach(p => {
+                        if (p.id) deletedPaymentIds.push(p.id);
+                    });
+                }
+                // Siapkan 1 baris pembayaran kosong siap diinput kembali dari awal
+                addPaymentRow();
+            } else if (n.payments && n.payments.length > 0) {
                 n.payments.forEach(p => {
                     addPaymentRow({
                         id: p.id,
@@ -5541,6 +5776,57 @@
             }
         }
 
+        function resetFormPembayaran(showAlert = true) {
+            if (!activeNotaModal) return;
+            const rows = document.querySelectorAll('#mPaymentRowsContainer .payment-row');
+            rows.forEach(r => {
+                const pid = r.getAttribute('data-payment-id');
+                if (pid && !deletedPaymentIds.includes(pid)) {
+                    deletedPaymentIds.push(pid);
+                }
+            });
+            if (activeNotaModal.payments) {
+                activeNotaModal.payments.forEach(p => {
+                    if (p.id && !deletedPaymentIds.includes(p.id)) {
+                        deletedPaymentIds.push(p.id);
+                    }
+                });
+            }
+            const container = document.getElementById('mPaymentRowsContainer');
+            if (container) {
+                container.innerHTML = '';
+            }
+            addPaymentRow();
+            recalcClassicNotaFinancials();
+            if (showAlert) {
+                showToast('Form pembayaran berhasil di-reset. Silakan input kembali metode pembayaran.');
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function muatUlangPembayaranAsli() {
+            if (!activeNotaModal || !activeNotaModal.payments || activeNotaModal.payments.length === 0) {
+                showToast('Tidak ada data pembayaran sebelumnya untuk dimuat.', 'info');
+                return;
+            }
+            deletedPaymentIds = [];
+            const container = document.getElementById('mPaymentRowsContainer');
+            if (container) {
+                container.innerHTML = '';
+            }
+            activeNotaModal.payments.forEach(p => {
+                addPaymentRow({
+                    id: p.id,
+                    nominal: p.nominal_final,
+                    keterangan: p.alasan_revisi || p.keterangan || '',
+                    tanggal: p.tanggal_pembayaran
+                });
+            });
+            recalcClassicNotaFinancials();
+            showToast('Data pembayaran sebelumnya berhasil dimuat kembali.');
+            if (window.lucide) lucide.createIcons();
+        }
+
         function setPayFullAmount() {
             if (!activeNotaModal) return;
 
@@ -5676,7 +5962,7 @@
         // SIMPAN PENYELESAIAN NOTA KLASIK & PEMBAYARAN
         // ----------------------------------------------------
 
-        async function saveClassicNotaSettlement() {
+        async function saveClassicNotaSettlement(silent = false) {
             if (!activeNotaModal) return;
             const notaId = activeNotaModal.id;
 
@@ -5847,7 +6133,9 @@
                     pIdx++;
                 }
 
-                showToast('Penyelesaian nota dan pembayaran berhasil disimpan!');
+                if (!silent) {
+                    showToast('Penyelesaian nota dan pembayaran berhasil disimpan!');
+                }
                 closeModal('modalBayar');
 
                 await fetchAllNormalizedNotas();
@@ -5855,8 +6143,9 @@
                 renderRekapNotaTable();
                 loadDashboardData();
 
-                // Otomatis buka pratinjau nota A5 landscape setelah berhasil disimpan
-                openPratinjauA5(notaId);
+                // Otomatis buka / perbarui pratinjau nota A5 landscape dalam mode resmi tersimpan
+                currentDraftNotaData = null;
+                await openPratinjauA5(notaId, false, null);
             } catch (err) {
                 console.error("Gagal simpan penyelesaian nota:", err);
                 showToast('Terjadi kendala saat menyimpan penyelesaian nota', 'error');
@@ -5881,27 +6170,284 @@
         // ----------------------------------------------------
 
         let activeA5Nota = null;
+        let currentDraftNotaData = null;
 
-        async function openPratinjauA5(notaId) {
-            if (!cacheNotas || cacheNotas.length === 0) {
-                await fetchAllNormalizedNotas();
+        function pratinjauPenyelesaianNota() {
+            if (!activeNotaModal) {
+                showToast('Pilih nota terlebih dahulu.', 'error');
+                return;
             }
-            const n = cacheNotas.find(x => x.id === notaId);
+            recalcClassicNotaFinancials();
+
+            // 1. Kumpulkan koreksi kiriman fisik & detail item terkini dari form
+            const rows = document.querySelectorAll('#mClassicItemRows tr');
+            let updatedKoreksiFisik = { ...(activeNotaModal.koreksiFisik || {}) };
+            let draftDetails = [];
+            let totalBruto = 0;
+
+            rows.forEach(row => {
+                const detailId = row.getAttribute('data-detail-id');
+                const orig = (activeNotaModal.details || []).find(o => o.id === detailId) || {};
+                const qtyInput = row.querySelector('.m-item-qty');
+                const priceInput = row.querySelector('.m-item-price');
+                const qty = qtyInput ? (parseFloat(qtyInput.value) || 0) : (orig.jumlah || 0);
+                const price = priceInput ? (parseFormattedNumber(priceInput.value) || 0) : (orig.harga_satuan || 0);
+                const subtotal = Math.round(qty * price);
+                totalBruto += subtotal;
+
+                const initialQty = parseFloat(row.getAttribute('data-initial-qty')) || 0;
+                const satNama = row.querySelector('.m-item-satuan')?.innerText?.trim() || orig.nama_satuan_snapshot || 'Ball';
+                const namaBarang = row.querySelector('.m-item-name')?.innerText?.trim() || orig.nama_barang_snapshot || 'Barang';
+
+                if (initialQty > 0) {
+                    const selisih = qty - initialQty;
+                    if (selisih < 0) {
+                        const diffCount = Math.abs(selisih);
+                        const diffStr = Number.isInteger(diffCount) ? diffCount : diffCount.toFixed(2).replace(/\.?0+$/, '');
+                        updatedKoreksiFisik[detailId] = {
+                            qty_awal: initialQty,
+                            qty_fisik: qty,
+                            selisih: selisih,
+                            satuan: satNama,
+                            keterangan: `Kurang -${diffStr} ${satNama}`
+                        };
+                    } else if (selisih > 0) {
+                        const diffCount = selisih;
+                        const diffStr = Number.isInteger(diffCount) ? diffCount : diffCount.toFixed(2).replace(/\.?0+$/, '');
+                        updatedKoreksiFisik[detailId] = {
+                            qty_awal: initialQty,
+                            qty_fisik: qty,
+                            selisih: selisih,
+                            satuan: satNama,
+                            keterangan: `Lebih +${diffStr} ${satNama}`
+                        };
+                    } else {
+                        delete updatedKoreksiFisik[detailId];
+                    }
+                }
+
+                draftDetails.push({
+                    ...orig,
+                    id: detailId,
+                    barang_id: orig.barang_id,
+                    nama_barang_snapshot: orig.nama_barang_snapshot || namaBarang,
+                    nama_satuan_snapshot: satNama,
+                    jumlah: qty,
+                    harga_satuan: price,
+                    subtotal: subtotal
+                });
+            });
+
+            // 2. Kumpulkan baris retur BS terkini dari form
+            const returRows = document.querySelectorAll('#mReturRowsContainer tr');
+            let draftReturs = [];
+            let totalReturBS = 0;
+
+            returRows.forEach(rRow => {
+                if (rRow.id === 'mReturEmptyRow') return;
+                const selBarang = rRow.querySelector('.retur-item-select');
+                const selSatuan = rRow.querySelector('.retur-unit-select');
+                const inpQty = rRow.querySelector('.retur-qty-input');
+                const inpNilai = rRow.querySelector('.retur-nilai-input');
+                const inpKet = rRow.querySelector('.retur-ket-input');
+
+                if (!selBarang || !inpQty || !inpNilai) return;
+                const barangId = selBarang.value;
+                if (!barangId) return;
+
+                const qty = parseFloat(inpQty.value) || 0;
+                const nilaiRetur = parseFormattedNumber(inpNilai.value) || 0;
+                const satuanNama = (selSatuan?.value || 'Pcs').trim();
+                const ket = (inpKet?.value || '').trim();
+
+                if (qty <= 0 && nilaiRetur <= 0) return;
+
+                const selectedOption = selBarang.options[selBarang.selectedIndex];
+                const namaBarang = selectedOption ? (selectedOption.getAttribute('data-nama') || selectedOption.text.replace(' ★ (Dalam Nota)', '').trim()) : 'Barang';
+
+                draftReturs.push({
+                    barang_id: barangId,
+                    nama_barang_snapshot: namaBarang,
+                    jumlah: qty,
+                    nama_satuan_snapshot: satuanNama,
+                    nilai_retur: nilaiRetur,
+                    keterangan: ket
+                });
+                totalReturBS += nilaiRetur;
+            });
+
+            // 3. Potongan Ongkir terkini
+            const currentOngkir = parseFormattedNumber(document.getElementById('payPotonganOngkir')?.value) || 0;
+
+            // 4. Netto
+            const totalNetto = Math.max(0, totalBruto - totalReturBS - currentOngkir);
+
+            // 5. Pembayaran terkini
+            const payRows = document.querySelectorAll('#mPaymentRowsContainer .payment-row');
+            let draftPayments = [];
+            let totalBayar = 0;
+            let pIdx = 1;
+
+            payRows.forEach(pRow => {
+                const inpNominal = pRow.querySelector('.pay-nominal');
+                const inpCatatan = pRow.querySelector('.pay-catatan');
+                const inpTanggal = pRow.querySelector('.pay-tanggal');
+
+                const nominal = parseFormattedNumber(inpNominal?.value) || 0;
+                const rawCatatan = (inpCatatan?.value || '').trim();
+                const tanggalVal = inpTanggal?.value;
+                const tanggalBayar = tanggalVal ? new Date(tanggalVal).toISOString() : new Date().toISOString();
+                const defaultLabel = `Bayar ${pIdx} / TF ${pIdx}`;
+                const finalCatatan = rawCatatan || defaultLabel;
+
+                if (nominal > 0) {
+                    draftPayments.push({
+                        tanggal_pembayaran: tanggalBayar,
+                        nominal_awal: nominal,
+                        nominal_final: nominal,
+                        alasan_revisi: finalCatatan,
+                        keterangan: 'Penyelesaian Nota Klasik'
+                    });
+                    totalBayar += nominal;
+                }
+                pIdx++;
+            });
+
+            // 6. Sisa & Status
+            const sisaPembayaran = Math.max(0, totalNetto - totalBayar);
+            let status = 'Belum Lunas';
+            if (sisaPembayaran <= 0 && totalNetto > 0 && totalBayar >= totalNetto) {
+                status = 'Lunas';
+            } else if (totalBayar > 0) {
+                status = 'Sebagian';
+            }
+
+            const draftNota = {
+                ...activeNotaModal,
+                details: draftDetails,
+                returs: draftReturs,
+                potonganOngkir: currentOngkir,
+                payments: draftPayments,
+                koreksiFisik: updatedKoreksiFisik,
+                totalBruto,
+                totalReturBS,
+                totalNetto,
+                totalBayar,
+                sisaPembayaran,
+                status,
+                is_draft: true
+            };
+
+            currentDraftNotaData = draftNota;
+            openPratinjauA5(activeNotaModal.id, true, draftNota);
+        }
+
+        async function konfirmasiSimpanNotaSettlementDariModal() {
+            const btnTop = document.getElementById('btnA5TopSimpanNota');
+            const btnBottom = document.getElementById('btnA5BottomSimpanNota');
+            if (btnTop) {
+                btnTop.disabled = true;
+                btnTop.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-emerald-200"></i><span>Menyimpan...</span>';
+            }
+            if (btnBottom) {
+                btnBottom.disabled = true;
+                btnBottom.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-emerald-200"></i><span>Menyimpan Penyelesaian Nota...</span>';
+            }
+            if (window.lucide) lucide.createIcons();
+
+            try {
+                let targetNota = currentDraftNotaData || activeA5Nota;
+                await saveClassicNotaSettlement(true);
+                targetNota = activeA5Nota || targetNota;
+                showModernSettlementSuccessPopup(targetNota);
+            } finally {
+                if (btnTop) {
+                    btnTop.disabled = false;
+                    btnTop.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 text-emerald-200"></i><span>Simpan Nota</span>';
+                }
+                if (btnBottom) {
+                    btnBottom.disabled = false;
+                    btnBottom.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 text-emerald-200"></i><span>Simpan Penyelesaian Nota & Pembayaran</span>';
+                }
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        async function openPratinjauA5(notaId, isDraft = false, draftData = null) {
+            if (draftData) {
+                currentDraftNotaData = draftData;
+            } else if (!isDraft) {
+                currentDraftNotaData = null;
+            }
+
+            let n = draftData;
+            if (!n) {
+                if (!cacheNotas || cacheNotas.length === 0) {
+                    await fetchAllNormalizedNotas();
+                }
+                n = cacheNotas.find(x => x.id === notaId);
+            }
             if (!n) return;
             activeA5Nota = n;
+
+            const isDraftMode = isDraft || Boolean(n.is_draft);
+
+            // Kontrol tombol Simpan & status badge pratinjau A5
+            const elBtnTopSimpan = document.getElementById('btnA5TopSimpanNota');
+            const elBtnBottomSimpan = document.getElementById('btnA5BottomSimpanNota');
+            const elTopBadge = document.getElementById('a5TopStatusBadge');
+            const elBottomInfo = document.getElementById('a5BottomInfo');
+            const elCloseTop = document.getElementById('lblBtnCloseA5');
+            const elCloseBottom = document.getElementById('lblBtnBottomCloseA5');
+
+            if (isDraftMode) {
+                if (elBtnTopSimpan) elBtnTopSimpan.classList.remove('hidden');
+                if (elBtnBottomSimpan) elBtnBottomSimpan.classList.remove('hidden');
+                if (elTopBadge) {
+                    elTopBadge.className = 'px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30';
+                    elTopBadge.innerText = 'Draf Siap Disimpan';
+                }
+                if (elBottomInfo) {
+                    elBottomInfo.innerText = 'Periksa lembar nota A5 di atas. Klik "Simpan Penyelesaian Nota & Pembayaran" untuk menyimpan resmi ke sistem.';
+                }
+                if (elCloseTop) elCloseTop.innerText = 'Kembali';
+                if (elCloseBottom) elCloseBottom.innerText = 'Kembali ke Form';
+            } else {
+                if (elBtnTopSimpan) elBtnTopSimpan.classList.add('hidden');
+                if (elBtnBottomSimpan) elBtnBottomSimpan.classList.add('hidden');
+                if (elTopBadge) {
+                    elTopBadge.className = 'px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30';
+                    elTopBadge.innerText = 'Siap Cetak / Unduh';
+                }
+                if (elBottomInfo) {
+                    elBottomInfo.innerText = 'Pratinjau ini dapat dicetak langsung (A5 Landscape) atau disimpan sebagai file gambar PNG.';
+                }
+                if (elCloseTop) elCloseTop.innerText = 'Tutup';
+                if (elCloseBottom) elCloseBottom.innerText = 'Tutup Modal';
+            }
 
             document.getElementById('a5NomorNota').innerText = n.nomor_nota;
             document.getElementById('a5TanggalNota').innerText = formatDateIndo(n.tanggal_nota);
             document.getElementById('a5Supplier').innerText = n.supplier;
 
-            // Status Badge Header
+            // Status Badge Header pada Lembar Kertas Slip A5
             const a5Badge = document.getElementById('a5StatusBadge');
-            if (n.status === 'Lunas') {
-                a5Badge.className = 'px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border-2 border-emerald-500 rounded font-black text-xs uppercase tracking-wider inline-flex items-center gap-1';
-                a5Badge.innerHTML = '<i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i> LUNAS';
+            if (isDraftMode) {
+                if (n.status === 'Lunas') {
+                    a5Badge.className = 'px-2.5 py-0.5 bg-amber-100 text-amber-900 border-2 border-amber-500 rounded font-black text-xs uppercase tracking-wider inline-flex items-center gap-1';
+                    a5Badge.innerHTML = '<i data-lucide="eye" class="w-3.5 h-3.5 text-amber-700"></i> PRATINJAU (LUNAS)';
+                } else {
+                    a5Badge.className = 'px-2.5 py-0.5 bg-amber-100 text-amber-900 border-2 border-amber-500 rounded font-black text-xs uppercase tracking-wider inline-flex items-center gap-1';
+                    a5Badge.innerHTML = `<i data-lucide="eye" class="w-3.5 h-3.5 text-amber-700"></i> PRATINJAU (${n.status.toUpperCase()})`;
+                }
             } else {
-                a5Badge.className = 'px-2.5 py-0.5 bg-amber-100 text-amber-800 border-2 border-amber-500 rounded font-black text-xs uppercase tracking-wider inline-flex items-center gap-1';
-                a5Badge.innerText = n.status.toUpperCase();
+                if (n.status === 'Lunas') {
+                    a5Badge.className = 'px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border-2 border-emerald-500 rounded font-black text-xs uppercase tracking-wider inline-flex items-center gap-1';
+                    a5Badge.innerHTML = '<i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i> LUNAS';
+                } else {
+                    a5Badge.className = 'px-2.5 py-0.5 bg-amber-100 text-amber-800 border-2 border-amber-500 rounded font-black text-xs uppercase tracking-wider inline-flex items-center gap-1';
+                    a5Badge.innerText = n.status.toUpperCase();
+                }
             }
 
             // Rincian Barang Fisik
@@ -5988,22 +6534,23 @@
                     const defaultLabel = `Bayar ${idx + 1} / TF ${idx + 1}`;
                     const note = p.alasan_revisi || p.keterangan || '';
                     payList.innerHTML += `
-            <div class="flex justify-between items-center text-[10.5px] border-b border-dashed border-slate-200 py-0.5">
-              <span class="text-slate-600 font-medium">
-                <strong class="text-slate-900">${defaultLabel}</strong> <span class="text-[9.5px] text-slate-400">(${pDate})</span>${note ? ` - <span class="italic text-slate-500">${note}</span>` : ''}
+            <div class="flex justify-between items-center text-[10px] border-b border-dashed border-slate-200/90 py-0.5 gap-2">
+              <span class="text-slate-600 font-medium text-left leading-tight">
+                <strong class="text-slate-900">${defaultLabel}</strong> <span class="text-[9px] text-slate-400">(${pDate})</span>${note ? ` - <span class="italic text-slate-500">${note}</span>` : ''}
               </span>
-              <span class="font-bold text-emerald-700">${formatRupiah(p.nominal_final)}</span>
+              <span class="font-bold text-emerald-700 shrink-0 text-right">${formatRupiah(p.nominal_final)}</span>
             </div>
           `;
                 });
             } else {
-                payList.innerHTML = `<div class="text-[10px] text-slate-400 italic">Belum ada rincian pembayaran dicatat.</div>`;
+                payList.innerHTML = `<div class="text-[10px] text-slate-400 italic py-0.5">Belum ada rincian pembayaran dicatat.</div>`;
             }
 
             // Tanda Lunas / Tuntas Dibayar (Stempel Resmi Menggantikan Sisa Tagihan)
             const stampEl = document.getElementById('a5LunasStamp');
             if (stampEl) {
                 if (n.status === 'Lunas' || (n.sisaPembayaran <= 0 && n.totalNetto > 0)) {
+                    const subText = isDraftMode ? 'SIAP DISIMPAN' : 'SUDAH DIBAYAR';
                     stampEl.innerHTML = `
             <div class="px-3.5 py-1.5 border-2 border-emerald-600 bg-emerald-50 text-emerald-800 rounded-lg flex items-center gap-2 shadow-xs">
               <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black">
@@ -6011,11 +6558,12 @@
               </div>
               <div class="text-left">
                 <div class="text-[10.5px] font-black tracking-widest text-emerald-800 uppercase leading-none">LUNAS / TUNTAS</div>
-                <div class="text-[8.5px] font-bold text-emerald-600 leading-tight">SUDAH DIBAYAR</div>
+                <div class="text-[8.5px] font-bold text-emerald-600 leading-tight">${subText}</div>
               </div>
             </div>
           `;
                 } else {
+                    const subText = isDraftMode ? `Sisa: ${formatRupiah(n.sisaPembayaran)} (DRAF)` : `Sisa: ${formatRupiah(n.sisaPembayaran)}`;
                     stampEl.innerHTML = `
             <div class="px-3.5 py-1.5 border-2 border-amber-500 bg-amber-50 text-amber-800 rounded-lg flex items-center gap-2 shadow-xs">
               <div class="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center font-black">
@@ -6023,7 +6571,7 @@
               </div>
               <div class="text-left">
                 <div class="text-[10px] font-black tracking-wider text-amber-800 uppercase leading-none">BELUM LUNAS</div>
-                <div class="text-[8.5px] font-bold text-amber-600 leading-tight">Sisa: ${formatRupiah(n.sisaPembayaran)}</div>
+                <div class="text-[8.5px] font-bold text-amber-600 leading-tight">${subText}</div>
               </div>
             </div>
           `;
@@ -6058,8 +6606,80 @@
             }
         }
 
-        function printNotaA5() {
-            window.print();
+        async function printNotaA5() {
+            // 1. Simpan target nota untuk popup
+            let targetNota = currentDraftNotaData || activeA5Nota;
+
+            // 2. Jika masih dalam mode draf (sedang dalam penyelesaian nota), simpan resmi terlebih dahulu
+            if (currentDraftNotaData && activeNotaModal) {
+                try {
+                    await saveClassicNotaSettlement(true);
+                    targetNota = activeA5Nota || targetNota;
+                } catch (err) {
+                    console.error("Gagal auto-save settlement saat print:", err);
+                }
+            }
+
+            // 3. Pastikan modal slip fee tersembunyi total dan tambahkan penanda body printing
+            document.body.classList.add('printing-nota-a5');
+            const feeModal = document.getElementById('modalPreviewSlipFee');
+            if (feeModal) {
+                feeModal.classList.add('hidden');
+                feeModal.style.setProperty('display', 'none', 'important');
+            }
+            const a5Modal = document.getElementById('modalPratinjauA5');
+            if (a5Modal) {
+                a5Modal.classList.remove('hidden');
+                a5Modal.style.setProperty('display', 'block', 'important');
+            }
+
+            // 4. Jalankan dialog cetak browser
+            try {
+                window.print();
+            } finally {
+                // 5. Bersihkan penanda cetak
+                document.body.classList.remove('printing-nota-a5');
+                if (feeModal) feeModal.style.display = '';
+                if (a5Modal) a5Modal.style.display = '';
+            }
+
+            // 6. Tampilkan confirmation popup modern bahwa nota telah selesai terbayar dan disimpan
+            showModernSettlementSuccessPopup(targetNota);
+        }
+
+        function showModernSettlementSuccessPopup(n) {
+            if (!n) return;
+            const nomorNotaEl = document.getElementById('popupSuccessNomorNota');
+            const supplierEl = document.getElementById('popupSuccessSupplier');
+            const totalNettoEl = document.getElementById('popupSuccessTotalNetto');
+            const statusBadgeEl = document.getElementById('popupSuccessStatusBadge');
+
+            if (nomorNotaEl) nomorNotaEl.innerText = n.nomor_nota || '-';
+            if (supplierEl) supplierEl.innerText = n.supplier || '-';
+            if (totalNettoEl) totalNettoEl.innerText = formatRupiah(n.totalNetto || 0);
+
+            if (statusBadgeEl) {
+                if (n.status === 'Lunas' || (n.sisaPembayaran <= 0 && n.totalNetto > 0)) {
+                    statusBadgeEl.className = 'px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800';
+                    statusBadgeEl.innerText = 'LUNAS / TUNTAS';
+                } else {
+                    statusBadgeEl.className = 'px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800';
+                    statusBadgeEl.innerText = `BELUM LUNAS (Sisa: ${formatRupiah(n.sisaPembayaran || 0)})`;
+                }
+            }
+
+            const popup = document.getElementById('modalNotaSelesaiPopup');
+            if (popup) {
+                popup.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        function tutupPopupSelesaiDanKembali() {
+            closeModal('modalNotaSelesaiPopup');
+            closeModal('modalPratinjauA5');
+            closeModal('modalBayar');
+            currentDraftNotaData = null;
         }
 
 
