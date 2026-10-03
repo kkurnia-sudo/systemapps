@@ -6645,23 +6645,43 @@
                 n.details.forEach((d, idx) => {
                     const kor = (n.koreksiFisik && (n.koreksiFisik[d.id] || n.koreksiFisik[d.barang_id])) || null;
                     let qtyDisplay = `<span class="text-xs font-black text-slate-900 leading-normal">${d.jumlah}</span>`;
+                    let noteBadge = '';
+
                     if (kor && kor.selisih !== 0) {
                         const isKurang = kor.selisih < 0;
                         const boxClass = isKurang
                             ? 'bg-rose-50 text-rose-700 border-rose-300'
                             : 'bg-emerald-50 text-emerald-800 border-emerald-300';
-                        const tip = kor.keterangan ? ` title="${kor.keterangan}"` : '';
+                        const badgeStyle = isKurang
+                            ? 'bg-rose-50 text-rose-700 border-rose-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                        const dotColor = isKurang ? 'bg-rose-500' : 'bg-emerald-500';
+
                         qtyDisplay = `
-                            <span class="inline-block px-2.5 py-0.5 rounded border ${boxClass} font-black text-xs leading-normal shadow-2xs"${tip}>
+                            <span class="inline-block px-2.5 py-0.5 rounded border ${boxClass} font-black text-xs leading-normal shadow-2xs" title="${kor.keterangan || ''}">
                                 ${d.jumlah}
                             </span>
                         `;
+
+                        if (kor.keterangan) {
+                            noteBadge = `
+                                <span class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeStyle} leading-none whitespace-nowrap shadow-2xs">
+                                    <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
+                                    ${kor.keterangan}
+                                </span>
+                            `;
+                        }
                     }
 
                     tbodyItems.innerHTML += `
                         <tr class="border-b border-slate-200">
                             <td class="py-2 px-2 text-center text-slate-500 font-medium align-middle">${idx + 1}</td>
-                            <td class="py-2 px-2.5 font-bold text-slate-900 align-middle leading-normal">${d.nama_barang_snapshot || 'Barang'}</td>
+                            <td class="py-2 px-2.5 font-bold text-slate-900 align-middle leading-normal">
+                                <div class="inline-flex items-center gap-2 flex-wrap">
+                                    <span>${d.nama_barang_snapshot || 'Barang'}</span>
+                                    ${noteBadge}
+                                </div>
+                            </td>
                             <td class="py-2 px-2 text-center text-slate-700 align-middle leading-normal">${d.nama_satuan_snapshot || 'Ball'}</td>
                             <td class="py-2 px-2 text-center align-middle">
                                 ${qtyDisplay}
