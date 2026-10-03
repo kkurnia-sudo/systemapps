@@ -439,6 +439,117 @@
             background: #fff;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
+
+        /* MODAL AKSI SELESAI (CEKLIS RINGKAS) */
+        .action-check-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--input-bg);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .action-check-card:hover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.04);
+        }
+
+        .action-check-card.is-checked {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.08);
+        }
+
+        [data-theme="dark"] .action-check-card.is-checked {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.16);
+        }
+
+        .action-check-card input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            flex-shrink: 0;
+            appearance: auto !important;
+            -webkit-appearance: checkbox !important;
+        }
+
+        .action-check-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .icon-blue {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .icon-amber {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .icon-emerald {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .icon-purple {
+            background: #f3e8ff;
+            color: #7e22ce;
+        }
+
+        [data-theme="dark"] .icon-blue {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        [data-theme="dark"] .icon-amber {
+            background: #78350f;
+            color: #fcd34d;
+        }
+
+        [data-theme="dark"] .icon-emerald {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        [data-theme="dark"] .icon-purple {
+            background: #581c87;
+            color: #d8b4fe;
+        }
+
+        .action-check-content {
+            flex: 1;
+            text-align: left;
+        }
+
+        .action-check-title {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--text-main);
+            line-height: 1.25;
+        }
+
+        .action-check-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            line-height: 1.3;
+        }
     </style>
 </head>
 <body>
@@ -624,6 +735,83 @@
     <h3 id="customDialogTitle" style="margin-bottom: 8px; font-weight: 800; font-size: 16px;">Pemberitahuan</h3>
     <div id="customDialogMessage" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; text-align: left; background: var(--input-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--border);"></div>
     <div id="customDialogButtons" class="form-grid"></div>
+</div>
+
+<!-- MODAL: Aksi Setelah Simpan Nota (Ceklis Ringkas) -->
+<div class="modal-overlay" id="overlayModalAksi" style="z-index: 205;" onclick="batalAksiLanjutan()"></div>
+<div class="bottom-sheet" id="sheetModalAksi" style="z-index: 206; text-align: center;">
+    <div class="sheet-indicator"></div>
+
+    <div style="margin-bottom: 14px;">
+        <div style="width: 52px; height: 52px; background: #d1fae5; color: #059669; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 10px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+            <i class="ph-bold ph-check"></i>
+        </div>
+        <h3 style="font-weight: 800; font-size: 17px; margin-bottom: 4px;">Nota Berhasil Disimpan!</h3>
+        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+            Pilih opsi cetak & tindakan lanjutan yang ingin diproses:
+        </p>
+    </div>
+
+    <!-- OPSI CEKLIS INTERAKTIF -->
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+        <!-- 1. Cetak Nota Tagihan (Customer) -->
+        <label class="action-check-card is-checked" id="cardOptCetakTagihan">
+            <input type="checkbox" id="chkOptCetakTagihan" checked onchange="updateActionCardStyle(this)">
+            <div class="action-check-icon icon-blue">
+                <i class="ph-bold ph-receipt"></i>
+            </div>
+            <div class="action-check-content">
+                <div class="action-check-title">Cetak Nota Tagihan (Customer)</div>
+                <div class="action-check-desc">Cetak fisik struk untuk pelanggan via printer Bluetooth</div>
+            </div>
+        </label>
+
+        <!-- 2. Cetak Nota Admin -->
+        <label class="action-check-card" id="cardOptCetakAdmin">
+            <input type="checkbox" id="chkOptCetakAdmin" onchange="updateActionCardStyle(this)">
+            <div class="action-check-icon icon-amber">
+                <i class="ph-bold ph-user-gear"></i>
+            </div>
+            <div class="action-check-content">
+                <div class="action-check-title">Cetak Nota Admin</div>
+                <div class="action-check-desc">Cetak fisik struk arsip kantor via printer Bluetooth</div>
+            </div>
+        </label>
+
+        <!-- 3. Unduh Gambar Nota Digital -->
+        <label class="action-check-card" id="cardOptUnduhGambar">
+            <input type="checkbox" id="chkOptUnduhGambar" onchange="updateActionCardStyle(this)">
+            <div class="action-check-icon icon-emerald">
+                <i class="ph-bold ph-image"></i>
+            </div>
+            <div class="action-check-content">
+                <div class="action-check-title">Unduh Gambar Nota (JPG)</div>
+                <div class="action-check-desc">Simpan salinan visual nota digital ke memori perangkat</div>
+            </div>
+        </label>
+
+        <!-- 4. Reset Form Buat Nota Baru -->
+        <label class="action-check-card is-checked" id="cardOptResetNota">
+            <input type="checkbox" id="chkOptResetNota" checked onchange="updateActionCardStyle(this)">
+            <div class="action-check-icon icon-purple">
+                <i class="ph-bold ph-arrow-counter-clockwise"></i>
+            </div>
+            <div class="action-check-content">
+                <div class="action-check-title">Reset Form Buat Nota Baru</div>
+                <div class="action-check-desc">Kosongkan form input dan perbarui nomor nota berikutnya</div>
+            </div>
+        </label>
+    </div>
+
+    <!-- TOMBOL EKSEKUSI -->
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button class="btn btn-primary" id="btnEksekusiAksi" style="height: 46px; font-weight: 700; font-size: 14px;" onclick="eksekusiAksiPilihan()">
+            <i class="ph-bold ph-paper-plane-right" style="font-size: 18px;"></i> Proses Aksi Terpilih
+        </button>
+        <button class="btn btn-outline" style="height: 42px; font-weight: 600; font-size: 13px;" onclick="batalAksiLanjutan()">
+            Selesai Saja (Tanpa Cetak)
+        </button>
+    </div>
 </div>
 
 <!-- MODAL: Pilihan Aksi Barang -->
@@ -859,6 +1047,7 @@
     let currentMode = 'Kirim'; 
     let editIndex = -1;
     let lastPrintText = ""; 
+    let lastDataStruk = null;
     let isDeposit = false;
     let availableItemsOptions = "";
 
@@ -1002,6 +1191,36 @@
         }
     }
 
+    function setTombolReprint() {
+        const btn = document.getElementById('btnSimpan');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ph-bold ph-printer"></i> Cetak Ulang ?';
+            btn.dataset.action = 'reprint';
+        }
+        const btnModal = document.getElementById('btnSimpanPreview');
+        if (btnModal) {
+            btnModal.disabled = false;
+            btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Cetak Ulang ?';
+        }
+        const btnReprint = document.getElementById('btnReprint');
+        if (btnReprint) btnReprint.disabled = false;
+    }
+
+    function resetTombolSimpan() {
+        const btn = document.getElementById('btnSimpan');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ph-bold ph-check-circle" style="font-size: 18px;"></i> SIMPAN & PRINT';
+            btn.dataset.action = '';
+        }
+        const btnModal = document.getElementById('btnSimpanPreview');
+        if (btnModal) {
+            btnModal.disabled = false;
+            btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print';
+        }
+    }
+
     function resetForm() {
         document.getElementById('tglNota').value = getTanggalHariIniLocal();
         formatTglDisplay(); 
@@ -1036,19 +1255,11 @@
         triggerHaptic(40);
         showCustomConfirm("Nota Baru", "Mulai nota baru / bersihkan form sekarang?", () => {
             resetForm();
-            const btn = document.getElementById('btnSimpan');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="ph-bold ph-check-circle" style="font-size: 18px;"></i> SIMPAN & PRINT';
-            btn.dataset.action = '';
-            
-            const btnModal = document.getElementById('btnSimpanPreview');
-            if (btnModal) { 
-                btnModal.disabled = false; 
-                btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print'; 
-            }
-            
-            document.getElementById('btnReprint').disabled = true;
+            resetTombolSimpan();
+            const btnReprint = document.getElementById('btnReprint');
+            if (btnReprint) btnReprint.disabled = true;
             lastPrintText = "";
+            lastDataStruk = null;
         });
     }
 
@@ -1530,53 +1741,164 @@
         const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff", logging: false });
         const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
         
-        document.getElementById('imgPreviewLaporan').src = imgUrl;
+        const imgEl = document.getElementById('imgPreviewLaporan');
+        if (imgEl) imgEl.src = imgUrl;
+        return imgUrl;
+    }
 
-        if (isSimpan) {
-            setTimeout(() => {
-                showCustomConfirm(
-                    "Simpan Gambar Nota",
-                    "Data sukses tersimpan ke Database!<br><br>Apakah Anda ingin mengunduh/download gambar nota digital ini ke perangkat?",
-                    () => {
-                        const downloadLink = document.createElement("a");
-                        downloadLink.href = imgUrl;
-                        downloadLink.download = `Nota_SBR_${dataStruk.noNota}.jpg`;
-                        document.body.appendChild(downloadLink);
-                        downloadLink.click();
-                        document.body.removeChild(downloadLink);
-                        
-                        closeSheet('sheetPreview');
-                        askResetFormAfterTransaction();
-                    },
-                    () => {
-                        closeSheet('sheetPreview');
-                        askResetFormAfterTransaction();
-                    }
-                );
-            }, 500);
+    async function unduhGambarLaporanLangsung(dataStruk) {
+        await buatGambarLaporan(dataStruk, false);
+        const imgEl = document.getElementById('imgPreviewLaporan');
+        if (imgEl && imgEl.src) {
+            const downloadLink = document.createElement("a");
+            downloadLink.href = imgEl.src;
+            downloadLink.download = `Nota_SBR_${dataStruk.noNota}.jpg`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
         }
     }
 
-    function askResetFormAfterTransaction() {
-        showCustomConfirm(
-            "Nota Baru",
-            "Transaksi selesai diproses sepenuhnya.<br><br>Apakah Anda ingin membersihkan form untuk membuat nota baru?",
-            () => {
-                resetForm();
-                const btn = document.getElementById('btnSimpan');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="ph-bold ph-check-circle" style="font-size: 18px;"></i> SIMPAN & PRINT';
-                btn.dataset.action = '';
-                document.getElementById('btnReprint').disabled = true;
-                lastPrintText = "";
-            },
-            () => {
-                const btn = document.getElementById('btnSimpan');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="ph-bold ph-printer"></i> Cetak Ulang ?';
-                btn.dataset.action = 'reprint';
+    function updateActionCardStyle(chk) {
+        const card = chk.closest('.action-check-card');
+        if (card) {
+            if (chk.checked) card.classList.add('is-checked');
+            else card.classList.remove('is-checked');
+        }
+    }
+
+    function bukaModalAksiSelesai() {
+        const chkTagihan = document.getElementById('chkOptCetakTagihan');
+        const chkAdmin = document.getElementById('chkOptCetakAdmin');
+        const chkUnduh = document.getElementById('chkOptUnduhGambar');
+        const chkReset = document.getElementById('chkOptResetNota');
+
+        if (chkTagihan) {
+            chkTagihan.checked = localStorage.getItem('sbr_opt_tagihan') !== '0';
+            updateActionCardStyle(chkTagihan);
+        }
+        if (chkAdmin) {
+            chkAdmin.checked = localStorage.getItem('sbr_opt_admin') === '1';
+            updateActionCardStyle(chkAdmin);
+        }
+        if (chkUnduh) {
+            chkUnduh.checked = localStorage.getItem('sbr_opt_unduh') === '1';
+            updateActionCardStyle(chkUnduh);
+        }
+        if (chkReset) {
+            chkReset.checked = localStorage.getItem('sbr_opt_reset') !== '0';
+            updateActionCardStyle(chkReset);
+        }
+
+        const btn = document.getElementById('btnEksekusiAksi');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ph-bold ph-paper-plane-right" style="font-size: 18px;"></i> Proses Aksi Terpilih';
+        }
+
+        setTombolReprint();
+        openSheet('sheetModalAksi');
+    }
+
+    function batalAksiLanjutan() {
+        closeSheet('sheetModalAksi');
+        setTombolReprint();
+        showCustomAlert("Tersimpan", "Data transaksi sukses tersimpan ke database.", "success");
+    }
+
+    async function eksekusiAksiPilihan() {
+        triggerHaptic(40);
+        const chkTagihan = document.getElementById('chkOptCetakTagihan');
+        const chkAdmin = document.getElementById('chkOptCetakAdmin');
+        const chkUnduh = document.getElementById('chkOptUnduhGambar');
+        const chkReset = document.getElementById('chkOptResetNota');
+
+        const doCetakTagihan = chkTagihan ? chkTagihan.checked : false;
+        const doCetakAdmin = chkAdmin ? chkAdmin.checked : false;
+        const doUnduhGambar = chkUnduh ? chkUnduh.checked : false;
+        const doResetNota = chkReset ? chkReset.checked : false;
+
+        // Simpan preferensi pilihan ke localStorage
+        localStorage.setItem('sbr_opt_tagihan', doCetakTagihan ? '1' : '0');
+        localStorage.setItem('sbr_opt_admin', doCetakAdmin ? '1' : '0');
+        localStorage.setItem('sbr_opt_unduh', doUnduhGambar ? '1' : '0');
+        localStorage.setItem('sbr_opt_reset', doResetNota ? '1' : '0');
+
+        const btnEksekusi = document.getElementById('btnEksekusiAksi');
+        if (btnEksekusi) {
+            btnEksekusi.disabled = true;
+            btnEksekusi.innerHTML = '<i class="ph ph-spinner ph-spin"></i> MEMPROSES...';
+        }
+
+        let btError = null;
+
+        try {
+            // 1. PENCETAKAN BLUETOOTH
+            if (doCetakTagihan || doCetakAdmin) {
+                try {
+                    if (!btCharacteristic) {
+                        try { await connectBT(); } catch (e) { }
+                    }
+
+                    if (!btCharacteristic) {
+                        btError = "Pencetakan fisik dilewati karena printer Bluetooth belum tersambung.";
+                    } else {
+                        if (doCetakTagihan) {
+                            if (btnEksekusi) btnEksekusi.innerHTML = '<i class="ph ph-printer ph-spin"></i> MENCETAK NOTA...';
+                            let cetakCustomer = lastPrintText.replace('[JENIS_CETAKAN]', ambilJudulNota(false));
+                            await printToBT(cetakCustomer);
+                            await new Promise(r => setTimeout(r, 600));
+                        }
+
+                        if (doCetakAdmin) {
+                            if (btnEksekusi) btnEksekusi.innerHTML = '<i class="ph ph-printer ph-spin"></i> MENCETAK ADMIN...';
+                            let cetakAdmin = lastPrintText.replace('[JENIS_CETAKAN]', ambilJudulNota(true));
+                            await printToBT(cetakAdmin);
+                            await new Promise(r => setTimeout(r, 600));
+                        }
+                    }
+                } catch (errPrint) {
+                    btError = "Pencetakan Bluetooth terputus/gagal: " + (errPrint.message || errPrint);
+                }
             }
-        );
+
+            // 2. UNDUH GAMBAR DIGITAL
+            if (doUnduhGambar && lastDataStruk) {
+                if (btnEksekusi) btnEksekusi.innerHTML = '<i class="ph ph-spinner ph-spin"></i> MEMBUAT GAMBAR...';
+                await unduhGambarLaporanLangsung(lastDataStruk);
+            }
+
+            // Tutup modal aksi selesai
+            closeSheet('sheetModalAksi');
+
+            // 3. RESET FORM BUAT NOTA BARU
+            if (doResetNota) {
+                resetForm();
+                resetTombolSimpan();
+                if (btError) {
+                    showCustomAlert("Perhatian", "Data transaksi sukses tersimpan di Database, namun " + btError + "<br><br>Form telah direset dan siap untuk transaksi baru.", "warning");
+                } else {
+                    showCustomAlert("Selesai", "Semua proses selesai! Form telah direset dan siap untuk transaksi nota baru berikutnya.", "success");
+                }
+            } else {
+                setTombolReprint();
+                if (btError) {
+                    showCustomAlert("Perhatian", "Data transaksi sukses tersimpan di Database, namun " + btError, "warning");
+                } else {
+                    showCustomAlert("Selesai", "Data berhasil disimpan ke database dan seluruh aksi yang dipilih telah selesai diproses.", "success");
+                }
+            }
+
+        } catch (err) {
+            closeSheet('sheetModalAksi');
+            showCustomAlert("Kendala Proses", "Terjadi kendala saat memproses aksi: " + (err.message || err), "danger");
+            setTombolReprint();
+        } finally {
+            if (btnEksekusi) {
+                btnEksekusi.disabled = false;
+                btnEksekusi.innerHTML = '<i class="ph-bold ph-paper-plane-right" style="font-size: 18px;"></i> Proses Aksi Terpilih';
+            }
+        }
     }
 
     async function bukaPratinjau() {
@@ -1624,7 +1946,8 @@
         await buatGambarLaporan({
             noNota, tglIndo, ag, drvGabung, mobil: mobil || '-',
             itemsKirim, itemsRetur, tk, tr, ongkir,
-            bl_input, tagihanBersih, cash, trf, sisa
+            bl_input, tagihanBersih, cash, trf, sisa,
+            judulNota: ambilJudulNota(false)
         }, false);
         
         btnPratinjau.innerHTML = originalIcon;
@@ -1656,14 +1979,6 @@
         if (errorList.length > 0) {
             showCustomAlert("Data Belum Lengkap", "Mohon lengkapi data berikut:<br><br>" + errorList.join("<br>"), "danger");
             return;
-        }
-
-        if (!btCharacteristic) {
-            try {
-                await connectBT();
-            } catch (e) {
-                // Lanjut simpan digital jika Bluetooth dibatalkan
-            }
         }
 
         const btn = document.getElementById('btnSimpan');
@@ -1749,6 +2064,8 @@
         const tabelTransaksi = (tipeAgen === 'khusus') ? 'transaksi_dp' : 'transaksi';
         const tabelDetail = (tipeAgen === 'khusus') ? 'transaksi_detaildp' : 'transaksi_detail';
 
+        let isDbSaved = false;
+
         try {
             await clientSupabase.from(tabelTransaksi).insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
@@ -1764,71 +2081,28 @@
             await clientSupabase.from(tabelDetail).insert(details);
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
-            if (btCharacteristic) {
-                btn.innerHTML = "MENCETAK NOTA...";
-                if (btnModal) btnModal.innerHTML = "MENCETAK NOTA...";
-                
-                let cetakCustomer = p.replace('[JENIS_CETAKAN]', ambilJudulNota(false));
-                await printToBT(cetakCustomer);
-                
-                await new Promise(r => setTimeout(r, 500)); 
-                
-                showCustomConfirm(
-                    "Cetak Lembar Admin",
-                    "Nota telah selesai dicetak.<br><br>Apakah Anda ingin lanjut mencetak Lembar Admin?",
-                    async () => {
-                        btn.innerHTML = "MENCETAK ADMIN...";
-                        if (btnModal) btnModal.innerHTML = "MENCETAK ADMIN...";
-                        let cetakAdmin = p.replace('[JENIS_CETAKAN]', '=== LEMBAR ADMIN ===');
-                        await printToBT(cetakAdmin);
-                        
-                        lastPrintText = p; 
-                        document.getElementById('btnReprint').disabled = false;
-                        btn.innerHTML = "MEMBUAT LAPORAN DIGITAL...";
-                        if (btnModal) btnModal.innerHTML = "MEMBUAT LAPORAN...";
-                        await buatGambarLaporan({
-                            noNota, tglIndo, ag, drvGabung, mobil: mobil || '-',
-                            itemsKirim, itemsRetur, tk, tr, ongkir,
-                            bl_input, tagihanBersih, cash, trf, sisa
-                        }, true); 
-                    },
-                    async () => {
-                        lastPrintText = p; 
-                        document.getElementById('btnReprint').disabled = false;
-                        btn.innerHTML = "MEMBUAT LAPORAN DIGITAL...";
-                        if (btnModal) btnModal.innerHTML = "MEMBUAT LAPORAN...";
-                        await buatGambarLaporan({
-                            noNota, tglIndo, ag, drvGabung, mobil: mobil || '-',
-                            itemsKirim, itemsRetur, tk, tr, ongkir,
-                            bl_input, tagihanBersih, cash, trf, sisa
-                        }, true);
-                    }
-                );
-            } else {
-                lastPrintText = p; 
-                document.getElementById('btnReprint').disabled = false;
-                btn.innerHTML = "MEMBUAT LAPORAN DIGITAL...";
-                if (btnModal) btnModal.innerHTML = "MEMBUAT LAPORAN...";
-                await buatGambarLaporan({
-                    noNota, tglIndo, ag, drvGabung, mobil: mobil || '-',
-                    itemsKirim, itemsRetur, tk, tr, ongkir,
-                    bl_input, tagihanBersih, cash, trf, sisa
-                }, true); 
-            }
+            isDbSaved = true;
+            lastPrintText = p;
+            lastDataStruk = {
+                noNota, tglIndo, ag, drvGabung, mobil: mobil || '-',
+                itemsKirim: [...itemsKirim], itemsRetur: [...itemsRetur], tk, tr, ongkir,
+                bl_input, tagihanBersih, cash, trf, sisa,
+                judulNota: ambilJudulNota(false)
+            };
 
-            btn.disabled = false;
-            if (btnModal) {
-                btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print';
-                btnModal.disabled = false;
-            }
+            // Tutup sheet preview jika sedang dibuka
+            closeSheet('sheetPreview');
+
+            // Buka popup modal ceklis aksi selesai terpadu
+            bukaModalAksiSelesai();
 
         } catch (e) {
-            showCustomAlert("Database Error", (e.message || e), "danger");
-            btn.innerHTML = '<i class="ph-bold ph-check-circle" style="font-size: 18px;"></i> SIMPAN & PRINT'; 
-            btn.disabled = false;
-            if (btnModal) { 
-                btnModal.innerHTML = '<i class="ph-bold ph-printer"></i> Simpan & Print'; 
-                btnModal.disabled = false; 
+            if (isDbSaved) {
+                showCustomAlert("Peringatan", "Data berhasil tersimpan ke Database, namun terjadi kendala lanjutan:<br><br>" + (e.message || e), "warning");
+                setTombolReprint();
+            } else {
+                showCustomAlert("Database Error", "Gagal menyimpan nota ke database:<br><br>" + (e.message || e), "danger");
+                resetTombolSimpan();
             }
         }
     }
