@@ -554,9 +554,9 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <button type="button" onclick="resetDeliveryForm()"
-                        class="w-full sm:w-auto px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition flex items-center justify-center gap-1.5 shadow-2xs">
-                        <i class="fas fa-plus-circle text-orange-500 text-xs"></i> Buat Pengiriman Baru
+                    <button type="button" onclick="resetDeliveryForm(true)"
+                        class="w-full sm:w-auto px-3 py-1.5 text-xs font-bold text-orange-600 hover:text-white bg-white hover:bg-orange-600 border border-orange-200 hover:border-orange-600 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer">
+                        <i class="fas fa-plus-circle text-xs"></i> Buat Pengiriman Baru
                     </button>
                 </div>
             </div>
@@ -609,7 +609,7 @@
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Nama Supir /
                                 Driver</label>
-                            <input type="text" id="delivDriverName" placeholder="Contoh: Pak Agus"
+                            <input type="text" id="delivDriverName" placeholder="Contoh: Homyung"
                                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/50 shadow-inner h-8">
                         </div>
                     </div>
@@ -618,7 +618,7 @@
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Kepada Yth. /
                                 Tujuan</label>
-                            <input type="text" id="delivDestination" value="Gudang Cabang Jambi (Bos Agus)"
+                            <input type="text" id="delivDestination" value="BOS Agus JAMBI"
                                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/50 shadow-inner h-8">
                         </div>
                         <div>
@@ -965,8 +965,31 @@
         <!-- Section: Riwayat Nota Database -->
         <div id="section-history" class="hide animate-fade-in">
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <div class="mb-4">
-                    <h2 class="font-bold text-xl text-slate-800">Database Nota Live</h2>
+                <div
+                    class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 border-b border-slate-100 pb-3">
+                    <div>
+                        <h2 class="font-bold text-xl text-slate-800 leading-tight">Database Nota Live</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Arsip data tersinkronisasi otomatis dari cloud
+                            database.</p>
+                    </div>
+                    <!-- Widget Summary Total Nota Aktif (seperti di Halaman Awal) -->
+                    <div
+                        class="relative bg-red-50 border border-red-200 px-4 py-2.5 rounded-2xl flex items-center gap-3 shadow-sm shadow-red-500/10 overflow-hidden w-full sm:w-auto">
+                        <div class="absolute inset-0 bg-red-500/15 animate-pulse duration-800 pointer-events-none">
+                        </div>
+                        <div
+                            class="relative z-10 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-500 shrink-0 text-sm">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <div class="relative z-10 flex flex-col overflow-hidden">
+                            <span class="text-[10px] font-bold text-red-400 uppercase tracking-wider mb-0.5">Total
+                                Piutang Aktif</span>
+                            <span id="headerTotalUnpaidNotes"
+                                class="text-sm sm:text-base font-bold text-red-600 leading-none whitespace-nowrap">
+                                Rp 0 <span class="text-xs italic font-semibold text-red-500/80">(0 Nota)</span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
@@ -1470,7 +1493,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                         title="Konversi Surat Jalan ini langsung ke Nota Penjualan">
                         <i class="fas fa-file-invoice-dollar"></i> Jadikan Nota
                     </button>
-                    <button type="button" onclick="downloadSuratJalanPNG()"
+                    <button type="button" id="btnDownloadSuratJalanPNG" onclick="downloadSuratJalanPNG(event)"
                         class="px-4 py-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center gap-1.5">
                         <i class="fas fa-file-image"></i> Simpan Gambar PNG
                     </button>
@@ -1758,7 +1781,23 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
         const formatRupiah = (angka) => new Intl.NumberFormat('id-ID').format(angka);
         const parseNumber = (str) => Number(String(str).replace(/[^0-9]/g, '')) || 0;
-        const getTodayDate = () => new Date().toISOString().split('T')[0];
+        const getTodayDate = () => {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // Fungsi pembersih keterangan item agar tidak terduplikasi tag [SJ-...]
+        function cleanItemNote(text) {
+            if (!text) return '';
+            let s = String(text).trim();
+            while (/^\[[^\]]*\]\s*/.test(s)) {
+                s = s.replace(/^\[[^\]]*\]\s*/, '').trim();
+            }
+            return s;
+        }
 
         const generateInvoiceNumber = () => {
             const randomNum = Math.floor(10000 + Math.random() * 90000);
@@ -2169,7 +2208,10 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             if (activeSec) activeSec.classList.remove('hide');
             if (activeBtn) activeBtn.classList.replace('tab-inactive', 'tab-active');
 
-            if (tab === 'history') fetchInvoicesFromDB();
+            if (tab === 'history') {
+                fetchInvoicesFromDB();
+                countTotalUnpaidNotes();
+            }
             if (tab === 'master') fetchMasterItems();
             if (tab === 'analytics') loadAnalyticsData();
             if (tab === 'delivery') initDeliverySection();
@@ -2674,6 +2716,18 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
         async function countTotalUnpaidNotes() {
             try {
+                // Render instan dari cache data yang sudah ada jika tersedia
+                if (typeof allInvoicesData !== 'undefined' && Array.isArray(allInvoicesData) && allInvoicesData.length > 0) {
+                    const unpaidInvs = allInvoicesData.filter(inv => Number(inv.remaining_amount) > 0);
+                    const localCount = unpaidInvs.length;
+                    const localTotal = unpaidInvs.reduce((sum, inv) => sum + Number(inv.remaining_amount || 0), 0);
+                    const localHtml = `Rp ${formatRupiah(localTotal)} <span class="text-sm italic font-semibold text-red-500/80">(${localCount} Nota)</span>`;
+                    const hEl = document.getElementById('headerTotalUnpaidNotes');
+                    if (hEl) hEl.innerHTML = localHtml;
+                    const wEl = document.getElementById('widgetTotalUnpaidNotes');
+                    if (wEl) wEl.innerHTML = localHtml;
+                }
+
                 const { data, count, error } = await db.from('invoices_jambi')
                     .select('remaining_amount', { count: 'exact' })
                     .gt('remaining_amount', 0);
@@ -4610,8 +4664,24 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             switchDeliverySubTab('history');
         }
 
+        // Sinkronisasi data deliveryItems dari elemen input DOM
+        function syncDeliveryItemsFromDOM() {
+            deliveryItems.forEach(item => {
+                const planInput = document.getElementById(`delivInputPlan_${item.id}`);
+                if (planInput && planInput.value !== undefined) {
+                    item.qtyPlanned = parseNumber(planInput.value) || 0;
+                }
+                const realInput = document.getElementById(`delivInputReal_${item.id}`);
+                if (realInput && realInput.value !== undefined) {
+                    item.qtyReal = parseNumber(realInput.value) || 0;
+                }
+            });
+            recalcDeliveryChecker();
+        }
+
         // TAHAP 1: Simpan Rencana Muat Terlebih Dahulu (Status: Menunggu Validasi)
         async function saveDeliveryPlanDraft() {
+            syncDeliveryItemsFromDOM();
             const itemsToSave = deliveryItems.filter(i => i.name && Number(i.qtyPlanned) > 0);
             if (itemsToSave.length === 0) {
                 alert("Harap masukkan minimal 1 barang dengan 'Qty Siap Muat' lebih dari 0!");
@@ -4654,7 +4724,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                     qtyPlanned: Number(i.qtyPlanned) || 0,
                     qtyReal: Number(i.qtyReal) || 0,
                     qtyRemaining: Math.max(0, (Number(i.qtyPlanned) || 0) - (Number(i.qtyReal) || 0)),
-                    note: i.note || ''
+                    note: cleanItemNote(i.note || '')
                 })),
                 total_planned: totalPlanned,
                 total_real: totalReal,
@@ -4679,16 +4749,19 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 const formattedDateSupabase = formatDateCustom(dateVal);
                 await db.from('table_kirimanjambi').delete().eq('mobil', truck).eq('tanggal', formattedDateSupabase);
 
-                const rowsToInsert = itemsToSave.map(i => ({
-                    tanggal: formattedDateSupabase,
-                    mobil: truck,
-                    nama_barang: i.name,
-                    qty: String(i.qtyPlanned || 0),
-                    uom: i.uom || 'Ball',
-                    keterangan: `[${noSJ}${driver ? ' | ' + driver : ''} | DRAFT] ${i.note || ''}`.trim(),
-                    total_terkirim: String(i.qtyReal || 0),
-                    sisa: String(Math.max(0, (Number(i.qtyPlanned) || 0) - (Number(i.qtyReal) || 0)))
-                }));
+                const rowsToInsert = itemsToSave.map(i => {
+                    const cleanNote = cleanItemNote(i.note || '');
+                    return {
+                        tanggal: formattedDateSupabase,
+                        mobil: truck,
+                        nama_barang: i.name,
+                        qty: String(i.qtyPlanned || 0),
+                        uom: i.uom || 'Ball',
+                        keterangan: cleanNote ? `[${noSJ}${driver ? ' | ' + driver : ''} | DRAFT] ${cleanNote}` : `[${noSJ}${driver ? ' | ' + driver : ''} | DRAFT]`,
+                        total_terkirim: String(i.qtyReal || 0),
+                        sisa: String(Math.max(0, (Number(i.qtyPlanned) || 0) - (Number(i.qtyReal) || 0)))
+                    };
+                });
 
                 const { error } = await db.from('table_kirimanjambi').insert(rowsToInsert);
                 if (error) console.warn("Supabase insert warning:", error.message);
@@ -4702,6 +4775,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
         // TAHAP 2: Simpan Hasil Validasi Checker (Status: Tervalidasi / Ada Sisa)
         async function saveDeliveryValidation(createSuratJalan = false) {
+            syncDeliveryItemsFromDOM();
             const itemsToSave = deliveryItems.filter(i => i.name && (Number(i.qtyPlanned) > 0 || Number(i.qtyReal) > 0));
             if (itemsToSave.length === 0) {
                 alert("Harap masukkan minimal 1 barang dengan jumlah siap muat atau real muat!");
@@ -4762,7 +4836,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                     qtyPlanned: Number(i.qtyPlanned) || 0,
                     qtyReal: Number(i.qtyReal) || 0,
                     qtyRemaining: Math.max(0, (Number(i.qtyPlanned) || 0) - (Number(i.qtyReal) || 0)),
-                    note: i.note || ''
+                    note: cleanItemNote(i.note || '')
                 })),
                 total_planned: totalPlanned,
                 total_real: totalReal,
@@ -4787,16 +4861,19 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 const formattedDateSupabase = formatDateCustom(dateVal);
                 await db.from('table_kirimanjambi').delete().eq('mobil', truck).eq('tanggal', formattedDateSupabase);
 
-                const rowsToInsert = itemsToSave.map(i => ({
-                    tanggal: formattedDateSupabase,
-                    mobil: truck,
-                    nama_barang: i.name,
-                    qty: String(i.qtyPlanned || 0),
-                    uom: i.uom || 'Ball',
-                    keterangan: `[${noSJ}${driver ? ' | ' + driver : ''}] ${i.note || ''}`.trim(),
-                    total_terkirim: String(i.qtyReal || 0),
-                    sisa: String(Math.max(0, (Number(i.qtyPlanned) || 0) - (Number(i.qtyReal) || 0)))
-                }));
+                const rowsToInsert = itemsToSave.map(i => {
+                    const cleanNote = cleanItemNote(i.note || '');
+                    return {
+                        tanggal: formattedDateSupabase,
+                        mobil: truck,
+                        nama_barang: i.name,
+                        qty: String(i.qtyPlanned || 0),
+                        uom: i.uom || 'Ball',
+                        keterangan: cleanNote ? `[${noSJ}${driver ? ' | ' + driver : ''}] ${cleanNote}` : `[${noSJ}${driver ? ' | ' + driver : ''}]`,
+                        total_terkirim: String(i.qtyReal || 0),
+                        sisa: String(Math.max(0, (Number(i.qtyPlanned) || 0) - (Number(i.qtyReal) || 0)))
+                    };
+                });
 
                 const { error } = await db.from('table_kirimanjambi').insert(rowsToInsert);
                 if (error) console.warn("Supabase insert warning:", error.message);
@@ -4806,11 +4883,14 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
             renderDeliveryHistoryTable();
 
-            if (createSuratJalan) {
-                openSuratJalanPreview(record);
-            } else {
-                alert(`Validasi muatan untuk Surat Jalan ${noSJ} berhasil disimpan!\nStatus: ${finalStatus}\nTotal Real Dimuat: ${totalReal} (Sisa Gudang: ${totalRemaining})`);
-            }
+            // 1. Reset form pengiriman ke mode baru
+            resetDeliveryForm(false);
+
+            // 2. Otomatis arahkan ke menu Riwayat Surat Jalan
+            switchDeliverySubTab('history');
+
+            // 3. Otomatis buka pratinjau cetak A5 yang baru saja dibuat
+            openSuratJalanPreview(record);
         }
 
         // Backward compatibility
@@ -4950,7 +5030,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 totalQtyReal += q;
                 const uom = i.uom || 'Ball';
                 uomSet.add(uom);
-                const noteText = i.note || i.keterangan || '';
+                const noteText = cleanItemNote(i.note || i.keterangan || '');
 
                 return `
                     <tr style="border-bottom: 1px solid #e2e8f0;">
@@ -5071,28 +5151,116 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         }
 
         // Download PNG Surat Jalan A5 Landscape
-        async function downloadSuratJalanPNG() {
-            const paper = document.getElementById('suratJalanPaper');
-            if (!paper) return;
-            try {
-                const docNo = document.getElementById('delivNumber')?.value || 'SJ';
-                const docDate = document.getElementById('delivDate')?.value || getTodayDate();
-                const driver = (document.getElementById('delivDriverName')?.value || 'Supir').replace(/[^a-zA-Z0-9]/g, '_');
+        // Dirender dari dokumen bersih berlebar tetap (bukan dari modal yang responsif),
+        // sehingga hasil gambar tidak terpotong & identik di HP maupun desktop.
+        async function downloadSuratJalanPNG(evt) {
+            const doc = currentActiveSuratJalanDoc;
+            if (!doc) {
+                alert("Data Surat Jalan tidak ditemukan. Silakan buka ulang pratinjau.");
+                return;
+            }
 
-                const canvas = await html2canvas(paper, {
+            const btn = (evt && evt.currentTarget) || document.getElementById('btnDownloadSuratJalanPNG');
+            const btnOriginalHTML = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            }
+
+            // Ukuran tetap A5 Landscape (rasio 1 : 1.414)
+            const PAGE_WIDTH = 1000;
+            const PAGE_MIN_HEIGHT = Math.round(PAGE_WIDTH / 1.414);
+
+            const wrapper = document.createElement('div');
+            wrapper.setAttribute('aria-hidden', 'true');
+            wrapper.style.cssText = [
+                'position: fixed', 'left: 0', 'top: 0', 'z-index: -9999',
+                'pointer-events: none', 'margin: 0', 'padding: 0',
+                `width: ${PAGE_WIDTH}px`, 'background: #ffffff'
+            ].join(';');
+
+            const page = document.createElement('div');
+            page.style.cssText = [
+                `width: ${PAGE_WIDTH}px`, `min-height: ${PAGE_MIN_HEIGHT}px`,
+                'padding: 36px 40px', 'box-sizing: border-box',
+                'background: #ffffff', 'color: #0f172a',
+                'border: none', 'border-radius: 0', 'box-shadow: none',
+                'transform: none', 'filter: none'
+            ].join(';');
+            page.innerHTML = renderSuratJalanHTML(doc);
+
+            // Lepas batas max-width template agar memenuhi lebar halaman A5
+            const inner = page.firstElementChild;
+            if (inner) {
+                inner.style.maxWidth = '100%';
+                inner.style.width = '100%';
+            }
+
+            wrapper.appendChild(page);
+            document.body.appendChild(wrapper);
+
+            try {
+                if (document.fonts && document.fonts.ready) {
+                    await document.fonts.ready;
+                }
+                await new Promise(r => requestAnimationFrame(() => setTimeout(r, 150)));
+
+                const fullWidth = page.scrollWidth;
+                const fullHeight = page.scrollHeight;
+
+                const canvas = await html2canvas(page, {
                     scale: 2,
                     backgroundColor: '#ffffff',
                     useCORS: true,
-                    logging: false
+                    logging: false,
+                    width: fullWidth,
+                    height: fullHeight,
+                    windowWidth: Math.max(fullWidth + 80, 1200),
+                    windowHeight: Math.max(fullHeight + 80, window.innerHeight),
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: (clonedDoc) => {
+                        // Pastikan hasil gambar selalu tampilan terang (tidak terpengaruh Mode Gelap)
+                        clonedDoc.body.classList.remove('dark-mode');
+                    }
                 });
 
+                const safe = (s, fb) => (String(s || fb).replace(/[^a-zA-Z0-9-]/g, '_'));
+                const fileName = `SuratJalan_${safe(doc.no_surat_jalan, 'SJ')}_${safe(doc.tanggal, getTodayDate())}_${safe(doc.supir, 'Supir')}.png`;
+
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                if (!blob) throw new Error("Gagal membuat file gambar.");
+
+                // Mobile: gunakan menu Share bawaan (bisa langsung simpan ke Galeri / kirim WA)
+                const file = (typeof File !== 'undefined') ? new File([blob], fileName, { type: 'image/png' }) : null;
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile && file && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({ files: [file], title: fileName });
+                        return;
+                    } catch (shareErr) {
+                        if (shareErr && shareErr.name === 'AbortError') return;
+                        // lanjut ke unduhan biasa
+                    }
+                }
+
+                const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                link.download = `SuratJalan_${docNo}_${docDate}_${driver}.png`;
-                link.href = canvas.toDataURL('image/png');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(url), 4000);
             } catch (err) {
                 alert("Gagal mengunduh gambar Surat Jalan: " + err.message);
                 console.error(err);
+            } finally {
+                if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = btnOriginalHTML;
+                }
             }
         }
 
@@ -5109,6 +5277,14 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         // Ambil data riwayat dari Supabase + LocalStorage
         async function fetchDeliveryRecords() {
             let localRecords = getSavedDeliveryRecords();
+            // Bersihkan format keterangan pada data lama jika ada yang masih menyimpan tag [SJ-...]
+            localRecords.forEach(r => {
+                if (r.items && Array.isArray(r.items)) {
+                    r.items.forEach(item => {
+                        item.note = cleanItemNote(item.note);
+                    });
+                }
+            });
 
             try {
                 const { data, error } = await db.from('table_kirimanjambi').select('*').order('id', { ascending: false });
@@ -5160,7 +5336,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                                     qtyPlanned: qP,
                                     qtyReal: qR,
                                     qtyRemaining: s,
-                                    note: gi.keterangan || ''
+                                    note: cleanItemNote(gi.keterangan || '')
                                 };
                             });
 
@@ -5546,7 +5722,8 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
             const dateEl = document.getElementById('invoiceDate');
             if (dateEl) {
-                dateEl.value = record.tanggal || getTodayDate();
+                // Otomatiskan tanggal sesuai date now pada device
+                dateEl.value = getTodayDate();
             }
 
             const noteEl = document.getElementById('shippingNote');
@@ -5561,15 +5738,16 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 const defaultPrice = master && master.default_price ? Number(master.default_price) : 0;
                 const uom = g.uom || (master ? master.uom : 'Ball');
                 const qtyVal = Number(g.qtyReal || g.qty || 0);
+                const cleanNote = cleanItemNote(g.note || g.keterangan || '');
 
                 return {
                     id: Date.now() + Math.random(),
                     qty: qtyVal,
                     name: itemName,
-                    note: g.note || '',
+                    note: cleanNote,
                     uom: uom,
                     price: defaultPrice,
-                    showNote: !!g.note
+                    showNote: !!cleanNote
                 };
             });
 
@@ -5684,13 +5862,13 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         }
 
         // Reset form pengiriman ke mode baru
-        function resetDeliveryForm() {
+        function resetDeliveryForm(shouldSwitchTab = true) {
             currentEditingDeliveryId = null;
             generateNewDeliveryNumber();
             document.getElementById('delivDate').value = getTodayDate();
             document.getElementById('delivTruckPlate').value = '';
             document.getElementById('delivDriverName').value = '';
-            document.getElementById('delivDestination').value = 'Gudang Cabang Jambi (Bos Agus)';
+            document.getElementById('delivDestination').value = 'BOS Agus JAMBI';
             document.getElementById('delivNotes').value = '';
 
             const badge = document.getElementById('deliveryEditModeBadge');
@@ -5700,6 +5878,14 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             addDeliveryRow();
             addDeliveryRow();
             setDeliveryStep('plan');
+
+            if (shouldSwitchTab) {
+                switchDeliverySubTab('form');
+                const formView = document.getElementById('deliv-view-form');
+                if (formView) {
+                    formView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
         }
 
         // Format tanggal lengkap Indonesia (cth: Jumat, 02 Oktober 2026)
