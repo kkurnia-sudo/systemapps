@@ -1861,7 +1861,9 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
                     class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl border border-gray-200 dark:border-slate-700 space-y-6 relative shadow-sm">
                     <div class="border-b border-gray-100 dark:border-slate-700 pb-4 flex justify-between items-start">
                         <div>
-                            <h2 class="text-lg sm:text-xl font-bold text-rose-600">NOTA PLASTIK / LAINNYA</h2>
+                            <h2 class="text-lg sm:text-xl font-bold text-rose-600">NOTA</h2>
+                            <p id="previewNotaJudul"
+                                class="text-sm font-bold text-gray-800 dark:text-gray-100 mt-1 hidden"></p>
                             <p class="text-xs text-gray-500 font-medium mt-1">SBR Putra Food</p>
                         </div>
                         <div class="text-right">
@@ -4215,6 +4217,7 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
             const t = f.reduce((s, i) => s + i.jml, 0);
 
             document.getElementById('previewNotaTgl').innerText = `Tgl: ${formatTgl(tgl)}`;
+            setPreviewNotaJudul(document.getElementById('notaA6Judul').value);
             document.getElementById('previewNotaTotal').innerText = formatRupiah(t);
 
             let terpakai = 0;
@@ -4349,11 +4352,20 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
             toggleModal('modalNotaA6');
         }
 
+        function setPreviewNotaJudul(judul) {
+            const el = document.getElementById('previewNotaJudul');
+            if (!el) return;
+            const j = (judul || '').trim();
+            el.innerText = j;
+            el.classList.toggle('hidden', j === '');
+        }
+
         async function bukaPreviewNotaKeluar(id, source = 'aktif') {
             const r = source === 'riwayat' ? globalRiwayatNotaKeluar.find(x => x.id == id) : globalNotaKeluar.find(x => x.id == id);
             if (!r) return;
 
             document.getElementById('previewNotaTgl').innerText = `Tgl: ${formatTgl(r.tanggal)}`;
+            setPreviewNotaJudul(r.judul_nota);
             document.getElementById('previewNotaTotal').innerText = formatRupiah(r.total_nominal);
             const sisaSaldo = r.total_nominal - (r.terpakai || 0);
             const elSisa = document.getElementById('previewNotaSisa');
