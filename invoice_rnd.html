@@ -174,6 +174,46 @@
         #previewContent table { min-width: 100% !important; width: 100%; table-layout: auto; }
 
         /* ========================================================================= */
+        /* GAYA EKSPOR PNG — hanya berlaku saat wrapper #pngExportWrap aktif         */
+        /* Menimpa aturan mobile (!important) agar gambar tetap besar & terbaca.     */
+        /* Lebar TETAP 750px; tinggi mengikuti isi (tanpa dipaksa kotak 1:1).        */
+        /* ========================================================================= */
+        #pngExportWrap { width: 750px; padding: 30px 28px; box-sizing: border-box; background: #ffffff; }
+        #pngExportWrap #previewContent { padding: 0 !important; border: none !important; border-radius: 0 !important; background-color: #ffffff !important; }
+
+        /* PENTING — Perbaikan bug "tanggal hilang" saat ekspor PNG.
+           Aturan global #previewContent * memaksa background-color putih pada SEMUA elemen.
+           Saat dirender html2canvas, kotak putih opak tiap elemen anak menutupi teks
+           tanggal/badge yang kebetulan digambar lebih dulu. Aturannya hanya di dalam
+           wrapper ekspor ini, latar dibuat transparan (kanvas sudah putih). */
+        #pngExportWrap #previewContent * { background-color: transparent !important; }
+        #pngExportWrap #previewContent { background-color: #ffffff !important; }
+        #pngExportWrap #previewContent img { background-color: transparent !important; }
+
+        /* Kop surat */
+        #pngExportWrap #previewContent img { width: 64px !important; height: 64px !important; }
+        #pngExportWrap #previewContent h2 { font-size: 30px !important; }
+        #pngExportWrap #previewContent h3 { font-size: 26px !important; }
+        #pngExportWrap #previewContent h4 { font-size: 21px !important; }
+        #pngExportWrap #previewContent p { font-size: 16px !important; }
+        #pngExportWrap #previewContent #prevInvNo,
+        #pngExportWrap #previewContent #prevDate { font-size: 18px !important; }
+
+        /* Tabel rincian barang */
+        #pngExportWrap #previewContent table th { font-size: 17px !important; padding: 14px 8px !important; }
+        #pngExportWrap #previewContent table td { font-size: 20px !important; padding: 16px 8px !important; }
+        #pngExportWrap #previewContent #prevItemsBody td span { font-size: 16px !important; padding: 3px 8px !important; }
+
+        /* Ringkasan subtotal / deposit / sisa bayar */
+        #pngExportWrap #previewContent .summary-table-container table { font-size: 19px !important; }
+        #pngExportWrap #previewContent .summary-table-container td { padding: 7px 6px !important; }
+        #pngExportWrap #previewContent #prevBalanceLabel,
+        #pngExportWrap #previewContent #prevBalance { font-size: 23px !important; padding-top: 16px !important; }
+
+        /* Penutup */
+        #pngExportWrap #previewContent > div:last-child { font-size: 16px !important; margin-top: 34px !important; }
+
+        /* ========================================================================= */
         /* OPTIMASI KHUSUS MOBILE ANDROID                                            */
         /* ========================================================================= */
         @media (max-width: 768px) {
@@ -187,33 +227,25 @@
                 padding: 12px 14px !important; 
             }
 
-            /* GANTI ATAU TAMBAHKAN BAGIAN INI PADA TAG <style> */
-			.top-actions {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 10px;
-				margin-bottom: 20px;
-				align-items: stretch; /* Memaksa semua tombol lurus dengan tinggi yang sama persis */
-			}
-
-			.top-actions .btn {
-				flex: 1;
-				min-height: 44px; /* Hitbox standar ramah kursor dan jempol */
-				padding: 10px 16px;
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				gap: 8px;
-				font-size: 13px;
-				font-weight: 600;
-				line-height: 1;
-			}
-
-			.top-actions .btn-theme-toggle {
-				width: 44px;
-				height: 44px;
-				flex: 0 0 44px;
-			}
+            /* Tombol Menu Atas Ramah Jempol 2 Kolom */
+            .top-actions { 
+                display: grid !important; 
+                grid-template-columns: 1fr 1fr; 
+                gap: 8px; 
+                margin-bottom: 14px; 
+            }
+            .top-actions .btn { 
+                width: 100%; 
+                padding: 11px 8px; 
+                font-size: 12px; 
+                border-radius: 10px; 
+            }
+            .top-actions .btn-theme-toggle {
+                grid-column: span 2;
+                width: 100%;
+                height: 40px;
+                border-radius: 10px;
+            }
 
             .header { flex-direction: column; text-align: center; gap: 10px; padding: 16px 12px; }
             .brand-section { flex-direction: column; text-align: center; gap: 8px; }
@@ -297,7 +329,7 @@
             <div class="success-icon">✓</div>
             <h4 id="popupSuccessText" style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Berhasil!</h4>
             <p id="popupSuccessSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">Data berhasil diproses.</p>
-            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="closePopup()">OK</button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="handleSuccessPopupOk()">OK</button>
         </div>
         <div id="popupWarningState" style="display: none;">
             <div class="warning-icon">⚠️</div>
@@ -318,25 +350,19 @@
 </div>
 
 <div class="container" id="invoiceContainer">
-	<!-- MENU ATAS RAMAH JEMPOL & PRESISI (LURUS SEJAJAR) -->
+    <!-- MENU ATAS 2 KOLOM RAMAH JEMPOL ANDROID -->
     <div class="top-actions">
         <button class="btn btn-top-data" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);" onclick="openQuickPayModal()" title="Quick Pay">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <span>Quick Pay</span>
+            ⚡ Quick Pay
         </button>
         <button class="btn btn-top-history" onclick="openHistoryModal()" title="Riwayat Invoice">
-            <svg class="humbleicons hi-history" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7.5v5l4 1M4.252 5v4H8M5.07 8a8 8 0 1 1-.818 6"/></svg>
-            <span>Riwayat</span>
+            <svg class="humbleicons hi-history" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7.5v5l4 1M4.252 5v4H8M5.07 8a8 8 0 1 1-.818 6"/></svg> Riwayat
         </button>
         <button class="btn btn-top-print" onclick="window.print()" title="Cetak / Print PDF">
-            <svg class="humbleicons hi-print" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M8 17H5a1 1 0 0 1-1-1v-5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a1 1 0 0 1-1 1h-3M8 4h8v5H8V4zm0 11h8v4H8v-4z"/><circle cx="7" cy="12" r="1" fill="currentColor"/></svg>
-            <span>Cetak</span>
+            <svg class="humbleicons hi-print" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M8 17H5a1 1 0 0 1-1-1v-5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a1 1 0 0 1-1 1h-3M8 4h8v5H8V4zm0 11h8v4H8v-4z"/><circle cx="7" cy="12" r="1" fill="currentColor"/></svg> Cetak
         </button>
         <button class="btn btn-top-data" onclick="toggleModal('dataModal')" title="Data Master">
-            <svg class="humbleicons hi-cog-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 0a7 7 0 0 0-7 7m7-7a7 7 0 0 1 7 7m0 0h2m-2 0a7 7 0 0 1-7 7m0 0v2m0-2a7 7 0 0 1-7-7m0 0H3m4.5-7.794 1 1.732M18.062 8.5l1.732-1M15.5 18.062l1 1.732M5.938 15.5l-1.732 1m0-9 1.732 1M15.5 5.938l1-1.732M18.062 15.5l1.732 1M8.5 18.062l-1 1.732M12 12 7 7.101M12 12l-1.812 6.762M12 12l6.762-1.812"/></svg>
-            <span>Data Master</span>
+            <svg class="humbleicons hi-cog-2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 0a7 7 0 0 0-7 7m7-7a7 7 0 0 1 7 7m0 0h2m-2 0a7 7 0 0 1-7 7m0 0v2m0-2a7 7 0 0 1-7-7m0 0H3m4.5-7.794 1 1.732M18.062 8.5l1.732-1M15.5 18.062l1 1.732M5.938 15.5l-1.732 1m0-9 1.732 1M15.5 5.938l1-1.732M18.062 15.5l1.732 1M8.5 18.062l-1 1.732M12 12 7 7.101M12 12l-1.812 6.762M12 12l6.762-1.812"/></svg> Data Master
         </button>
         <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema Gelap/Terang">
             <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -514,10 +540,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
                 <div><p style="font-size: 12px; color: #555; margin: 0;">Ditagihkan Kepada:</p><h4 style="font-size: 14px; font-weight: 700; margin: 4px 0;" id="prevCustName">-</h4><p style="font-size: 12px; margin: 0;" id="prevCustPhone">-</p><p style="font-size: 12px; margin: 0;" id="prevCustAddress">-</p></div>
-                <div style="text-align: right;">
-					<p style="font-size: 12px; color: #555; margin: 0;">Tanggal Terbit:</p>
-					<p style="font-size: 15.6px; font-weight: 700; margin: 4px 0 0 0;" id="prevDate">-</p>
-				</div>
+                <div style="text-align: right;"><p style="font-size: 12px; color: #555; margin: 0;">Tanggal Terbit:</p><p style="font-size: 13px; font-weight: 600; margin: 4px 0 0 0;" id="prevDate">-</p></div>
             </div>
             <!-- Tabel Pratinjau dengan Kolom Qty di Kiri -->
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
@@ -543,9 +566,9 @@
                     </tr>
                     <tbody id="prevDepositBody"></tbody>
                     <tr>
-						<td style="padding: 12px 4px 4px 4px; font-weight: 800; font-size: 17.5px; border-top: 2px solid #000;" id="prevBalanceLabel">STATUS PEMBAYARAN</td>
-						<td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 17.5px; border-top: 2px solid #000; font-style: italic; white-space: nowrap;" id="prevBalance">-</td>
-					</tr>
+                        <td style="padding: 12px 4px 4px 4px; font-weight: 700; font-size: 15px; border-top: 2px solid #000;" id="prevBalanceLabel">SISA PEMBAYARAN</td>
+                        <td style="padding: 12px 4px 4px 4px; text-align: right; font-weight: 800; font-size: 15px; border-top: 2px solid #000; color: #10b981!important; font-style: italic; white-space: nowrap;" id="prevBalance">-</td>
+                    </tr>
                 </table>
             </div>
             <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #777;"><p>Terima Kasih Atas Kepercayaannya<br>Mulus Rahayu, Berkah Salamet<br>**SBR SYSTEMS**</p></div>
@@ -557,7 +580,7 @@
                 <button class="btn btn-primary" id="btnSaveInvoicePreview" onclick="simpanInvoiceAndClose()" style="flex: 1;">💾 Simpan</button>
             </div>
             <div style="display: flex; gap: 10px; width: 100%; margin-top: 6px;">
-                <button class="btn btn-secondary" onclick="exportToPNG()" title="Simpan PNG Rasio 1:1" style="flex: 1;">🖼️ Gambar PNG (1:1)</button>
+                <button class="btn btn-secondary" onclick="exportToPNG()" title="Simpan gambar PNG (lebar tetap, font besar)" style="flex: 1;">🖼️ Gambar PNG (HD)</button>
                 <button class="btn btn-danger" onclick="exportToPDF()" title="Simpan PDF" style="flex: 1;">📄 Berkas PDF</button>
             </div>
         </div>
@@ -822,7 +845,14 @@
         document.getElementById('popupOverlay').classList.add('active');
     }
 
-    function showSuccessPopup(title = "Berhasil!", subtitle = "Data berhasil diproses.") {
+    // Callback opsional yang dijalankan saat tombol popup sukses ditekan.
+    let _popupSuccessCallback = null;
+
+    function showSuccessPopup(title = "Berhasil!", subtitle = "Data berhasil diproses.", onSuccess = null) {
+        _popupSuccessCallback = typeof onSuccess === 'function' ? onSuccess : null;
+        const okBtn = document.querySelector('#popupSuccessState .btn');
+        if (okBtn) okBtn.textContent = _popupSuccessCallback ? 'Lihat Pratinjau →' : 'OK';
+
         document.getElementById('popupSuccessText').innerText = title;
         document.getElementById('popupSuccessSubtext').innerText = subtitle;
         document.getElementById('popupLoadingState').style.display = 'none';
@@ -844,6 +874,16 @@
 
     function closePopup() {
         document.getElementById('popupOverlay').classList.remove('active');
+    }
+
+    // Dijalankan saat tombol pada popup sukses ditekan: tutup popup lalu lanjutkan aksi (mis. buka pratinjau).
+    function handleSuccessPopupOk() {
+        const cb = _popupSuccessCallback;
+        _popupSuccessCallback = null;
+        const okBtn = document.querySelector('#popupSuccessState .btn');
+        if (okBtn) okBtn.textContent = 'OK';
+        closePopup();
+        if (cb) setTimeout(cb, 260); // beri jeda agar popup benar-benar tertutup
     }
 
     function buatInvoiceBaru() {
@@ -1008,42 +1048,6 @@
             const { data, error } = await supabaseClient.from('invoices').select('balance_due').eq('customer_name', customerName).order('created_at', { ascending: false }).limit(1);
             if (!error && data && data.length > 0) return parseFloat(data[0].balance_due) || 0;
         } catch (err) {} return 0;
-    }
-	
-	// Format tanggal dd/mmm/yyyy (Contoh: 25/Sept/2026)
-    function formatInvoiceDate(dateString) {
-        if (!dateString) return '-';
-        const monthsCustom = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sept', 'Okt', 'Nov', 'Des'];
-
-        if (typeof dateString === 'string' && dateString.length >= 10 && dateString.includes('-')) {
-            const parts = dateString.substring(0, 10).split('-');
-            if (parts.length === 3) {
-                const day = String(parseInt(parts[2], 10)).padStart(2, '0');
-                const mmm = monthsCustom[parseInt(parts[1], 10) - 1] || parts[1];
-                const yyyy = parts[0];
-                return `${day}/${mmm}/${yyyy}`;
-            }
-        }
-
-        const d = new Date(dateString);
-        if (isNaN(d.getTime())) return dateString;
-
-        const day = String(d.getDate()).padStart(2, '0');
-        const mmm = monthsCustom[d.getMonth()] || 'Jan';
-        const yyyy = d.getFullYear();
-        return `${day}/${mmm}/${yyyy}`;
-    }
-
-    // Penentuan label, teks, dan warna status (LUNAS = Hijau, SISA TAGIHAN = Merah)
-    function getBalanceStatus(amount) {
-        const val = Math.round(parseFloat(amount) || 0);
-        if (val === 0) {
-            return { label: 'STATUS PEMBAYARAN', text: 'LUNAS', color: '#10b981' };
-        } else if (val > 0) {
-            return { label: 'Sisa Tagihan (Due)', text: formatMoney(val), color: '#ef4444' };
-        } else {
-            return { label: 'Deposit / Kelebihan Bayar', text: formatMoney(Math.abs(val)), color: '#3b82f6' };
-        }
     }
 
     // Penyesuaian Kolom QTY di Kiri pada Baris Piutang
@@ -1328,7 +1332,7 @@
                         </tr>`;
                     } else {
                         const destText = item.destination && item.destination !== "MANUAL" ? ` <br><span style="font-size: 11px; color: #777;">Tujuan: ${item.destination}</span>` : '';
-                        const dateText = showDateOnItems ? `<span style="font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #333; margin-right: 6px; display: inline-block; font-weight: 500;">${formatInvoiceDate(item.tanggal)}</span>` : '';
+                        const dateText = showDateOnItems ? `<span style="font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #333; margin-right: 6px; display: inline-block; font-weight: 500;">${formatCustomDate(item.tanggal)}</span>` : '';
                         const descText = item.keterangan ? `<br><span style="font-size: 11px; color: #555; font-style: italic;">Ket: ${item.keterangan}</span>` : '';
                         
                         itemsHtml += `<tr>
@@ -1342,45 +1346,37 @@
             }
 
             if (depositHtml === '' && totalDeposit > 0) {
-                depositHtml = `<tr><td style="padding: 4px; color: #555;">Deposit</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic; white-space: nowrap;">- ${formatMoney(totalDeposit)}</td></tr>`;
+                depositHtml = `<tr><td style="padding: 4px; color: #555;">Deposit</td><td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic;">- ${formatMoney(totalDeposit)}</td></tr>`;
             }
 
-            const status = getBalanceStatus(balanceDue);
-
-            const prevInvNoEl = document.getElementById('prevInvNo');
-            if (prevInvNoEl) prevInvNoEl.innerText = invData.invoice_no; 
-
-            const prevCustNameEl = document.getElementById('prevCustName');
-            if (prevCustNameEl) prevCustNameEl.innerText = invData.customer_name;
-
-            const prevCustPhoneEl = document.getElementById('prevCustPhone');
-            if (prevCustPhoneEl) prevCustPhoneEl.innerText = invData.customer_phone || '-'; 
-
-            const prevCustAddressEl = document.getElementById('prevCustAddress');
-            if (prevCustAddressEl) prevCustAddressEl.innerText = invData.customer_address || '-';
-
-            const prevDateEl = document.getElementById('prevDate');
-            if (prevDateEl) prevDateEl.innerText = formatInvoiceDate(invData.created_at);
+            document.getElementById('prevInvNo').innerText = invData.invoice_no; 
+            document.getElementById('prevCustName').innerText = invData.customer_name;
+            document.getElementById('prevCustPhone').innerText = invData.customer_phone || '-'; 
+            document.getElementById('prevCustAddress').innerText = invData.customer_address || '-';
+            document.getElementById('prevDate').innerText = formatCustomDate(invData.created_at);
             
-            const prevItemsBodyEl = document.getElementById('prevItemsBody');
-            if (prevItemsBodyEl) prevItemsBodyEl.innerHTML = itemsHtml; 
-
-            const prevSubtotalEl = document.getElementById('prevSubtotal');
-            if (prevSubtotalEl) prevSubtotalEl.innerText = formatMoney(subtotal);
-
-            const prevDepositBodyEl = document.getElementById('prevDepositBody');
-            if (prevDepositBodyEl) prevDepositBodyEl.innerHTML = depositHtml; 
+            document.getElementById('prevItemsBody').innerHTML = itemsHtml; 
+            document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
+            document.getElementById('prevDepositBody').innerHTML = depositHtml; 
             
             const prevBalanceLabel = document.getElementById('prevBalanceLabel');
             const prevBalanceValue = document.getElementById('prevBalance');
+            const prevBalanceRow = prevBalanceLabel.parentElement; 
             
-            if (prevBalanceLabel) {
-                prevBalanceLabel.innerText = status.label;
-                prevBalanceLabel.style.setProperty('color', status.color, 'important');
-            }
-            if (prevBalanceValue) {
-                prevBalanceValue.innerText = status.text;
-                prevBalanceValue.style.setProperty('color', status.color, 'important');
+            if (balanceDue === subtotal) {
+                prevBalanceRow.style.display = 'none';
+            } else {
+                prevBalanceRow.style.display = 'table-row'; 
+                if (balanceDue < 0) {
+                    prevBalanceLabel.innerText = 'KELEBIHAN BAYAR (DEPOSIT)';
+                    prevBalanceValue.innerText = formatMoney(Math.abs(balanceDue));
+                } else if (balanceDue === 0) {
+                    prevBalanceLabel.innerText = 'STATUS PEMBAYARAN';
+                    prevBalanceValue.innerText = 'LUNAS';
+                } else {
+                    prevBalanceLabel.innerText = 'SISA PEMBAYARAN';
+                    prevBalanceValue.innerText = formatMoney(balanceDue);
+                }
             }
 
             const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
@@ -1391,7 +1387,6 @@
             toggleModal('previewModal');
 
         } catch (err) { 
-            closePopup();
             showWarningPopup("Terjadi Kesalahan", "Gagal memuat pratinjau: " + err.message); 
         }
     }
@@ -2141,11 +2136,17 @@
     }
 
     function openPreviewModal() {
-        if(!currentCustomerId) return showWarningPopup("Pilih Agen!", "Pilih Agen terlebih dahulu sebelum melakukan pratinjau!");
+        if (!renderPreviewFromEditor()) return;
+        toggleModal('previewModal');
+    }
+
+    // Bangun isi pratinjau dari form editor. Return true bila berhasil, false bila data belum valid.
+    function renderPreviewFromEditor() {
+        if(!currentCustomerId) { showWarningPopup("Pilih Agen!", "Pilih Agen terlebih dahulu sebelum melakukan pratinjau!"); return false; }
         
         window.isPreviewFromHistory = false; 
 
-        const invoiceNo = document.getElementById('invoiceNumber') ? document.getElementById('invoiceNumber').value : '';
+        const invoiceNo = document.getElementById('invoiceNumber').value;
         const customer = customers.find(c => c.id === currentCustomerId);
         const rows = document.querySelectorAll('#itemsBody tr');
         
@@ -2158,20 +2159,20 @@
             const descInput = row.querySelector('.item-desc');
             const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
             const price = parseFloat(row.querySelector('.item-price').value) || 0; 
-            const unit = row.querySelector('.item-unit') ? row.querySelector('.item-unit').value : '';
+            const unit = row.querySelector('.item-unit').value;
             const dest = row.querySelector('.item-destination') ? row.querySelector('.item-destination').value : ''; 
-            const itemDate = row.querySelector('.item-date') ? row.querySelector('.item-date').value : '';
+            const itemDate = row.querySelector('.item-date').value;
             const desc = descInput ? descInput.value.trim() : '';
             const total = qty * price; 
             
-            if (prodSelect && prodSelect.value && qty > 0) {
+            if (prodSelect.value && qty > 0) {
                 subtotal += total;
                 validItems.push({ prodSelect, qty, price, unit, dest, itemDate, desc, total });
                 if (itemDate) uniqueDates.add(itemDate);
             }
         });
         
-        if(validItems.length === 0 && depositList.length === 0) return showWarningPopup("Data Kosong!", "Belum ada rincian barang atau deposit yang ditambahkan!");
+        if(validItems.length === 0 && depositList.length === 0) { showWarningPopup("Data Kosong!", "Belum ada rincian barang atau deposit yang ditambahkan!"); return false; }
 
         const showDateOnItems = uniqueDates.size > 1;
 
@@ -2180,7 +2181,7 @@
             const prodName = item.prodSelect.options[item.prodSelect.selectedIndex].getAttribute('data-name');
             const isPakRachmat = customer && customer.name === 'Pak Rachmat RnD';
             const destText = (isPakRachmat && item.dest && item.dest !== "MANUAL") ? ` <br><span style="font-size: 11px; color: #777;">Tujuan: ${item.dest}</span>` : '';
-            const dateText = showDateOnItems ? `<span style="font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #333; margin-right: 6px; display: inline-block; font-weight: 500;">${formatInvoiceDate(item.itemDate)}</span>` : '';
+            const dateText = showDateOnItems ? `<span style="font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #333; margin-right: 6px; display: inline-block; font-weight: 500;">${formatCustomDate(item.itemDate)}</span>` : '';
             const descText = item.desc ? `<br><span style="font-size: 11px; color: #555; font-style: italic;">Ket: ${item.desc}</span>` : '';
             
             itemsHtml += `<tr>
@@ -2191,52 +2192,39 @@
             </tr>`;
         });
 
-        let totalDeposit = 0; 
-        let depositHtml = '';
-        depositList.forEach(dep => { 
-            totalDeposit += dep.nom; 
-            depositHtml += `<tr>
-                <td style="padding: 4px; color: #555;">${dep.ket}</td>
-                <td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic; white-space: nowrap;">- ${formatMoney(dep.nom)}</td>
-            </tr>`; 
-        });
+        let totalDeposit = 0; let depositHtml = '';
+        depositList.forEach(dep => { totalDeposit += dep.nom; depositHtml += `<tr>
+            <td style="padding: 4px; color: #555;">${dep.ket}</td>
+            <td style="padding: 4px; text-align: right; color: #dc2626; font-weight: 600; font-style: italic; white-space: nowrap;">- ${formatMoney(dep.nom)}</td>
+        </tr>`; });
         const balanceDue = subtotal - totalDeposit;
-        const status = getBalanceStatus(balanceDue);
 
-        const prevInvNoEl = document.getElementById('prevInvNo');
-        if (prevInvNoEl) prevInvNoEl.innerText = invoiceNo; 
+        document.getElementById('prevInvNo').innerText = invoiceNo; document.getElementById('prevCustName').innerText = customer.name;
+        document.getElementById('prevCustPhone').innerText = customer.phone || '-'; document.getElementById('prevCustAddress').innerText = customer.address || '-';
+        document.getElementById('prevDate').innerText = formatCustomDate(new Date());
         
-        const prevCustNameEl = document.getElementById('prevCustName');
-        if (prevCustNameEl && customer) prevCustNameEl.innerText = customer.name;
-        
-        const prevCustPhoneEl = document.getElementById('prevCustPhone');
-        if (prevCustPhoneEl) prevCustPhoneEl.innerText = (customer && customer.phone) ? customer.phone : '-'; 
-        
-        const prevCustAddressEl = document.getElementById('prevCustAddress');
-        if (prevCustAddressEl) prevCustAddressEl.innerText = (customer && customer.address) ? customer.address : '-';
-        
-        const prevDateEl = document.getElementById('prevDate');
-        if (prevDateEl) prevDateEl.innerText = formatInvoiceDate(new Date());
-        
-        const prevItemsBodyEl = document.getElementById('prevItemsBody');
-        if (prevItemsBodyEl) prevItemsBodyEl.innerHTML = itemsHtml; 
-        
-        const prevSubtotalEl = document.getElementById('prevSubtotal');
-        if (prevSubtotalEl) prevSubtotalEl.innerText = formatMoney(subtotal);
-        
-        const prevDepositBodyEl = document.getElementById('prevDepositBody');
-        if (prevDepositBodyEl) prevDepositBodyEl.innerHTML = depositHtml; 
+        document.getElementById('prevItemsBody').innerHTML = itemsHtml; 
+        document.getElementById('prevSubtotal').innerText = formatMoney(subtotal);
+        document.getElementById('prevDepositBody').innerHTML = depositHtml; 
         
         const prevBalanceLabel = document.getElementById('prevBalanceLabel');
         const prevBalanceValue = document.getElementById('prevBalance');
+        const prevBalanceRow = prevBalanceLabel.parentElement; 
         
-        if (prevBalanceLabel) {
-            prevBalanceLabel.innerText = status.label;
-            prevBalanceLabel.style.setProperty('color', status.color, 'important');
-        }
-        if (prevBalanceValue) {
-            prevBalanceValue.innerText = status.text;
-            prevBalanceValue.style.setProperty('color', status.color, 'important');
+        if (balanceDue === subtotal) {
+            prevBalanceRow.style.display = 'none';
+        } else {
+            prevBalanceRow.style.display = 'table-row'; 
+            if (balanceDue < 0) {
+                prevBalanceLabel.innerText = 'KELEBIHAN BAYAR (DEPOSIT)';
+                prevBalanceValue.innerText = formatMoney(Math.abs(balanceDue));
+            } else if (balanceDue === 0) {
+                prevBalanceLabel.innerText = 'STATUS PEMBAYARAN';
+                prevBalanceValue.innerText = 'LUNAS';
+            } else {
+                prevBalanceLabel.innerText = 'SISA PEMBAYARAN';
+                prevBalanceValue.innerText = formatMoney(balanceDue);
+            }
         }
         
         const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
@@ -2244,7 +2232,8 @@
             btnSavePreview.innerHTML = isEditingMode ? '💾 Simpan Perubahan' : '💾 Simpan Invoice';
         }
 
-        toggleModal('previewModal');
+        window.isPreviewFromHistory = false;
+        return true;
     }
 
     function exportToPDF() {
@@ -2290,112 +2279,86 @@
         }, 500);
     }
 
-    // Ekspor PNG Rasio 1:1 HD Kotak
+    // Ekspor PNG ramah mobile: lebar TETAP 750px, tinggi mengikuti isi (bukan dipaksa kotak 1:1),
+    // sehingga font bisa diperbesar dan tidak kecil saat ditampilkan di layar HP.
     async function exportToPNG() {
         if (typeof html2canvas === 'undefined') {
             showWarningPopup("Sistem Belum Siap", "Library html2canvas belum termuat.");
             return;
         }
 
-        showLoadingPopup("Menyiapkan Gambar Nota (1:1 Kotak)...");
+        showLoadingPopup("Menyiapkan Gambar Nota...");
 
         setTimeout(async () => {
             const originalElement = document.getElementById('previewContent');
-            const invoiceNo = document.getElementById('invoiceNumber').value || 'Rekap';
+            const invoiceNo = document.getElementById('prevInvNo').innerText || document.getElementById('invoiceNumber').value || 'Rekap';
 
             const wrapper = document.createElement('div');
+            wrapper.id = 'pngExportWrap';
             wrapper.style.position = 'absolute';
             wrapper.style.top = '-9999px';
             wrapper.style.left = '0';
-            wrapper.style.backgroundColor = '#ffffff';
-            wrapper.style.boxSizing = 'border-box';
 
             const clone = originalElement.cloneNode(true);
+            clone.style.width = '100%';
             clone.style.border = 'none';
             clone.style.boxShadow = 'none';
-            clone.style.padding = '0';
             clone.style.margin = '0';
-            clone.style.width = '100%';
 
+            // Rapikan struktur: konten utama dikelompokkan, footer (terima kasih) tetap di bawah.
             const children = Array.from(clone.children);
             if (children.length > 1) {
                 const mainGroup = document.createElement('div');
                 mainGroup.style.display = 'flex';
                 mainGroup.style.flexDirection = 'column';
-                mainGroup.style.gap = '12px'; 
+                mainGroup.style.gap = '16px';
                 mainGroup.style.width = '100%';
 
                 const footerElement = children[children.length - 1];
-
-                for (let i = 0; i < children.length - 1; i++) {
-                    mainGroup.appendChild(children[i]);
-                }
+                for (let i = 0; i < children.length - 1; i++) mainGroup.appendChild(children[i]);
 
                 clone.innerHTML = '';
                 clone.appendChild(mainGroup);
 
-                footerElement.style.marginTop = 'auto';
-                footerElement.style.paddingTop = '16px';
+                footerElement.style.marginTop = '24px';
+                footerElement.style.paddingTop = '18px';
                 footerElement.style.borderTop = '1px dashed #cbd5e1';
                 clone.appendChild(footerElement);
-
-                clone.style.display = 'flex';
-                clone.style.flexDirection = 'column';
-                clone.style.height = '100%';
-                clone.style.justifyContent = 'space-between';
             }
-
-            clone.querySelectorAll('th').forEach(th => {
-                th.style.padding = '9px 6px';
-                th.style.fontSize = '12px';
-            });
-            clone.querySelectorAll('td').forEach(td => {
-                td.style.padding = '8px 6px';
-                td.style.fontSize = '13px';
-            });
 
             wrapper.appendChild(clone);
             document.body.appendChild(wrapper);
 
-            const baseSize = 750;
-            wrapper.style.width = `${baseSize}px`;
-            wrapper.style.padding = '30px 28px';
-
-            const contentHeight = wrapper.scrollHeight;
-            const finalSize = Math.max(baseSize, contentHeight);
-
-            wrapper.style.width = `${finalSize}px`;
-            wrapper.style.height = `${finalSize}px`;
-            wrapper.style.minHeight = `${finalSize}px`;
+            // Lebar selalu 750px; tinggi = tinggi isi apa adanya (tanpa dipaksa kotak).
+            const exportWidth = 750;
+            const contentH = wrapper.scrollHeight || clone.scrollHeight;
+            const exportHeight = Math.max(contentH + 40, 480);
 
             try {
                 const canvas = await html2canvas(wrapper, {
-                    scale: 2, 
+                    scale: 3, // hi-DPI agar tajam saat dicetak / dibagikan
                     useCORS: true,
                     backgroundColor: '#ffffff',
-                    width: finalSize,
-                    height: finalSize,
-                    windowWidth: finalSize + 50,
+                    width: exportWidth,
+                    height: exportHeight,
+                    windowWidth: exportWidth,
                     scrollY: 0,
                     scrollX: 0
                 });
 
-                const imageURI = canvas.toDataURL('image/png');
                 const link = document.createElement('a');
                 link.download = `Invoice_${invoiceNo}.png`;
-                link.href = imageURI;
+                link.href = canvas.toDataURL('image/png');
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
 
-                showSuccessPopup("PNG Berhasil Disimpan!", `Invoice ${invoiceNo} berhasil disimpan dalam format kotak (1:1).`);
+                showSuccessPopup("PNG Berhasil Disimpan!", `Invoice ${invoiceNo} berhasil disimpan (${canvas.width}×${canvas.height} px).`);
             } catch (err) {
                 closePopup();
                 showWarningPopup("Gagal Ekspor PNG", "Terjadi kesalahan: " + err.message);
             } finally {
-                if (document.body.contains(wrapper)) {
-                    document.body.removeChild(wrapper);
-                }
+                if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
             }
         }, 350);
     }
@@ -2445,12 +2408,22 @@
         const successTitle = isEditingMode ? "Perubahan Disimpan!" : "Invoice Berhasil Disimpan!";
         const successSub = isEditingMode ? `Invoice ${invoiceNo} berhasil diperbarui.` : `Invoice ${invoiceNo} berhasil disimpan ke sistem.`;
 
+        // Siapkan tampilan pratinjau SEBELUM form direset, agar bisa dibuka setelah popup sukses.
+        const previewReady = renderPreviewFromEditor();
+        if (!previewReady) return; // renderPreviewFromEditor sudah menampilkan peringatan sendiri
+
+        const showSavedPreview = () => {
+            if (previewReady && !document.getElementById('previewModal').classList.contains('active')) {
+                toggleModal('previewModal');
+            }
+        };
+
         showLoadingPopup(actionText);
 
         if(!isSupabaseConnected) {
             setTimeout(() => {
-                showSuccessPopup(successTitle, successSub);
-                buatInvoiceBaru(); 
+                buatInvoiceBaru();
+                showSuccessPopup(successTitle, successSub, showSavedPreview);
             }, 600);
             return;
         }
@@ -2460,17 +2433,15 @@
                 await supabaseClient.from('invoice_items').delete().eq('invoice_no', invoiceNo);
                 await supabaseClient.from('invoices').update({ customer_name: customer.name, customer_phone: customer.phone, customer_address: customer.address, subtotal, deposit: totalDeposit, balance_due: subtotal - totalDeposit }).eq('invoice_no', invoiceNo);
                 await supabaseClient.from('invoice_items').insert(itemsPayload);
-                showSuccessPopup(successTitle, successSub);
-                buatInvoiceBaru(); 
             } else {
                 await supabaseClient.from('invoices').insert([{ invoice_no: invoiceNo, customer_name: customer.name, customer_phone: customer.phone, customer_address: customer.address, subtotal, deposit: totalDeposit, balance_due: subtotal - totalDeposit }]);
                 await supabaseClient.from('invoice_items').insert(itemsPayload);
-                showSuccessPopup(successTitle, successSub);
-                buatInvoiceBaru(); 
             }
-        } catch (error) { 
+            buatInvoiceBaru();
+            showSuccessPopup(successTitle, successSub, showSavedPreview);
+        } catch (error) {
             closePopup();
-            showWarningPopup("Gagal Menyimpan", error.message); 
+            showWarningPopup("Gagal Menyimpan", error.message);
         }
     }
     
@@ -2481,7 +2452,7 @@
         document.getElementById('qpFormArea').style.display = 'none';
         document.getElementById('qpNoDataMsg').style.display = 'none';
         document.getElementById('btnProsesQP').disabled = true;
-        document.getElementById('qpKet').value = 'Tf Tgl : ';
+        document.getElementById('qpKet').value = '';
         document.getElementById('qpNominal').value = '';
         qpSelectedInvoice = null;
         
@@ -2802,11 +2773,10 @@
                 <label>Nominal Pembayaran (Rp)</label>
                 <input type="text" id="qpNominal" oninput="formatRibuanInput(this)" style="font-size: 16px; font-weight: 600; color: var(--primary);">
             </div>
-            <!-- KODE BARU (Sudah menggunakan default value) -->
-			<div class="form-group">
-				<label>Keterangan (Opsional)</label>
-				<input type="text" id="qpKet" value="Tf Tgl : ">
-			</div>
+            <div class="form-group">
+                <label>Keterangan (Opsional)</label>
+                <input type="text" id="qpKet" placeholder="Cth: Transfer BCA, Cash, dsb...">
+            </div>
         </div>
 
         <div id="qpNoDataMsg" style="display: none; padding: 16px; background: rgba(245, 158, 11, 0.1); color: #b45309; border-radius: 8px; text-align: center; font-size: 13px; font-weight: 500; margin-top: 16px;">
