@@ -439,19 +439,70 @@
                 display: none !important;
             }
 
+            /* ============================================================
+               CETAK SETENGAH A4
+               - Media kertas : A4 Potret (210mm x 297mm)
+               - Area cetak   : bagian ATAS setengah lembar = 210mm x 148mm
+                 (setara ukuran A5) -> 2 lembar nota per lembar A4 = hemat kertas
+               - transform:scale dihitung JavaScript (siapkanCetakSetengahA4)
+                 agar isi nota selalu pas memenuhi area setengah A4, berapa pun
+                 tinggi asli layoutnya (desktop / mobile / banyak item).
+               ============================================================ */
+            #notaPrintPage {
+                position: relative !important;
+                width: 210mm !important;
+                height: 148mm !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                display: block !important;
+                flex-shrink: 0 !important;
+                background: white !important;
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            #notaPrintPage>.nota-print-sheet {
+                position: absolute !important;
+                left: var(--sheet-left, 0px) !important;
+                top: var(--sheet-top, 0px) !important;
+                transform-origin: top left !important;
+                margin: 0 !important;
+            }
+
             #a5PreviewPaper,
             #slipFeePaper {
                 width: 210mm !important;
-                min-height: 148mm !important;
-                margin: 0 auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                height: auto !important;
+                margin: 0 !important;
                 padding: 6mm 8mm !important;
                 box-shadow: none !important;
                 border: none !important;
+                border-radius: 0 !important;
+                overflow: visible !important;
+                display: block !important;
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            /* Area scroll modal jangan memotong lembar nota saat dicetak */
+            #modalPratinjauA5>div>div,
+            #modalPreviewSlipFee>div>div {
+                overflow: visible !important;
+                max-height: none !important;
+                height: auto !important;
+                min-height: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: white !important;
+                display: block !important;
             }
 
             @page {
-                size: A5 landscape;
-                margin: 4mm;
+                size: A4 portrait;
+                margin: 0;
             }
         }
     </style>
@@ -2031,7 +2082,7 @@
                                     <th class="py-2 px-2 text-center w-24">Satuan</th>
                                     <th class="py-2 px-2 text-center w-20">Qty</th>
                                     <th class="py-2 px-2 text-right w-28">Nilai Retur (Rp)</th>
-                                    <th class="py-2 px-2">Alasan / Catatan</th>
+                                    <th class="py-2 px-2">Catatan</th>
                                     <th class="py-2 pr-3 text-center w-10">#</th>
                                 </tr>
                             </thead>
@@ -2215,11 +2266,6 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button type="button" id="btnA5TopSimpanNota" onclick="konfirmasiSimpanNotaSettlementDariModal()"
-                        class="min-h-[40px] px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 active:scale-[0.98] hidden">
-                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-200"></i>
-                        <span>Simpan Nota</span>
-                    </button>
                     <button type="button" onclick="downloadNotaA5PNG()" title="Simpan sebagai file gambar PNG"
                         class="min-h-[40px] px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-2 active:scale-[0.98]">
                         <i data-lucide="download" class="w-4 h-4"></i>
@@ -2255,13 +2301,13 @@
                                     alt="Logo Header"
                                     class="w-11 h-11 rounded-xl object-contain bg-white border border-slate-200 shadow-2xs aspect-square shrink-0">
                                 <div>
-                                    <h1 class="text-base font-black uppercase tracking-wider text-slate-900">Sbr Putra
+                                    <h1 class="text-[19px] font-black uppercase tracking-wider text-slate-900">Sbr Putra
                                         Food
                                     </h1>
-                                    <p class="text-[10px] text-slate-500 font-medium">Distribusi & Logistik Snack
+                                    <p class="mt-1 text-[12px] text-slate-500 font-medium italic">Distribusi & Logistik Snack
                                         Makroni
                                     </p>
-                                    <div class="mt-1 text-[11px] font-bold text-slate-800">BUKTI NOTA PEMBAYARAN</div>
+                                    <div class="mt-1 text-[13px] font-bold text-slate-800">BUKTI NOTA PEMBAYARAN</div>
                                 </div>
                             </div>
 
@@ -2270,11 +2316,11 @@
                                     class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border-2 border-emerald-500 rounded font-black text-xs uppercase tracking-wider inline-flex items-center gap-1">
                                     <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i> LUNAS
                                 </div>
-                                <div class="text-xs font-black text-slate-900 tracking-tight" id="a5NomorNota">
+                                <div class="text-[11px] text-slate-900 tracking-tight" id="a5NomorNota">
                                     NOTA-20261001-XXXX</div>
-                                <div class="text-[10px] text-slate-500">Tanggal Nota: <span id="a5TanggalNota"
-                                        class="font-bold text-slate-800">2026-10-01</span></div>
-                                <div class="text-[10px] text-slate-500">Supplier: <strong id="a5Supplier"
+                                <div class="text-[12px] text-slate-500">Tanggal Nota: <span id="a5TanggalNota"
+                                        class="font-black text-slate-800 text-[14px]">2026-10-01</span></div>
+                                <div class="text-[11px] text-slate-500">Supplier: <strong id="a5Supplier"
                                         class="text-slate-900">...</strong></div>
                             </div>
                         </div>
@@ -2289,9 +2335,9 @@
                                     class="bg-slate-100 text-slate-700 font-bold border-b border-slate-300 uppercase text-[9.5px]">
                                     <tr>
                                         <th class="py-1.5 px-2 text-center w-8 align-middle">No</th>
-                                        <th class="py-1.5 px-2.5 align-middle">Nama Barang Kiriman Fisik</th>
+                                        <th class="py-1.5 px-2.5 align-middle">Nama Barang Kiriman</th>
                                         <th class="py-1.5 px-2 text-center w-20 align-middle">Satuan</th>
-                                        <th class="py-1.5 px-2 text-center w-28 align-middle">Qty Fisik</th>
+                                        <th class="py-1.5 px-2 text-center w-28 align-middle">Qty</th>
                                         <th class="py-1.5 px-2.5 text-right w-28 align-middle">Harga (Rp)</th>
                                         <th class="py-1.5 px-2.5 text-right w-32 align-middle">Subtotal (Rp)</th>
                                     </tr>
@@ -2326,7 +2372,7 @@
                             class="border border-rose-200 bg-rose-50/30 rounded-lg overflow-hidden hidden">
                             <div
                                 class="px-2.5 py-1 bg-rose-100/60 font-bold text-[9.5px] uppercase tracking-wider text-rose-800 border-b border-rose-200 flex justify-between items-center">
-                                <span>Rincian Potongan Retur / BS Lapangan</span>
+                                <span>Rincian Potongan Retur / BS</span>
                                 <span class="text-[9px] font-semibold text-rose-600">Dipotongkan dari Tagihan
                                     Nota</span>
                             </div>
@@ -2349,11 +2395,10 @@
                                 </div>
 
                                 <!-- Keterangan Dokumen Resmi -->
-                                <div class="text-[9px] text-slate-400 space-y-0.5 mt-auto pt-2">
-                                    <p class="font-semibold text-slate-600">Sbr Putra Food • Dokumen Sah Bukti Pembelian
-                                        & Pelunasan Nota</p>
-                                    <p class="italic text-slate-400">Pembayaran sah jika dana efektif telah diterima dan
-                                        dikonfirmasi admin.</p>
+                                <div class="text-[10px] text-slate-400 space-y-0.5 mt-auto pt-2">
+                                    <p class="font-semibold text-slate-600">Dokumen Bukti Pembelian
+                                        & Pembayaran Nota</p>
+                                    <p class="italic text-slate-400">Sbr Putra Food • Admin</p>
                                 </div>
                             </div>
 
@@ -2409,16 +2454,16 @@
                     <!-- Slip Footer: Signature & Timestamp -->
                     <div class="pt-1.5">
                         <div class="flex justify-between items-end text-[10px]">
-                            <div class="text-[8.5px] text-slate-400">
+                            <div class="text-[11px] text-slate-400">
                                 <span>Waktu Cetak: <span id="a5PrintTimestamp"
                                         class="text-slate-600 font-medium">-</span></span>
                             </div>
 
                             <!-- Tanda Tangan: Disiapkan oleh -->
                             <div class="text-center pr-2">
-                                <p class="text-slate-600 font-medium mb-5 text-[10px]">Disiapkan oleh,</p>
-                                <div class="border-b border-slate-400 w-36 mx-auto"></div>
-                                <p class="text-[10px] font-bold text-slate-900 mt-1">Sbr Admin</p>
+                                <p class="text-slate-600 font-medium mb-7 text-[11px]">Disiapkan oleh,</p>
+                                <div class="border-b border-slate-400 w-35 mx-auto"></div>
+                                <p class="text-[11px] font-bold text-slate-900 mt-1">Sbr Admin</p>
                             </div>
                         </div>
                     </div>
@@ -4043,6 +4088,114 @@
          * Engine universal ekspor elemen ke PNG dengan resolusi tinggi (HD 2x)
          * Mengatasi kendala teks terpotong, tumpang tindih font, koordinat scroll, dan shadow.
          */
+        // Konversi milimeter ke piksel memakai 96 DPI (standar CSS), hasilnya
+        // sama di desktop maupun mobile sehingga ukuran kertas A5 konsisten.
+        function mmToPx(mm) {
+            return Math.round(mm * 96 / 25.4);
+        }
+
+        /**
+         * Siapkan lembar nota untuk dicetak "SETENGAH A4".
+         * Membungkus kertas nota ke dalam #notaPrintPage (210mm x 148mm) lalu
+         * men-scale isi nota agar selalu pas memenuhi area setengah A4 tersebut,
+         * berapa pun tinggi asli layoutnya (desktop / mobile / banyak item).
+         * Mengembalikan referensi wrapper agar bisa dilepas lagi setelah print.
+         */
+        async function siapkanCetakSetengahA4(paperEl) {
+            if (!paperEl || !paperEl.parentElement) return null;
+
+            // Tunggu semua gambar (logo, dsb.) termuat agar tinggi terukur akurat
+            const imgs = Array.from(paperEl.querySelectorAll('img'));
+            await Promise.all(imgs.filter(i => !i.complete).map(i => new Promise(res => {
+                i.addEventListener('load', res, { once: true });
+                i.addEventListener('error', res, { once: true });
+                setTimeout(res, 1500);
+            })));
+
+            // Bungkus sekali saja bila sudah pernah dibungkus
+            let wrapper = paperEl.parentElement && paperEl.parentElement.closest('#notaPrintPage');
+            let createdWrapper = false;
+            if (!wrapper) {
+                wrapper = document.createElement('div');
+                wrapper.id = 'notaPrintPage';
+                paperEl.parentNode.insertBefore(wrapper, paperEl);
+                wrapper.appendChild(paperEl);
+                createdWrapper = true;
+            }
+            // Jangan biarkan flex parent mempekecil area cetak
+            wrapper.style.setProperty('flex-shrink', '0');
+            wrapper.style.setProperty('width', '210mm');
+            wrapper.style.setProperty('height', '148mm');
+
+            // Ukuran tujuan: area SETENGAH A4 = 210mm x 148mm (px CSS @96dpi)
+            const targetW = mmToPx(210);
+            const targetH = mmToPx(148);
+
+            // Paksa layout versi desktop agar hasil print identik di HP maupun PC
+            // (layar print selebar 210mm ~794px, jadi semua breakpoint sm/md aktif)
+            const overrides = [];
+            const applyOverride = (els, prop, value) => {
+                els.forEach(el => {
+                    overrides.push({
+                        el,
+                        prop,
+                        value: el.style.getPropertyValue(prop),
+                        priority: el.style.getPropertyPriority(prop)
+                    });
+                    el.style.setProperty(prop, value, 'important');
+                });
+            };
+            applyOverride(paperEl.querySelectorAll('.sm\\:flex-row'), 'flex-direction', 'row');
+            applyOverride(paperEl.querySelectorAll('.sm\\:w-\\[350px\\], .md\\:w-\\[375px\\]'), 'width', '375px');
+
+            paperEl.classList.remove('w-full', 'max-w-[210mm]', 'min-h-[148mm]', 'p-6');
+            paperEl.style.setProperty('width', '210mm', 'important');
+            paperEl.style.setProperty('max-width', 'none', 'important');
+            paperEl.style.setProperty('min-width', '0', 'important');
+            paperEl.style.setProperty('min-height', '0', 'important');
+            paperEl.style.setProperty('padding', '6mm 8mm', 'important');
+            paperEl.classList.add('nota-print-sheet');
+
+            // Ukuran asli isi nota (layout asli — offset* tidak terpengaruh transform)
+            const naturalW = paperEl.offsetWidth || targetW;
+            const naturalH = paperEl.offsetHeight || targetH;
+
+            const skala = Math.min(targetW / naturalW, targetH / naturalH, 1);
+            const renderedW = naturalW * skala;
+            const renderedH = naturalH * skala;
+            // Pusatkan lembar di dalam area setengah A4
+            const leftPx = Math.max(0, (targetW - renderedW) / 2);
+            const topPx = Math.max(0, (targetH - renderedH) / 2);
+
+            paperEl.style.setProperty('transform', `scale(${skala})`, 'important');
+            paperEl.style.setProperty('transform-origin', 'top left', 'important');
+            paperEl.style.setProperty('--sheet-left', leftPx + 'px');
+            paperEl.style.setProperty('--sheet-top', topPx + 'px');
+
+            return {
+                skala,
+                restore() {
+                    [
+                        'transform', 'transform-origin', '--sheet-left', '--sheet-top',
+                        'width', 'max-width', 'min-width', 'min-height', 'padding',
+                        'position', 'left', 'top'
+                    ].forEach(prop => paperEl.style.removeProperty(prop));
+                    paperEl.classList.remove('nota-print-sheet');
+                    paperEl.classList.add('w-full', 'max-w-[210mm]', 'min-h-[148mm]', 'p-6');
+                    overrides.forEach(o => {
+                        if (o.value) o.el.style.setProperty(o.prop, o.value, o.priority);
+                        else o.el.style.removeProperty(o.prop);
+                    });
+                    if (createdWrapper && wrapper.parentElement) {
+                        wrapper.parentElement.insertBefore(paperEl, wrapper);
+                        wrapper.parentElement.removeChild(wrapper);
+                    } else if (wrapper) {
+                        ['flex-shrink', 'width', 'height'].forEach(prop => wrapper.style.removeProperty(prop));
+                    }
+                }
+            };
+        }
+
         async function exportElementToPNG(elementOrId, defaultFilename = 'dokumen.png', customOptions = {}) {
             const el = typeof elementOrId === 'string' ? document.getElementById(elementOrId) : elementOrId;
             if (!el) {
@@ -4070,6 +4223,8 @@
                 // 3. Jeda mikro agar layout browser stabil
                 await new Promise(resolve => setTimeout(resolve, 80));
 
+                const userOnclone = customOptions.onclone;
+
                 // 4. Render canvas beresolusi tinggi dengan kompensasi scroll & overflow
                 const canvas = await html2canvas(el, {
                     scale: 2, // Resolusi 2x Retina/HD super tajam
@@ -4078,8 +4233,10 @@
                     backgroundColor: '#ffffff',
                     scrollX: 0,
                     scrollY: 0,
-                    windowWidth: document.documentElement.offsetWidth,
-                    windowHeight: document.documentElement.offsetHeight,
+                    // Viewport clone DIPATOK tetap supaya layout (termasuk breakpoint
+                    // Tailwind sm:/md:) sama persis di desktop maupun mobile device.
+                    windowWidth: 1440,
+                    windowHeight: 1200,
                     onclone: (clonedDoc) => {
                         const target = clonedDoc.getElementById(el.id);
                         if (target) {
@@ -4105,7 +4262,36 @@
                             imgs.forEach(img => {
                                 img.setAttribute('crossOrigin', 'anonymous');
                             });
+
+                            // Lembar nota A5: geometri DIPAKSA ukuran tetap (210mm x 148mm)
+                            // sehingga rasio hasil PNG selalu konsisten di layar apa pun.
+                            if (el.id === 'a5PreviewPaper' || el.id === 'slipFeePaper') {
+                                const paperW = mmToPx(210);
+                                target.style.width = paperW + 'px';
+                                target.style.maxWidth = 'none';
+                                target.style.minWidth = paperW + 'px';
+                                target.style.minHeight = mmToPx(148) + 'px';
+                                target.style.maxHeight = 'none';
+                                target.style.height = 'auto';
+                                target.style.overflow = 'visible';
+                                target.style.flexShrink = '0';
+                                target.style.padding = '28px'; // sama dengan sm:p-7 di semua perangkat
+
+                                // Buka semua pembungkusnya (modal, panel scroll, dsb.)
+                                // agar lembar tetap berukuran penuh dan tidak terpotong.
+                                let p = target.parentElement;
+                                while (p && p !== clonedDoc.body) {
+                                    p.style.overflow = 'visible';
+                                    p.style.maxHeight = 'none';
+                                    p.style.maxWidth = 'none';
+                                    p.style.height = 'auto';
+                                    p.style.flexShrink = '0';
+                                    if (p.classList.contains('flex')) p.style.justifyContent = 'flex-start';
+                                    p = p.parentElement;
+                                }
+                            }
                         }
+                        if (typeof userOnclone === 'function') userOnclone(clonedDoc);
                     },
                     ...customOptions
                 });
@@ -4132,7 +4318,7 @@
             await exportElementToPNG('slipFeePaper', filename);
         }
 
-        function printSlipFee() {
+        async function printSlipFee() {
             document.body.classList.add('printing-slip-fee');
             const a5Modal = document.getElementById('modalPratinjauA5');
             if (a5Modal) {
@@ -4145,9 +4331,13 @@
                 feeModal.style.setProperty('display', 'block', 'important');
             }
 
+            // Bungkus lembar slip fee ke area setengah A4 & skala agar pas muat
+            const cetakSetup = await siapkanCetakSetengahA4(document.getElementById('slipFeePaper'));
+
             try {
                 window.print();
             } finally {
+                if (cetakSetup) cetakSetup.restore();
                 document.body.classList.remove('printing-slip-fee');
                 if (a5Modal) a5Modal.style.display = '';
                 if (feeModal) feeModal.style.display = '';
@@ -6529,12 +6719,7 @@
         }
 
         async function konfirmasiSimpanNotaSettlementDariModal() {
-            const btnTop = document.getElementById('btnA5TopSimpanNota');
             const btnBottom = document.getElementById('btnA5BottomSimpanNota');
-            if (btnTop) {
-                btnTop.disabled = true;
-                btnTop.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-emerald-200"></i><span>Menyimpan...</span>';
-            }
             if (btnBottom) {
                 btnBottom.disabled = true;
                 btnBottom.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-emerald-200"></i><span>Menyimpan Penyelesaian Nota...</span>';
@@ -6547,10 +6732,6 @@
                 targetNota = activeA5Nota || targetNota;
                 showModernSettlementSuccessPopup(targetNota);
             } finally {
-                if (btnTop) {
-                    btnTop.disabled = false;
-                    btnTop.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 text-emerald-200"></i><span>Simpan Nota</span>';
-                }
                 if (btnBottom) {
                     btnBottom.disabled = false;
                     btnBottom.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 text-emerald-200"></i><span>Simpan Penyelesaian Nota & Pembayaran</span>';
@@ -6579,7 +6760,6 @@
             const isDraftMode = isDraft || Boolean(n.is_draft);
 
             // Kontrol tombol Simpan & status badge pratinjau A5
-            const elBtnTopSimpan = document.getElementById('btnA5TopSimpanNota');
             const elBtnBottomSimpan = document.getElementById('btnA5BottomSimpanNota');
             const elTopBadge = document.getElementById('a5TopStatusBadge');
             const elBottomInfo = document.getElementById('a5BottomInfo');
@@ -6587,7 +6767,6 @@
             const elCloseBottom = document.getElementById('lblBtnBottomCloseA5');
 
             if (isDraftMode) {
-                if (elBtnTopSimpan) elBtnTopSimpan.classList.remove('hidden');
                 if (elBtnBottomSimpan) elBtnBottomSimpan.classList.remove('hidden');
                 if (elTopBadge) {
                     elTopBadge.className = 'px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30';
@@ -6599,7 +6778,6 @@
                 if (elCloseTop) elCloseTop.innerText = 'Kembali';
                 if (elCloseBottom) elCloseBottom.innerText = 'Kembali ke Form';
             } else {
-                if (elBtnTopSimpan) elBtnTopSimpan.classList.add('hidden');
                 if (elBtnBottomSimpan) elBtnBottomSimpan.classList.add('hidden');
                 if (elTopBadge) {
                     elTopBadge.className = 'px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30';
@@ -6890,11 +7068,16 @@
                 a5Modal.style.setProperty('display', 'block', 'important');
             }
 
+            // Bungkus lembar nota ke area setengah A4 & skala agar pas muat
+            const paperEl = document.getElementById('a5PreviewPaper');
+            const cetakSetup = await siapkanCetakSetengahA4(paperEl);
+
             // 4. Jalankan dialog cetak browser
             try {
                 window.print();
             } finally {
-                // 5. Bersihkan penanda cetak
+                // 5. Bersihkan penanda cetak & kembalikan layout semula
+                if (cetakSetup) cetakSetup.restore();
                 document.body.classList.remove('printing-nota-a5');
                 if (feeModal) feeModal.style.display = '';
                 if (a5Modal) a5Modal.style.display = '';
