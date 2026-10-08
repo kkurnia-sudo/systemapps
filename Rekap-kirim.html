@@ -2,17 +2,42 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rekap Pengiriman - SBR Putra Food</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <script>
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js').catch(error => {
+                    console.warn('PWA service worker gagal didaftarkan:', error);
+                });
+            });
+        }
+    </script>
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class', 
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: '#3b82f6',
+                        primary: '#2563eb',
+                        ink: '#0f172a',
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        soft: '0 4px 20px -4px rgba(15, 23, 42, 0.08)',
+                        card: '0 1px 3px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.10)',
                     }
                 }
             }
@@ -28,67 +53,167 @@
     <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
     
     <style>
+        :root {
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            overscroll-behavior-y: contain;
+        }
+
+        /* Cegah zoom otomatis saat fokus input di iOS */
+        input, select, textarea, button {
+            font-size: 16px !important;
+        }
+
+        /* Area scroll halus & momentum di mobile */
+        .receipt-scroll {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
+        }
         .receipt-scroll::-webkit-scrollbar { width: 5px; }
         .receipt-scroll::-webkit-scrollbar-track { background: transparent; }
         .receipt-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark .receipt-scroll::-webkit-scrollbar-thumb { background: #475569; }
-        
+
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
-        /* Font khusus untuk struk */
+
+        /* Bottom bar menghormati notch / home indicator */
+        .bottom-dock {
+            padding-bottom: calc(1rem + var(--safe-bottom));
+        }
+
+        /* Card efek angkat saat ditekan */
+        .pressable {
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+        }
+        .pressable:active {
+            transform: scale(0.97);
+        }
+
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Toast sederhana */
+        #toastNotif {
+            position: fixed;
+            left: 50%;
+            bottom: calc(6.5rem + var(--safe-bottom));
+            transform: translate(-50%, 20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 90;
+            max-width: calc(100vw - 2rem);
+        }
+        #toastNotif.show {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+
+        /* Font khusus untuk struk: mono modern, jelas di layar kecil */
         .font-struk {
-            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+            letter-spacing: -0.01em;
+        }
+
+        /* Highlight header struk preview */
+        .struk-grid {
+            background-image: radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.15) 1px, transparent 0);
+            background-size: 16px 16px;
         }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen relative pb-44 transition-colors duration-300">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans min-h-screen relative pb-40 transition-colors duration-300">
 
-    <div class="max-w-md mx-auto p-5 space-y-5">
-        
+    <div class="max-w-lg mx-auto px-4 pt-5 pb-4 space-y-5">
+
         <!-- Header -->
-        <div class="text-center pb-2 border-b border-gray-200 dark:border-gray-700">
-            <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">SBR Putra Food</h1>
-            <h2 class="text-md font-medium text-gray-500 dark:text-gray-400">Rekap Pengiriman Harian</h2>
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-600 px-5 py-5 text-white shadow-lg shadow-blue-900/15">
+            <div class="absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/10"></div>
+            <div class="absolute -right-1 -bottom-16 h-32 w-32 rounded-full bg-indigo-300/15"></div>
+            <div class="relative flex items-center justify-between gap-3">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-100">Logistik • SBR</p>
+                    <h1 class="mt-1 text-xl font-extrabold tracking-tight">SBR Putra Food</h1>
+                    <h2 class="mt-0.5 text-sm font-medium text-blue-100">Rekap Pengiriman Harian</h2>
+                </div>
+                <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white/20 bg-white/10 shadow-inner">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7h11v10H3zM14 10h4l3 3v4h-7M7 17a2 2 0 104 0m5 0a2 2 0 104 0"/></svg>
+                </div>
+            </div>
         </div>
 
         <!-- Wrapper untuk merekatkan Kotak Tanggal dan Input Form -->
         <div class="space-y-2">
             <!-- Date Input & Tombol Manajemen -->
-            <div class="flex items-center justify-between space-x-2 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative">
+            <div class="flex items-center justify-between space-x-2 bg-white dark:bg-slate-900 p-3 rounded-2xl shadow-card border border-slate-200/70 dark:border-slate-800 relative">
                 <div class="flex items-center space-x-2 w-full">
-                    <label for="tanggal" class="font-semibold whitespace-nowrap text-sm">Hari/Tanggal :</label>
-                    <input type="text" id="tanggal" class="w-full min-w-[120px] px-2 py-1.5 bg-transparent border-b-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:border-primary text-sm font-medium">
+                    <label for="tanggal" class="font-semibold whitespace-nowrap text-sm text-slate-600 dark:text-slate-300">Hari/Tanggal :</label>
+                    <input type="text" id="tanggal" class="w-full min-w-[120px] px-2 py-1.5 bg-transparent border-b-2 border-slate-200 dark:border-slate-700 focus:outline-none focus:border-primary text-sm font-medium text-slate-900 dark:text-white">
                 </div>
-                
+
                 <div class="flex items-center space-x-2 shrink-0 pl-2">
                     <!-- Tombol Toggle Mode Gelap / Terang -->
-                    <button onclick="toggleDarkMode()" class="p-2 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition active:scale-95 shadow-sm" title="Ubah Tema Gelap/Terang">
+                    <button onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition active:scale-95 shadow-sm" title="Ubah Tema Gelap/Terang">
                         <!-- Icon Matahari (muncul di mode gelap) -->
                         <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                         <!-- Icon Bulan (muncul di mode terang) -->
                         <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                     </button>
                     <!-- Tombol Manajemen Data -->
-                    <button onclick="bukaManajemen()" class="p-2 bg-yellow-100 text-yellow-600 dark:bg-yellow-900/40 dark:text-yellow-500 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-900/60 transition active:scale-95 shadow-sm" title="Manajemen Data Agen/Kendaraan/Driver">
+                    <button onclick="bukaManajemen()" class="p-2.5 bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900/60 transition active:scale-95 shadow-sm" title="Manajemen Data Agen/Kendaraan/Driver">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     </button>
                 </div>
             </div>
 
-            <!-- Input Form Section -->
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3">
+            <!-- Tombol Tambah Kiriman (buka wizard) -->
+            <button onclick="bukaWizard()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white p-4 rounded-2xl shadow-lg shadow-blue-900/25 transition active:scale-[0.98] flex items-center justify-between group">
+                <div class="text-left">
+                    <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-100">Formulir</p>
+                    <p class="text-base font-extrabold mt-0.5">Tambah Kiriman Baru</p>
+                    <p class="text-[11px] text-blue-100 font-medium mt-0.5">Isi berurutan: waktu → agen → driver → mobil → nominal</p>
+                </div>
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/20 border border-white/25 transition-transform group-hover:rotate-90">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                </span>
+            </button>
+
+            <!-- Input Form Section (tersembunyi — diisi oleh wizard, logika simpan tidak berubah) -->
+            <div class="hidden bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-card border border-slate-200/70 dark:border-slate-800 space-y-3">
                 
                 <!-- Baris 1: Agen & Waktu -->
                 <div class="grid grid-cols-2 gap-3">
-                    <button type="button" id="btnPilihAgen" onclick="bukaModalPilihAgen()" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-left text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all flex justify-between items-center">
-                        <span id="teksPilihAgen" class="truncate pr-2">Pilih Agen (>1)...</span>
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <button type="button" id="btnPilihAgen" onclick="bukaModalPilihAgen()" class="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-left text-slate-500 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all flex justify-between items-center active:scale-[0.98]">
+                        <span id="teksPilihAgen" class="truncate pr-2">Pilih Agen (&gt;1)...</span>
+                        <svg class="w-4 h-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
-                    <select id="waktuPengiriman" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all">
+                    <select id="waktuPengiriman" class="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:text-white">
                         <option value="">Waktu...</option>
                         <option value="Malam">Malam</option>
                         <option value="Subuh/Pagi">Subuh/Pagi</option>
@@ -97,26 +222,26 @@
                 
                 <!-- Baris 2: Driver & Mobil -->
                 <div class="grid grid-cols-2 gap-3">
-                    <button type="button" id="btnPilihDriver" onclick="bukaModalPilihDriver()" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-left text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all flex justify-between items-center">
+                    <button type="button" id="btnPilihDriver" onclick="bukaModalPilihDriver()" class="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-left text-slate-500 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all flex justify-between items-center active:scale-[0.98]">
                         <span id="teksPilihDriver" class="truncate pr-2">Pilih Driver (Maks 2)...</span>
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <svg class="w-4 h-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
-                    <select id="mobil" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"></select>
+                    <select id="mobil" class="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:text-white"></select>
                 </div>
 
                 <!-- Baris 3: Nominal Bensin & Makan -->
                 <div class="grid grid-cols-2 gap-3">
-                    <input type="text" inputmode="numeric" id="inputBensin" placeholder="Bensin (Cth: 300)" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:text-white">
-                    <input type="text" inputmode="numeric" id="inputMakan" placeholder="Uang Makan (Cth: 100)" class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:text-white">
+                    <input type="text" inputmode="numeric" id="inputBensin" placeholder="Bensin (Cth: 300)" class="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:text-white">
+                    <input type="text" inputmode="numeric" id="inputMakan" placeholder="Uang Makan (Cth: 100)" class="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:text-white">
                 </div>
 
                 <!-- Tombol Aksi Langsung dan Draft -->
-                <div class="flex space-x-2 pt-1">
-                    <button onclick="simpanLangsungKeDatabase()" id="btnSimpanLangsung" class="flex-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60 font-bold py-3 rounded-lg text-sm transition-colors active:scale-[0.98] flex justify-center items-center gap-1.5 shadow-sm border border-emerald-200 dark:border-emerald-800">
+                <div class="flex space-x-2.5 pt-1">
+                    <button onclick="simpanLangsungKeDatabase()" id="btnSimpanLangsung" class="flex-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60 font-bold py-3 rounded-xl text-sm transition active:scale-[0.98] flex justify-center items-center gap-1.5 shadow-sm border border-emerald-200/80 dark:border-emerald-800">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         Simpan ke DB
                     </button>
-                    <button onclick="tambahKiriman()" class="flex-1 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/60 font-bold py-3 rounded-lg text-sm transition-colors active:scale-[0.98] flex justify-center items-center shadow-sm border border-blue-200 dark:border-blue-800">
+                    <button onclick="tambahKiriman()" class="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/60 font-bold py-3 rounded-xl text-sm transition active:scale-[0.98] flex justify-center items-center shadow-sm border border-blue-200/80 dark:border-blue-800">
                         + Antrean
                     </button>
                 </div>
@@ -125,55 +250,111 @@
 
         <!-- Draft Antrean -->
         <div id="draftSection" class="pt-2 hidden">
-            <h2 class="text-sm font-bold text-primary mb-2 px-1">Antrean Belum Disimpan</h2>
-            <div class="border border-blue-200 dark:border-blue-900/50 bg-blue-50/50 dark:bg-gray-800 rounded-xl p-2">
-                <div id="draftContainer" class="space-y-2 max-h-[220px] overflow-y-auto receipt-scroll pr-1">
+            <div class="flex items-center justify-between mb-2 px-1">
+                <div class="flex items-center gap-2">
+                    <span class="grid h-6 w-6 place-items-center rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    </span>
+                    <h2 class="text-sm font-extrabold text-blue-700 dark:text-blue-400">Antrean Belum Disimpan</h2>
+                </div>
+            </div>
+            <div class="border border-blue-200/70 dark:border-blue-900/50 bg-blue-50/70 dark:bg-slate-900 rounded-2xl p-2 shadow-card">
+                <div id="draftContainer" class="space-y-2 max-h-[240px] overflow-y-auto receipt-scroll pr-1">
                     <!-- Draft items -->
                 </div>
             </div>
         </div>
 
         <!-- History Section Dari Database -->
-        <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between mb-2 px-1">
-                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Riwayat</h2>
-                <select id="filterWaktu" onchange="handleFilterChange()" class="text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 outline-none focus:ring-2 focus:ring-primary text-gray-700 dark:text-gray-300">
+        <div class="pt-1">
+            <div class="flex items-center justify-between mb-3 px-1 gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="grid h-7 w-7 place-items-center rounded-lg bg-primary/10 text-primary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </span>
+                    <h2 class="text-lg font-extrabold text-slate-900 dark:text-white">Riwayat</h2>
+                </div>
+                <select id="filterWaktu" onchange="handleFilterChange()" class="text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-2 outline-none focus:ring-2 focus:ring-primary text-slate-700 dark:text-slate-300 shadow-sm">
                     <option value="hari_ini_besok">Hari Ini & Besok</option>
                     <option value="kemarin">Kemarin</option>
                     <option value="dua_hari">2 Hari Terakhir</option>
                     <option value="rentang">Pilih Rentang...</option>
                 </select>
             </div>
-            
-            <div id="dateRangeDiv" class="hidden flex-wrap gap-2 mb-3 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+
+            <div id="dateRangeDiv" class="hidden flex-wrap gap-2 mb-3 p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-card">
                 <div class="flex w-full items-center space-x-2">
-                    <input type="text" id="startDate" placeholder="Mulai" class="flex-1 text-xs p-1.5 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 outline-none text-center">
-                    <span class="text-xs font-bold text-gray-500">sd</span>
-                    <input type="text" id="endDate" placeholder="Akhir" class="flex-1 text-xs p-1.5 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 outline-none text-center">
+                    <input type="text" id="startDate" placeholder="Mulai" class="flex-1 text-xs p-2 border border-slate-200 dark:border-slate-600 rounded-lg dark:bg-slate-800 dark:text-slate-200 outline-none text-center focus:ring-2 focus:ring-primary">
+                    <span class="text-xs font-bold text-slate-400">sd</span>
+                    <input type="text" id="endDate" placeholder="Akhir" class="flex-1 text-xs p-2 border border-slate-200 dark:border-slate-600 rounded-lg dark:bg-slate-800 dark:text-slate-200 outline-none text-center focus:ring-2 focus:ring-primary">
                 </div>
-                <button onclick="loadRiwayatDB()" class="w-full bg-primary text-white text-xs py-2 rounded-md font-bold mt-1">Cari Data</button>
+                <button onclick="loadRiwayatDB()" class="w-full bg-primary text-white text-xs py-2.5 rounded-lg font-bold mt-1 active:scale-[0.98] transition">Cari Data</button>
             </div>
-            
+
             <!-- Flatbox Riwayat -->
-            <div class="border border-gray-200 dark:border-gray-700 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-2">
-                <div id="riwayatDbContainer" class="space-y-1.5 max-h-[300px] overflow-y-auto receipt-scroll pr-1">
-                    <p class="text-center text-xs text-gray-500 py-4 italic">Memuat data...</p>
+            <div class="border border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 rounded-2xl p-2 shadow-card">
+                <div id="riwayatDbContainer" class="space-y-2 max-h-[340px] overflow-y-auto receipt-scroll pr-1">
+                    <div class="skeleton h-14 rounded-xl"></div>
+                    <div class="skeleton h-14 rounded-xl"></div>
+                    <div class="skeleton h-14 rounded-xl"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Bottom Action Button -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 p-4 pb-6 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10">
-        <div class="max-w-md mx-auto flex space-x-3">
-            <button onclick="simpanKeDatabase()" id="btnSimpanDB" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-2 rounded-xl shadow-md transition transform active:scale-[0.98] flex items-center justify-center space-x-1.5">
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+    <div class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 bottom-dock pt-3 shadow-[0_-12px_28px_-12px_rgba(15,23,42,0.18)] z-10">
+        <div class="max-w-lg mx-auto px-4 flex space-x-3">
+            <button onclick="simpanKeDatabase()" id="btnSimpanDB" class="flex-1 bg-white dark:bg-slate-900 hover:bg-slate-50 text-slate-800 dark:text-slate-100 font-bold py-3.5 px-2 rounded-2xl shadow-card border border-slate-200 dark:border-slate-700 transition transform active:scale-[0.98] flex items-center justify-center space-x-1.5">
+                <svg class="w-5 h-5 shrink-0 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                 <span class="text-sm">Simpan Antrean</span>
             </button>
-            <button onclick="tampilkanPratinjau()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-2 rounded-xl shadow-lg transition transform active:scale-[0.98] flex items-center justify-center space-x-1.5">
+            <button onclick="tampilkanPratinjau()" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 px-2 rounded-2xl shadow-lg shadow-blue-900/25 transition transform active:scale-[0.98] flex items-center justify-center space-x-1.5">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                 <span class="text-sm">Pratinjau</span>
             </button>
+        </div>
+    </div>
+
+    <!-- Wizard Tambah Kiriman -->
+    <div id="modalWizard" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-[55] hidden flex-col justify-end sm:justify-center items-center opacity-0 transition-opacity duration-300 px-0 sm:px-4">
+        <div id="wizardContent" class="bg-slate-50 dark:bg-slate-950 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] shadow-2xl border border-slate-200 dark:border-slate-800 transform translate-y-full sm:translate-y-3 transition-transform duration-300 max-h-[92vh] overflow-y-auto receipt-scroll">
+            <div class="flex items-start justify-between gap-3 mb-5">
+                <div>
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">Tambah Kiriman</p>
+                    <h3 class="text-xl font-extrabold text-slate-900 dark:text-white mt-0.5" id="wizardTitle">Pilih waktu</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="wizardSubtitle">Langkah 1 dari 5</p>
+                </div>
+                <button type="button" onclick="tutupWizard()" class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500" aria-label="Tutup">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="flex gap-1.5 mb-5" aria-hidden="true">
+                <span class="wizard-step h-1.5 flex-1 rounded-full bg-primary transition-colors"></span>
+                <span class="wizard-step h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-800 transition-colors"></span>
+                <span class="wizard-step h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-800 transition-colors"></span>
+                <span class="wizard-step h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-800 transition-colors"></span>
+                <span class="wizard-step h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-800 transition-colors"></span>
+            </div>
+            <div id="wizardStepContent" class="min-h-[210px]"></div>
+            <!-- Panel pilihan tujuan simpan (muncul saat "Simpan Data" diklik) -->
+            <div id="wizardPilihan" class="hidden mt-5 space-y-2.5 border-t border-slate-200 dark:border-slate-800 pt-4">
+                <p class="text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400 text-center">Simpan data ke mana?</p>
+                <button type="button" onclick="pilihTujuanSimpan('antrean')" class="wizard-tujuan w-full py-3.5 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-extrabold shadow-sm active:scale-[0.98] transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                    Simpan Ke Antrean
+                </button>
+                <button type="button" onclick="pilihTujuanSimpan('database')" class="wizard-tujuan w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold shadow-lg shadow-blue-900/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    Simpan Ke Database
+                </button>
+                <button type="button" onclick="batalPilihanSimpan()" class="wizard-tujuan w-full py-2.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition">← Kembali ke Ringkasan</button>
+            </div>
+            <div class="flex gap-2 mt-5">
+                <button type="button" id="wizardBack" onclick="wizardMundur()" class="hidden flex-1 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold active:scale-[0.98]">Kembali</button>
+                <button type="button" id="wizardNext" onclick="wizardLanjut()" class="flex-[2] py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold shadow-lg shadow-blue-900/20 active:scale-[0.98] transition disabled:opacity-45 disabled:cursor-not-allowed disabled:shadow-none">Lanjut</button>
+            </div>
+            <p class="text-center text-[10px] text-slate-400 mt-3">Pilihan agen dan driver dapat lebih dari satu</p>
         </div>
     </div>
 
@@ -275,43 +456,49 @@
     </div>
 
     <!-- Pratinjau Struk -->
-    <div id="modalPreview" class="fixed inset-0 bg-black/80 z-50 hidden flex-col justify-end opacity-0 transition-opacity duration-300">
-        <div class="bg-gray-100 dark:bg-gray-900 w-full rounded-t-3xl pt-5 pb-8 px-4 flex flex-col h-[90vh] transform translate-y-full transition-transform duration-300" id="modalContent">
-            <div class="flex justify-between items-center mb-4 px-2 shrink-0">
-                <h3 class="font-bold text-lg text-gray-900 dark:text-white">Pratinjau Struk</h3>
-                <button onclick="tutupPratinjau()" class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition">
-                    <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    <div id="modalPreview" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 hidden flex-col justify-end opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-50 dark:bg-slate-950 w-full rounded-t-3xl pt-4 pb-5 px-4 flex flex-col h-[92vh] transform translate-y-full transition-transform duration-300 shadow-2xl border-t border-white/30" id="modalContent">
+            <div class="flex justify-between items-center mb-3 px-1 shrink-0">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">Siap dicetak</p>
+                    <h3 class="font-extrabold text-lg text-slate-900 dark:text-white">Pratinjau Struk</h3>
+                </div>
+                <button onclick="tutupPratinjau()" class="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition active:scale-95">
+                    <svg class="w-5 h-5 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            
-            <div class="flex-1 overflow-y-auto receipt-scroll flex flex-col items-center mb-6 pt-2">
-                <div id="areaStruk" class="bg-white p-5 shadow-sm w-[340px] shrink-0 h-fit text-black font-struk leading-snug relative rounded mx-auto">
-                    <div class="text-center pb-2">
-                        <h2 class="text-[17px] font-bold uppercase tracking-wider text-black">SBR PUTRA FOOD</h2>
-                        <p class="text-[12px] font-bold mt-1.5 tracking-wide text-black">REKAP PENGIRIMAN</p>
-                    </div>
-                    
-                    <div class="font-bold text-center text-[14px] pb-1.5 text-black" id="strukTanggal"></div>
-                    <div class="border-b-[1.5px] border-black mb-3 border-dashed"></div>
-                    
-                    <div id="strukDaftarKiriman" class="space-y-0 text-black">
-                        <!-- Items go here -->
-                    </div>
-                    
-                    <div class="text-center text-black mt-2">
-                        <p class="text-[13px] mb-10">Mengetahui,</p>
-                        <p class="font-bold inline-block px-5 pb-1 text-[13px]" style="border-bottom: 1.5px solid black;">Admin / Logistik</p>
+
+            <div class="flex-1 overflow-auto receipt-scroll flex flex-col items-center mb-4 pt-1 px-1">
+                <div class="struk-grid rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shrink-0">
+                    <div id="areaStruk" class="bg-white p-5 shadow-md w-[340px] max-w-[calc(100vw-4rem)] shrink-0 h-fit text-black font-struk leading-snug relative rounded-lg mx-auto">
+                        <div class="text-center pb-1">
+                            <h2 class="text-[19px] font-extrabold uppercase tracking-[0.12em] text-black">SBR PUTRA FOOD</h2>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 mt-1.5">Rekap Pengiriman</p>
+                        </div>
+
+                        <div class="font-bold text-center text-[13px] py-2 mt-1 text-neutral-800 tracking-wide" id="strukTanggal"></div>
+                        <div class="border-b-2 border-dashed border-neutral-400 mb-2.5"></div>
+
+                        <div id="strukDaftarKiriman" class="space-y-0 text-black">
+                            <!-- Items go here -->
+                        </div>
+
+                        <div class="text-center text-black mt-3 pt-1">
+                            <div class="border-t-2 border-dashed border-neutral-400 mb-3"></div>
+                            <p class="text-[12px] mb-8 text-neutral-600">Mengetahui,</p>
+                            <p class="font-bold inline-block px-6 pb-1 text-[13px] tracking-wide" style="border-bottom: 1.5px solid black;">Admin / Logistik</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 shrink-0 px-2">
-                <button onclick="simpanPNG()" class="col-span-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-md flex items-center justify-center space-x-2 transition active:scale-[0.98]">
+            <div class="grid grid-cols-2 gap-2.5 shrink-0 px-1">
+                <button onclick="simpanPNG()" class="col-span-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl shadow-md flex items-center justify-center space-x-2 transition active:scale-[0.98]">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     <span>Simpan sbg Gambar (PNG)</span>
                 </button>
-                <button onclick="cetakBluetooth(32)" class="bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 text-white font-bold py-3 rounded-xl shadow-md transition active:scale-[0.98] text-sm">Cetak BT (58mm)</button>
-                <button onclick="cetakBluetooth(48)" class="bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 text-white font-bold py-3 rounded-xl shadow-md transition active:scale-[0.98] text-sm">Cetak BT (80mm)</button>
+                <button id="btnCetak58" onclick="cetakBluetooth(32)" class="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md transition active:scale-[0.98] text-sm disabled:opacity-50 disabled:cursor-wait">Cetak BT (58mm)</button>
+                <button id="btnCetak80" onclick="cetakBluetooth(48)" class="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md transition active:scale-[0.98] text-sm disabled:opacity-50 disabled:cursor-wait">Cetak BT (80mm)</button>
             </div>
         </div>
     </div>
@@ -653,6 +840,309 @@
             document.getElementById('inputMakan').value = '';
         }
 
+        // --- WIZARD TAMBAH KIRIMAN (isian berurutan 1 modal) ---
+        // Urutan: Waktu -> Agen -> Driver -> Mobil -> Bensin & Uang Makan.
+        // Langkah pilihan tunggal (waktu, mobil) auto-advance; langkah multi (agen, driver)
+        // memakai checkbox dan tombol Lanjut. Data akhir ditulis ke form asal lalu
+        // disimpan lewat fungsi simpanLangsungKeDatabase() yang sudah ada.
+        let wizardAktif = false;
+        let wizardLangkah = 0;
+        let wizardTimer = null; // debounce auto-advance antar langkah
+        let wizardPilihanTerbuka = false;
+        let wizardSimpanSibuk = false;
+        const TOTAL_WIZARD = 5;
+
+        function bukaWizard() {
+            resetForm();
+            wizardAktif = true;
+            wizardLangkah = 0;
+            // Bersihkan sisa state panel pilihan simpan (jika wizard ditutup lewat tombol X)
+            wizardPilihanTerbuka = false;
+            wizardSimpanSibuk = false;
+            document.getElementById('wizardPilihan').classList.add('hidden');
+            document.getElementById('wizardNext').classList.remove('hidden');
+            setTombolTujuan(false);
+            const m = document.getElementById('modalWizard'); const c = document.getElementById('wizardContent');
+            m.classList.remove('hidden'); m.style.display = 'flex';
+            requestAnimationFrame(() => { m.classList.remove('opacity-0'); c.classList.remove('translate-y-full', 'sm:translate-y-3'); });
+            renderWizard();
+        }
+
+        function tutupWizard() {
+            wizardAktif = false;
+            wizardPilihanTerbuka = false;
+            wizardSimpanSibuk = false;
+            clearTimeout(wizardTimer);
+            document.getElementById('wizardPilihan').classList.add('hidden');
+            document.getElementById('wizardNext').classList.remove('hidden');
+            const m = document.getElementById('modalWizard'); const c = document.getElementById('wizardContent');
+            m.classList.add('opacity-0'); c.classList.add('translate-y-full');
+            setTimeout(() => { m.classList.add('hidden'); m.style.display = ''; }, 300);
+        }
+
+        function renderWizard() {
+            if (!wizardAktif) return;
+            const judul = ['Kapan waktu pengiriman?', 'Pilih agen tujuan', 'Pilih driver', 'Pilih mobil', 'Bensin & uang makan'];
+            const sub = ['Langkah 1 dari 5', 'Langkah 2 dari 5 — boleh lebih dari satu', 'Langkah 3 dari 5 — maksimal 2 orang', 'Langkah 4 dari 5', 'Langkah 5 dari 5 — opsional'];
+            document.getElementById('wizardTitle').innerText = judul[wizardLangkah];
+            document.getElementById('wizardSubtitle').innerText = sub[wizardLangkah];
+            document.querySelectorAll('.wizard-step').forEach((el, i) => {
+                el.classList.toggle('bg-primary', i <= wizardLangkah);
+                el.classList.toggle('bg-slate-200', i > wizardLangkah);
+                el.classList.toggle('dark:bg-slate-800', i > wizardLangkah);
+            });
+            document.getElementById('wizardBack').classList.toggle('hidden', wizardLangkah === 0);
+
+            const box = document.getElementById('wizardStepContent');
+            const next = document.getElementById('wizardNext');
+            next.disabled = false;
+
+            if (wizardLangkah === 0) {
+                const waktu = document.getElementById('waktuPengiriman').value;
+                box.innerHTML = `
+                    <div class="grid gap-2.5">
+                        ${['Malam', 'Subuh/Pagi'].map(w => `
+                            <button type="button" data-waktu="${w}" class="wizard-opt w-full text-left px-4 py-4 rounded-2xl border font-bold flex items-center justify-between transition active:scale-[0.98] ${waktu === w ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200'}">
+                                <span>${w}</span>
+                                <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full ${waktu === w ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400/60'}">
+                                    ${waktu === w ? '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                                </span>
+                            </button>`).join('')}
+                    </div>`;
+                next.innerText = waktu ? 'Lanjut' : 'Pilih waktu dulu';
+                next.disabled = !waktu;
+                box.querySelectorAll('.wizard-opt').forEach(b => b.onclick = () => {
+                    document.getElementById('waktuPengiriman').value = b.dataset.waktu;
+                    renderWizard(); // render ulang supaya check muncul & tombol aktif
+                    clearTimeout(wizardTimer);
+                    wizardTimer = setTimeout(() => wizardLanjut(), 280);
+                });
+                return;
+            }
+
+            if (wizardLangkah === 1) {
+                const src = document.getElementById('listCheckboxAgen');
+                box.innerHTML = `
+                    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800 max-h-[42vh] overflow-y-auto receipt-scroll">
+                        ${src.innerHTML || '<p class="text-sm text-slate-400 p-4 text-center italic">Data agen belum tersedia</p>'}
+                    </div>`;
+                box.querySelectorAll('input[type=checkbox]').forEach(cb => {
+                    cb.removeAttribute('onchange');
+                    cb.checked = agenTerpilih.includes(cb.value);
+                    cb.onchange = () => {
+                        const asli = v => v && v.trim() && v.trim() !== '-' && v.trim() !== '- Kosong -';
+                        agenTerpilih = Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value.trim()).filter(asli);
+                        hitungAgenTerpilih();
+                        next.innerText = agenTerpilih.length ? `Lanjut (${agenTerpilih.length} dipilih)` : 'Pilih minimal 1 agen';
+                        next.disabled = agenTerpilih.length === 0;
+                    };
+                });
+                next.innerText = agenTerpilih.length ? `Lanjut (${agenTerpilih.length} dipilih)` : 'Pilih minimal 1 agen';
+                next.disabled = agenTerpilih.length === 0;
+                return;
+            }
+
+            if (wizardLangkah === 2) {
+                const src = document.getElementById('listCheckboxDriver');
+                box.innerHTML = `
+                    <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800 max-h-[42vh] overflow-y-auto receipt-scroll">
+                        ${src.innerHTML || '<p class="text-sm text-slate-400 p-4 text-center italic">Data driver belum tersedia</p>'}
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2 text-center">Driver utama & co-driver — maksimal 2 orang</p>`;
+                box.querySelectorAll('input[type=checkbox]').forEach(cb => {
+                    cb.removeAttribute('onchange');
+                    cb.classList.remove('driver-checkbox'); cb.classList.add('wizard-driver');
+                    cb.checked = driverTerpilih.includes(cb.value);
+                    cb.onchange = () => {
+                        const asli = v => v && v.trim() && v.trim() !== '-' && v.trim() !== '- Kosong -';
+                        if (!asli(cb.value)) {
+                            cb.checked = false;
+                            toast('Baris placeholder bukan driver valid.', 'gagal');
+                            return;
+                        }
+                        // Nilai kosong/placeholder ("-", "- Kosong -") tidak dihitung
+                        const semua = Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value.trim()).filter(asli);
+                        if (semua.length > 2) { cb.checked = false; toast('Maksimal 2 driver (Driver & Co-Driver).', 'gagal'); }
+                        const val = Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value.trim()).filter(asli);
+                        driverTerpilih = val;
+                        document.getElementById('counterDriver').innerText = `${val.length} Terpilih`;
+                        next.innerText = val.length ? `Lanjut (${val.length} dipilih)` : 'Pilih minimal 1 driver';
+                        next.disabled = val.length === 0;
+                    };
+                });
+                next.innerText = driverTerpilih.length ? `Lanjut (${driverTerpilih.length} dipilih)` : 'Pilih minimal 1 driver';
+                next.disabled = driverTerpilih.length === 0;
+                return;
+            }
+
+            if (wizardLangkah === 3) {
+                const mobil = document.getElementById('mobil');
+                const dipilih = mobil.value;
+                box.innerHTML = `
+                    <div class="grid gap-2">
+                        ${Array.from(mobil.options).filter(o => o.value).map(o => `
+                            <button type="button" data-mobil="${o.value.replace(/"/g, '&quot;')}" class="wizard-opt w-full text-left px-4 py-3.5 rounded-2xl border font-semibold flex items-center justify-between transition active:scale-[0.98] ${dipilih === o.value ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200'}">
+                                <span class="truncate pr-2">${o.text}</span>
+                                <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full ${dipilih === o.value ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400/60'}">
+                                    ${dipilih === o.value ? '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                                </span>
+                            </button>`).join('')}
+                    </div>`;
+                next.innerText = dipilih ? 'Lanjut' : 'Pilih mobil dulu';
+                next.disabled = !dipilih;
+                box.querySelectorAll('.wizard-opt').forEach(b => b.onclick = () => {
+                    document.getElementById('mobil').value = b.dataset.mobil;
+                    renderWizard(); // update selected state + enable next before advancing
+                    clearTimeout(wizardTimer);
+                    wizardTimer = setTimeout(() => wizardLanjut(), 280);
+                });
+                return;
+            }
+
+            if (wizardLangkah === 4) {
+                box.innerHTML = `
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Bensin</label>
+                            <input type="text" inputmode="numeric" id="wizardBensin" placeholder="Cth: 300" value="${document.getElementById('inputBensin').value}" class="w-full px-3.5 py-3 text-[15px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none dark:text-white font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Uang Makan</label>
+                            <input type="text" inputmode="numeric" id="wizardMakan" placeholder="Cth: 100" value="${document.getElementById('inputMakan').value}" class="w-full px-3.5 py-3 text-[15px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none dark:text-white font-semibold">
+                        </div>
+                    </div>
+                    <div class="mt-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200/70 dark:border-emerald-800 p-3.5">
+                        <p class="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">Ringkasan</p>
+                        <div id="wizardRingkasan" class="text-xs text-slate-700 dark:text-slate-200 leading-relaxed space-y-1"></div>
+                    </div>`;
+                document.getElementById('wizardBensin').oninput = e => { document.getElementById('inputBensin').value = e.target.value; };
+                document.getElementById('wizardMakan').oninput = e => { document.getElementById('inputMakan').value = e.target.value; };
+                const waktu = document.getElementById('waktuPengiriman').value || '-';
+                const r = document.getElementById('wizardRingkasan');
+                r.innerHTML = `
+                    <p><span class="text-slate-400 inline-block w-16">Waktu</span> <b>${waktu}</b></p>
+                    <p><span class="text-slate-400 inline-block w-16">Agen</span> <b>${agenTerpilih.join(', ') || '-'}</b></p>
+                    <p><span class="text-slate-400 inline-block w-16">Driver</span> <b>${driverTerpilih.join(' & ') || '-'}</b></p>
+                    <p><span class="text-slate-400 inline-block w-16">Mobil</span> <b>${document.getElementById('mobil').value || '-'}</b></p>`;
+                next.innerText = 'Simpan Data';
+                next.disabled = false;
+            }
+        }
+
+        function wizardLanjut() {
+            if (!wizardAktif || document.getElementById('wizardNext').disabled) return;
+            if (wizardLangkah < TOTAL_WIZARD - 1) {
+                wizardLangkah++;
+                renderWizard();
+                return;
+            }
+            // Langkah 5 + panel pilihan belum terbuka → buka panel pilihan tujuan
+            if (!wizardPilihanTerbuka) {
+                if (!validasiPilihanKiriman()) return;
+                bukaPilihanSimpan();
+                return;
+            }
+        }
+
+        function validasiPilihanKiriman() {
+            const mobil = document.getElementById('mobil').value;
+            if (!agenTerpilih.length || !driverTerpilih.length || !mobil) {
+                toast('Lengkapi pilihan agen, driver, dan mobil.', 'gagal');
+                return false;
+            }
+            return true;
+        }
+
+        function bukaPilihanSimpan() {
+            wizardPilihanTerbuka = true;
+            clearTimeout(wizardTimer);
+            document.getElementById('wizardPilihan').classList.remove('hidden');
+            document.getElementById('wizardNext').classList.add('hidden');
+            document.getElementById('wizardBack').classList.add('hidden');
+        }
+
+        function batalPilihanSimpan() {
+            wizardPilihanTerbuka = false;
+            document.getElementById('wizardPilihan').classList.add('hidden');
+            document.getElementById('wizardNext').classList.remove('hidden');
+            // Kembali ke footer normal (tombol Kembali tergantung langkah)
+            document.getElementById('wizardBack').classList.toggle('hidden', wizardLangkah === 0);
+        }
+
+        function setTombolTujuan(sibuk) {
+            document.querySelectorAll('#wizardPilihan .wizard-tujuan').forEach(b => {
+                b.disabled = sibuk;
+                b.classList.toggle('opacity-50', sibuk);
+                b.classList.toggle('pointer-events-none', sibuk);
+            });
+        }
+
+        async function pilihTujuanSimpan(tujuan) {
+            if (wizardSimpanSibuk) return;
+            if (!validasiPilihanKiriman()) { batalPilihanSimpan(); return; }
+
+            if (tujuan === 'antrean') {
+                // 1 mobil yang mengantar ke 2-3 agen = 1 entri antrean, nama digabung ", "
+                const jumlahAgen = agenTerpilih.length;
+                const namaAgenGabung = agenTerpilih.join(', ');
+                listRekapan.push({
+                    id: Date.now(),
+                    tanggal: document.getElementById('tanggal').value,
+                    agen: namaAgenGabung,
+                    waktu_kirim: document.getElementById('waktuPengiriman').value,
+                    driver: driverTerpilih[0] || '',
+                    codriver: driverTerpilih[1] || '',
+                    mobil: document.getElementById('mobil').value,
+                    bensin: document.getElementById('inputBensin').value,
+                    uang_makan: document.getElementById('inputMakan').value
+                });
+                tutupWizard();
+                renderDraft();
+                resetForm(); // reset setelah semua nilai dibaca, agar toast tidak kehilangan data
+                toast(`1 kiriman (${jumlahAgen} agen: ${namaAgenGabung}) ditambahkan ke antrean.`, 'sukses');
+                return;
+            }
+
+            if (tujuan === 'database') {
+                if (!supabaseClient) return toast('Koneksi database tidak tersedia.', 'gagal');
+                wizardSimpanSibuk = true;
+                setTombolTujuan(true);
+                tampilkanAlertLoading('Menyimpan ke database...');
+
+                // 1 kiriman = 1 baris gabungan (keputusan user), sama seperti hasil antrean
+                const baris = {
+                    tanggal: document.getElementById('tanggal').value,
+                    agen: agenTerpilih.join(', '),
+                    waktu_kirim: document.getElementById('waktuPengiriman').value,
+                    driver: driverTerpilih[0] || '',
+                    codriver: driverTerpilih[1] || '',
+                    mobil: document.getElementById('mobil').value,
+                    bensin: document.getElementById('inputBensin').value,
+                    uang_makan: document.getElementById('inputMakan').value
+                };
+
+                try {
+                    const { error } = await supabaseClient.from('rekap_pengiriman').insert([baris]);
+                    if (error) throw error;
+                    tutupAlert();
+                    tutupWizard();
+                    loadRiwayatDB();
+                    resetForm();
+                    tampilkanAlertBerhasil('Berhasil!', `Data "${baris.agen}" tersimpan ke Database.`);
+                } catch (error) {
+                    // Gagal: wizard tetap terbuka di langkah 5 dengan pilihan tetap
+                    tutupAlert();
+                    toast('Gagal menyimpan: ' + (error.message || error), 'gagal');
+                } finally {
+                    wizardSimpanSibuk = false;
+                    setTombolTujuan(false);
+                }
+            }
+        }
+        function wizardMundur() {
+            if (wizardLangkah > 0) { wizardLangkah--; renderWizard(); }
+        }
+
         function tambahKiriman() {
             const mobil = document.getElementById('mobil').value;
             const tanggal = document.getElementById('tanggal').value; 
@@ -668,13 +1158,13 @@
             const mainCoDriver = driverTerpilih[1] || '';
 
             agenTerpilih.forEach((agenItem, index) => {
-                listRekapan.push({ 
+                listRekapan.push({
                     id: Date.now() + index,
-                    tanggal: tanggal, 
-                    agen: agenItem, 
+                    tanggal: tanggal,
+                    agen: agenItem,
                     waktu_kirim: waktu_kirim,
-                    driver: mainDriver, 
-                    codriver: mainCoDriver, 
+                    driver: mainDriver,
+                    codriver: mainCoDriver,
                     mobil: mobil,
                     bensin: bensin,
                     uang_makan: uang_makan
@@ -708,7 +1198,7 @@
                 let makanText = item.uang_makan || '0';
 
                 container.innerHTML += `
-                    <div class="bg-blue-50 dark:bg-blue-900/20 py-2 px-2.5 rounded-lg shadow-sm border border-blue-100 dark:border-blue-800 fade-in relative overflow-hidden">
+                    <div class="bg-white dark:bg-slate-900 py-2.5 px-3 rounded-xl shadow-card border border-blue-200/60 dark:border-blue-900/40 fade-in relative overflow-hidden pressable">
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
                         <div class="pl-1.5 flex flex-col">
                             <div class="flex justify-between items-center mb-0.5">
@@ -733,9 +1223,26 @@
             });
         }
 
+        // Nilai agen gabungan ("Agen 1, Agen 2") tidak punya opsi di select —
+        // sisipkan sementara supaya tidak jadi kosong saat modal Edit dibuka/disimpan.
+        function pilihOpsiAgen(selectId, nilai) {
+            const select = document.getElementById(selectId);
+            if (!select || !nilai) return;
+            // Buang opsi sintetis hasil inject sebelumnya supaya tidak menumpuk
+            select.querySelectorAll('option[data-sintetis]').forEach(o => o.remove());
+            const ada = Array.from(select.options).some(o => o.value === nilai);
+            if (!ada) {
+                const opt = document.createElement('option');
+                opt.value = nilai; opt.textContent = nilai;
+                opt.setAttribute('data-sintetis', '');
+                select.appendChild(opt);
+            }
+            select.value = nilai;
+        }
+
         function bukaEditDraftModal(id) {
             currentDraftEditId = id; const item = listRekapan.find(x => x.id === id); if(!item) return;
-            document.getElementById('editDraftAgen').value = item.agen; 
+            pilihOpsiAgen('editDraftAgen', item.agen);
             document.getElementById('editDraftWaktu').value = item.waktu_kirim || '';
             document.getElementById('editDraftMobil').value = item.mobil;
             document.getElementById('editDraftDriver').value = item.driver; 
@@ -776,7 +1283,7 @@
         async function loadRiwayatDB() {
             if(!supabaseClient) return;
             const filter = document.getElementById('filterWaktu').value; const container = document.getElementById('riwayatDbContainer');
-            container.innerHTML = '<p class="text-center text-xs text-gray-500 py-4 italic">Memuat data...</p>';
+            container.innerHTML = '<div class="space-y-2 py-1"><div class="skeleton h-14 rounded-xl"></div><div class="skeleton h-14 rounded-xl"></div><div class="skeleton h-14 rounded-xl"></div></div>';
             let query = supabaseClient.from('rekap_pengiriman').select('*').order('created_at', { ascending: true });
             
             const today = new Date();
@@ -835,7 +1342,7 @@
                 const makanText = item.uang_makan || '0';
 
                 container.innerHTML += `
-                    <div class="bg-white dark:bg-gray-800 py-2 px-2.5 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 fade-in relative overflow-hidden mb-1.5">
+                    <div class="bg-white dark:bg-slate-900 py-2.5 px-3 rounded-xl shadow-card border border-slate-200/70 dark:border-slate-800 fade-in relative overflow-hidden">
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-400"></div>
                         <div class="pl-1.5 flex flex-col">
                             <div class="flex justify-between items-center mb-0.5">
@@ -866,7 +1373,7 @@
             if(calInput) { calInput.setDate(item.tanggal); } 
             else { document.getElementById('editTanggal').value = item.tanggal; }
 
-            document.getElementById('editAgen').value = item.agen; 
+            pilihOpsiAgen('editAgen', item.agen);
             document.getElementById('editWaktu').value = item.waktu_kirim || '';
             document.getElementById('editMobil').value = item.mobil;
             document.getElementById('editDriver').value = item.driver; 
@@ -958,9 +1465,9 @@
                 const makanText = item.uang_makan || '0';
 
                 containerStruk.innerHTML += `
-                    <div class="py-2.5 border-b border-gray-400 border-dashed">
-                        <div class="font-bold text-[13px] tracking-wide">${agenTitleCase}${infoTgl}${labelWaktu}</div>
-                        <div class="text-[13px] mt-0.5 tracking-tight">${driverText} | ${item.mobil} | (${bensinText}+${makanText})</div>
+                    <div class="py-2.5 border-b border-neutral-200 last:border-b-0">
+                        <div class="font-bold text-[13.5px] text-black leading-snug">${agenTitleCase}<span class="text-neutral-500 font-medium">${infoTgl}</span>${labelWaktu ? `<span class="inline-block ml-1 px-1.5 py-[1px] text-[10px] font-bold uppercase tracking-wide bg-neutral-100 text-neutral-700 rounded">${labelWaktu.trim()}</span>` : ''}</div>
+                        <div class="text-[12.5px] mt-1 text-neutral-700 font-medium">${driverText} <span class="text-neutral-300">•</span> ${item.mobil} <span class="text-neutral-300">•</span> <span class="font-semibold text-neutral-900">(${bensinText}+${makanText})</span></div>
                     </div>
                 `;
             });
@@ -1107,32 +1614,164 @@
             }, 600);
         }
 
-        // --- BLUETOOTH PRINTING ---
-        async function cetakBluetooth(maxChars = 32) {
+        // --- BLUETOOTH PRINTING (ESC/POS) ---
+        const BT_SERVICE_UUID = '000018f0-0000-1000-8000-00805f9b34fb';
+        const BT_CHAR_UUID    = '00002af1-0000-1000-8000-00805f9b34fb';
+        let btDeviceTersimpan = null; // supaya cetak berikutnya tidak perlu memilih printer lagi
+        let btSedangCetak = false;
+
+        const tunggu = (ms) => new Promise(r => setTimeout(r, ms));
+
+        function setTombolCetak(sibuk) {
+            const labels = { btnCetak58: 'Cetak BT (58mm)', btnCetak80: 'Cetak BT (80mm)' };
+            Object.keys(labels).forEach(id => {
+                const b = document.getElementById(id);
+                if (!b) return;
+                b.disabled = sibuk;
+                b.innerHTML = sibuk ? '<span class="inline-flex items-center gap-1.5"><svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>Mengirim...</span>' : labels[id];
+            });
+        }
+
+        // Toast notifikasi (lebih ringan dari alert di mobile)
+        let toastTimer = null;
+        function toast(pesan, tipe = 'info') {
+            let el = document.getElementById('toastNotif');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'toastNotif';
+                document.body.appendChild(el);
+            }
+            const warna = tipe === 'sukses' ? 'bg-emerald-600' : tipe === 'gagal' ? 'bg-red-600' : 'bg-slate-800 dark:bg-slate-700';
+            el.className = `${warna} text-white text-[13px] font-semibold px-4 py-3 rounded-2xl shadow-xl text-center leading-snug`;
+            el.textContent = pesan;
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), tipe === 'info' ? 2200 : 4000);
+        }
+
+        // Ambil perangkat + koneksi GATT (pakai ulang perangkat terakhir bila masih ada)
+        async function ambilPerangkatBT() {
+            if (!navigator.bluetooth) throw new Error('Web Bluetooth tidak didukung. Buka lewat Chrome/Edge terbaru.');
+
+            if (btDeviceTersimpan) {
+                try {
+                    if (!btDeviceTersimpan.gatt.connected) await btDeviceTersimpan.gatt.connect();
+                    return btDeviceTersimpan;
+                } catch (e) {
+                    btDeviceTersimpan = null; // koneksi lama terputus, pilih ulang
+                }
+            }
+
+            let device;
             try {
-                const device = await navigator.bluetooth.requestDevice({ 
-                    filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }], 
-                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] 
-                }).catch(e => { 
-                    return navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] }); 
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [BT_SERVICE_UUID] }],
+                    optionalServices: [BT_SERVICE_UUID]
                 });
-                
-                const server = await device.gatt.connect(); 
-                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb'); 
-                const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb'); 
-                
-                const strTanggal = document.getElementById('strukTanggal').innerText; 
-                
-                const CMD_ALIGN_CENTER = "\x1B\x61\x01"; 
+            } catch (e) {
+                if (e && e.name === 'NotFoundError') throw e; // user menutup dialog pemilihan
+                // Beberapa printer tidak terdeteksi lewat filter → tawarkan semua perangkat
+                device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [BT_SERVICE_UUID]
+                });
+            }
+
+            if (!device._listenerBT) {
+                device._listenerBT = true;
+                device.addEventListener('gattserverdisconnected', () => { btDeviceTersimpan = null; });
+            }
+            if (!device.gatt.connected) await device.gatt.connect();
+            btDeviceTersimpan = device;
+            return device;
+        }
+
+        // Kirim byte ke printer dengan flow-control yang benar.
+        // - writeValueWithResponse: tiap potongan ditunggu ACK printer → tidak meluber & tidak perlu jeda buatan.
+        // - writeWithoutResponse: perlu jeda kecil agar buffer printer tidak tumpah.
+        // Jika ada potongan yang ditolak (MTU kecil), ukuran potongan diturunkan otomatis lalu dicoba ulang.
+        async function kirimKePrinter(bytes, onProgress) {
+            const device = await ambilPerangkatBT();
+            const service = await device.gatt.getPrimaryService(BT_SERVICE_UUID);
+            const characteristic = await service.getCharacteristic(BT_CHAR_UUID);
+
+            // Strategi tulis, dari yang paling andal:
+            // 1) writeValueWithResponse → menunggu ACK per potongan (paling aman)
+            // 2) writeValue             → API lama, perilaku sama (ada di Chrome lama)
+            // 3) writeValueWithoutResponse → cepat, tapi perlu jeda agar buffer tidak meluber
+            let caraTulis = null;
+            if (typeof characteristic.writeValueWithResponse === 'function') caraTulis = 'respons';
+            else if (typeof characteristic.writeValue === 'function') caraTulis = 'respons';
+            else if (typeof characteristic.writeValueWithoutResponse === 'function') caraTulis = 'tanpa';
+            else throw new Error('Printer tidak mendukung operasi tulis.');
+
+            const tulis = async (chunk) => {
+                if (caraTulis === 'respons') {
+                    if (typeof characteristic.writeValueWithResponse === 'function') await characteristic.writeValueWithResponse(chunk);
+                    else await characteristic.writeValue(chunk);
+                } else {
+                    await characteristic.writeValueWithoutResponse(chunk);
+                }
+            };
+
+            let ukuranPotong = caraTulis === 'respons' ? 128 : 100;
+            const jedaMs = caraTulis === 'respons' ? 0 : 15;
+            let pctTerkirim = -1;
+
+            for (let i = 0; i < bytes.length; ) {
+                let potong = Math.min(ukuranPotong, bytes.length - i);
+                let selesai = false;
+                while (!selesai) {
+                    try {
+                        await tulis(bytes.slice(i, i + potong));
+                        selesai = true;
+                    } catch (err) {
+                        // Potongan terlalu besar untuk MTU printer → turunkan ukuran lalu coba lagi
+                        if (potong > 20) {
+                            potong = Math.max(20, Math.floor(potong / 2));
+                            ukuranPotong = potong;
+                            if (caraTulis === 'respons' && typeof characteristic.writeValueWithoutResponse === 'function') caraTulis = 'tanpa';
+                        } else {
+                            throw err;
+                        }
+                    }
+                }
+                i += potong;
+                if (jedaMs) await tunggu(jedaMs);
+                if (onProgress) {
+                    const pct = Math.round((i / bytes.length) * 100);
+                    if (pct !== pctTerkirim) { pctTerkirim = pct; onProgress(pct); }
+                }
+            }
+        }
+
+        async function cetakBluetooth(maxChars = 32) {
+            if (btSedangCetak) return;
+            if (!dataRiwayatDB || dataRiwayatDB.length === 0) return toast('Tidak ada data riwayat untuk dicetak.', 'gagal');
+
+            btSedangCetak = true;
+            setTombolCetak(true);
+            toast('Membuka koneksi printer...');
+
+            try {
+                const strTanggal = document.getElementById('strukTanggal').innerText;
+
+                // Perintah dasar ESC/POS. Font fisik printer tidak bisa diganti,
+                // jadi hierarki disamakan dengan pratinjau lewat bold (ESC E) & skala (GS !).
+                const BOLD_ON = "\x1B\x45\x01";
+                const BOLD_OFF = "\x1B\x45\x00";
+                const SIZE_BIG = "\x1B\x21\x09"; // bit0-2 tinggi x2, bit3-5 lebar x2 (14 char x2 = 28 kolom, muat di 58mm)
+                const SIZE_NRM = "\x1B\x21\x00";
+                const ALIGN_CENTER = "\x1B\x61\x01";
                 let lines = [];
-                
-                lines.push(CMD_ALIGN_CENTER);
-                lines.push("SBR PUTRA FOOD"); 
-                lines.push("REKAP PENGIRIMAN"); 
-                lines.push(""); 
-                lines.push(strTanggal); 
+
+                lines.push(ALIGN_CENTER);
+                lines.push(SIZE_BIG + BOLD_ON + "SBR PUTRA FOOD" + BOLD_OFF + SIZE_NRM);
+                lines.push(BOLD_ON + "REKAP PENGIRIMAN" + BOLD_OFF);
+                lines.push("");
+                lines.push(BOLD_ON + strTanggal + BOLD_OFF);
                 lines.push("-".repeat(maxChars));
-                
+
                 let groupedMap = {};
                 dataRiwayatDB.forEach(item => {
                     const key = `${item.tanggal}_${item.driver}_${item.codriver}_${item.mobil}_${item.waktu_kirim}`;
@@ -1144,46 +1783,51 @@
                 });
                 const dataToPrint = Object.values(groupedMap);
                 const daysAbbr = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-                
+
                 dataToPrint.forEach((item, i) => {
                     const agenTitleCase = item.agenList.join(', ').toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
-                    const p = item.tanggal.split('-'); 
+                    const p = item.tanggal.split('-');
                     const d = new Date(p[0], p[1] - 1, p[2]);
                     const dayName = daysAbbr[d.getDay()];
                     const infoTgl = ` (${dayName},${p[2]}/${p[1]})`;
                     const labelWaktu = item.waktu_kirim ? ` ${item.waktu_kirim}` : '';
-                    
+
                     const driverText = item.codriver && item.codriver !== '' ? `${item.driver} & ${item.codriver}` : item.driver;
                     const bensinText = item.bensin || '0';
                     const makanText = item.uang_makan || '0';
 
-                    lines.push(`${agenTitleCase}${infoTgl}${labelWaktu}`);
-                    lines.push(`${driverText} | ${item.mobil} | (${bensinText}+${makanText})`);
-                    lines.push("-".repeat(maxChars)); 
+                    lines.push(BOLD_ON + agenTitleCase + BOLD_OFF + infoTgl + labelWaktu);
+                    lines.push(`${driverText} | ${item.mobil} | ` + BOLD_ON + `(${bensinText}+${makanText})` + BOLD_OFF);
+                    lines.push("-".repeat(maxChars));
                 });
-                
+
                 lines.push("");
-                lines.push("Mengetahui,"); 
-                lines.push("\n"); 
-                lines.push("Admin / Logistik"); 
+                lines.push("Mengetahui,");
+                lines.push("\n");
+                lines.push(BOLD_ON + "Admin / Logistik" + BOLD_OFF);
                 lines.push("-".repeat(maxChars));
-                lines.push("*** AKHIR CETAK ***"); 
-                lines.push("\n\n"); 
-                
-                let text = lines.join("\n"); 
-                let encoder = new TextEncoder(); 
-                let data = encoder.encode(text);
-                
-                let chunkSize = 20; 
-                for (let i = 0; i < data.length; i += chunkSize) { 
-                    let chunk = data.slice(i, i + chunkSize); 
-                    await characteristic.writeValue(chunk); 
-                    await new Promise(resolve => setTimeout(resolve, 100)); 
-                }
-                
-                alert('Berhasil mengirim perintah ke printer Bluetooth!');
-            } catch (error) { 
-                alert('Gagal cetak Bluetooth: ' + error.message + '\n\nPastikan GPS/Lokasi menyala dan printer sudah dipairing.'); 
+                lines.push("*** AKHIR CETAK ***");
+                lines.push("\n\n");
+
+                // Susun paket: ESC @ (reset printer) + isi struk + feed kertas
+                const encoder = new TextEncoder();
+                const initBytes  = new Uint8Array([0x1B, 0x40]);
+                const bodyBytes  = encoder.encode(lines.join("\n"));
+                const feedBytes  = encoder.encode("\n\n\n");
+                const paket = new Uint8Array(initBytes.length + bodyBytes.length + feedBytes.length);
+                paket.set(initBytes, 0);
+                paket.set(bodyBytes, initBytes.length);
+                paket.set(feedBytes, initBytes.length + bodyBytes.length);
+
+                await kirimKePrinter(paket, pct => toast(`Mengirim ke printer... ${pct}%`));
+                toast('Berhasil mengirim perintah ke printer!', 'sukses');
+            } catch (error) {
+                console.error('Bluetooth print error:', error);
+                if (error && error.name === 'NotFoundError') toast('Pemilihan printer dibatalkan.', 'info');
+                else toast('Gagal cetak: ' + (error.message || error) + '. Cek GPS/Lokasi & pairing printer.', 'gagal');
+            } finally {
+                btSedangCetak = false;
+                setTombolCetak(false);
             }
         }
 
