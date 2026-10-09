@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBR Putra Food - Sistem Manajemen Terpadu</title>
+    <link rel="icon" href="data:,">
     <!-- Google Fonts Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
@@ -168,6 +169,48 @@
             animation: kelapKelip 1.5s ease-in-out infinite;
         }
 
+        /* Animasi masuk panel Wizard Catat Barang Masuk */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes wizardMasuk {
+            from {
+                opacity: 0;
+                transform: translateX(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .wizard-panel {
+            animation: wizardMasuk 0.28s ease-out;
+        }
+
+        /* Sorot baris baru di Rekapan Berjalan setelah berhasil disimpan */
+        @keyframes barisBaruMasuk {
+            0% {
+                background-color: rgba(16, 185, 129, 0.35);
+            }
+
+            100% {
+                background-color: rgba(16, 185, 129, 0);
+            }
+        }
+
+        tr.baris-baru {
+            animation: barisBaruMasuk 2.8s ease-out;
+        }
+
         /* Hapus Numeric Up/Down */
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button {
@@ -228,7 +271,7 @@
     </style>
 </head>
 
-<body class="p-4 md:p-6 lg:p-8 relative overflow-x-hidden">
+<body class="p-4 md:p-6 lg:p-8 relative overflow-x-hidden lg:h-screen lg:overflow-hidden lg:flex lg:flex-col">
 
     <!-- POPUP MODAL MODERN UNTUK PROSES & BERHASIL EXPORT -->
     <div id="modalExportStatus"
@@ -356,6 +399,10 @@
             </div>
         </div>
     </div>
+
+    <!-- TOAST NOTIFIKASI (AUTO-CLOSE, DI KANAN ATAS) -->
+    <div id="toastContainer"
+        class="fixed top-4 right-4 z-[130] flex flex-col gap-2 items-end pointer-events-none"></div>
 
     <!-- MODAL RINCIAN PEMAKAIAN TITIP UANG (POPUP MODERN) -->
     <div id="modalDetailPakaiTitip"
@@ -547,10 +594,10 @@
         </div>
     </div>
 
-    <div class="max-w-[1400px] mx-auto space-y-6">
+    <div class="max-w-[1400px] mx-auto space-y-6 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col lg:space-y-4">
         <!-- HEADER -->
         <header
-            class="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-4 lg:p-6 rounded-2xl shadow-sm border border-gray-100 gap-4">
+            class="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-4 lg:px-6 lg:py-4 rounded-2xl shadow-sm border border-gray-100 gap-4 lg:shrink-0">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()"
                     class="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 transition"
@@ -656,10 +703,10 @@
         </header>
 
         <!-- LAYOUT UTAMA DENGAN SIDEBAR -->
-        <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch relative">
+        <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch relative lg:flex-1 lg:min-h-0">
             <!-- SIDEBAR NAVIGASI -->
             <aside id="sidebar"
-                class="w-full lg:w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-4 shrink-0 flex flex-col">
+                class="w-full lg:w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-4 shrink-0 flex flex-col lg:max-h-full lg:overflow-y-auto">
                 <!-- HEADER SIDEBAR -->
                 <div
                     class="flex items-center justify-between px-2 mb-3 lg:mb-2 pb-2 border-b border-gray-100 dark:border-slate-700">
@@ -673,7 +720,7 @@
                         Navigasi Menu
                     </span>
                     <span
-                        class="text-[9px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-full">9
+                        class="text-[9px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-full">8
                         Menu</span>
                 </div>
 
@@ -747,8 +794,8 @@
                             <span>Perhitungan Fee</span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 lg:flex lg:flex-col lg:gap-0 lg:space-y-1.5">
-                            <!-- 4. Fee Basreng -->
-                            <button onclick="toggleModal('modalHitungFee')"
+                            <!-- 4. Perhitungan Fee (Basreng & Plastik dalam satu menu) -->
+                            <button onclick="bukaMenuFee()"
                                 class="w-full text-left bg-indigo-50/70 hover:bg-indigo-100/80 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 border border-indigo-100/90 dark:border-indigo-900/40 px-2.5 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all shadow-xs hover:shadow-sm flex items-center group">
                                 <div
                                     class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 flex items-center justify-center mr-2 shrink-0 group-hover:scale-105 transition-transform">
@@ -759,21 +806,7 @@
                                         </path>
                                     </svg>
                                 </div>
-                                <span class="truncate">Fee Basreng</span>
-                            </button>
-
-                            <!-- 5. Fee Plastik -->
-                            <button onclick="toggleModal('modalFeePlastik')"
-                                class="w-full text-left bg-indigo-50/70 hover:bg-indigo-100/80 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 border border-indigo-100/90 dark:border-indigo-900/40 px-2.5 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all shadow-xs hover:shadow-sm flex items-center group">
-                                <div
-                                    class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 flex items-center justify-center mr-2 shrink-0 group-hover:scale-105 transition-transform">
-                                    <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                                    </svg>
-                                </div>
-                                <span class="truncate">Fee Plastik</span>
+                                <span class="truncate">Perhitungan Fee</span>
                             </button>
                         </div>
                     </div>
@@ -889,10 +922,10 @@
                 </div>
             </aside>
             <!-- KONTEN UTAMA -->
-            <div class="flex-1 w-full grid grid-cols-1 xl:grid-cols-12 gap-6 min-w-0 items-stretch">
+            <div class="flex-1 w-full grid grid-cols-1 xl:grid-cols-12 gap-6 min-w-0 items-stretch xl:min-h-0">
                 <!-- KOLOM KIRI (CATAT BARANG) - DISEJAJARKAN DENGAN KARTU KANAN -->
                 <div
-                    class="glass-card p-6 xl:col-span-4 border border-gray-100 dark:border-slate-700 flex flex-col justify-between">
+                    class="glass-card p-6 xl:col-span-4 border border-gray-100 dark:border-slate-700 flex flex-col justify-between xl:min-h-0 xl:overflow-y-auto">
                     <div>
                         <h2
                             class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-5 border-b pb-3 flex items-center">
@@ -904,87 +937,51 @@
                             </svg>
                             Catat Barang Masuk
                         </h2>
-                        <form id="formCatat" class="space-y-4">
-                            <div>
-                                <label
-                                    class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Tanggal</label>
-                                <input type="date" id="tanggal" required
-                                    class="block w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none focus:border-indigo-500">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label
-                                        class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Agen</label>
-                                    <select id="agen" required
-                                        class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none"
-                                        onchange="onAgenChange()">
-                                        <option value="" disabled selected>Pilih Agen</option>
-                                        <option value="Jambi">Jambi</option>
-                                        <option value="Jakarta">Jakarta</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label
-                                        class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Kurir</label>
-                                    <select id="keterangan_kurir" required
-                                        class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none"></select>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Varian
-                                    Basreng</label>
-                                <select id="varian" required
-                                    class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none"
-                                    onchange="kalkulasiKarungKeBal()"></select>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div><label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1"
-                                        id="labelQtyKarung">Qty (Karung)</label><input type="number" id="qty_karung"
-                                        placeholder="0"
-                                        class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm"
-                                        oninput="kalkulasiKarungKeBal()"></div>
-                                <div><label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Qty
-                                        (Bal)</label><input type="number" id="qty_bal" required
-                                        class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm font-bold"
-                                        placeholder="0" oninput="hitungNominal()"></div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Keterangan
-                                    (Opsional)</label>
-                                <input type="text" id="keterangan_barang" placeholder="Contoh: Catatan khusus / bonus"
-                                    class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none focus:border-indigo-500">
-                            </div>
-                        </form>
-                    </div>
+                        <!-- TOMBOL BUKA WIZARD MODAL -->
+                        <button type="button" onclick="bukaWizardCatat()"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-2 active:scale-[0.98]">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Catat Barang Masuk
+                        </button>
 
-                    <!-- BAGIAN TOTAL & TOMBOL AKSI TERKUNCI RAPI DI BAWAH -->
-                    <div class="space-y-4 pt-4 mt-auto">
-                        <div
-                            class="bg-indigo-50 dark:bg-slate-800 p-3 rounded-xl text-center border border-indigo-100 dark:border-slate-700">
-                            <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Total Harga</p>
-                            <p class="text-xl font-poppins-custom text-indigo-700 dark:text-indigo-400"
-                                id="nominalKalkulasi">Rp 0</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <button type="button" onclick="resetFormCatat()"
-                                class="bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 p-3 rounded-xl transition shadow-sm border border-gray-200 dark:border-slate-700 flex items-center justify-center shrink-0 aspect-square"
-                                title="Reset Form">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                    </path>
-                                </svg>
-                            </button>
-                            <button type="button" onclick="document.getElementById('formCatat').requestSubmit()"
-                                id="btnSimpanCatat"
-                                class="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg transition">Simpan
-                                Barang Masuk</button>
+                        <!-- ALUR 3 LANGKAH: RINGKASAN CHIP HORIZONTAL (HEMAT TEMPAT) -->
+                        <div class="mt-5">
+                            <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                                Alur Pencatatan · 3 Langkah</p>
+                            <ol class="grid grid-cols-3 gap-1.5">
+                                <li class="bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700 rounded-xl px-2 py-2 text-center">
+                                    <span
+                                        class="w-5 h-5 mx-auto mb-1 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold flex items-center justify-center">1</span>
+                                    <p class="text-[11px] font-bold text-gray-700 dark:text-gray-200 leading-tight">Detail</p>
+                                    <p class="text-[9px] text-gray-400 dark:text-gray-500 leading-tight">Tgl, Agen,
+                                        Kurir</p>
+                                </li>
+                                <li class="bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700 rounded-xl px-2 py-2 text-center">
+                                    <span
+                                        class="w-5 h-5 mx-auto mb-1 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold flex items-center justify-center">2</span>
+                                    <p class="text-[11px] font-bold text-gray-700 dark:text-gray-200 leading-tight">Barang</p>
+                                    <p class="text-[9px] text-gray-400 dark:text-gray-500 leading-tight">Varian, Qty,
+                                        Total</p>
+                                </li>
+                                <li class="bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700 rounded-xl px-2 py-2 text-center">
+                                    <span
+                                        class="w-5 h-5 mx-auto mb-1 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold flex items-center justify-center">3</span>
+                                    <p class="text-[11px] font-bold text-gray-700 dark:text-gray-200 leading-tight">Simpan</p>
+                                    <p class="text-[9px] text-gray-400 dark:text-gray-500 leading-tight">Periksa lalu
+                                        simpan</p>
+                                </li>
+                            </ol>
+                            <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-2 italic leading-relaxed">* Setelah
+                                disimpan, Rekapan Berjalan di kanan otomatis menyegarkan data.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="glass-card p-6 xl:col-span-8 border border-gray-100 flex flex-col dark:border-slate-700">
-                    <div class="flex justify-between items-center mb-5">
+                <div class="glass-card p-6 xl:col-span-8 border border-gray-100 flex flex-col dark:border-slate-700 xl:min-h-0">
+                    <div class="flex justify-between items-center mb-4 shrink-0">
                         <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center">
                             <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
@@ -1016,7 +1013,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="overflow-y-auto max-h-[520px] border border-gray-100 dark:border-slate-700 rounded-xl">
+                    <div class="overflow-y-auto flex-1 min-h-[240px] border border-gray-100 dark:border-slate-700 rounded-xl">
                         <table class="w-full text-sm text-left">
                             <thead
                                 class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-slate-800 sticky top-0 z-10">
@@ -1032,7 +1029,7 @@
                         </table>
                     </div>
                     <!-- TAMBAHAN: Tombol Paginasi UI -->
-                    <div class="flex justify-between items-center mt-4 px-2">
+                    <div class="flex justify-between items-center mt-3 px-2 shrink-0">
                         <button id="btnPrevBerjalan" onclick="gantiHalamanBerjalan(-1)"
                             class="px-4 py-2 bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold transition hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
                             &#8592; Sebelumnya
@@ -1134,6 +1131,156 @@
                 <button onclick="simpanEditCatat()"
                     class="px-6 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 transition">Simpan
                     Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL WIZARD CATAT BARANG MASUK (3 LANGKAH) -->
+    <div id="modalWizardCatat"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-[80] p-4 transition-all">
+        <div
+            class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] animate-[fadeIn_0.2s_ease-out_forwards]">
+            <!-- Header Modal -->
+            <div
+                class="px-6 py-5 bg-indigo-50 dark:bg-slate-800 flex justify-between items-center border-b border-indigo-100 dark:border-slate-700">
+                <h3 class="text-lg font-bold text-indigo-800 dark:text-indigo-300 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                        </path>
+                    </svg>
+                    Catat Barang Masuk
+                </h3>
+                <button onclick="tutupWizardCatat()"
+                    class="text-2xl text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition">&times;</button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1">
+                <!-- STEPPER: LABEL DI BAWAH BADGE — TIDAK PERNAH TERPOTONG -->
+                <div id="wizardStepper" class="flex items-start justify-center mb-6 select-none">
+                    <div class="flex flex-col items-center gap-1 w-20">
+                        <span id="wizBadge1"
+                            class="w-8 h-8 rounded-full text-sm font-extrabold flex items-center justify-center bg-indigo-600 text-white transition">1</span>
+                        <span id="wizLabel1"
+                            class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap transition">Detail</span>
+                    </div>
+                    <span id="wizLine1"
+                        class="flex-1 h-0.5 mx-1 mt-[15px] rounded bg-gray-200 dark:bg-slate-700 transition"></span>
+                    <div class="flex flex-col items-center gap-1 w-20">
+                        <span id="wizBadge2"
+                            class="w-8 h-8 rounded-full text-sm font-extrabold flex items-center justify-center bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500 transition">2</span>
+                        <span id="wizLabel2"
+                            class="text-[11px] font-bold text-gray-400 dark:text-gray-500 whitespace-nowrap transition">Barang</span>
+                    </div>
+                    <span id="wizLine2"
+                        class="flex-1 h-0.5 mx-1 mt-[15px] rounded bg-gray-200 dark:bg-slate-700 transition"></span>
+                    <div class="flex flex-col items-center gap-1 w-20">
+                        <span id="wizBadge3"
+                            class="w-8 h-8 rounded-full text-sm font-extrabold flex items-center justify-center bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500 transition">3</span>
+                        <span id="wizLabel3"
+                            class="text-[11px] font-bold text-gray-400 dark:text-gray-500 whitespace-nowrap transition">Simpan</span>
+                    </div>
+                </div>
+
+                <form id="formCatat" novalidate>
+                    <!-- LANGKAH 1: DETAIL PENGIRIMAN -->
+                    <div class="wizard-panel space-y-4" data-wizstep="1">
+                        <div>
+                            <label
+                                class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Tanggal</label>
+                            <input type="date" id="tanggal" required
+                                class="block w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none focus:border-indigo-500 text-gray-700 dark:text-gray-100">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Agen</label>
+                                <select id="agen" required
+                                    class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none text-gray-700 dark:text-gray-100"
+                                    onchange="onAgenChange()">
+                                    <option value="" disabled selected>Pilih Agen</option>
+                                    <option value="Jambi">Jambi</option>
+                                    <option value="Jakarta">Jakarta</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Kurir</label>
+                                <select id="keterangan_kurir" required
+                                    class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none text-gray-700 dark:text-gray-100"></select>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-gray-400 dark:text-gray-500 italic">Isi detail pengiriman terlebih
+                            dahulu, lalu tekan <strong>Lanjut</strong>.</p>
+                    </div>
+
+                    <!-- LANGKAH 2: BARANG & QUANTITY -->
+                    <div class="wizard-panel space-y-4 hidden" data-wizstep="2">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Varian
+                                Basreng</label>
+                            <select id="varian" required
+                                class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none text-gray-700 dark:text-gray-100"
+                                onchange="kalkulasiKarungKeBal()"></select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1"
+                                    id="labelQtyKarung">Qty (Karung)</label><input type="number" id="qty_karung"
+                                    min="0" placeholder="0"
+                                    class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm text-gray-700 dark:text-gray-100"
+                                    oninput="kalkulasiKarungKeBal()"></div>
+                            <div><label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Qty
+                                    (Bal)</label><input type="number" id="qty_bal" required min="1"
+                                    class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm font-bold text-gray-700 dark:text-gray-100"
+                                    placeholder="0" oninput="hitungNominal()"></div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Keterangan
+                                (Opsional)</label>
+                            <input type="text" id="keterangan_barang" placeholder="Contoh: Catatan khusus / bonus"
+                                class="w-full rounded-xl border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 border p-2 text-sm outline-none focus:border-indigo-500 text-gray-700 dark:text-gray-100">
+                        </div>
+                    </div>
+
+                    <!-- LANGKAH 3: KONFIRMASI & SIMPAN -->
+                    <div class="wizard-panel hidden" data-wizstep="3">
+                        <p class="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                            Periksa Kembali Data</p>
+                        <div id="wizRingkasan"
+                            class="bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700 rounded-xl p-3 space-y-2 text-xs"></div>
+                        <p class="text-[11px] text-gray-400 dark:text-gray-500 italic mt-3">Tekan <strong>Simpan</strong>
+                            untuk menyimpan permanen. Rekapan Berjalan akan otomatis menyegarkan.</p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Footer: Total Harga + Tombol Aksi -->
+            <div
+                class="p-4 px-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 space-y-4">
+                <div
+                    class="bg-indigo-50 dark:bg-slate-800 p-3 rounded-xl text-center border border-indigo-100 dark:border-slate-700">
+                    <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Total Harga</p>
+                    <p class="text-xl font-poppins-custom text-indigo-700 dark:text-indigo-400"
+                        id="nominalKalkulasi">Rp 0</p>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="resetFormCatat()"
+                        class="bg-gray-100 hover:bg-gray-200 dark:bg-slate-700/60 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 p-3 rounded-xl transition shadow-sm border border-gray-200 dark:border-slate-700 flex items-center justify-center shrink-0 aspect-square"
+                        title="Reset Form">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                            </path>
+                        </svg>
+                    </button>
+                    <button type="button" id="btnWizPrev" onclick="wizardKembali()"
+                        class="hidden flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-600 dark:text-gray-200 font-bold py-3 rounded-xl transition shadow-sm border border-gray-200 dark:border-slate-700">
+                        &larr; Kembali
+                    </button>
+                    <button type="button" onclick="wizardTombolUtama()" id="btnSimpanCatat"
+                        class="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg transition">Lanjut
+                        &rarr;</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2632,6 +2779,13 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
                             Terbayar</button>
                     </div>
                 </div>
+                <!-- PENGALIH JENIS FEE: BASRENG <-> PLASTIK (dalam 1 menu sidebar) -->
+                <div class="flex gap-1 bg-white/70 dark:bg-slate-900/60 p-1 rounded-xl border border-teal-200 dark:border-slate-700 text-xs">
+                    <button onclick="pindahFeeModal('basreng')" id="feeSegBasreng"
+                        class="px-2.5 py-1 font-bold rounded-lg bg-teal-600 text-white transition">Basreng</button>
+                    <button onclick="pindahFeeModal('plastik')" id="feeSegPlastik"
+                        class="px-2.5 py-1 font-bold rounded-lg text-gray-500 hover:text-teal-600 transition">Plastik</button>
+                </div>
                 <button onclick="toggleModal('modalHitungFee')"
                     class="text-2xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">&times;</button>
             </div>
@@ -3424,6 +3578,27 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
                 renderDropdowns();
             }
         }
+        // ==========================================
+        // MENU FEE GABUNGAN (BASRENG & PLASTIK)
+        // ==========================================
+        // Dari sidebar hanya ada satu menu "Perhitungan Fee" (default ke Basreng),
+        // lalu pengalih Basreng/Plastik di header modal untuk berpindah cepat.
+        function bukaMenuFee() { toggleModal('modalHitungFee'); }
+
+        function pindahFeeModal(jenis) {
+            const mFee = document.getElementById('modalHitungFee');
+            const mPlastik = document.getElementById('modalFeePlastik');
+            const feeTerbuka = mFee && !mFee.classList.contains('hidden');
+            const plastikTerbuka = mPlastik && !mPlastik.classList.contains('hidden');
+            if (jenis === 'basreng') {
+                if (plastikTerbuka) toggleModal('modalFeePlastik');
+                if (!feeTerbuka) toggleModal('modalHitungFee');
+            } else {
+                if (feeTerbuka) toggleModal('modalHitungFee');
+                if (!plastikTerbuka) toggleModal('modalFeePlastik');
+            }
+        }
+
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('sidebar-hidden'); }
 
         function renderDropdowns(selectedAgen = null, targetSelectId = 'varian') {
@@ -3890,6 +4065,116 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
             if (sel.selectedIndex > 0) document.getElementById('edit_nominalKalkulasi').innerText = formatRupiah(bal * sel.options[sel.selectedIndex].getAttribute('data-harga'));
         }
 
+        // ==========================================
+        // WIZARD CATAT BARANG MASUK (3 LANGKAH)
+        // ==========================================
+        let wizLangkahSaatIni = 1;
+        const WIZ_TOTAL_LANGKAH = 3;
+        const WIZ_FIELD_WAJIB = {
+            1: [{ id: 'tanggal', label: 'Tanggal' }, { id: 'agen', label: 'Agen' }, { id: 'keterangan_kurir', label: 'Kurir' }],
+            2: [{ id: 'varian', label: 'Varian Basreng' }, { id: 'qty_bal', label: 'Qty (Bal)' }]
+        };
+
+        function setWizardStep(n) {
+            wizLangkahSaatIni = Math.min(Math.max(1, n), WIZ_TOTAL_LANGKAH);
+
+            // Tampilkan hanya panel langkah aktif
+            document.querySelectorAll('#formCatat [data-wizstep]').forEach(p => {
+                const aktif = Number(p.dataset.wizstep) === wizLangkahSaatIni;
+                p.classList.toggle('hidden', !aktif);
+                if (aktif) { p.classList.remove('wizard-panel'); void p.offsetWidth; p.classList.add('wizard-panel'); } // restart animasi
+            });
+
+            // Perbarui indikator stepper
+            for (let i = 1; i <= WIZ_TOTAL_LANGKAH; i++) {
+                const badge = document.getElementById('wizBadge' + i);
+                const label = document.getElementById('wizLabel' + i);
+                const sudah = i < wizLangkahSaatIni, aktif = i === wizLangkahSaatIni;
+                badge.className = `w-8 h-8 shrink-0 rounded-full text-sm font-extrabold flex items-center justify-center transition ${sudah ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300' : aktif ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' : 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500'}`;
+                badge.innerHTML = sudah ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : i;
+                label.className = `text-[11px] font-bold whitespace-nowrap transition ${sudah || aktif ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`;
+                const line = document.getElementById('wizLine' + i);
+                if (line) line.className = `flex-1 h-0.5 mx-1 mt-[15px] rounded transition ${i < wizLangkahSaatIni ? 'bg-indigo-400 dark:bg-indigo-600' : 'bg-gray-200 dark:bg-slate-700'}`;
+            }
+
+            // Perbarui tombol aksi bawah
+            const btnPrev = document.getElementById('btnWizPrev');
+            const btnNext = document.getElementById('btnSimpanCatat');
+            btnPrev.classList.toggle('hidden', wizLangkahSaatIni === 1);
+            if (wizLangkahSaatIni === WIZ_TOTAL_LANGKAH) {
+                renderWizardRingkasan();
+                btnNext.innerText = '✔ Simpan Barang Masuk';
+                btnNext.className = 'flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-600/25 transition';
+            } else {
+                btnNext.innerText = 'Lanjut →';
+                btnNext.className = 'flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg transition';
+            }
+        }
+
+        function validasiWizardLangkah(n) {
+            const fields = WIZ_FIELD_WAJIB[n] || [];
+            const kosong = fields.filter(f => {
+                const el = document.getElementById(f.id);
+                return el && (!el.value || (el.type === 'number' && Number(el.value) <= 0));
+            });
+            if (kosong.length > 0) {
+                tampilkanAlert('Mohon lengkapi: ' + kosong.map(f => f.label).join(', ') + '.', 'Form Belum Lengkap', 'warning');
+                return false;
+            }
+            return true;
+        }
+
+        function wizardLanjut() {
+            if (!validasiWizardLangkah(wizLangkahSaatIni)) return;
+            if (wizLangkahSaatIni === 2) {
+                const kg = parseInt(document.getElementById('qty_karung').value) || 0, bl = parseInt(document.getElementById('qty_bal').value) || 0;
+                if (kg < 0 || bl < 0) { tampilkanAlert('Qty tidak boleh minus.', 'Periksa Kuantitas', 'warning'); return; }
+            }
+            setWizardStep(wizLangkahSaatIni + 1);
+        }
+
+        function wizardKembali() { setWizardStep(wizLangkahSaatIni - 1); }
+
+        // Buka / tutup modal wizard catat barang masuk
+        function bukaWizardCatat() {
+            const m = document.getElementById('modalWizardCatat');
+            m.classList.remove('hidden'); m.classList.add('flex');
+            setWizardStep(1);
+        }
+
+        function tutupWizardCatat() {
+            const m = document.getElementById('modalWizardCatat');
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        // Tombol aksi utama: "Lanjut" pada langkah 1-2, "Simpan" (submit) pada langkah 3
+        function wizardTombolUtama() {
+            if (wizLangkahSaatIni === WIZ_TOTAL_LANGKAH) document.getElementById('formCatat').requestSubmit();
+            else wizardLanjut();
+        }
+
+        function renderWizardRingkasan() {
+            const sel = document.getElementById('varian');
+            const satuan = sel.selectedIndex > 0 ? Number(sel.options[sel.selectedIndex].getAttribute('data-harga')) : 0;
+            const bal = Number(document.getElementById('qty_bal').value) || 0;
+            const ket = document.getElementById('keterangan_barang').value.trim();
+            const rekam = {
+                varian: sel.value || '-',
+                qty_karung: document.getElementById('qty_karung').value || 0,
+                qty_bal: bal
+            };
+            const baris = (l, v, cls = '') => `<div class="flex justify-between gap-3"><span class="text-gray-500 dark:text-gray-400 shrink-0">${l}</span><strong class="text-right text-gray-800 dark:text-gray-100 ${cls}">${v}</strong></div>`;
+            document.getElementById('wizRingkasan').innerHTML =
+                baris('Tanggal', formatTgl(document.getElementById('tanggal').value)) +
+                baris('Agen', document.getElementById('agen').value || '-') +
+                baris('Kurir', document.getElementById('keterangan_kurir').value || '-') +
+                baris('Varian', rekam.varian) +
+                baris('Qty', formatQtyDisplay(rekam)) +
+                baris('Harga Satuan', formatRupiah(satuan)) +
+                (ket ? baris('Keterangan', ket) : '') +
+                `<div class="flex justify-between gap-3 border-t border-gray-200 dark:border-slate-700 pt-2 mt-1"><span class="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Total Harga</span><strong class="font-poppins-custom text-indigo-700 dark:text-indigo-400">${formatRupiah(bal * satuan)}</strong></div>`;
+        }
+
         function resetFormCatat() {
             // Mereset semua isian form ke kondisi kosong/awal
             document.getElementById('formCatat').reset();
@@ -3901,10 +4186,45 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
 
             // Render ulang dropdown agar kurir dan varian ikut terkunci jika agen belum dipilih
             renderDropdowns();
+
+            // Kembalikan wizard ke langkah pertama
+            setWizardStep(1);
+        }
+
+        // ==========================================
+        // TOAST NOTIFIKASI RINGAN (AUTO-CLOSE)
+        // ==========================================
+        function showToastSukses(pesan) {
+            const c = document.getElementById('toastContainer');
+            if (!c) { alert(pesan); return; }
+            const t = document.createElement('div');
+            t.className = 'pointer-events-auto flex items-start gap-3 bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl shadow-2xl shadow-emerald-900/10 px-4 py-3 max-w-sm animate-[fadeIn_0.25s_ease-out_forwards]';
+            t.innerHTML = `
+                <span class="w-8 h-8 shrink-0 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <svg style="width:1.1rem;height:1.1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                </span>
+                <div class="min-w-0">
+                    <p class="text-xs font-bold text-gray-800 dark:text-gray-100">Berhasil Disimpan!</p>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">${pesan}</p>
+                </div>`;
+            c.appendChild(t);
+            setTimeout(() => {
+                t.style.transition = 'opacity 0.3s, transform 0.3s';
+                t.style.opacity = '0';
+                t.style.transform = 'translateY(-8px)';
+                setTimeout(() => t.remove(), 320);
+            }, 3800);
         }
 
         document.getElementById('formCatat').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Enter pada langkah 1/2 berarti "Lanjut", bukan langsung simpan
+            if (wizLangkahSaatIni !== WIZ_TOTAL_LANGKAH) { wizardLanjut(); return; }
+
+            // Validasi terakhir sebelum kirim
+            if (!validasiWizardLangkah(1) || !validasiWizardLangkah(2)) return;
+
             const sel = document.getElementById('varian');
             const data = {
                 tanggal: document.getElementById('tanggal').value, agen: document.getElementById('agen').value,
@@ -3914,18 +4234,36 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
                 harga_satuan: sel.options[sel.selectedIndex].getAttribute('data-harga')
             };
 
-            const { error } = await supabaseClient.from('pencatatan_basreng').insert([data]);
+            const btn = document.getElementById('btnSimpanCatat');
+            const labelAsli = btn.innerText;
+            btn.disabled = true; btn.innerText = 'Menyimpan...';
+
+            const { data: baru, error } = await supabaseClient.from('pencatatan_basreng').insert([data]).select().maybeSingle();
+            btn.disabled = false;
             if (error) {
+                btn.innerText = labelAsli;
                 alert(error.message);
             } else {
-                e.target.reset();
-                document.getElementById('tanggal').valueAsDate = new Date();
-                document.getElementById('labelQtyKarung').innerText = 'Qty (Karung)';
-                document.getElementById('nominalKalkulasi').innerText = 'Rp 0';
-                renderDropdowns();
+                // Tutup modal & reset form/wizard ke kondisi awal
+                tutupWizardCatat();
+                resetFormCatat();
+
+                // Muat ulang widget dan Rekapan Berjalan agar data langsung tampil
                 loadWidgets();
+                currentPageBerjalan = 1;
+                // Pastikan baris baru pasti terlihat: lepas filter agen jika tidak cocok
+                const fAgen = document.getElementById('filterAgen');
+                if (fAgen && fAgen.value !== 'Semua' && fAgen.value !== data.agen) fAgen.value = 'Semua';
+                loadDataMasuk(baru ? baru.id : null);
+
+                // Notifikasi sukses
+                const total = Number(baru && baru.total_nominal) || (Number(data.qty_bal) * Number(data.harga_satuan)) || 0;
+                showToastSukses(`Barang masuk ${data.varian} (${formatAngka(data.qty_bal)} bal) untuk ${data.agen} senilai ${formatRupiah(total)} tercatat di Rekapan Berjalan.`);
             }
         });
+
+        // Langkah awal wizard saat halaman dimuat
+        setWizardStep(1);
 
         function bukaModalEdit(id, source) {
             try {
@@ -3995,6 +4333,7 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
                     toggleModal('modalEditCatat');
                     if (source === 'berjalan') {
                         loadWidgets();
+                        loadDataMasuk();
                     } else if (source === 'arsip') {
                         muatDataArsip();
                         loadWidgets();
@@ -4016,11 +4355,11 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
             bukaModalKonfirmasiHapus("Hapus Rekapan Masuk?", "Data rekapitulasi berjalan ini akan dihapus permanen.", async () => {
                 const { error } = await supabaseClient.from('pencatatan_basreng').delete().eq('id', idToDel);
                 if (error) alert("Gagal menghapus: " + error.message);
-                else loadWidgets();
+                else { loadWidgets(); loadDataMasuk(); }
             });
         }
 
-        async function loadDataMasuk() {
+        async function loadDataMasuk(highlightId = null) {
             const f = document.getElementById('filterAgen').value;
 
             // 1. Hitung titik mulai (from) dan batas akhir (to) baris yang ditarik
@@ -4050,7 +4389,8 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
             document.getElementById('tableBody').innerHTML = globalRekapMasuk.map((r, index) => {
                 const ketBarangHtml = r.keterangan_barang ? `<span class="block text-xs italic text-gray-400 dark:text-gray-500 mt-0.5">${r.keterangan_barang}</span>` : '';
                 const bgRow = index % 2 === 1 ? 'bg-gray-100 dark:bg-slate-800' : 'bg-white dark:bg-slate-900';
-                return `<tr class="${bgRow} hover:bg-gray-200/60 dark:hover:bg-slate-700/70 transition"><td class="px-4 py-3">${formatTgl(r.tanggal)}</td><td class="px-4 py-3"><span class="font-bold block">${r.agen}</span><span class="text-[10px] text-gray-400">${r.keterangan_kurir}</span></td><td class="px-4 py-3">${r.varian} <span class="font-bold text-indigo-500">(${formatQtyDisplay(r)})</span>${ketBarangHtml}</td><td class="px-4 py-3 text-right font-bold font-poppins-custom">${formatRupiah(r.total_nominal)}</td><td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-2"><span class="text-[10px] px-2 py-0.5 rounded font-bold ${r.status_pembayaran === 'Lunas' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">${r.status_pembayaran}</span><button onclick="bukaModalAksiRekap('${r.id}')" class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-gray-200/80 dark:hover:bg-slate-800 transition" title="Edit / Hapus"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg></button></div></td></tr>`;
+                const baruRow = highlightId && String(r.id) === String(highlightId) ? ' baris-baru' : '';
+                return `<tr class="${bgRow}${baruRow} hover:bg-gray-200/60 dark:hover:bg-slate-700/70 transition"><td class="px-4 py-3">${formatTgl(r.tanggal)}</td><td class="px-4 py-3"><span class="font-bold block">${r.agen}</span><span class="text-[10px] text-gray-400">${r.keterangan_kurir}</span></td><td class="px-4 py-3">${r.varian} <span class="font-bold text-indigo-500">(${formatQtyDisplay(r)})</span>${ketBarangHtml}</td><td class="px-4 py-3 text-right font-bold font-poppins-custom">${formatRupiah(r.total_nominal)}</td><td class="px-4 py-3 text-center"><div class="flex items-center justify-center gap-2"><span class="text-[10px] px-2 py-0.5 rounded font-bold ${r.status_pembayaran === 'Lunas' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">${r.status_pembayaran}</span><button onclick="bukaModalAksiRekap('${r.id}')" class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-gray-200/80 dark:hover:bg-slate-800 transition" title="Edit / Hapus"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg></button></div></td></tr>`;
             }).join('');
 
             // 4. Update status tombol Paginasi di UI
@@ -5261,6 +5601,7 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
 
                         muatBadgeSaldoTitipUang();
                         loadWidgets();
+                        loadDataMasuk(); // Rekapan Berjalan: baris yang kini Lunas otomatis hilang
 
                         tutupModalStatus();
                         document.getElementById('modalInvoice').classList.add('hidden');
@@ -6804,8 +7145,7 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
                         <div class="flex items-center gap-1.5 shrink-0">
                             <span class="font-bold text-pink-600 font-poppins-custom">${qty} ${it.unit || ''}</span>
                             <span class="text-gray-400 text-[10px]">× Rp</span>
-                            <!-- Input tarif per barang -->
-                            <input type="number" 
+                            <input type="number"
                                 class="input-tarif-barang w-20 p-1 text-right text-xs font-bold text-emerald-600 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-md outline-none focus:border-emerald-500" 
                                 id="tarif_${nIdx}_${itIdx}" 
                                 value="${defaultTarif}" 
@@ -7761,6 +8101,13 @@ SELECT setval(pg_get_serial_sequence('titip_uang', 'id'), COALESCE((SELECT MAX(i
                             class="px-3 py-1 font-bold rounded-lg text-gray-500 hover:text-emerald-600 transition">Riwayat
                             Terbayar</button>
                     </div>
+                </div>
+                <!-- PENGALIH JENIS FEE: BASRENG <-> PLASTIK (dalam 1 menu sidebar) -->
+                <div class="flex gap-1 bg-white/70 dark:bg-slate-900/60 p-1 rounded-xl border border-emerald-200 dark:border-slate-700 text-xs">
+                    <button onclick="pindahFeeModal('basreng')" id="feeSegBasreng2"
+                        class="px-2.5 py-1 font-bold rounded-lg text-gray-500 hover:text-emerald-600 transition">Basreng</button>
+                    <button onclick="pindahFeeModal('plastik')" id="feeSegPlastik2"
+                        class="px-2.5 py-1 font-bold rounded-lg bg-emerald-600 text-white transition">Plastik</button>
                 </div>
                 <button type="button" onclick="tutupModalFeePlastik()"
                     class="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 hover:bg-emerald-100/60 dark:hover:bg-slate-700 text-xl font-bold transition shrink-0">&times;</button>
