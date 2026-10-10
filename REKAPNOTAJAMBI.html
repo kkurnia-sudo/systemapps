@@ -2032,7 +2032,9 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 // Pemetaan nama bulan persis seperti yang ditulis formatDateCustom
                 const monthMap = {
                     jan: 1, feb: 2, mar: 3, apr: 4, mei: 5, jun: 6, jul: 7,
-                    ags: 8, sept: 9, sep: 9, okt: 10, nov: 11, des: 12
+                    ags: 8, sept: 9, sep: 9, okt: 10, nov: 11, des: 12,
+                    // alias Inggris (bila data pernah ditulis format lain)
+                    may: 5, aug: 8, oct: 10, dec: 12
                 };
                 const monthNum = monthMap[m[2].toLowerCase()];
                 if (monthNum) {
@@ -3111,9 +3113,13 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
         async function loadInvoiceForEdit(invoiceNum) {
             try {
-                const { data: invData } = await db.from('invoices_jambi').select('*').eq('invoice_number', invoiceNum).single();
-                const { data: itemsData } = await db.from('invoice_items_jambi').select('*').eq('invoice_number', invoiceNum);
-                const { data: payData } = await db.from('invoice_payments_jambi').select('*').eq('invoice_number', invoiceNum);
+                const { data: invData, error: invErr } = await db.from('invoices_jambi').select('*').eq('invoice_number', invoiceNum).single();
+                if (invErr) throw new Error("Gagal memuat header nota: " + invErr.message);
+                if (!invData) throw new Error("Nota " + invoiceNum + " tidak ditemukan.");
+                const { data: itemsData, error: itemErr } = await db.from('invoice_items_jambi').select('*').eq('invoice_number', invoiceNum);
+                if (itemErr) throw new Error("Gagal memuat item nota: " + itemErr.message);
+                const { data: payData, error: payErr } = await db.from('invoice_payments_jambi').select('*').eq('invoice_number', invoiceNum);
+                if (payErr) throw new Error("Gagal memuat pembayaran: " + payErr.message);
 
                 currentEditingInvoiceNumber = invoiceNum;
                 currentInvoiceNumber = invData.invoice_number || generateInvoiceNumber();
@@ -3122,11 +3128,11 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 document.getElementById('invoiceDate').value = invData.invoice_date;
                 document.getElementById('shippingNote').value = invData.shipping_note || '';
 
-                items = itemsData.map(item => ({
+                items = (itemsData || []).map(item => ({
                     id: Date.now() + Math.random(), qty: item.qty, name: item.item_name, note: item.item_note || '', uom: item.item_uom || 'Ball', price: item.price, showNote: !!item.item_note
                 }));
 
-                payments = payData.map(p => ({
+                payments = (payData || []).map(p => ({
                     id: Date.now() + Math.random(), date: p.payment_date, amount: p.amount
                 }));
 
@@ -3179,8 +3185,6 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 const grandTotal = validItems.reduce((sum, item) => sum + (item.qty * item.price), 0);
                 const totalPaid = payments.filter(p => Number(p.amount) > 0).reduce((sum, p) => sum + p.amount, 0);
                 const remaining = grandTotal - totalPaid;
-
-                const targetInvoiceNumber = currentEditingInvoiceNumber || currentInvoiceNumber;
 
                 if (currentEditingInvoiceNumber) {
                     const invNum = currentEditingInvoiceNumber;
@@ -3260,6 +3264,8 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 }
 
                 // Link SJ hanya SETELAH seluruh write sukses
+                // Nomor final dipakai untuk link & modal PNG (bila server mengoreksi collision nomor).
+                const finalInvoiceNumber = currentEditingInvoiceNumber || currentInvoiceNumber;
                 if (note && note.includes('SJ:')) {
                     try {
                         const match = note.match(/SJ:\s*([^\s|]+)/);
@@ -3268,7 +3274,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                             let savedList = getSavedDeliveryRecords();
                             const recIdx = savedList.findIndex(x => x.no_surat_jalan === linkedSJ || x.id === linkedSJ);
                             if (recIdx >= 0) {
-                                savedList[recIdx].linked_invoice = targetInvoiceNumber;
+                                savedList[recIdx].linked_invoice = finalInvoiceNumber;
                                 localStorage.setItem('rekap_pengiriman_jambi_v1', JSON.stringify(savedList));
                                 deliveryRecordsCache = savedList;
                             }
@@ -3281,7 +3287,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 switchTab('history');
 
                 // Buka popup penawaran simpan PNG dengan menyertakan Tanggal Invoice (date)
-                openOfferPNGModal(targetInvoiceNumber, customer, date);
+                openOfferPNGModal(finalInvoiceNumber, customer, date);
             } catch (error) {
                 alert("Gagal memproses data: " + error.message);
                 console.error(error);
@@ -5504,6 +5510,15 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
         // TAHAP 2: Simpan Hasil Validasi Checker (Status: Tervalidasi / Ada Sisa)
         async function saveDeliveryValidation(createSuratJalan = false) {
+            if (deliverySaveInFlight) return;
+            // Setel flag + kunci tombol SEBELUM await pertama (konfirmasi qty muat)
+            // supaya klik ganda tidak lolos guard.
+            deliverySaveInFlight = true;
+            const btnValidate = document.querySelector('#delivActionsValidate button[onclick*="saveDeliveryValidation"]');
+            const origValidateHtml = btnValidate ? btnValidate.innerHTML : '';
+            if (btnValidate) { btnValidate.disabled = true; btnValidate.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...'; }
+
+            try {
             syncDeliveryItemsFromDOM();
             const itemsToSave = deliveryItems.filter(i => i.name && (Number(i.qtyPlanned) > 0 || Number(i.qtyReal) > 0));
             if (itemsToSave.length === 0) {
@@ -5581,12 +5596,6 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 updated_at: new Date().toISOString()
             };
 
-            if (deliverySaveInFlight) return;
-            deliverySaveInFlight = true;
-            const btnValidate = document.querySelector('#delivActionsValidate button[onclick*="saveDeliveryValidation"]');
-            const origValidateHtml = btnValidate ? btnValidate.innerHTML : '';
-            if (btnValidate) { btnValidate.disabled = true; btnValidate.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...'; }
-
             try {
                 const result = await persistDeliveryRecord(record, itemsToSave, { isDraft: false });
                 if (!result.localOk) {
@@ -5610,16 +5619,18 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                     resetDeliveryForm(false);
                     openSuratJalanPreview(record);
                 } else {
-                    // Reset form pengiriman ke mode baru, lalu tampilkan Modal Aksi Cepat.
-                    // Data record diambil dari variabel sehingga tidak bergantung pada form yang sudah di-reset.
                     resetDeliveryForm(false);
                     openValidationCompleteModal(record.no_surat_jalan);
                 }
-            } finally {
-                deliverySaveInFlight = false;
-                if (btnValidate) { btnValidate.disabled = false; btnValidate.innerHTML = origValidateHtml; }
+            } catch (error) {
+                console.error("Gagal menyimpan validasi pengiriman:", error);
+                alert("Gagal menyimpan validasi pengiriman: " + error.message);
             }
+        } finally {
+            deliverySaveInFlight = false;
+            if (btnValidate) { btnValidate.disabled = false; btnValidate.innerHTML = origValidateHtml; }
         }
+    }
 
         // ==========================================
         // MODAL AKSI CEPAT SETELAH VALIDASI CHECKER
@@ -6719,7 +6730,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
                 renderDeliveryHistoryTable();
                 countTotalUnpaidNotes();
-                fetchHistory();
+                fetchInvoicesFromDB();
 
                 // 3. Tampilkan modal sukses nota instan
                 openInstantInvoiceSuccessModal(invNum, record.no_surat_jalan, custName, invDate);
@@ -6731,7 +6742,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                     .select('invoice_number').like('shipping_note', `%SJ: ${noSJ}%`).limit(1);
                 if (partial && partial.length > 0) {
                     alert(`Nota ${partial[0].invoice_number} sudah tersimpan sebagian di server untuk Surat Jalan ${noSJ}. Item mungkin belum lengkap — silakan coba konversi lagi (sistem akan memperbaiki nota yang sama, bukan membuat baru) atau edit Nota tersebut dari History Nota.`);
-                    fetchHistory();
+                    fetchInvoicesFromDB();
                 } else {
                     alert("Gagal menerbitkan nota otomatis: " + err.message);
                 }
