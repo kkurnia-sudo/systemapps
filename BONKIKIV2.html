@@ -1565,7 +1565,6 @@
             const headerPrinterBtn = document.getElementById('btnPrinterIcon');
             if (headerPrinterBtn) headerPrinterBtn.classList.add('connected');
 
-            // PERBAIKAN: Pasang class denyut biru saat terhubung
             const btnQuick = document.getElementById('btnQuickBT');
             const lblQuick = document.getElementById('labelQuickBT');
             if (btnQuick && lblQuick) {
@@ -1582,7 +1581,6 @@
             const headerPrinterBtn = document.getElementById('btnPrinterIcon');
             if (headerPrinterBtn) headerPrinterBtn.classList.remove('connected');
             
-            // PERBAIKAN: Lepas class denyut jika terputus/batal
             const btnQuick = document.getElementById('btnQuickBT');
             const lblQuick = document.getElementById('labelQuickBT');
             if (btnQuick && lblQuick && !connectedDeviceId) {
@@ -1701,21 +1699,35 @@
             htmlContent += `<div class="flex-row" style="font-weight: bold; color: #000;"><span>TOTAL RETUR:</span><span style="color: red;">-Rp ${dataStruk.tr.toLocaleString('id-ID')}</span></div>`;
         }
         
-        htmlContent += `<div class="garis"></div>`;
-        if (dataStruk.ongkir > 0) {
-            htmlContent += `<div class="flex-row"><span>ONGKIR:</span><span>-Rp ${dataStruk.ongkir.toLocaleString('id-ID')}</span></div>`;
+        // Tampilkan Ongkir & Bon Lama hanya jika nominalnya > 0
+        if (dataStruk.ongkir > 0 || dataStruk.bl_input > 0) {
+            htmlContent += `<div class="garis"></div>`;
+            if (dataStruk.ongkir > 0) {
+                htmlContent += `<div class="flex-row"><span>ONGKIR:</span><span>-Rp ${dataStruk.ongkir.toLocaleString('id-ID')}</span></div>`;
+            }
+            if (dataStruk.bl_input > 0) {
+                const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
+                const valBonPrint = isDeposit ? `-Rp ${dataStruk.bl_input.toLocaleString('id-ID')}` : `Rp ${dataStruk.bl_input.toLocaleString('id-ID')}`;
+                htmlContent += `<div class="flex-row"><span>${labelBonPrint}</span><span>${valBonPrint}</span></div>`;
+            }
         }
 
-        const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
-        const valBonPrint = isDeposit ? `-Rp ${dataStruk.bl_input.toLocaleString('id-ID')}` : `Rp ${dataStruk.bl_input.toLocaleString('id-ID')}`;
-        htmlContent += `<div class="flex-row"><span>${labelBonPrint}</span><span>${valBonPrint}</span></div>`;
-
-        htmlContent += `<div class="garis-tebal"></div>`;
-        htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px;"><span>TOTAL TAGIHAN:</span><span>Rp ${dataStruk.tagihanBersih.toLocaleString('id-ID')}</span></div>`;
-        htmlContent += `<div class="garis"></div>`;
-        htmlContent += `<div class="flex-row"><span>Bayar CASH:</span><span>Rp ${dataStruk.cash.toLocaleString('id-ID')}</span></div>`;
-        htmlContent += `<div class="flex-row"><span>Bayar TRF:</span><span>Rp ${dataStruk.trf.toLocaleString('id-ID')}</span></div>`;
-        htmlContent += `<div class="garis"></div>`;
+        // TOTAL TAGIHAN: Hanya tampil jika nilainya tidak sama dengan TOTAL KIRIM
+        if (Math.round(dataStruk.tagihanBersih) !== Math.round(dataStruk.tk)) {
+            htmlContent += `<div class="garis-tebal"></div>`;
+            htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px;"><span>TOTAL TAGIHAN:</span><span>Rp ${dataStruk.tagihanBersih.toLocaleString('id-ID')}</span></div>`;
+        }
+        
+        // Tampilkan Bayar Cash / Transfer hanya jika nominalnya > 0
+        if (dataStruk.cash > 0 || dataStruk.trf > 0) {
+            htmlContent += `<div class="garis"></div>`;
+            if (dataStruk.cash > 0) {
+                htmlContent += `<div class="flex-row"><span>Bayar CASH:</span><span>Rp ${dataStruk.cash.toLocaleString('id-ID')}</span></div>`;
+            }
+            if (dataStruk.trf > 0) {
+                htmlContent += `<div class="flex-row"><span>Bayar TRF:</span><span>Rp ${dataStruk.trf.toLocaleString('id-ID')}</span></div>`;
+            }
+        }
         
         let sisaAkhir = Math.round(dataStruk.sisa);
         let labelSisa = "SISA BON:";
@@ -1732,7 +1744,12 @@
             colorSisa = "green";
         }
 
-        htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px; color: ${colorSisa};"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+        // SISA BON: Hanya tampil jika nilainya tidak sama dengan TOTAL KIRIM
+        if (sisaAkhir !== Math.round(dataStruk.tk)) {
+            htmlContent += `<div class="garis"></div>`;
+            htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px; color: ${colorSisa};"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+        }
+
         htmlContent += `<div class="garis"></div>`;
         htmlContent += `<div style="text-align: center; margin-top: 30px; font-weight: bold;">SBR PUTRA FOOD SYSTEM</div>`;
 
@@ -2041,22 +2058,40 @@
             });
             p += garisStrip + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString()}`);
         }
-        p += garisStrip;
-        if (ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString()}`);
-        
-        const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
-        const valBonPrint = isDeposit ? `-Rp ${bl_input.toLocaleString()}` : `Rp ${bl_input.toLocaleString()}`;
-        p += buatBaris(labelBonPrint, valBonPrint);
 
-        p += garisSamaDengan;
-        p += `\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString()}`) + `\x1B\x45\x00`;
-        p += garisStrip;
-        p += buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`);
-        p += buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
-        p += garisStrip;
+        // Cetak Ongkir & Bon Lama hanya jika nominalnya > 0
+        if (ongkir > 0 || bl_input > 0) {
+            p += garisStrip;
+            if (ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString()}`);
+            if (bl_input > 0) {
+                const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
+                const valBonPrint = isDeposit ? `-Rp ${bl_input.toLocaleString()}` : `Rp ${bl_input.toLocaleString()}`;
+                p += buatBaris(labelBonPrint, valBonPrint);
+            }
+        }
+
+        // Cetak TOTAL TAGIHAN hanya jika nilainya tidak sama dengan TOTAL KIRIM
+        if (Math.round(tagihanBersih) !== Math.round(tk)) {
+            p += garisSamaDengan;
+            p += `\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString()}`) + `\x1B\x45\x00`;
+        }
         
-        const labelSisaBluetooth = sisa < 0 ? "DEPOSIT:" : "SISA BON:";
-        p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`${labelSisaBluetooth}`, `Rp ${Math.abs(sisa).toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
+        // Cetak Bayar Cash / Transfer hanya jika nominalnya > 0
+        if (cash > 0 || trf > 0) {
+            p += garisStrip;
+            if (cash > 0) p += buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`);
+            if (trf > 0) p += buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
+        }
+        
+        // Cetak SISA BON hanya jika nilainya tidak sama dengan TOTAL KIRIM
+        const labelSisaBluetooth = sisa < 0 ? "DEPOSIT:" : (sisa === 0 ? "LUNAS:" : "SISA BON:");
+        if (Math.round(sisa) !== Math.round(tk)) {
+            p += garisStrip;
+            p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`${labelSisaBluetooth}`, `Rp ${Math.abs(sisa).toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
+        } else {
+            p += `\n`;
+        }
+
         p += `\x1B\x61\x01\x1B\x21\x00\n\n\n( ............................ )\n` + garisStrip;
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
