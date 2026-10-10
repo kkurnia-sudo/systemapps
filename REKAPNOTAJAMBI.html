@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekap Nota & Pengiriman Jambi v55.4 - SBR Putra Food</title>
+    <title>Rekap Nota & Pengiriman Jambi v55.5 - SBR Putra Food</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -312,7 +312,7 @@
                 <div>
                     <h1 class="font-bold text-lg md:text-xl text-slate-800 leading-tight tracking-tight">SBR Putra Food
                     </h1>
-                    <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Rekap Nota & Pengiriman - Jambi <span class="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md font-bold text-[10px] ml-1">v55.4</span></p>
+                    <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Rekap Nota & Pengiriman - Jambi <span class="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md font-bold text-[10px] ml-1">v55.5</span></p>
                 </div>
             </div>
 
@@ -2013,7 +2013,12 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             const inside = s.substring(1, closeIdx);
             if (inside.includes('DRAFT')) result.isDraft = true;
             const parts = inside.split('|').map(p => p.trim()).filter(p => p !== 'DRAFT');
-            result.noSJ = parts[0] || '';
+            let parsedSJ = parts[0] || '';
+            // Jangan pernah biarkan string 'undefined' atau 'null' dianggap nomor SJ yang valid
+            if (parsedSJ === 'undefined' || parsedSJ === 'null' || parsedSJ === '-') {
+                parsedSJ = '';
+            }
+            result.noSJ = parsedSJ;
             result.supir = parts[1] || '';
             return result;
         }
@@ -5350,23 +5355,46 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         // Mengembalikan { localOk, remoteOk, remoteError } agar pemanggil bisa membedakan
         // "tersimpan lokal" vs "tersinkron ke database".
         async function persistDeliveryRecord(record, itemsToSave, opts = {}) {
-            const { noSJ, mobil, supir, isDraft } = record;
+            // FIX UTAMA: Pastikan nomor SJ valid dan tidak pernah undefined
+            const noSJ = record.no_surat_jalan || record.id || currentEditingDeliveryId || generateNewDeliveryNumber();
+            record.no_surat_jalan = noSJ;
+            record.id = noSJ;
+            const mobil = record.mobil || '-';
+            const supir = record.supir || '-';
+            const isDraft = (opts && typeof opts.isDraft === 'boolean')
+                ? opts.isDraft
+                : (record.is_validated === false || record.status === 'Menunggu Validasi');
+            record.is_validated = !isDraft;
 
-            // 1. LocalStorage — upsert HANYA bila record dengan nomor SJ sama sudah ada.
-            //    Nomor SJ berbeda tidak boleh pernah menimpa record lain (guard tabrakan nomor).
+            // 1. LocalStorage — update record yang sedang diedit atau masukkan record baru
             let localOk = false;
             try {
-                const savedList = getSavedDeliveryRecords();
-                const existingIndex = savedList.findIndex(x => x.no_surat_jalan === noSJ && x.id === noSJ);
+                let savedList = getSavedDeliveryRecords();
+                const targetKey = currentEditingDeliveryId || noSJ;
+                const existingIndex = savedList.findIndex(x => 
+                    x.no_surat_jalan === noSJ || 
+                    x.id === noSJ || 
+                    (targetKey && (x.no_surat_jalan === targetKey || x.id === targetKey))
+                );
+
                 if (existingIndex >= 0) {
                     const prev = savedList[existingIndex];
-                    savedList[existingIndex] = Object.assign({}, record, { linked_invoice: prev.linked_invoice || record.linked_invoice });
-                } else if (savedList.some(x => x.no_surat_jalan === noSJ || x.id === noSJ)) {
-                    // Tabrakan nomor: ada record lain yang memakai noSJ/id ini — jangan timpa.
-                    throw new Error(`Nomor Surat Jalan ${noSJ} sudah dipakai data lain. Muat ulang halaman dan coba lagi.`);
+                    savedList[existingIndex] = Object.assign({}, prev, record, { 
+                        linked_invoice: prev.linked_invoice || record.linked_invoice 
+                    });
                 } else {
                     savedList.unshift(record);
                 }
+
+                // Bersihkan duplikat & data invalid di savedList
+                const seen = new Set();
+                savedList = savedList.filter(item => {
+                    if (!item || !item.no_surat_jalan || item.no_surat_jalan === 'undefined' || item.id === 'undefined') return false;
+                    if (seen.has(item.no_surat_jalan)) return false;
+                    seen.add(item.no_surat_jalan);
+                    return true;
+                });
+
                 localStorage.setItem('rekap_pengiriman_jambi_v1', JSON.stringify(savedList));
                 deliveryRecordsCache = savedList;
                 localOk = true;
@@ -5375,17 +5403,29 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 return { localOk: false, remoteOk: false, remoteError: e.message };
             }
 
-            // 2. Supabase — hapus baris SJ ini lalu tulis ulang. Error DIPERIKSA, bukan ditelan.
+            // 2. Supabase — hapus baris SJ ini (dan baris lama jika nomor berubah) lalu tulis ulang
             try {
                 const formattedDateSupabase = formatDateCustom(record.tanggal_ISO || record.tanggal);
                 const tag = `[${noSJ}${supir ? ' | ' + supir : ''}${isDraft ? ' | DRAFT' : ''}]`;
 
-                const del = await db.from('table_kirimanjambi')
+                // Hapus data yang ada berdasarkan tag nomor surat jalan
+                await db.from('table_kirimanjambi')
+                    .delete()
+                    .like('keterangan', '[' + noSJ + '%');
+
+                // Jika sedang edit dan nomor lama berbeda dari noSJ, hapus juga tag nomor lama
+                if (currentEditingDeliveryId && currentEditingDeliveryId !== noSJ && currentEditingDeliveryId !== 'undefined') {
+                    await db.from('table_kirimanjambi')
+                        .delete()
+                        .like('keterangan', '[' + currentEditingDeliveryId + '%');
+                }
+
+                // Bersihkan data corrupt [undefined% jika ada untuk mobil & tanggal ini
+                await db.from('table_kirimanjambi')
                     .delete()
                     .eq('mobil', mobil)
                     .eq('tanggal', formattedDateSupabase)
-                    .like('keterangan', '[' + noSJ + '%');
-                if (del.error) throw del.error;
+                    .like('keterangan', '[undefined%');
 
                 const rowsToInsert = itemsToSave.map(i => {
                     const cleanNote = cleanItemNote(i.note || '');
@@ -5425,8 +5465,9 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
 
             let noSJ = document.getElementById('delivNumber').value.trim();
             const editingSJ = currentEditingDeliveryId;
-            if (!noSJ) {
-                noSJ = generateNewDeliveryNumber();
+            if (!noSJ || noSJ === 'undefined') {
+                noSJ = editingSJ || generateNewDeliveryNumber();
+                document.getElementById('delivNumber').value = noSJ;
             } else if (!editingSJ && getSavedDeliveryRecords().some(x => x.no_surat_jalan === noSJ)) {
                 // Nomor baru jangan pernah mengedit data lain secara tidak sengaja
                 noSJ = generateNewDeliveryNumber();
@@ -5489,9 +5530,19 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                     alert("Gagal menyimpan ke perangkat: " + (result.remoteError || 'unknown'));
                     return;
                 }
+
+                // AKTIFKAN mode edit pada record yang baru disimpan agar tidak terduplikasi saat lanjut validasi
+                currentEditingDeliveryId = noSJ;
+                const badge = document.getElementById('deliveryEditModeBadge');
+                const numEl = document.getElementById('deliveryEditingNumber');
+                if (badge) {
+                    badge.className = "bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold text-center py-2.5 mb-4 tracking-widest uppercase rounded-xl shadow-md flex items-center justify-center gap-2";
+                    badge.classList.remove('hide');
+                }
+                if (numEl) numEl.innerText = `${noSJ} (Rencana Tersimpan)`;
+
                 renderDeliveryHistoryTable();
                 if (!result.remoteOk) {
-                    // Bedakan "tersimpan lokal" dari "tersinkron" — jangan klaim sukses penuh
                     const retry = confirm(`Data tersimpan di perangkat ini, tetapi GAGAL sinkron ke database.\n\n(${result.remoteError})\n\nTekan OK untuk coba sinkron ulang, Batal untuk lanjut (data akan disinkronkan saat tab dibuka lagi).`);
                     if (retry) {
                         const resync = await persistDeliveryRecord(record, itemsToSave, { isDraft: true });
@@ -5511,98 +5562,109 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         // TAHAP 2: Simpan Hasil Validasi Checker (Status: Tervalidasi / Ada Sisa)
         async function saveDeliveryValidation(createSuratJalan = false) {
             if (deliverySaveInFlight) return;
-            // Setel flag + kunci tombol SEBELUM await pertama (konfirmasi qty muat)
-            // supaya klik ganda tidak lolos guard.
             deliverySaveInFlight = true;
             const btnValidate = document.querySelector('#delivActionsValidate button[onclick*="saveDeliveryValidation"]');
             const origValidateHtml = btnValidate ? btnValidate.innerHTML : '';
             if (btnValidate) { btnValidate.disabled = true; btnValidate.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...'; }
 
             try {
-            syncDeliveryItemsFromDOM();
-            const itemsToSave = deliveryItems.filter(i => i.name && (Number(i.qtyPlanned) > 0 || Number(i.qtyReal) > 0));
-            if (itemsToSave.length === 0) {
-                alert("Harap masukkan minimal 1 barang dengan jumlah siap muat atau real muat!");
-                return;
-            }
-
-            let totalPlanned = 0;
-            let totalReal = 0;
-            let totalRemaining = 0;
-
-            itemsToSave.forEach(i => {
-                totalPlanned += Number(i.qtyPlanned) || 0;
-                totalReal += Number(i.qtyReal) || 0;
-                totalRemaining += Math.max(0, (Number(i.qtyPlanned) || 0) - (Number(i.qtyReal) || 0));
-            });
-
-            if (totalReal === 0 && totalPlanned > 0) {
-                const confirmFill = await showModernConfirm({
-                    title: "Konfirmasi Qty Muat",
-                    message: "Perhatian Checker: 'Qty Real Muat' masih kosong (0).<br>Apakah seluruh barang termuat sesuai rencana (muatan penuh)?",
-                    icon: "fas fa-question-circle",
-                    iconColor: "amber",
-                    confirmText: "Ya, Muatan Penuh",
-                    confirmBg: "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30",
-                    cancelText: "Batal / Cek Ulang"
-                });
-                if (confirmFill) {
-                    setAllRealQtyToPlanned();
-                    totalReal = totalPlanned;
-                    totalRemaining = 0;
-                } else {
+                syncDeliveryItemsFromDOM();
+                const itemsToSave = deliveryItems.filter(i => i.name && (Number(i.qtyPlanned) > 0 || Number(i.qtyReal) > 0));
+                if (itemsToSave.length === 0) {
+                    alert("Harap masukkan minimal 1 barang dengan jumlah siap muat atau real muat!");
                     return;
                 }
-            }
 
-            let noSJ = document.getElementById('delivNumber').value.trim();
-            if (!noSJ) noSJ = generateNewDeliveryNumber();
-            // Saat mode edit, pakai nomor sedang diedit. Saat nomor baru, pastikan tidak menimpa data lain.
-            if (!currentEditingDeliveryId && getSavedDeliveryRecords().some(x => x.no_surat_jalan === noSJ)) {
-                noSJ = generateNewDeliveryNumber();
-                document.getElementById('delivNumber').value = noSJ;
-            }
-            const dateVal = document.getElementById('delivDate').value || getTodayDate();
-            const truck = document.getElementById('delivTruckPlate').value.trim() || '-';
-            const driver = document.getElementById('delivDriverName').value.trim() || '-';
-            const dest = document.getElementById('delivDestination').value.trim() || 'Gudang Cabang Jambi';
-            const notes = document.getElementById('delivNotes').value.trim();
+                let totalPlanned = 0;
+                let totalReal = 0;
+                let totalRemaining = 0;
 
-            const finalStatus = totalRemaining > 0 ? 'Ada Sisa' : 'Tervalidasi';
+                itemsToSave.forEach(i => {
+                    totalPlanned += Number(i.qtyPlanned) || 0;
+                    totalReal += Number(i.qtyReal) || 0;
+                    totalRemaining += Math.max(0, (Number(i.qtyPlanned) || 0) - (Number(i.qtyReal) || 0));
+                });
 
-            const record = {
-                id: noSJ,
-                no_surat_jalan: noSJ,
-                tanggal: dateVal,
-                tanggal_ISO: dateVal,
-                tanggal_formatted: formatDateIndoFull(dateVal),
-                mobil: truck,
-                supir: driver,
-                tujuan: dest,
-                catatan: notes,
-                is_validated: true,
-                items: itemsToSave.map(i => ({
-                    name: i.name,
-                    uom: i.uom || 'Ball',
-                    qtyPlanned: Number(i.qtyPlanned) || 0,
-                    qtyReal: Number(i.qtyReal) || 0,
-                    qtyRemaining: Math.max(0, (Number(i.qtyPlanned) || 0) - (Number(i.qtyReal) || 0)),
-                    note: cleanItemNote(i.note || '')
-                })),
-                total_planned: totalPlanned,
-                total_real: totalReal,
-                total_remaining: totalRemaining,
-                status: finalStatus,
-                updated_at: new Date().toISOString()
-            };
+                if (totalReal === 0 && totalPlanned > 0) {
+                    const confirmFill = await showModernConfirm({
+                        title: "Konfirmasi Qty Muat",
+                        message: "Perhatian Checker: 'Qty Real Muat' masih kosong (0).<br>Apakah seluruh barang termuat sesuai rencana (muatan penuh)?",
+                        icon: "fas fa-question-circle",
+                        iconColor: "amber",
+                        confirmText: "Ya, Muatan Penuh",
+                        confirmBg: "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30",
+                        cancelText: "Batal / Cek Ulang"
+                    });
+                    if (confirmFill) {
+                        setAllRealQtyToPlanned();
+                        totalReal = totalPlanned;
+                        totalRemaining = 0;
+                    } else {
+                        return;
+                    }
+                }
 
-            try {
+                let noSJ = document.getElementById('delivNumber').value.trim();
+                if (!noSJ || noSJ === 'undefined') {
+                    noSJ = currentEditingDeliveryId || generateNewDeliveryNumber();
+                    document.getElementById('delivNumber').value = noSJ;
+                }
+
+                const dateVal = document.getElementById('delivDate').value || getTodayDate();
+                const truck = document.getElementById('delivTruckPlate').value.trim() || '-';
+                const driver = document.getElementById('delivDriverName').value.trim() || '-';
+                const dest = document.getElementById('delivDestination').value.trim() || 'Gudang Cabang Jambi';
+                const notes = document.getElementById('delivNotes').value.trim();
+
+                // Cek apakah nomor ini bentrok dengan pengiriman LAIN
+                if (!currentEditingDeliveryId) {
+                    const existingRec = getSavedDeliveryRecords().find(x => x.no_surat_jalan === noSJ);
+                    if (existingRec) {
+                        // Jika mobil & tanggal sama, berarti ini draft rencana yang baru disimpan -> pertahankan nomor ini!
+                        if (existingRec.mobil === truck && (existingRec.tanggal === dateVal || existingRec.tanggal_ISO === dateVal)) {
+                            currentEditingDeliveryId = noSJ;
+                        } else {
+                            noSJ = generateNewDeliveryNumber();
+                            document.getElementById('delivNumber').value = noSJ;
+                        }
+                    }
+                }
+
+                const finalStatus = totalRemaining > 0 ? 'Ada Sisa' : 'Tervalidasi';
+
+                const record = {
+                    id: noSJ,
+                    no_surat_jalan: noSJ,
+                    tanggal: dateVal,
+                    tanggal_ISO: dateVal,
+                    tanggal_formatted: formatDateIndoFull(dateVal),
+                    mobil: truck,
+                    supir: driver,
+                    tujuan: dest,
+                    catatan: notes,
+                    is_validated: true,
+                    items: itemsToSave.map(i => ({
+                        name: i.name,
+                        uom: i.uom || 'Ball',
+                        qtyPlanned: Number(i.qtyPlanned) || 0,
+                        qtyReal: Number(i.qtyReal) || 0,
+                        qtyRemaining: Math.max(0, (Number(i.qtyPlanned) || 0) - (Number(i.qtyReal) || 0)),
+                        note: cleanItemNote(i.note || '')
+                    })),
+                    total_planned: totalPlanned,
+                    total_real: totalReal,
+                    total_remaining: totalRemaining,
+                    status: finalStatus,
+                    updated_at: new Date().toISOString()
+                };
+
                 const result = await persistDeliveryRecord(record, itemsToSave, { isDraft: false });
                 if (!result.localOk) {
                     alert("Gagal menyimpan ke perangkat: " + (result.remoteError || 'unknown'));
                     return;
                 }
 
+                currentEditingDeliveryId = noSJ;
                 renderDeliveryHistoryTable();
 
                 if (!result.remoteOk) {
@@ -5613,24 +5675,19 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                     }
                 }
 
-                // A10: "Simpan & Buat SJ (A5)" benar-benar membuka pratinjau A5 dari data tersimpan,
-                // SEBELUM form direset.
                 if (createSuratJalan) {
-                    resetDeliveryForm(false);
                     openSuratJalanPreview(record);
                 } else {
-                    resetDeliveryForm(false);
                     openValidationCompleteModal(record.no_surat_jalan);
                 }
             } catch (error) {
                 console.error("Gagal menyimpan validasi pengiriman:", error);
                 alert("Gagal menyimpan validasi pengiriman: " + error.message);
+            } finally {
+                deliverySaveInFlight = false;
+                if (btnValidate) { btnValidate.disabled = false; btnValidate.innerHTML = origValidateHtml; }
             }
-        } finally {
-            deliverySaveInFlight = false;
-            if (btnValidate) { btnValidate.disabled = false; btnValidate.innerHTML = origValidateHtml; }
         }
-    }
 
         // ==========================================
         // MODAL AKSI CEPAT SETELAH VALIDASI CHECKER
@@ -6094,11 +6151,41 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             }
         }
 
-        // Ambil arsip dari localStorage
+        // Ambil arsip dari localStorage dengan auto-healing data corrupt / duplikat
         function getSavedDeliveryRecords() {
             try {
                 const raw = localStorage.getItem('rekap_pengiriman_jambi_v1');
-                return raw ? JSON.parse(raw) : [];
+                let list = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(list)) list = [];
+
+                const cleaned = [];
+                const seenSJ = new Set();
+                for (const r of list) {
+                    if (!r) continue;
+                    const sjNum = r.no_surat_jalan || r.id;
+                    if (!sjNum || sjNum === 'undefined' || sjNum === 'null' || sjNum === '-') {
+                        continue;
+                    }
+                    if (seenSJ.has(sjNum)) {
+                        const prevIdx = cleaned.findIndex(x => x.no_surat_jalan === sjNum || x.id === sjNum);
+                        if (prevIdx >= 0) {
+                            const prev = cleaned[prevIdx];
+                            if ((!prev.is_validated && r.is_validated) || (!prev.linked_invoice && r.linked_invoice)) {
+                                cleaned[prevIdx] = Object.assign({}, prev, r);
+                            }
+                        }
+                        continue;
+                    }
+                    seenSJ.add(sjNum);
+                    r.no_surat_jalan = sjNum;
+                    r.id = sjNum;
+                    cleaned.push(r);
+                }
+
+                if (cleaned.length !== list.length) {
+                    localStorage.setItem('rekap_pengiriman_jambi_v1', JSON.stringify(cleaned));
+                }
+                return cleaned;
             } catch (e) {
                 return [];
             }
@@ -6107,7 +6194,6 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         // Ambil data riwayat dari Supabase + LocalStorage
         async function fetchDeliveryRecords() {
             let localRecords = getSavedDeliveryRecords();
-            // Bersihkan format keterangan pada data lama jika ada yang masih menyimpan tag [SJ-...]
             localRecords.forEach(r => {
                 if (r.items && Array.isArray(r.items)) {
                     r.items.forEach(item => {
@@ -6120,8 +6206,6 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                 const { data, error } = await db.from('table_kirimanjambi').select('*').order('id', { ascending: false });
                 if (error) throw error;
                 if (data && data.length > 0) {
-                    // A1: group per nomor SJ yang di-parse dari SETIAP baris, bukan per tanggal+mobil.
-                    // Sehingga dua SJ dengan truk+tanggal sama tetap terpisah.
                     const grouped = {};
                     data.forEach(row => {
                         const tag = parseSJTagFromKeterangan(row.keterangan);
@@ -6140,10 +6224,21 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                         const groupItems = g.rows;
                         const sample = groupItems[0];
 
-                        const docNumber = g.noSJ || `SJ-${sample.tanggal.replace(/[^a-zA-Z0-9]/g, '')}-${sample.mobil.replace(/[^a-zA-Z0-9]/g, '')}`;
+                        let docNumber = g.noSJ;
+                        if (!docNumber || docNumber === 'undefined' || docNumber === 'null') {
+                            const sampleISO = customDateToISO(sample.tanggal);
+                            const matchLocal = localRecords.find(lr => 
+                                lr.mobil === sample.mobil && 
+                                (lr.tanggal === sample.tanggal || lr.tanggal === sampleISO || lr.tanggal_ISO === sampleISO) &&
+                                lr.no_surat_jalan && lr.no_surat_jalan !== 'undefined'
+                            );
+                            if (matchLocal) {
+                                docNumber = matchLocal.no_surat_jalan;
+                            } else {
+                                docNumber = `SJ-${sample.tanggal.replace(/[^a-zA-Z0-9]/g, '')}-${sample.mobil.replace(/[^a-zA-Z0-9]/g, '')}`;
+                            }
+                        }
 
-                        // Cocokkan HANYA berdasarkan nomor SJ yang stabil. Klausa tanggal+mobil lama
-                        // menyebabkan SJ lain di truk+tanggal sama dianggap duplikat dan disembunyikan.
                         const existingIdx = localRecords.findIndex(r => r.no_surat_jalan === docNumber || r.id === docNumber);
                         const alreadyExists = existingIdx >= 0;
 
@@ -6191,45 +6286,39 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
                         if (!alreadyExists) {
                             localRecords.push(remoteRecord);
                         } else {
-                            // A5: record lokal yang sudah ada (mis. hasil simpan perangkat ini) dipertahankan
-                            // supaya field lokal seperti linked_invoice, tujuan, dan catatan tidak tertimpa.
-                            // Baris Supabase hanya dipakai bila record lokal belum punya isi item.
                             const localRec = localRecords[existingIdx];
-                            if (!localRec.items || localRec.items.length === 0) {
-                                localRecords[existingIdx] = Object.assign({}, localRec, remoteRecord, {
-                                    linked_invoice: localRec.linked_invoice
-                                });
-                            }
+                            localRecords[existingIdx] = Object.assign({}, remoteRecord, localRec, {
+                                items: (localRec.items && localRec.items.length > 0) ? localRec.items : remoteRecord.items,
+                                total_real: Number(remoteRecord.total_real || localRec.total_real || 0),
+                                total_planned: Number(remoteRecord.total_planned || localRec.total_planned || 0),
+                                total_remaining: Number(remoteRecord.total_remaining || localRec.total_remaining || 0),
+                                status: remoteRecord.status || localRec.status,
+                                is_validated: remoteRecord.is_validated ?? localRec.is_validated,
+                                linked_invoice: localRec.linked_invoice || remoteRecord.linked_invoice
+                            });
                         }
                     });
                 }
             } catch (err) {
                 console.warn("Gagal sinkronisasi data Supabase table_kirimanjambi:", err);
-                // Data lokal tetap ditampilkan; jangan diganti dengan keadaan kosong.
             }
 
-            // A5: baca ulang localStorage SEBELUM menulis — snapshot di awal mungkin sudah usang
-            // bila ada simpanan yang berjalan selama await di atas.
-            try {
-                const latest = getSavedDeliveryRecords();
-                const merged = localRecords.map(lr => {
-                    const fresh = latest.find(x => x.no_surat_jalan === lr.no_surat_jalan && x.id === lr.id);
-                    if (fresh && fresh.linked_invoice && !lr.linked_invoice) {
-                        return Object.assign({}, lr, { linked_invoice: fresh.linked_invoice });
-                    }
-                    return lr;
-                });
-                // Tambahkan record yang disimpan selama proses fetch tapi belum ada di hasil merge
-                latest.forEach(fr => {
-                    if (!merged.some(m => m.no_surat_jalan === fr.no_surat_jalan && m.id === fr.id)) merged.push(fr);
-                });
-                localStorage.setItem('rekap_pengiriman_jambi_v1', JSON.stringify(merged));
-                localRecords = merged;
-            } catch (e) {
-                console.warn("Gagal simpan cache lokal pengiriman:", e);
+            // Bersihkan duplikat & invalid data secara menyeluruh sebelum disimpan
+            const cleanList = [];
+            const seen = new Set();
+            for (const r of localRecords) {
+                if (!r) continue;
+                const sj = r.no_surat_jalan || r.id;
+                if (!sj || sj === 'undefined' || sj === 'null' || sj === '-') continue;
+                if (seen.has(sj)) continue;
+                seen.add(sj);
+                r.no_surat_jalan = sj;
+                r.id = sj;
+                cleanList.push(r);
             }
 
-            deliveryRecordsCache = localRecords;
+            localStorage.setItem('rekap_pengiriman_jambi_v1', JSON.stringify(cleanList));
+            deliveryRecordsCache = cleanList;
             renderDeliveryHistoryTable();
         }
 
@@ -7068,42 +7157,38 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             if (!ok) return;
 
             const record = deliveryRecordsCache.find(r => r.no_surat_jalan === noSJ);
-            if (record) {
-                try {
+            try {
+                if (noSJ && noSJ !== 'undefined') {
+                    await db.from('table_kirimanjambi').delete().like('keterangan', '[' + noSJ + '%');
+                }
+                if (noSJ === 'undefined') {
+                    await db.from('table_kirimanjambi').delete().like('keterangan', '[undefined%');
+                }
+                if (record) {
                     const storedDate = formatDateCustom(customDateToISO(record.tanggal) || customDateToISO(record.tanggal_formatted) || record.tanggal);
-                    // Rekonstruksi id grup lama (SJ-{tanggal alfanumerik}-{truk alfanumerik}) untuk
-                    // mengetahui apakah record ini berasal dari pengelompokan lama tanpa tag di keterangan.
                     const legacyId = 'SJ-' + String(record.tanggal || '').replace(/[^a-zA-Z0-9]/g, '') +
                         '-' + String(record.mobil || '').replace(/[^a-zA-Z0-9]/g, '');
-                    const isLegacyRecord = record.no_surat_jalan === legacyId;
-
-                    let query = db.from('table_kirimanjambi')
-                        .delete()
-                        .eq('mobil', record.mobil)
-                        .eq('tanggal', storedDate);
-                    if (!isLegacyRecord) {
-                        // Kunci hapus per-SJ agar baris SJ lain pada truk+tanggal sama ikut terhapus
-                        query = query.like('keterangan', '[' + noSJ + '%');
+                    if (record.no_surat_jalan === legacyId) {
+                        await db.from('table_kirimanjambi').delete().eq('mobil', record.mobil).eq('tanggal', storedDate);
                     }
-                    const { error } = await query;
-                    if (error) throw error;
-                } catch (e) {
-                    console.warn("Gagal menghapus Surat Jalan dari Supabase:", e);
-                    alert("Gagal menghapus data Surat Jalan dari database. Riwayat lokal tidak dihapus agar data tidak berbeda.");
-                    return;
                 }
+            } catch (e) {
+                console.warn("Gagal menghapus Surat Jalan dari Supabase:", e);
+                alert("Gagal menghapus data Surat Jalan dari database: " + e.message);
+                return;
             }
 
             let list = getSavedDeliveryRecords();
-            list = list.filter(r => r.no_surat_jalan !== noSJ && r.id !== noSJ);
+            list = list.filter(r => r.no_surat_jalan !== noSJ && r.id !== noSJ && r.no_surat_jalan !== 'undefined');
             localStorage.setItem('rekap_pengiriman_jambi_v1', JSON.stringify(list));
             deliveryRecordsCache = list;
 
-            if (currentEditingDeliveryId === noSJ) {
-                resetDeliveryForm();
+            if (currentEditingDeliveryId === noSJ || currentEditingDeliveryId === 'undefined') {
+                resetDeliveryForm(false);
             }
 
             renderDeliveryHistoryTable();
+            showModernToast(`Surat Jalan ${noSJ} berhasil dihapus.`);
         }
 
         // Reset form pengiriman ke mode baru
