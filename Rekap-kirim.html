@@ -393,7 +393,7 @@
 
     <!-- Modals for Edit Draft -->
     <div id="modalEditDraft" class="fixed inset-0 bg-black/70 z-50 hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 px-4">
-        <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-5 transform scale-95 transition-transform duration-300 shadow-2xl" id="modalEditDraftContent">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-5 transform scale-95 transition-transform duration-300 shadow-2xl max-h-[88vh] overflow-y-auto receipt-scroll" id="modalEditDraftContent">
             <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Edit / Hapus Antrean</h3>
             <div class="space-y-3 mb-6">
                 <select id="editDraftAgen" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"></select>
@@ -411,6 +411,7 @@
                     <input type="text" inputmode="numeric" id="editDraftBensin" placeholder="Bensin" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg dark:text-white">
                     <input type="text" inputmode="numeric" id="editDraftMakan" placeholder="Uang Makan" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg dark:text-white">
                 </div>
+                <div id="editDraftIsiCepat"></div>
             </div>
             <div class="flex flex-col space-y-2.5">
                 <button onclick="simpanEditDraft()" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-xl transition">Simpan Perubahan</button>
@@ -422,7 +423,7 @@
 
     <!-- Modals for Edit DB -->
     <div id="modalEdit" class="fixed inset-0 bg-black/70 z-50 hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 px-4">
-        <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-5 transform scale-95 transition-transform duration-300 shadow-2xl" id="modalEditContent">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-5 transform scale-95 transition-transform duration-300 shadow-2xl max-h-[88vh] overflow-y-auto receipt-scroll" id="modalEditContent">
             <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Edit / Hapus Riwayat Database</h3>
             <div class="space-y-3 mb-6">
                 <!-- Edit Tanggal Riwayat -->
@@ -446,6 +447,7 @@
                     <input type="text" inputmode="numeric" id="editBensin" placeholder="Bensin" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg dark:text-white">
                     <input type="text" inputmode="numeric" id="editMakan" placeholder="Uang Makan" class="w-full px-2 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg dark:text-white">
                 </div>
+                <div id="editIsiCepat"></div>
             </div>
             <div class="flex flex-col space-y-2.5">
                 <button onclick="simpanEdit()" id="btnSimpanEdit" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-xl transition">Simpan Perubahan</button>
@@ -842,14 +844,18 @@
 
         // --- WIZARD TAMBAH KIRIMAN (isian berurutan 1 modal) ---
         // Urutan: Waktu -> Agen -> Driver -> Mobil -> Bensin & Uang Makan.
-        // Langkah pilihan tunggal (waktu, mobil) auto-advance; langkah multi (agen, driver)
-        // memakai checkbox dan tombol Lanjut. Data akhir ditulis ke form asal lalu
+        // Langkah pilihan tunggal (waktu) auto-advance; mobil memakai tombol Lanjut.
+        // Langkah multi (agen, driver) memakai checkbox dan tombol Lanjut. Data akhir ditulis ke form asal lalu
         // disimpan lewat fungsi simpanLangsungKeDatabase() yang sudah ada.
         let wizardAktif = false;
         let wizardLangkah = 0;
         let wizardTimer = null; // debounce auto-advance antar langkah
         let wizardPilihanTerbuka = false;
         let wizardSimpanSibuk = false;
+        // Isian target bar "Isi cepat" ('wizardBensin' | 'wizardMakan' | id isian modal edit)
+        let chipTarget = 'wizardBensin';
+        // Rute sinkronisasi chip ↔ isian milik modal/wizard yang sedang aktif
+        let chipRute = { bensin: 'wizardBensin', makan: 'wizardMakan', sinkBensin: 'inputBensin', sinkMakan: 'inputMakan', wadah: 'wizardIsiCepat' };
         const TOTAL_WIZARD = 5;
 
         function bukaWizard() {
@@ -990,33 +996,36 @@
                     </div>`;
                 next.innerText = dipilih ? 'Lanjut' : 'Pilih mobil dulu';
                 next.disabled = !dipilih;
+                // Pilihan mobil TIDAK auto-advance: user harus menekan tombol Lanjut
                 box.querySelectorAll('.wizard-opt').forEach(b => b.onclick = () => {
                     document.getElementById('mobil').value = b.dataset.mobil;
-                    renderWizard(); // update selected state + enable next before advancing
-                    clearTimeout(wizardTimer);
-                    wizardTimer = setTimeout(() => wizardLanjut(), 280);
+                    renderWizard(); // update selected state + enable next (tanpa pindah langkah)
                 });
                 return;
             }
 
             if (wizardLangkah === 4) {
+                // Satu bar "Isi cepat" bersama untuk kedua input, biar tidak dobel kiri-kanan.
+                // Isian yang mau diisi = isian terakhir yang disentuh (bisa diganti kapan saja).
                 box.innerHTML = `
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Bensin</label>
-                            <input type="text" inputmode="numeric" id="wizardBensin" placeholder="Cth: 300" value="${document.getElementById('inputBensin').value}" class="w-full px-3.5 py-3 text-[15px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none dark:text-white font-semibold">
+                            <input type="text" inputmode="numeric" id="wizardBensin" placeholder="Cth: 300" value="${document.getElementById('inputBensin').value}" class="w-full px-3.5 py-3 text-[15px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none dark:text-white font-semibold transition">
                         </div>
                         <div>
                             <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Uang Makan</label>
-                            <input type="text" inputmode="numeric" id="wizardMakan" placeholder="Cth: 100" value="${document.getElementById('inputMakan').value}" class="w-full px-3.5 py-3 text-[15px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary outline-none dark:text-white font-semibold">
+                            <input type="text" inputmode="numeric" id="wizardMakan" placeholder="Cth: 100" value="${document.getElementById('inputMakan').value}" class="w-full px-3.5 py-3 text-[15px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none dark:text-white font-semibold transition">
                         </div>
                     </div>
+                    <div id="wizardIsiCepat" class="mt-3"></div>
                     <div class="mt-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200/70 dark:border-emerald-800 p-3.5">
                         <p class="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">Ringkasan</p>
                         <div id="wizardRingkasan" class="text-xs text-slate-700 dark:text-slate-200 leading-relaxed space-y-1"></div>
                     </div>`;
-                document.getElementById('wizardBensin').oninput = e => { document.getElementById('inputBensin').value = e.target.value; };
-                document.getElementById('wizardMakan').oninput = e => { document.getElementById('inputMakan').value = e.target.value; };
+
+                pasangIsiCepat('wizardIsiCepat', 'wizardBensin', 'wizardMakan', 'inputBensin', 'inputMakan');
+
                 const waktu = document.getElementById('waktuPengiriman').value || '-';
                 const r = document.getElementById('wizardRingkasan');
                 r.innerHTML = `
@@ -1027,6 +1036,104 @@
                 next.innerText = 'Simpan Data';
                 next.disabled = false;
             }
+        }
+
+        // --- BAR "ISI CEPAT" (dipakai wizard langkah 5 & modal edit) ---
+        const NOMINAL_BENSIN = [300, 250, 200, 100];
+        const NOMINAL_MAKAN = ['100']; // nominal uang makan yang ditawarkan
+        const CHIP_NOMINAL = NOMINAL_BENSIN;
+
+        // Pasang bar isi cepat ke kontainer + isi target chip awal
+        function pasangIsiCepat(idWadah, idBensin, idMakan, idSinkBensin, idSinkMakan) {
+            const wadah = document.getElementById(idWadah);
+            if (!wadah) return;
+            wadah.innerHTML = `
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/60 p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Isi cepat</p>
+                        <p class="chip-target-label text-[10px] font-extrabold text-primary"></p>
+                    </div>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        ${CHIP_NOMINAL.map(n => `
+                            <button type="button" data-nominal="${n}" class="wizard-chip py-2.5 rounded-xl text-xs font-extrabold border transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">${n}</button>`).join('')}
+                    </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-2 text-center leading-snug">Ketuk isian dulu untuk memilih mau diisi yang mana</p>
+                </div>`;
+
+            chipTarget = idBensin;
+            chipRute = { bensin: idBensin, makan: idMakan, sinkBensin: idSinkBensin, sinkMakan: idSinkMakan, wadah: idWadah };
+
+            [idBensin, idMakan].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const pilih = () => { chipTarget = id; sinkronIsiCepat(); };
+                el.onfocus = pilih;
+                el.onpointerdown = pilih; // ketuk isian kosong pun tetap mengarahkan chip
+                el.oninput = () => {
+                    const sink = id === idBensin ? idSinkBensin : idSinkMakan;
+                    if (sink) document.getElementById(sink).value = el.value;
+                    pilih();
+                };
+            });
+
+            wadah.querySelectorAll('.wizard-chip').forEach(b => b.onclick = () => {
+                const r = chipRute;
+                const inp = document.getElementById(chipTarget);
+                if (!inp || document.getElementById(r.wadah) !== wadah) return; // container sudah diganti
+                const sink = document.getElementById(chipTarget === r.bensin ? r.sinkBensin : r.sinkMakan);
+                const sama = inp.value.trim() === b.dataset.nominal;
+                inp.value = sama ? '' : b.dataset.nominal; // ketuk lagi = kosongkan
+                if (sink) sink.value = inp.value;
+                sinkronIsiCepat();
+                if (!sama && navigator.vibrate) navigator.vibrate(12);
+            });
+
+            sinkronIsiCepat();
+        }
+
+        // Sinkronkan bar isi cepat: sorot isian target, matikan nominal yang tidak
+        // berlaku, dan tandai chip yang cocok dengan isi isian aktif.
+        function sinkronIsiCepat() {
+            const r = chipRute;
+            const inp = document.getElementById(chipTarget);
+            if (!inp) return;
+            const wadah = document.getElementById(r.wadah);
+            if (!wadah) return; // container sudah diganti/dihapus — jangan sentuh chip milik modal lain
+            const label = wadah.querySelector('.chip-target-label');
+            if (label) label.innerText = '→ ' + (chipTarget === r.bensin ? 'Bensin' : 'Uang Makan');
+
+            // Sorot isian yang jadi target chip
+            [r.bensin, r.makan].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const aktif = id === chipTarget;
+                el.classList.toggle('ring-2', aktif);
+                el.classList.toggle('ring-primary', aktif);
+                el.classList.toggle('border-primary', aktif);
+            });
+
+            const bolehSemua = chipTarget === r.bensin;
+            wadah.querySelectorAll('.wizard-chip').forEach(b => {
+                const n = b.dataset.nominal;
+                const boleh = bolehSemua || NOMINAL_MAKAN.includes(n);
+                const aktif = boleh && inp.value.trim() === n;
+                b.disabled = !boleh;
+                b.classList.toggle('bg-primary', aktif);
+                b.classList.toggle('text-white', aktif);
+                b.classList.toggle('border-primary', aktif);
+                b.classList.toggle('shadow-md', aktif);
+                b.classList.toggle('bg-white', !aktif && boleh);
+                b.classList.toggle('dark:bg-slate-800', !aktif && boleh);
+                b.classList.toggle('text-slate-600', !aktif && boleh);
+                b.classList.toggle('dark:text-slate-300', !aktif && boleh);
+                b.classList.toggle('border-slate-200', !aktif && boleh);
+                b.classList.toggle('dark:border-slate-700', !aktif && boleh);
+                b.classList.toggle('bg-transparent', !boleh);
+                b.classList.toggle('border-slate-200/50', !boleh);
+                b.classList.toggle('dark:border-slate-700/50', !boleh);
+                b.classList.toggle('text-slate-300', !boleh);
+                b.classList.toggle('dark:text-slate-600', !boleh);
+            });
         }
 
         function wizardLanjut() {
@@ -1249,6 +1356,7 @@
             document.getElementById('editDraftCodriver').value = item.codriver ? item.codriver : "- Kosong -";
             document.getElementById('editDraftBensin').value = item.bensin || '';
             document.getElementById('editDraftMakan').value = item.uang_makan || '';
+            pasangIsiCepat('editDraftIsiCepat', 'editDraftBensin', 'editDraftMakan', null, null);
 
             const m = document.getElementById('modalEditDraft'); const c = document.getElementById('modalEditDraftContent');
             m.classList.remove('hidden'); m.style.display = 'flex'; setTimeout(() => { m.classList.remove('opacity-0'); c.classList.remove('scale-95'); }, 10);
@@ -1380,6 +1488,7 @@
             document.getElementById('editCodriver').value = item.codriver ? item.codriver : "- Kosong -";
             document.getElementById('editBensin').value = item.bensin || '';
             document.getElementById('editMakan').value = item.uang_makan || '';
+            pasangIsiCepat('editIsiCepat', 'editBensin', 'editMakan', null, null);
 
             const m = document.getElementById('modalEdit'); const c = document.getElementById('modalEditContent');
             m.classList.remove('hidden'); m.style.display = 'flex'; setTimeout(() => { m.classList.remove('opacity-0'); c.classList.remove('scale-95'); }, 10);
