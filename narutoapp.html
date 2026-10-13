@@ -2008,8 +2008,13 @@
                         </div>
                         <p class="text-amber-800 text-[11px] leading-relaxed">
                             Form pembayaran telah otomatis di-reset bersih agar Anda dapat menginput kembali metode
-                            pembayaran dari awal (Bayar 1, Bayar 2, dst). Anda juga dapat merevisi Qty fisik kiriman,
-                            retur, atau potongan pengambilan ke pabrik jika ada penyesuaian.
+                            pembayaran dari awal (Bayar 1, Bayar 2, dst).
+                            <strong class="text-amber-900">Perhatikan:</strong> jika Anda menyimpan tanpa mengisi ulang
+                            pembayaran, seluruh riwayat pembayaran lama pada nota ini akan dihapus dan status nota
+                            kembali menjadi <strong class="text-amber-900">BELUM LUNAS</strong>. Gunakan tombol
+                            <strong class="text-amber-900">"Muat Pembayaran Sebelumnya"</strong> di atas untuk
+                            memulihkan rincian pembayaran lama. Anda juga dapat merevisi Qty fisik kiriman, retur,
+                            atau potongan pengambilan ke pabrik jika ada penyesuaian.
                         </p>
                     </div>
                 </div>
@@ -3129,6 +3134,31 @@
             if (typeof val === 'number') return val;
             const cleaned = String(val).replace(/\D/g, '');
             return cleaned ? parseInt(cleaned, 10) : 0;
+        }
+
+        // Verifikasi respons query Supabase (Supabase tidak melempar exception,
+        // ia hanya mengembalikan { error } sehingga harus dicek manual agar
+        // kegagalan tulis tidak dianggap sukses oleh pemanggil).
+        function assertDbOk(res, aksi) {
+            if (res && res.error) {
+                // Error struktur database (42703 = kolom tidak ada / 42P01 = tabel tidak ada):
+                // beri pesan yang dapat ditindaklanjuti, bukan hanya teks teknis Postgres.
+                if (res.error.code === '42703' || res.error.code === '42P01') {
+                    throw new Error(
+                        `Struktur database belum diperbarui (${res.error.message}). ` +
+                        'Jalankan skema SQL terbaru pada Supabase Dashboard → SQL Editor.'
+                    );
+                }
+                // Kolom NOT NULL yang tidak dikirim aplikasi (23502 = not-null violation)
+                if (res.error.code === '23502') {
+                    throw new Error(
+                        `Kolom wajib database belum siap (${res.error.message}). ` +
+                        'Jalankan migrasi_pembayaran_lanjutan.sql pada Supabase Dashboard → SQL Editor.'
+                    );
+                }
+                const detail = res.error.message || res.error.code || 'respons kosong';
+                throw new Error(`${aksi}: ${detail}`);
+            }
         }
 
         function onNominalInput(input) {
@@ -6509,10 +6539,69 @@
         // ----------------------------------------------------
 
         async function saveClassicNotaSettlement(silent = false) {
-            if (!activeNotaModal) return;
+            if (!activeNotaModal) return false;
             const notaId = activeNotaModal.id;
 
             try {
+                // 0. Pra-penulisan: baca nilai form terkini untuk memperingatkan
+                //    kehilangan riwayat pembayaran sebelum menyentuh database sama sekali
+                let formNetto = 0;
+                document.querySelectorAll('#mClassicItemRows tr').forEach(row => {
+                    const qtyInput = row.querySelector('.m-item-qty');
+                    const priceInput = row.querySelector('.m-item-price');
+                    if (qtyInput && priceInput) {
+                        formNetto += Math.round((parseFloat(qtyInput.value) || 0) * (parseFormattedNumber(priceInput.value) || 0));
+                    }
+                });
+                let formRetur = 0;
+                document.querySelectorAll('#mReturRowsContainer .retur-nilai-input').forEach(inp => {
+                    formRetur += parseFormattedNumber(inp.value) || 0;
+                });
+                const formOngkir = parseFormattedNumber(document.getElementById('payPotonganOngkir').value) || 0;
+                formNetto = Math.max(0, formNetto - formRetur - formOngkir);
+
+                let formBayar = 0;
+                document.querySelectorAll('#mPaymentRowsContainer .pay-nominal').forEach(inp => {
+                    formBayar += parseFormattedNumber(inp.value) || 0;
+                });
+
+                // Kondisi destruktif 1: nota sudah Lunas dan ID pembayaran lama akan dihapus.
+                // Walaupun pengguna menginput ulang total penuh, riwayat transaksi yang lama
+                // tetap akan diganti sehingga harus ada persetujuan eksplisit.
+                if (activeNotaModal.status === 'Lunas' && deletedPaymentIds.length > 0) {
+                    const yakin = confirm(
+                        'PERINGATAN: Riwayat pembayaran lama pada nota ini akan DIHAPUS dan diganti dengan rincian pembayaran pada form.\n\n' +
+                        `Pembayaran tersimpan saat ini: ${formatRupiah(activeNotaModal.totalDibayar || 0)}\n` +
+                        `Pembayaran setelah disimpan  : ${formatRupiah(formBayar)}\n` +
+                        (formBayar < formNetto
+                            ? '\nStatus nota setelah simpan akan kembali menjadi BELUM LUNAS.\n'
+                            : '\nPastikan rincian pembayaran baru sudah benar.\n') +
+                        '\nJika ingin mempertahankan riwayat pembayaran lama, klik BATAL lalu gunakan tombol "Muat Pembayaran Sebelumnya".\n\n' +
+                        'Tetap simpan perubahan pembayaran?'
+                    );
+                    if (!yakin) {
+                        showToast('Penyimpanan dibatalkan. Riwayat pembayaran lama tidak diubah.', 'info');
+                        return false;
+                    }
+                }
+
+                // Kondisi destruktif 2: seluruh pembayaran lama dihapus dan tidak ada input baru
+                // (kasus nota belum Lunas; kasus nota Lunas sudah tercakup kondisi di atas)
+                if (activeNotaModal.status !== 'Lunas'
+                    && deletedPaymentIds.length > 0 && formBayar === 0
+                    && (activeNotaModal.totalDibayar || 0) > 0) {
+                    const yakin = confirm(
+                        'PERINGATAN: Seluruh riwayat pembayaran pada nota ini akan DIHAPUS dan tidak ada pembayaran baru yang tercatat.\n\n' +
+                        `Total pembayaran yang akan hilang: ${formatRupiah(activeNotaModal.totalDibayar || 0)}\n\n` +
+                        'Jika ingin mempertahankan riwayat pembayaran, klik BATAL lalu gunakan tombol "Muat Pembayaran Sebelumnya".\n\n' +
+                        'Tetap hapus seluruh riwayat pembayaran?'
+                    );
+                    if (!yakin) {
+                        showToast('Penyimpanan dibatalkan. Riwayat pembayaran lama tidak diubah.', 'info');
+                        return false;
+                    }
+                }
+
                 // 1. Simpan koreksi kiriman fisik jika ada perubahan Qty atau Harga Satuan
                 const rows = document.querySelectorAll('#mClassicItemRows tr');
                 let updatedKoreksiFisik = { ...(activeNotaModal.koreksiFisik || {}) };
@@ -6560,17 +6649,17 @@
 
                     const orig = originalNotaDetails.find(o => o.id === detailId);
                     if (orig && (orig.jumlah !== qty || orig.harga_satuan !== price)) {
-                        await db.from('detail_nota').update({
+                        assertDbOk(await db.from('detail_nota').update({
                             jumlah: qty,
                             harga_satuan: price,
                             subtotal: subtotal
-                        }).eq('id', detailId);
+                        }).eq('id', detailId), 'Menyimpan koreksi qty barang gagal');
                     }
                 }
 
                 // 2. Hapus baris retur yang dihapus user
                 for (const rid of deletedReturIds) {
-                    await db.from('retur_bs').delete().eq('id', rid);
+                    assertDbOk(await db.from('retur_bs').delete().eq('id', rid), 'Menghapus baris retur gagal');
                 }
 
                 // 3. Simpan / Perbarui baris retur BS
@@ -6603,7 +6692,7 @@
                     const detailItem = activeNotaModal.details?.find(d => d.barang_id === barangId);
 
                     if (existingReturId) {
-                        await db.from('retur_bs').update({
+                        assertDbOk(await db.from('retur_bs').update({
                             barang_id: barangId,
                             nama_barang_snapshot: namaBarang,
                             jumlah: qty,
@@ -6611,9 +6700,9 @@
                             nama_satuan_snapshot: satuanNama,
                             nilai_retur: nilaiRetur,
                             keterangan: ket
-                        }).eq('id', existingReturId);
+                        }).eq('id', existingReturId), 'Memperbarui retur gagal');
                     } else {
-                        await db.from('retur_bs').insert({
+                        assertDbOk(await db.from('retur_bs').insert({
                             id: generateUUID(),
                             nota_id: notaId,
                             detail_nota_id: detailItem ? detailItem.id : null,
@@ -6625,7 +6714,7 @@
                             nama_satuan_snapshot: satuanNama,
                             nilai_retur: nilaiRetur,
                             keterangan: ket
-                        });
+                        }), 'Menyimpan retur baru gagal');
                     }
                 }
 
@@ -6635,16 +6724,16 @@
 
                 // 4. Simpan Potongan Pengambilan Ke Pabrik, Koreksi Fisik & Urutan Barang ke nota.catatan
                 const currentOngkir = parseFormattedNumber(document.getElementById('payPotonganOngkir').value) || 0;
-                await db.from('nota').update({
+                assertDbOk(await db.from('nota').update({
                     catatan: formatNotaCatatan(currentOngkir, activeNotaModal.catatanTeks || '', updatedKoreksiFisik, finalItemOrder)
-                }).eq('id', notaId);
+                }).eq('id', notaId), 'Menyimpan catatan nota gagal');
 
                 activeNotaModal.urutanBarang = finalItemOrder;
                 activeNotaModal.koreksiFisik = updatedKoreksiFisik;
 
                 // 5. Hapus pembayaran yang dibuang user
                 for (const pid of deletedPaymentIds) {
-                    await db.from('pembayaran').delete().eq('id', pid);
+                    assertDbOk(await db.from('pembayaran').delete().eq('id', pid), 'Menghapus pembayaran lama gagal');
                 }
 
                 // 6. Simpan / Perbarui Baris Pembayaran (Bayar 1 / TF 1, Bayar 2 / TF 2, dst)
@@ -6665,25 +6754,29 @@
 
                     if (nominal > 0) {
                         if (existingPayId) {
-                            await db.from('pembayaran').update({
+                            assertDbOk(await db.from('pembayaran').update({
                                 nominal_awal: nominal,
                                 nominal_final: nominal,
                                 alasan_revisi: finalCatatan,
                                 tanggal_pembayaran: tanggalBayar
-                            }).eq('id', existingPayId);
+                            }).eq('id', existingPayId), 'Memperbarui pembayaran gagal');
                         } else {
-                            await db.from('pembayaran').insert({
+                            // Kolom legacy tabel pembayaran (tanggal, total_bayar, catatan)
+                            // boleh NULL/default sesuai migrasi. Aplikasi menyimpan nilai final
+                            // di kolom tanggal_pembayaran dan nominal_final.
+                            assertDbOk(await db.from('pembayaran').insert({
                                 id: generateUUID(),
                                 nota_id: notaId,
+                                no_pembayaran: pIdx,
                                 tanggal_pembayaran: tanggalBayar,
                                 nominal_awal: nominal,
                                 nominal_final: nominal,
                                 alasan_revisi: finalCatatan,
                                 keterangan: 'Penyelesaian Nota Klasik'
-                            });
+                            }), 'Menyimpan pembayaran baru gagal');
                         }
                     } else if (existingPayId) {
-                        await db.from('pembayaran').delete().eq('id', existingPayId);
+                        assertDbOk(await db.from('pembayaran').delete().eq('id', existingPayId), 'Menghapus baris pembayaran kosong gagal');
                     }
                     pIdx++;
                 }
@@ -6701,9 +6794,12 @@
                 // Otomatis buka / perbarui pratinjau nota A5 landscape dalam mode resmi tersimpan
                 currentDraftNotaData = null;
                 await openPratinjauA5(notaId, false, null);
+                return true;
             } catch (err) {
                 console.error("Gagal simpan penyelesaian nota:", err);
-                showToast('Terjadi kendala saat menyimpan penyelesaian nota', 'error');
+                const pesan = (err && err.message) ? err.message : 'Terjadi kendala saat menyimpan penyelesaian nota';
+                showToast(pesan, 'error');
+                return false;
             }
         }
 
@@ -6909,9 +7005,13 @@
 
             try {
                 let targetNota = currentDraftNotaData || activeA5Nota;
-                await saveClassicNotaSettlement(true);
-                targetNota = activeA5Nota || targetNota;
-                showModernSettlementSuccessPopup(targetNota);
+                const ok = await saveClassicNotaSettlement(true);
+                if (ok) {
+                    targetNota = activeA5Nota || targetNota;
+                    showModernSettlementSuccessPopup(targetNota);
+                }
+                // Jika tidak ok: pengguna membatalkan konfirmasi pelunasan
+                // atau penyimpanan gagal — popup sukses sengaja tidak ditampilkan.
             } finally {
                 if (btnBottom) {
                     btnBottom.disabled = false;
@@ -7228,12 +7328,19 @@
 
             // 2. Jika masih dalam mode draf (sedang dalam penyelesaian nota), simpan resmi terlebih dahulu
             if (currentDraftNotaData && activeNotaModal) {
+                let saveOk = false;
                 try {
-                    await saveClassicNotaSettlement(true);
-                    targetNota = activeA5Nota || targetNota;
+                    saveOk = await saveClassicNotaSettlement(true);
                 } catch (err) {
                     console.error("Gagal auto-save settlement saat print:", err);
                 }
+                if (!saveOk) {
+                    // Penyimpanan gagal atau dibatalkan pengguna: jangan cetak
+                    // dan jangan tampilkan popup seolah-olah nota sudah lunas.
+                    showToast('Cetakan dibatalkan: penyelesaian nota belum tersimpan.', 'error');
+                    return;
+                }
+                targetNota = activeA5Nota || targetNota;
             }
 
             // 3. Pastikan modal slip fee tersembunyi total dan tambahkan penanda body printing
