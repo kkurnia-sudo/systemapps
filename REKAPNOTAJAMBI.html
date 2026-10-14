@@ -1971,6 +1971,46 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
             if (!isFinite(n)) return 0;
             return neg ? -n : n;
         };
+        // Parser khusus untuk input nominal uang yang diformat otomatis (integer-only).
+        // Berbeda dengan parseNumber, titik/koma SELALU dianggap pemisah ribuan, bukan
+        // desimal — "7.2000" menjadi 72000, bukan 7.2. Ini menghilangkan ambiguitas:
+        // formatRupiah menghasilkan "7.200", dan ketika user mengetik 0 lagi di akhir,
+        // parseNumber biasa akan membaca "7.2000" sebagai desimal 7,2 (bug Bayar Cepat).
+        const parseMoneyInput = (str) => {
+            if (str === null || str === undefined) return 0;
+            const t = String(str).replace(/[^0-9]/g, '');
+            if (t === '') return 0;
+            const n = Number(t);
+            return isFinite(n) ? n : 0;
+        };
+        // Format ulang input uang dengan MEMPERTAHANKAN posisi kursor.
+        // Tanpa ini, penambahan pemisah ribuan ("7200" → "7.200") menggeser isi ke
+        // kanan kursor sehingga ketikan berikutnya jatuh di tengah angka.
+        const formatMoneyInput = (el) => {
+            const raw = el.value;
+            const cursor = el.selectionStart === null ? raw.length : el.selectionStart;
+            // Hitung berapa digit ANGKA sebelum kursor, supaya bisa dipasang lagi
+            // di posisi yang sama setelah pemisah ribuan disisipkan/dihapus.
+            const digitsBefore = raw.slice(0, cursor).replace(/[^0-9]/g, '').length;
+
+            const val = parseMoneyInput(raw);
+            const newVal = val === 0 ? '' : formatRupiah(val);
+            el.value = newVal;
+
+            if (document.activeElement === el) {
+                let pos = 0;
+                if (digitsBefore > 0) {
+                    let seen = 0;
+                    pos = newVal.length;
+                    for (let i = 0; i < newVal.length; i++) {
+                        if (newVal[i] >= '0' && newVal[i] <= '9') seen++;
+                        if (seen === digitsBefore) { pos = i + 1; break; }
+                    }
+                }
+                el.setSelectionRange(pos, pos);
+            }
+            return val;
+        };
         const getTodayDate = () => {
             const d = new Date();
             const year = d.getFullYear();
@@ -2635,11 +2675,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         function handlePriceChange(id, el) {
             const item = items.find(i => i.id === id);
             if (item) {
-                let cursor = el.selectionStart; let oldLen = el.value.length;
-                item.price = parseNumber(el.value);
-                let newVal = item.price === 0 ? '' : formatRupiah(item.price);
-                el.value = newVal;
-                el.setSelectionRange(cursor + (newVal.length - oldLen), cursor + (newVal.length - oldLen));
+                item.price = formatMoneyInput(el);
                 const elTotal = document.getElementById(`row-total-${id}`);
                 if (elTotal) elTotal.innerText = formatRupiah(item.qty * item.price);
                 calculateTotal();
@@ -2710,11 +2746,7 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         function handlePaymentAmount(id, el) {
             const p = payments.find(x => x.id === id);
             if (p) {
-                let cursor = el.selectionStart; let oldLen = el.value.length;
-                p.amount = parseNumber(el.value);
-                let newVal = p.amount === 0 ? '' : formatRupiah(p.amount);
-                el.value = newVal;
-                el.setSelectionRange(cursor + (newVal.length - oldLen), cursor + (newVal.length - oldLen));
+                p.amount = formatMoneyInput(el);
                 calculateTotal();
             }
         }
@@ -3432,15 +3464,14 @@ SELECT setval(pg_get_serial_sequence('invoice_payments_jambi', 'id'), COALESCE((
         }
 
         function handleQuickPayInput(el) {
-            let val = parseNumber(el.value);
-            el.value = val === 0 ? '' : formatRupiah(val);
+            formatMoneyInput(el);
         }
 
         async function submitQuickPay() {
             if (!quickPayTargetInvoice) return;
             const targetInv = quickPayTargetInvoice;
             const payDate = document.getElementById('quickPayDate').value;
-            const payAmount = parseNumber(document.getElementById('quickPayAmount').value);
+            const payAmount = parseMoneyInput(document.getElementById('quickPayAmount').value);
 
             if (payAmount <= 0) return alert("Mohon masukkan nominal pembayaran yang valid!");
 
