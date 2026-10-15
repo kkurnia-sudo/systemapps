@@ -1,0 +1,2732 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Nota Digital SBR PUTRA FOOD - Lembang</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sbr-terracotta: #ba5d4f;
+      --sbr-terracotta-dark: #99463a;
+      --sbr-paper: #fcfbfa;
+      --sbr-ink: #2b2927;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1edea;
+      color: var(--sbr-ink);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .font-condensed {
+      font-family: 'Barlow Condensed', sans-serif;
+      letter-spacing: 0.02em;
+    }
+    .font-mono-receipt {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Hide Spinners on Number Inputs (QTY & Harga) */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    /* Replica Physical Nota Styling */
+    .nota-paper {
+      background-color: var(--sbr-paper);
+      border: 1px solid #d6d0c8;
+      box-shadow: 0 8px 24px -4px rgba(43, 41, 39, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+    .nota-table-wrap {
+      border: 2px solid #2b2927;
+      border-top-left-radius: 18px;
+      border-top-right-radius: 18px;
+      overflow: hidden;
+      position: relative;
+      background-color: rgba(252, 251, 250, 0.96);
+    }
+    .nota-thead {
+      background-color: var(--sbr-terracotta);
+      color: #ffffff;
+      border-bottom: 2px solid #2b2927;
+    }
+    .nota-thead th {
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+      border-right: 1.5px solid #2b2927;
+      padding: 8px 6px;
+      font-size: 0.75rem;
+      line-height: 1.1;
+    }
+    .nota-thead th:last-child {
+      border-right: none;
+    }
+    .nota-row {
+      border-bottom: 1.25px solid #4a4744;
+      position: relative;
+      z-index: 2;
+      transition: background-color 0.15s ease;
+    }
+    .nota-row:last-child {
+      border-bottom: none;
+    }
+    .nota-row:hover, .nota-row:focus-within {
+      background-color: rgba(186, 93, 79, 0.06);
+    }
+    .nota-cell {
+      border-right: 1.5px solid #4a4744;
+      padding: 5px 6px;
+      vertical-align: middle;
+    }
+    .nota-cell:last-child {
+      border-right: none;
+    }
+    .nota-subtotal-deduct-line {
+      border-bottom: 2.5px solid #1c1917;
+      position: relative;
+    }
+    .nota-total-box {
+      border: 2px solid #2b2927;
+      border-top: none;
+      border-bottom-left-radius: 16px;
+      overflow: hidden;
+      display: inline-flex;
+      margin-top: 6px;
+    }
+    .nota-total-label {
+      background-color: var(--sbr-terracotta);
+      color: #ffffff;
+      font-weight: 800;
+      padding: 8px 14px;
+      border-right: 2px solid #2b2927;
+      font-size: 0.85rem;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+    }
+    .nota-total-value {
+      background-color: #ffffff;
+      color: #1f1d1b;
+      font-weight: 800;
+      padding: 8px 14px;
+      min-width: 145px;
+      text-align: right;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .dotted-input {
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px dotted #57534e;
+      outline: none;
+      width: 100%;
+      padding: 2px 4px;
+      font-size: 0.85rem;
+      color: #1c1917;
+      font-weight: 600;
+    }
+    .dotted-input:focus {
+      border-bottom: 2px solid var(--sbr-terracotta);
+      background-color: rgba(186, 93, 79, 0.05);
+    }
+
+    /* Watermark center table */
+    .nota-watermark {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.11;
+      user-select: none;
+    }
+
+    /* Print Media Query for Direct Browser Print */
+    @media print {
+      body {
+        background: #ffffff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .nota-paper {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-24">
+
+  <!-- Top App Bar -->
+  <header class="no-print sticky top-0 z-30 bg-[#2b2927] text-white shadow-md">
+    <div class="max-w-xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-full bg-[#dce8d6] border-2 border-[#ba5d4f] flex items-center justify-center shrink-0">
+          <span class="text-xs font-extrabold text-[#ba5d4f]">SBR</span>
+        </div>
+        <div>
+          <h1 class="font-condensed text-lg font-extrabold tracking-wide leading-none text-white">SBR PUTRA FOOD</h1>
+          <p class="text-[11px] text-stone-300 leading-tight">Nota Jual / Setor, Ambil Bahan &amp; Harga Mitra</p>
+        </div>
+      </div>
+
+      <!-- Bluetooth Connection Status Pill -->
+      <div class="flex items-center gap-1.5">
+        <button id="btnConnectBleTop" type="button" onclick="openBluetoothModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-800 hover:bg-stone-700 border border-stone-600 transition">
+          <span id="bleStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="bleStatusText">Printer BLE</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="max-w-xl mx-auto px-2 pb-1.5 flex gap-1 overflow-x-auto">
+      <button type="button" id="tabBtnNota" onclick="switchTab('nota')" class="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold bg-[#ba5d4f] text-white transition whitespace-nowrap">
+        📝 Buat Nota
+      </button>
+      <button type="button" id="tabBtnBarang" onclick="switchTab('barang')" class="flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold text-stone-300 hover:bg-stone-800 transition whitespace-nowrap">
+        📦 Barang &amp; Harga (<span id="badgeCountBarang">0</span>)
+      </button>
+      <button type="button" id="tabBtnPembeli" onclick="switchTab('pembeli')" class="flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold text-stone-300 hover:bg-stone-800 transition whitespace-nowrap">
+        👤 Pembeli (<span id="badgeCountPembeli">0</span>)
+      </button>
+      <button type="button" id="tabBtnRiwayat" onclick="switchTab('riwayat')" class="flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold text-stone-300 hover:bg-stone-800 transition whitespace-nowrap">
+        🧾 Riwayat (<span id="badgeCountRiwayat">0</span>)
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-xl mx-auto px-2.5 pt-3">
+
+    <!-- ==================== TAB 1: BUAT NOTA ==================== -->
+    <section id="viewNota" class="space-y-3">
+
+      <!-- Quick Item Adder Bar with (+) Masuk/Jual vs (-) Ambil Barang Toggle -->
+      <div class="no-print bg-white rounded-xl p-3 shadow-sm border border-stone-200">
+        <div class="flex items-center justify-between gap-1 mb-2">
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-stone-600">⚡ Input Cepat</span>
+            <!-- Mode Toggle: (+) Barang Utama vs (-) Ambil Barang -->
+            <div class="inline-flex rounded-lg p-0.5 bg-stone-100 border border-stone-200">
+              <button type="button" id="btnQuickModeAdd" onclick="setQuickItemTipe('add')" class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-600 text-white transition">
+                + Masuk / Jual
+              </button>
+              <button type="button" id="btnQuickModeSub" onclick="setQuickItemTipe('sub')" class="px-2 py-0.5 rounded-md text-[11px] font-bold text-stone-600 hover:text-stone-900 transition">
+                − Ambil Barang
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="loadSampleSimpingNota()" class="text-[11px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2 py-0.5 rounded" title="Muat contoh nota Simping & Ambil Barang seperti foto">
+              Contoh Foto
+            </button>
+            <button type="button" onclick="resetCurrentNota()" class="text-xs font-semibold text-red-600 hover:text-red-700 px-2 py-0.5 rounded hover:bg-red-50">
+              Reset Nota Baru
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Customer Custom Price Banner -->
+        <div id="activeMitraPriceBanner" class="mb-2 px-2.5 py-1.5 rounded-lg bg-violet-50 border border-violet-200 flex items-center justify-between gap-2 text-[11px]">
+          <div class="flex items-center gap-1.5 text-violet-900 font-medium truncate">
+            <span class="font-bold">🏷️ Mitra Aktif:</span>
+            <span id="bannerMitraName" class="font-bold underline">Umum (Harga Standar)</span>
+            <span id="bannerMitraSpecialCount" class="px-1.5 py-0.2 rounded bg-violet-200 text-violet-900 font-extrabold text-[10px]">0 Harga Khusus</span>
+          </div>
+          <button type="button" onclick="openActivePembeliHargaModal()" class="shrink-0 px-2 py-0.5 rounded bg-violet-700 hover:bg-violet-800 text-white font-bold text-[10px] transition">
+            Atur Harga Mitra
+          </button>
+        </div>
+
+        <div class="grid grid-cols-12 gap-2 items-end">
+          <div class="col-span-2">
+            <label for="quickQty" class="block text-[10px] font-semibold text-stone-500 mb-0.5">QTY</label>
+            <input id="quickQty" type="number" inputmode="numeric" min="1" step="1" value="1" class="w-full px-2 py-2 rounded-lg border border-stone-300 text-sm font-bold text-center focus:outline-none focus:border-[#ba5d4f]" />
+          </div>
+          <div class="col-span-6 relative">
+            <label for="quickNamaBarang" class="block text-[10px] font-semibold text-stone-500 mb-0.5">Nama Barang (Auto-Harga Mitra)</label>
+            <input id="quickNamaBarang" type="text" list="datalistBarang" placeholder="Ketik: Simping / Aci / Plastik..." oninput="onQuickBarangInput(this.value)" class="w-full px-2.5 py-2 rounded-lg border border-stone-300 text-sm font-medium focus:outline-none focus:border-[#ba5d4f]" />
+            <datalist id="datalistBarang"></datalist>
+          </div>
+          <div class="col-span-4">
+            <div class="flex items-center justify-between mb-0.5">
+              <label for="quickHarga" class="block text-[10px] font-semibold text-stone-500">Harga (Rp)</label>
+              <span id="quickHargaSourceBadge" class="hidden text-[9px] px-1 rounded bg-violet-100 text-violet-800 font-bold">★ Khusus</span>
+            </div>
+            <input id="quickHarga" type="number" inputmode="numeric" min="0" step="100" placeholder="0" class="w-full px-2 py-2 rounded-lg border border-stone-300 text-sm font-bold text-right focus:outline-none focus:border-[#ba5d4f]" />
+          </div>
+        </div>
+
+        <!-- Quick chips of saved products (shows effective price for active Mitra + ★ indicator) -->
+        <div id="quickProductChips" class="flex gap-1.5 overflow-x-auto py-2 mt-1 no-scrollbar"></div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 mt-1 pt-2 border-t border-stone-100">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+            <label class="flex items-center gap-1.5 text-[11px] text-stone-600 cursor-pointer select-none">
+              <input id="chkAutoSaveMaster" type="checkbox" checked class="rounded text-[#ba5d4f] focus:ring-[#ba5d4f]" />
+              <span>Auto-simpan barang/mitra baru</span>
+            </label>
+            <label class="flex items-center gap-1.5 text-[11px] text-violet-800 font-semibold cursor-pointer select-none">
+              <input id="chkAutoSaveHargaMitra" type="checkbox" checked class="rounded text-violet-700 focus:ring-violet-600" />
+              <span>Ingat ubahan harga khusus untuk Mitra ini</span>
+            </label>
+          </div>
+          <button type="button" id="btnAddQuickSubmit" onclick="handleAddQuickItem()" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-sm transition shrink-0">
+            + Masuk Baris
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Calculation Pill Bar (Shows Subtotal Masuk - Subtotal Ambil Barang = Total Diterima) -->
+      <div class="no-print grid grid-cols-3 gap-1.5 bg-stone-800 text-white rounded-xl p-2.5 text-center shadow-sm">
+        <div class="bg-stone-900/60 rounded-lg p-1.5">
+          <div class="text-[10px] text-emerald-400 font-bold uppercase">Barang Masuk/Jual (+)</div>
+          <div id="summarySubtotalAdd" class="font-mono-receipt text-xs sm:text-sm font-extrabold mt-0.5">Rp 0</div>
+        </div>
+        <div class="bg-stone-900/60 rounded-lg p-1.5">
+          <div class="text-[10px] text-amber-400 font-bold uppercase">Ambil Barang (−)</div>
+          <div id="summarySubtotalSub" class="font-mono-receipt text-xs sm:text-sm font-extrabold mt-0.5">Rp 0</div>
+        </div>
+        <div class="bg-[#ba5d4f] rounded-lg p-1.5">
+          <div class="text-[10px] text-white/90 font-bold uppercase">Total Di Terima</div>
+          <div id="summaryGrandTotal" class="font-mono-receipt text-xs sm:text-sm font-extrabold mt-0.5">Rp 0</div>
+        </div>
+      </div>
+
+      <!-- REPLICA PHYSICAL NOTA (Matches Uploaded Photo 1 & Photo 2 with AMBIL BARANG deduction) -->
+      <div id="notaPrintableArea" class="nota-paper rounded-2xl p-3.5 sm:p-5">
+
+        <!-- NOTA HEADER: Left Logo + Store Title | Right Tanggal + Kepada Yth (Dropdown List) -->
+        <div class="grid grid-cols-12 gap-2 items-start mb-3">
+          
+          <!-- Left: Logo + SBR PUTRA FOOD -->
+          <div class="col-span-7 flex items-center gap-2 sm:gap-3">
+            <!-- Faithful Vector Recreation of Arumanis Susu Lembang Siputra Logo -->
+            <div class="w-16 h-16 sm:w-20 sm:h-20 shrink-0 relative flex items-center justify-center">
+              <svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-sm">
+                <defs>
+                  <path id="topArc" d="M 14,62 A 46,46 0 1,1 106,62" />
+                </defs>
+                <circle cx="60" cy="62" r="38" fill="#a3be9b" stroke="#6f8769" stroke-width="1.5" />
+                <circle cx="60" cy="62" r="33" fill="#b7cfb0" />
+                <text font-size="6.3" font-weight="800" fill="#3a3835" letter-spacing="0.8">
+                  <textPath href="#topArc" startOffset="50%" text-anchor="middle">ARUMANIS SUSU LEMBANG SIPUTRA</textPath>
+                </text>
+                <line x1="52" y1="74" x2="48" y2="96" stroke="#5c4033" stroke-width="2.5" stroke-linecap="round" />
+                <line x1="69" y1="68" x2="66" y2="95" stroke="#5c4033" stroke-width="2.5" stroke-linecap="round" />
+                <g fill="#d99ab5" stroke="#6b3fa0" stroke-width="1.5">
+                  <path d="M62,38 C66,32 76,33 79,40 C85,42 86,51 81,56 C84,62 79,70 72,70 C67,73 59,70 58,64 C54,60 55,50 60,46 C58,42 59,39 62,38 Z" />
+                </g>
+                <g fill="#e3adc4" stroke="#6b3fa0" stroke-width="1.5">
+                  <path d="M40,46 C44,40 54,41 57,48 C63,50 64,59 59,64 C62,70 57,78 50,78 C45,81 37,78 36,72 C32,68 33,58 38,54 C36,50 37,47 40,46 Z" />
+                </g>
+                <path d="M22,86 L34,82 L34,94 L20,92 L25,88 Z" fill="#2b2927" />
+                <path d="M98,86 L86,82 L86,94 L100,92 L95,88 Z" fill="#2b2927" />
+                <path d="M30,85 Q60,97 90,85 L88,97 Q60,108 32,97 Z" fill="#2b2927" stroke="#ffffff" stroke-width="0.8" />
+                <text x="60" y="96" font-size="8.5" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">★ ASLI ★</text>
+              </svg>
+            </div>
+
+            <div class="leading-none">
+              <div class="font-condensed font-extrabold text-2xl sm:text-3xl text-[#3b3a38] tracking-tight leading-none">SBR</div>
+              <div class="font-condensed font-extrabold text-2xl sm:text-3xl text-[#3b3a38] tracking-tight leading-none mt-0.5">PUTRA FOOD</div>
+              <div class="flex items-center gap-1 mt-1.5 text-[11px] sm:text-xs font-medium text-stone-600">
+                <svg class="w-3.5 h-3.5 text-[#ba5d4f] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+                </svg>
+                <span>Lembang, Bandung Barat</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Tanggal & Kepada Yth (Dropdown Select) -->
+          <div class="col-span-5 text-xs space-y-1.5 pt-1">
+            <div class="flex items-center gap-1">
+              <span class="font-semibold text-stone-700 shrink-0">Tanggal,</span>
+              <input id="notaTanggal" type="date" class="dotted-input text-xs py-0.5" onchange="saveDraftState()" />
+            </div>
+
+            <div class="pt-0.5">
+              <div class="flex items-center justify-between gap-1">
+                <span class="font-semibold text-stone-700">Kepada Yth,</span>
+                <span id="customerSavedBadge" class="hidden text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-semibold">Tersimpan</span>
+              </div>
+              <!-- Dropdown list for Nama Pembeli as requested -->
+              <select id="notaPembeli" onchange="onPembeliInput(this.value)" class="dotted-input mt-0.5 font-bold cursor-pointer bg-transparent">
+                <option value="">-- Pilih Pembeli / Mitra --</option>
+              </select>
+              <datalist id="datalistPembeli" class="hidden"></datalist>
+              <input id="notaCatatanPembeli" type="text" placeholder="Alamat / No. HP / Ket (opsional)..." oninput="saveDraftState()" class="dotted-input mt-1 text-[11px] font-normal text-stone-600" />
+            </div>
+          </div>
+        </div>
+
+        <!-- NOTA TABLE (QTY widened to 15%, no spinners, default 1 (+) row & 2 (-) rows) -->
+        <div class="nota-table-wrap">
+          
+          <!-- Center Watermark "SBR PUTRA mulus rahayu berkah salamet" -->
+          <div class="nota-watermark">
+            <div class="text-center px-4">
+              <div class="font-condensed text-4xl sm:text-5xl font-extrabold tracking-wider text-stone-800 border-2 border-stone-700 rounded-xl px-4 py-1">
+                SBR PUTRA
+              </div>
+              <div class="text-xs sm:text-sm font-bold italic tracking-widest text-stone-700 mt-0.5">
+                mulus rahayu berkah salamet
+              </div>
+            </div>
+          </div>
+
+          <table class="w-full border-collapse relative z-10 table-fixed">
+            <thead class="nota-thead">
+              <tr>
+                <th style="width: 15%;" class="text-center">QTY</th>
+                <th class="text-center">NAMA BARANG</th>
+                <th class="w-24 sm:w-28 text-center">HARGA<br/>SATUAN</th>
+                <th class="w-28 sm:w-32 text-center">JUMLAH</th>
+                <th class="w-7 no-print text-center" title="Hapus Baris">×</th>
+              </tr>
+            </thead>
+            <tbody id="notaTableBody">
+              <!-- Populated dynamically via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Add Row helper buttons inside paper (no-print) -->
+        <div class="no-print mt-2.5 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="addBlankRow('add')" class="text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition">
+              + Tambah Baris Kosong
+            </button>
+            <button type="button" onclick="addBlankRow('sub')" class="text-[11px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-lg transition">
+              − Baris Ambil Barang (−)
+            </button>
+          </div>
+          <span id="notaNoRef" class="text-[11px] font-mono-receipt text-stone-400"></span>
+        </div>
+
+        <!-- NOTA FOOTER: TOTAL DI TERIMA -->
+        <div class="flex justify-end items-center mt-2">
+          <div class="nota-total-box">
+            <div class="nota-total-label">TOTAL DI TERIMA</div>
+            <div id="notaGrandTotal" class="nota-total-value font-mono-receipt">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons Bar (Save, Print Bluetooth -> 3 Options Modal, Preview Struk, Download PNG) -->
+      <div class="no-print grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+        <button type="button" onclick="printViaBluetooth()" class="col-span-2 sm:col-span-2 py-3 px-4 rounded-xl bg-[#2b2927] hover:bg-stone-800 active:scale-[0.99] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition">
+          <svg class="w-4 h-4 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/>
+          </svg>
+          <span>Print Bluetooth (ESC/POS)</span>
+        </button>
+
+        <button type="button" onclick="saveCurrentNotaToHistory()" class="py-2.5 px-3 rounded-xl bg-[#ba5d4f] hover:bg-[#99463a] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition">
+          <span>💾 Simpan Nota</span>
+        </button>
+
+        <button type="button" onclick="openThermalPreviewModal()" class="py-2.5 px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition">
+          <span>🧾 Preview &amp; Gambar</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: MASTER BARANG & HARGA ==================== -->
+    <section id="viewBarang" class="hidden space-y-3">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200">
+        <h2 class="font-bold text-sm text-stone-800 flex items-center justify-between">
+          <span>📦 Mapping Nama Barang, Harga Standar &amp; Jenis</span>
+          <span class="text-[11px] font-normal text-stone-500">LocalStorage</span>
+        </h2>
+        <p class="text-xs text-stone-500 mt-0.5 mb-3">
+          Harga di bawah adalah <strong>Harga Standar/Umum</strong>. Untuk mengatur harga berbeda tiap mitra/pembeli, buka tab <strong>Pembeli</strong>.
+        </p>
+
+        <form id="formMasterBarang" onsubmit="handleSaveMasterBarang(event)" class="grid grid-cols-12 gap-2">
+          <input type="hidden" id="editBarangId" value="" />
+          <div class="col-span-12 sm:col-span-5">
+            <label for="inputMasterNamaBarang" class="block text-[11px] font-semibold text-stone-600 mb-1">Nama Barang</label>
+            <input id="inputMasterNamaBarang" type="text" required placeholder="Contoh: SIMPING / ACI / PLASTIK" class="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-[#ba5d4f]" />
+          </div>
+          <div class="col-span-6 sm:col-span-4">
+            <label for="inputMasterHargaBarang" class="block text-[11px] font-semibold text-stone-600 mb-1">Harga Standar (Rp)</label>
+            <input id="inputMasterHargaBarang" type="number" required min="0" step="100" placeholder="5800" class="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm font-bold text-right focus:outline-none focus:border-[#ba5d4f]" />
+          </div>
+          <div class="col-span-6 sm:col-span-3">
+            <label for="inputMasterTipeBarang" class="block text-[11px] font-semibold text-stone-600 mb-1">Kelompok Default</label>
+            <select id="inputMasterTipeBarang" class="w-full px-2.5 py-2 rounded-lg border border-stone-300 text-xs font-bold focus:outline-none focus:border-[#ba5d4f]">
+              <option value="add">(+) Masuk / Jual</option>
+              <option value="sub">(−) Ambil Barang</option>
+            </select>
+          </div>
+          <div class="col-span-12 flex justify-end gap-2 mt-1">
+            <button type="button" id="btnCancelEditBarang" onclick="resetFormMasterBarang()" class="hidden px-3 py-2 rounded-lg border border-stone-300 text-xs font-semibold text-stone-600">
+              Batal
+            </button>
+            <button type="submit" id="btnSubmitMasterBarang" class="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#ba5d4f] hover:bg-[#99463a] text-white font-bold text-xs transition">
+              + Simpan Barang &amp; Harga
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Search & List Master Barang -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <input id="searchMasterBarang" type="text" placeholder="Cari nama barang (Simping, Aci, Plastik)..." oninput="renderMasterBarangList()" class="w-full px-3 py-1.5 rounded-lg border border-stone-200 text-xs focus:outline-none focus:border-[#ba5d4f]" />
+        </div>
+        <div id="listMasterBarang" class="divide-y divide-stone-100"></div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: MASTER PEMBELI & HARGA KHUSUS MITRA ==================== -->
+    <section id="viewPembeli" class="hidden space-y-3">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200">
+        <h2 class="font-bold text-sm text-stone-800 flex items-center justify-between">
+          <span>👤 Data Mitra / Pembeli &amp; Mapping Harga Khusus</span>
+          <span class="text-[11px] font-normal text-stone-500">Tersimpan di LocalStorage</span>
+        </h2>
+        <p class="text-xs text-stone-500 mt-0.5 mb-3">
+          Daftar pembeli di sini akan muncul di dropdown <strong>Kepada Yth</strong> pada nota beserta Harga Khususnya.
+        </p>
+
+        <form id="formMasterPembeli" onsubmit="handleSaveMasterPembeli(event)" class="grid grid-cols-12 gap-2">
+          <input type="hidden" id="editPembeliId" value="" />
+          <div class="col-span-6">
+            <label for="inputMasterNamaPembeli" class="block text-[11px] font-semibold text-stone-600 mb-1">Nama Pembeli / Mitra</label>
+            <input id="inputMasterNamaPembeli" type="text" required placeholder="Contoh: Kang Asep (Mitra Simping)" class="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-[#ba5d4f]" />
+          </div>
+          <div class="col-span-6">
+            <label for="inputMasterInfoPembeli" class="block text-[11px] font-semibold text-stone-600 mb-1">Alamat / Kontak (Opsional)</label>
+            <input id="inputMasterInfoPembeli" type="text" placeholder="Contoh: Lembang / 0812xxx" class="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-[#ba5d4f]" />
+          </div>
+          <div class="col-span-12 flex justify-end gap-2 mt-1">
+            <button type="button" id="btnCancelEditPembeli" onclick="resetFormMasterPembeli()" class="hidden px-3 py-2 rounded-lg border border-stone-300 text-xs font-semibold text-stone-600">
+              Batal
+            </button>
+            <button type="submit" id="btnSubmitMasterPembeli" class="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#ba5d4f] hover:bg-[#99463a] text-white font-bold text-xs transition">
+              + Simpan Nama Pembeli
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-bold text-xs text-stone-700 uppercase tracking-wider">Daftar Mitra &amp; Harga Khususnya</h3>
+          <span class="text-[11px] text-stone-400">Klik "🏷️ Harga Khusus" untuk atur harga per barang</span>
+        </div>
+        <div id="listMasterPembeli" class="divide-y divide-stone-100"></div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: RIWAYAT NOTA & BACKUP ==================== -->
+    <section id="viewRiwayat" class="hidden space-y-3">
+      <!-- Summary Card -->
+      <div class="bg-[#2b2927] text-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-[11px] text-stone-400 uppercase tracking-wider font-semibold">Total Nilai Bersih Tersimpan</p>
+          <p id="riwayatTotalOmzet" class="text-xl font-extrabold font-mono-receipt text-amber-400 mt-0.5">Rp 0</p>
+        </div>
+        <div class="flex gap-1.5">
+          <button type="button" onclick="exportBackupJSON()" class="px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-[11px] font-semibold border border-stone-600">
+            ⬇️ Backup Data
+          </button>
+          <label class="px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-[11px] font-semibold border border-stone-600 cursor-pointer">
+            ⬆️ Restore
+            <input id="inputRestoreJson" type="file" accept=".json" class="hidden" onchange="importBackupJSON(event)" />
+          </label>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-sm text-stone-800">🧾 Daftar Riwayat Nota</h2>
+          <button type="button" onclick="confirmClearAllHistory()" class="text-xs text-red-600 hover:underline font-semibold">
+            Hapus Semua
+          </button>
+        </div>
+        <div id="listRiwayatNota" class="space-y-2.5"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODAL: PILIH MODE CETAK BLUETOOTH (3 PILIHAN) ==================== -->
+  <div id="modalPrintChoices" class="no-print fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-xl space-y-3">
+      <div class="flex items-center justify-between border-b border-stone-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full bg-stone-900 text-sky-400 flex items-center justify-center font-bold">🖨️</span>
+          <div>
+            <h3 class="font-bold text-sm text-stone-900">Pilih Mode Cetak Bluetooth</h3>
+            <p class="text-[11px] text-stone-500">Pilih sesuai ukuran kertas &amp; printer yang digunakan</p>
+          </div>
+        </div>
+        <button type="button" onclick="closePrintChoicesModal()" class="w-7 h-7 rounded-full hover:bg-stone-100 text-stone-500 font-bold">✕</button>
+      </div>
+
+      <div class="space-y-2">
+        <!-- Pilihan 1: Kertas 58mm -->
+        <button type="button" onclick="executeBluetoothPrintWithMode('58mm')" class="w-full p-3 rounded-xl border-2 border-stone-200 hover:border-[#ba5d4f] hover:bg-stone-50 text-left flex items-center justify-between gap-2 transition group">
+          <div>
+            <div class="font-bold text-sm text-stone-900 group-hover:text-[#ba5d4f]">1. Kertas 58mm</div>
+            <div class="text-[11px] text-stone-500">Lebar standar 32 karakter pada printer 58mm</div>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-stone-900 text-white text-xs font-bold shrink-0">Cetak 58mm</span>
+        </button>
+
+        <!-- Pilihan 2: Kertas 80mm -->
+        <button type="button" onclick="executeBluetoothPrintWithMode('80mm')" class="w-full p-3 rounded-xl border-2 border-stone-200 hover:border-[#ba5d4f] hover:bg-stone-50 text-left flex items-center justify-between gap-2 transition group">
+          <div>
+            <div class="font-bold text-sm text-stone-900 group-hover:text-[#ba5d4f]">2. Kertas 80mm</div>
+            <div class="text-[11px] text-stone-500">Lebar penuh 48 karakter pada printer 80mm</div>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-stone-900 text-white text-xs font-bold shrink-0">Cetak 80mm</span>
+        </button>
+
+        <!-- Pilihan 3: Kertas 58mm Admin (di Printer 80mm - Geser Kanan) -->
+        <div class="p-3 rounded-xl border-2 border-amber-300 bg-amber-50/60 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <div class="font-bold text-sm text-amber-950 flex items-center gap-1.5"><span>3. Kertas 58mm Admin</span><span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 font-extrabold">✂️ Auto-Cutter</span></div>
+              <div class="text-[11px] text-amber-800 leading-tight">
+                Kertas lebar 58mm (32 karakter) dipasang di printer Bluetooth 80mm (posisi cetak digeser ke kanan)
+              </div>
+            </div>
+            <button type="button" onclick="executeBluetoothPrintWithMode('58mm_admin')" class="px-3 py-2 rounded-lg bg-[#ba5d4f] hover:bg-[#99463a] text-white text-xs font-bold shrink-0 shadow-sm">
+              Cetak 58mm Admin
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-amber-200/80 text-xs">
+            <label for="inputAdminOffset" class="text-[11px] font-semibold text-amber-900">
+              Geser Kanan (Spasi/Karakter):
+            </label>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="adjustAdminOffset(-1)" class="w-6 h-6 rounded bg-white border border-amber-300 font-bold text-amber-900">−</button>
+              <input id="inputAdminOffset" type="number" min="0" max="30" value="15" onchange="savePrinterSettings()" class="w-12 py-0.5 text-center font-mono-receipt font-bold bg-white border border-amber-300 rounded text-xs" />
+              <button type="button" onclick="adjustAdminOffset(1)" class="w-6 h-6 rounded bg-white border border-amber-300 font-bold text-amber-900">+</button>
+              <span class="text-[10px] text-amber-800">spasi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-1 text-[11px] text-stone-500">
+        <span>Total Di Terima dicetak <strong>Double Height &amp; Weight</strong></span>
+        <button type="button" onclick="closePrintChoicesModal(); openBluetoothModal();" class="text-sky-700 font-semibold hover:underline">
+          ⚙️ Pengaturan BLE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: HARGA KHUSUS PER MITRA/PEMBELI ==================== -->
+  <div id="modalHargaKhusus" class="no-print fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-xl flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between border-b border-stone-100 pb-2.5">
+        <div>
+          <h3 class="font-bold text-sm text-stone-900 flex items-center gap-1.5">
+            <span>🏷️ Harga Khusus Mitra:</span>
+            <span id="modalHargaKhususTitle" class="text-violet-700 underline">-</span>
+          </h3>
+          <p class="text-[11px] text-stone-500">Kosongkan kolom jika ingin mengikuti Harga Standar.</p>
+        </div>
+        <button type="button" onclick="closeHargaKhususModal()" class="w-7 h-7 rounded-full hover:bg-stone-100 text-stone-500 font-bold">✕</button>
+      </div>
+
+      <input type="hidden" id="modalHargaKhususPembeliId" value="" />
+
+      <!-- List of all Master Barang with Custom Price Inputs for this Mitra -->
+      <div id="modalHargaKhususList" class="overflow-y-auto flex-1 divide-y divide-stone-100 my-2 pr-1"></div>
+
+      <div class="flex items-center justify-between gap-2 pt-2.5 border-t border-stone-100">
+        <button type="button" onclick="resetAllHargaKhususInModal()" class="px-3 py-2 rounded-xl border border-stone-300 hover:bg-stone-100 text-xs font-semibold text-stone-600">
+          Reset ke Standar
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeHargaKhususModal()" class="px-3 py-2 rounded-xl border border-stone-300 text-xs font-semibold text-stone-600">
+            Tutup
+          </button>
+          <button type="button" onclick="saveHargaKhususFromModal()" class="px-4 py-2 rounded-xl bg-violet-700 hover:bg-violet-800 text-white font-bold text-xs shadow-sm transition">
+            💾 Simpan Harga Mitra
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: BLUETOOTH PRINTER SETUP ==================== -->
+  <div id="modalBluetooth" class="no-print fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-xl space-y-3">
+      <div class="flex items-center justify-between border-b border-stone-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold">B</span>
+          <div>
+            <h3 class="font-bold text-sm text-stone-900">Pengaturan Printer Bluetooth</h3>
+            <p class="text-[11px] text-stone-500">Web Bluetooth API (ESC/POS Thermal)</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeBluetoothModal()" class="w-7 h-7 rounded-full hover:bg-stone-100 text-stone-500 font-bold">✕</button>
+      </div>
+
+      <div class="bg-stone-50 rounded-xl p-3 border border-stone-200 text-xs space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-stone-500">Status Koneksi:</span>
+          <span id="modalBleStatus" class="font-bold text-amber-600">Belum Terhubung</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-stone-500">Perangkat:</span>
+          <span id="modalBleDeviceName" class="font-mono-receipt font-semibold text-stone-800">-</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label for="selectPaperWidth" class="block text-[11px] font-semibold text-stone-600 mb-1">Mode Kertas Default</label>
+          <select id="selectPaperWidth" onchange="savePrinterSettings()" class="w-full px-2.5 py-2 rounded-lg border border-stone-300 text-xs font-semibold">
+            <option value="32">58mm (32 Karakter)</option>
+            <option value="48">80mm (48 Karakter)</option>
+            <option value="58_admin">58mm Admin (di Printer 80mm)</option>
+          </select>
+        </div>
+        <div>
+          <label for="selectChunkSize" class="block text-[11px] font-semibold text-stone-600 mb-1">Ukuran Paket BLE</label>
+          <select id="selectChunkSize" onchange="savePrinterSettings()" class="w-full px-2.5 py-2 rounded-lg border border-stone-300 text-xs font-semibold">
+            <option value="20">20 Bytes (Aman Semua HP)</option>
+            <option value="64">64 Bytes (Cepat)</option>
+            <option value="128">128 Bytes (Ultra Cepat)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="text-[11px] text-stone-500 bg-amber-50 border border-amber-200 rounded-lg p-2.5 leading-relaxed">
+        💡 <strong>Tips Mobile:</strong> Gunakan browser <strong>Google Chrome di Android</strong> (atau Bluefy di iOS) dengan koneksi HTTPS (seperti domain Vercel). Nyalakan printer Bluetooth lalu tekan <em>Cari &amp; Hubungkan Printer</em>.
+      </div>
+
+      <div class="flex flex-wrap gap-2 pt-1">
+        <button type="button" onclick="connectBluetoothPrinter()" class="flex-1 py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition">
+          🔍 Cari &amp; Hubungkan Printer
+        </button>
+        <button type="button" onclick="testPrintBluetooth()" class="py-2.5 px-3 rounded-xl bg-stone-800 hover:bg-stone-900 text-white font-bold text-xs transition">
+          🖨️ Test Print
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: THERMAL PREVIEW & SHARE IMAGE ==================== -->
+  <div id="modalThermalPreview" class="no-print fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-xl space-y-3 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+        <h3 class="font-bold text-sm text-stone-900">🧾 Preview Struk Thermal &amp; Cetak</h3>
+        <button type="button" onclick="closeThermalPreviewModal()" class="w-7 h-7 rounded-full hover:bg-stone-100 text-stone-500 font-bold">✕</button>
+      </div>
+
+      <div class="flex items-center justify-center gap-1.5 text-[11px]">
+        <button type="button" onclick="previewThermalByMode('58mm')" class="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 font-bold text-stone-700">58mm</button>
+        <button type="button" onclick="previewThermalByMode('80mm')" class="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 font-bold text-stone-700">80mm</button>
+        <button type="button" onclick="previewThermalByMode('58mm_admin')" class="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 font-bold text-amber-900">58mm Admin (Geser Kanan)</button>
+      </div>
+
+      <div class="overflow-y-auto flex-1 bg-stone-100 p-3 rounded-xl border border-stone-200">
+        <pre id="thermalPreviewText" class="font-mono-receipt text-[11px] leading-snug bg-white p-3 rounded-lg shadow-inner border border-stone-200 overflow-x-auto text-stone-900 mx-auto max-w-[340px]"></pre>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button type="button" onclick="downloadNotaAsImage()" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5">
+          <span>📸 Unduh Gambar Nota</span>
+        </button>
+        <button type="button" onclick="window.print()" class="py-2.5 px-3 rounded-xl bg-stone-800 hover:bg-stone-900 text-white font-bold text-xs flex items-center justify-center gap-1.5">
+          <span>🖨️ Print Browser / PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CONFIRMATION DIALOG ==================== -->
+  <div id="modalConfirm" class="no-print fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-xl space-y-3">
+      <h3 id="confirmTitle" class="font-bold text-sm text-stone-900">Konfirmasi</h3>
+      <p id="confirmMessage" class="text-xs text-stone-600 leading-relaxed"></p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeConfirmModal()" class="px-3.5 py-2 rounded-lg border border-stone-300 text-xs font-semibold text-stone-700">
+          Batal
+        </button>
+        <button type="button" id="btnConfirmYes" class="px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold">
+          Ya, Lanjutkan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastContainer" class="no-print fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-1.5 w-11/12 max-w-sm"></div>
+
+  <script>
+    // =========================================================================
+    // SAFE LOCAL STORAGE WRAPPER & INITIAL STATE
+    // =========================================================================
+    const STORAGE_KEYS = {
+      BARANG: 'sbr_putra_master_barang_v3',
+      PEMBELI: 'sbr_putra_master_pembeli_v3',
+      RIWAYAT: 'sbr_putra_riwayat_nota_v3',
+      DRAFT: 'sbr_putra_current_draft_v4',
+      SETTINGS: 'sbr_putra_printer_settings_v3'
+    };
+
+    const memoryStorageFallback = {};
+
+    function safeGetStorage(key, fallbackVal) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        if (!raw) return fallbackVal;
+        return JSON.parse(raw);
+      } catch (e) {
+        return memoryStorageFallback[key] !== undefined ? memoryStorageFallback[key] : fallbackVal;
+      }
+    }
+
+    function safeSetStorage(key, val) {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(val));
+      } catch (e) {
+        memoryStorageFallback[key] = val;
+      }
+    }
+
+    // Default Master Barang & Harga Standar
+    const DEFAULT_BARANG = [
+      { id: 'brg-1', nama: 'SIMPING', harga: 5800, tipe: 'add' },
+      { id: 'brg-2', nama: 'ACI', harga: 329000, tipe: 'sub' },
+      { id: 'brg-3', nama: 'PLASTIK', harga: 44000, tipe: 'sub' },
+      { id: 'brg-4', nama: 'Arumanis Susu Original', harga: 15000, tipe: 'add' },
+      { id: 'brg-5', nama: 'Arumanis Susu Strawberry', harga: 15000, tipe: 'add' },
+      { id: 'brg-6', nama: 'Gula Pasir (Karung)', harga: 720000, tipe: 'sub' }
+    ];
+
+    // Default Master Pembeli / Mitra with Per-Customer Custom Price Mapping (hargaKhusus)
+    const DEFAULT_PEMBELI = [
+      {
+        id: 'pbl-1',
+        nama: 'Mitra Pengrajin Simping',
+        info: 'Setor Simping & Ambil Bahan (Lembang)',
+        hargaKhusus: {
+          'SIMPING': 5800,
+          'ACI': 329000,
+          'PLASTIK': 44000
+        }
+      },
+      {
+        id: 'pbl-2',
+        nama: 'Kang Asep (Mitra Senior)',
+        info: 'Harga Setor Khusus Mitra Senior',
+        hargaKhusus: {
+          'SIMPING': 6000,
+          'ACI': 325000,
+          'PLASTIK': 42000
+        }
+      },
+      {
+        id: 'pbl-3',
+        nama: 'Toko Oleh-Oleh Lembang Asri',
+        info: 'Jl. Raya Lembang No. 45 (Reseller Grosir)',
+        hargaKhusus: {
+          'Arumanis Susu Original': 13500,
+          'Arumanis Susu Strawberry': 13500
+        }
+      }
+    ];
+
+    let masterBarang = [];
+    let masterPembeli = [];
+    let riwayatNota = [];
+    let printerSettings = { paperWidth: '32', chunkSize: 20, adminOffset: 15 };
+    let quickItemTipe = 'add'; // 'add' (+) or 'sub' (- Ambil Barang)
+
+    // Current Active Receipt Rows
+    let currentNota = {
+      noNota: '',
+      tanggal: '',
+      pembeli: '',
+      catatanPembeli: '',
+      rows: []
+    };
+
+    // Web Bluetooth State
+    let bleDevice = null;
+    let bleCharacteristic = null;
+
+    // Confirm modal callback
+    let pendingConfirmCallback = null;
+
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
+    function formatRupiahNumber(num) {
+      const n = Number(num) || 0;
+      const absVal = Math.abs(n);
+      const formatted = absVal.toLocaleString('id-ID');
+      return n < 0 ? '-' + formatted : formatted;
+    }
+
+    function getTodayISO() {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return yyyy + '-' + mm + '-' + dd;
+    }
+
+    function generateNotaNumber() {
+      const d = new Date();
+      const ymd = String(d.getFullYear()).slice(-2) +
+                  String(d.getMonth() + 1).padStart(2, '0') +
+                  String(d.getDate()).padStart(2, '0');
+      const rand = String(Math.floor(100 + Math.random() * 900));
+      return 'SBR-' + ymd + '-' + rand;
+    }
+
+    // Default: 1 row (+) and 2 rows (-) / Ambil Barang as requested in point #3
+    function createDefaultRows() {
+      return [
+        { id: 'row-' + Date.now() + '-1', qty: '', nama: '', harga: '', tipe: 'add' },
+        { id: 'row-' + Date.now() + '-2', qty: '', nama: '', harga: '', tipe: 'sub' },
+        { id: 'row-' + Date.now() + '-3', qty: '', nama: '', harga: '', tipe: 'sub' }
+      ];
+    }
+
+    // Photo example also uses 1 row (+) and 2 rows (-) / Ambil Barang
+    function buildPhotoExampleRows() {
+      const _unusedRows = [{ id: 'row-init-2' }, { id: 'row-ex-3' }];
+      return [
+        { id: 'row-init-1', qty: 300, nama: 'SIMPING', harga: 5800, tipe: 'add' },
+        { id: 'row-ex-4', qty: 1, nama: 'ACI', harga: 329000, tipe: 'sub' },
+        { id: 'row-ex-5', qty: 2, nama: 'PLASTIK', harga: 44000, tipe: 'sub' }
+      ];
+    }
+
+    function initApp() {
+      masterBarang = safeGetStorage(STORAGE_KEYS.BARANG, null);
+      if (!Array.isArray(masterBarang) || masterBarang.length === 0) {
+        masterBarang = DEFAULT_BARANG.slice();
+        safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
+      }
+
+      masterPembeli = safeGetStorage(STORAGE_KEYS.PEMBELI, null);
+      if (!Array.isArray(masterPembeli) || masterPembeli.length === 0) {
+        masterPembeli = DEFAULT_PEMBELI.slice();
+        safeSetStorage(STORAGE_KEYS.PEMBELI, masterPembeli);
+      } else {
+        masterPembeli.forEach(function(p) {
+          if (!p.hargaKhusus || typeof p.hargaKhusus !== 'object') {
+            p.hargaKhusus = {};
+          }
+        });
+      }
+
+      riwayatNota = safeGetStorage(STORAGE_KEYS.RIWAYAT, []);
+      printerSettings = safeGetStorage(STORAGE_KEYS.SETTINGS, { paperWidth: '32', chunkSize: 20, adminOffset: 15 });
+
+      document.getElementById('selectPaperWidth').value = String(printerSettings.paperWidth || '32');
+      document.getElementById('selectChunkSize').value = String(printerSettings.chunkSize || 20);
+      document.getElementById('inputAdminOffset').value = String(printerSettings.adminOffset !== undefined ? printerSettings.adminOffset : 15);
+
+      const savedDraft = safeGetStorage(STORAGE_KEYS.DRAFT, null);
+      if (savedDraft && Array.isArray(savedDraft.rows) && savedDraft.rows.length > 0) {
+        currentNota = savedDraft;
+      } else {
+        currentNota = {
+          noNota: generateNotaNumber(),
+          tanggal: getTodayISO(),
+          pembeli: 'Mitra Pengrajin Simping',
+          catatanPembeli: 'Setor Simping & Ambil Bahan (Lembang)',
+          rows: createDefaultRows()
+        };
+      }
+
+      renderDatalistsAndChips();
+      syncHeaderInputsFromState();
+      setQuickItemTipe('add');
+      renderNotaTable();
+      renderMasterBarangList();
+      renderMasterPembeliList();
+      renderRiwayatList();
+      updateBadges();
+    }
+
+    function loadSampleSimpingNota() {
+      currentNota = {
+        noNota: generateNotaNumber(),
+        tanggal: '2026-09-15',
+        pembeli: 'Mitra Pengrajin Simping',
+        catatanPembeli: 'Setor Simping & Ambil Bahan Baku',
+        rows: buildPhotoExampleRows()
+      };
+      renderDatalistsAndChips();
+      syncHeaderInputsFromState();
+      renderNotaTable();
+      saveDraftState();
+      showToast('Contoh nota Simping & Ambil Barang (Rp 1.323.000) dimuat', 'success');
+    }
+
+    // =========================================================================
+    // UI TABS & TOASTS
+    // =========================================================================
+    function switchTab(tabName) {
+      const tabs = ['nota', 'barang', 'pembeli', 'riwayat'];
+      tabs.forEach(function(t) {
+        const viewEl = document.getElementById('view' + t.charAt(0).toUpperCase() + t.slice(1));
+        const btnEl = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (t === tabName) {
+          viewEl.classList.remove('hidden');
+          btnEl.className = 'flex-1 py-1.5 px-2 rounded-lg text-xs font-bold bg-[#ba5d4f] text-white transition whitespace-nowrap';
+        } else {
+          viewEl.classList.add('hidden');
+          btnEl.className = 'flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold text-stone-300 hover:bg-stone-800 transition whitespace-nowrap';
+        }
+      });
+    }
+
+    function showToast(message, type) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const bgClass = type === 'error' ? 'bg-red-700' : (type === 'success' ? 'bg-emerald-700' : 'bg-stone-900');
+      toast.className = bgClass + ' text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-lg border border-white/15 transition-all duration-200 pointer-events-auto';
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.opacity = '0';
+        setTimeout(function() {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 200);
+      }, 2600);
+    }
+
+    function openConfirmModal(title, message, onYes) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMessage').textContent = message;
+      pendingConfirmCallback = onYes;
+      document.getElementById('modalConfirm').classList.remove('hidden');
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('modalConfirm').classList.add('hidden');
+      pendingConfirmCallback = null;
+    }
+
+    document.getElementById('btnConfirmYes').addEventListener('click', function() {
+      const cb = pendingConfirmCallback;
+      closeConfirmModal();
+      if (typeof cb === 'function') cb();
+    });
+
+    function updateBadges() {
+      document.getElementById('badgeCountBarang').textContent = String(masterBarang.length);
+      document.getElementById('badgeCountPembeli').textContent = String(masterPembeli.length);
+      document.getElementById('badgeCountRiwayat').textContent = String(riwayatNota.length);
+    }
+
+    // =========================================================================
+    // HARGA KHUSUS PER MITRA/PEMBELI RESOLUTION LOGIC
+    // =========================================================================
+    function findBarangByName(nama) {
+      if (!nama) return null;
+      const clean = nama.trim().toLowerCase();
+      return masterBarang.find(function(b) {
+        return b.nama.trim().toLowerCase() === clean;
+      }) || null;
+    }
+
+    function findPembeliByName(nama) {
+      if (!nama) return null;
+      const clean = nama.trim().toLowerCase();
+      return masterPembeli.find(function(p) {
+        return p.nama.trim().toLowerCase() === clean;
+      }) || null;
+    }
+
+    function resolveHargaUntukPembeli(namaBarang, namaPembeli) {
+      const brg = findBarangByName(namaBarang);
+      const pbl = findPembeliByName(namaPembeli !== undefined ? namaPembeli : currentNota.pembeli);
+      let customPrice = null;
+
+      if (pbl && pbl.hargaKhusus && namaBarang) {
+        const cleanTarget = namaBarang.trim().toLowerCase();
+        const keys = Object.keys(pbl.hargaKhusus);
+        for (let i = 0; i < keys.length; i++) {
+          if (keys[i].trim().toLowerCase() === cleanTarget) {
+            const val = Number(pbl.hargaKhusus[keys[i]]);
+            if (val > 0) {
+              customPrice = val;
+              break;
+            }
+          }
+        }
+      }
+
+      if (customPrice !== null) {
+        return {
+          harga: customPrice,
+          isKhusus: true,
+          tipe: brg ? (brg.tipe || 'add') : 'add',
+          barangObj: brg
+        };
+      }
+
+      if (brg) {
+        return {
+          harga: Number(brg.harga) || 0,
+          isKhusus: false,
+          tipe: brg.tipe || 'add',
+          barangObj: brg
+        };
+      }
+
+      return null;
+    }
+
+    function saveHargaKhususForActivePembeli(namaBarang, hargaBaru) {
+      const namaPbl = (currentNota.pembeli || '').trim();
+      const cleanBrg = (namaBarang || '').trim();
+      const numHarga = Number(hargaBaru) || 0;
+      if (!namaPbl || !cleanBrg || numHarga <= 0) return;
+
+      let pbl = findPembeliByName(namaPbl);
+      if (!pbl) {
+        pbl = {
+          id: 'pbl-' + Date.now() + '-' + Math.floor(Math.random() * 100),
+          nama: namaPbl,
+          info: (currentNota.catatanPembeli || '').trim(),
+          hargaKhusus: {}
+        };
+        masterPembeli.unshift(pbl);
+      }
+      if (!pbl.hargaKhusus || typeof pbl.hargaKhusus !== 'object') {
+        pbl.hargaKhusus = {};
+      }
+
+      const stdBrg = findBarangByName(cleanBrg);
+      const canonicalName = stdBrg ? stdBrg.nama : cleanBrg;
+
+      Object.keys(pbl.hargaKhusus).forEach(function(k) {
+        if (k.trim().toLowerCase() === canonicalName.toLowerCase() && k !== canonicalName) {
+          delete pbl.hargaKhusus[k];
+        }
+      });
+
+      if (!stdBrg || Number(stdBrg.harga) !== numHarga || pbl.hargaKhusus[canonicalName] !== undefined) {
+        pbl.hargaKhusus[canonicalName] = numHarga;
+        safeSetStorage(STORAGE_KEYS.PEMBELI, masterPembeli);
+        renderMasterPembeliList();
+        updateActiveMitraBanner();
+      }
+    }
+
+    function updateActiveMitraBanner() {
+      const namaPbl = (currentNota.pembeli || '').trim();
+      const pbl = findPembeliByName(namaPbl);
+      const nameEl = document.getElementById('bannerMitraName');
+      const countEl = document.getElementById('bannerMitraSpecialCount');
+
+      if (pbl) {
+        const count = pbl.hargaKhusus ? Object.keys(pbl.hargaKhusus).length : 0;
+        nameEl.textContent = pbl.nama;
+        countEl.textContent = count + ' Harga Khusus';
+        countEl.className = count > 0
+          ? 'px-1.5 py-0.2 rounded bg-violet-600 text-white font-extrabold text-[10px]'
+          : 'px-1.5 py-0.2 rounded bg-stone-200 text-stone-700 font-bold text-[10px]';
+      } else if (namaPbl) {
+        nameEl.textContent = namaPbl;
+        countEl.textContent = 'Harga Standar';
+        countEl.className = 'px-1.5 py-0.2 rounded bg-stone-200 text-stone-700 font-bold text-[10px]';
+      } else {
+        nameEl.textContent = 'Umum (Harga Standar)';
+        countEl.textContent = 'Pilih Mitra di Kepada Yth';
+        countEl.className = 'px-1.5 py-0.2 rounded bg-stone-200 text-stone-700 font-bold text-[10px]';
+      }
+    }
+
+    function applyActivePembeliPricesToNotaRows() {
+      let updatedCount = 0;
+      currentNota.rows.forEach(function(r) {
+        if (r.nama && r.nama.trim() !== '') {
+          const resolved = resolveHargaUntukPembeli(r.nama, currentNota.pembeli);
+          if (resolved && resolved.harga > 0 && Number(r.harga) !== resolved.harga) {
+            r.harga = resolved.harga;
+            updatedCount++;
+          }
+        }
+      });
+      if (updatedCount > 0) {
+        renderNotaTable();
+        saveDraftState();
+        showToast('Harga ' + updatedCount + ' barang disesuaikan dengan Harga Khusus ' + currentNota.pembeli, 'info');
+      }
+    }
+
+    // =========================================================================
+    // NOTA TABLE & AUTO-MAPPING BARANG <-> HARGA & TIPE (+ / - AMBIL BARANG)
+    // =========================================================================
+    function setQuickItemTipe(tipe) {
+      quickItemTipe = tipe === 'sub' ? 'sub' : 'add';
+      const btnAdd = document.getElementById('btnQuickModeAdd');
+      const btnSub = document.getElementById('btnQuickModeSub');
+      const btnSubmit = document.getElementById('btnAddQuickSubmit');
+
+      if (quickItemTipe === 'add') {
+        btnAdd.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-600 text-white transition';
+        btnSub.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold text-stone-600 hover:text-stone-900 transition';
+        btnSubmit.className = 'px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-sm transition shrink-0';
+        btnSubmit.textContent = '+ Masuk Baris';
+      } else {
+        btnAdd.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold text-stone-600 hover:text-stone-900 transition';
+        btnSub.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-600 text-white transition';
+        btnSubmit.className = 'px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-xs shadow-sm transition shrink-0';
+        btnSubmit.textContent = '− Masuk Ambil Barang (−)';
+      }
+    }
+
+    function populatePembeliDropdown() {
+      const sel = document.getElementById('notaPembeli');
+      const currentVal = currentNota.pembeli || '';
+      const optionsHtml = ['<option value="">-- Pilih Pembeli / Mitra --</option>'];
+
+      let matchedInList = false;
+      masterPembeli.forEach(function(p) {
+        const isSelected = p.nama === currentVal;
+        if (isSelected) matchedInList = true;
+        optionsHtml.push(
+          '<option value="' + escapeHtml(p.nama) + '"' + (isSelected ? ' selected' : '') + '>' +
+            escapeHtml(p.nama) +
+          '</option>'
+        );
+      });
+
+      if (currentVal && !matchedInList) {
+        optionsHtml.push(
+          '<option value="' + escapeHtml(currentVal) + '" selected>' + escapeHtml(currentVal) + '</option>'
+        );
+      }
+
+      sel.innerHTML = optionsHtml.join('');
+    }
+
+    function syncHeaderInputsFromState() {
+      document.getElementById('notaTanggal').value = currentNota.tanggal || getTodayISO();
+      populatePembeliDropdown();
+      document.getElementById('notaCatatanPembeli').value = currentNota.catatanPembeli || '';
+      document.getElementById('notaNoRef').textContent = 'No: ' + (currentNota.noNota || '-');
+      checkCustomerBadge(currentNota.pembeli);
+      updateActiveMitraBanner();
+    }
+
+    function saveDraftState() {
+      currentNota.tanggal = document.getElementById('notaTanggal').value;
+      currentNota.pembeli = document.getElementById('notaPembeli').value;
+      currentNota.catatanPembeli = document.getElementById('notaCatatanPembeli').value;
+      safeSetStorage(STORAGE_KEYS.DRAFT, currentNota);
+    }
+
+    function checkCustomerBadge(nama) {
+      const badge = document.getElementById('customerSavedBadge');
+      const found = findPembeliByName(nama);
+      if (found) {
+        const countKhusus = found.hargaKhusus ? Object.keys(found.hargaKhusus).length : 0;
+        badge.textContent = countKhusus > 0 ? ('★ ' + countKhusus + ' Harga Mitra') : 'Tersimpan';
+        badge.className = countKhusus > 0
+          ? 'text-[10px] px-1.5 py-0.2 bg-violet-100 text-violet-800 rounded font-bold'
+          : 'text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-semibold';
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function onPembeliInput(val) {
+      currentNota.pembeli = val;
+      const found = findPembeliByName(val);
+      checkCustomerBadge(val);
+      updateActiveMitraBanner();
+      if (found) {
+        document.getElementById('notaCatatanPembeli').value = found.info || '';
+        currentNota.catatanPembeli = found.info || '';
+        applyActivePembeliPricesToNotaRows();
+      } else if (!val) {
+        document.getElementById('notaCatatanPembeli').value = '';
+        currentNota.catatanPembeli = '';
+        applyActivePembeliPricesToNotaRows();
+      }
+      renderDatalistsAndChips();
+      renderNotaTable();
+      saveDraftState();
+    }
+
+    function onQuickBarangInput(val) {
+      const resolved = resolveHargaUntukPembeli(val, currentNota.pembeli);
+      const badge = document.getElementById('quickHargaSourceBadge');
+      if (resolved) {
+        document.getElementById('quickHarga').value = resolved.harga;
+        setQuickItemTipe(resolved.tipe || 'add');
+        if (resolved.isKhusus) {
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function renderDatalistsAndChips() {
+      populatePembeliDropdown();
+
+      const dlBarang = document.getElementById('datalistBarang');
+      dlBarang.innerHTML = masterBarang.map(function(b) {
+        const resolved = resolveHargaUntukPembeli(b.nama, currentNota.pembeli);
+        const effHarga = resolved ? resolved.harga : b.harga;
+        const isKhusus = resolved && resolved.isKhusus;
+        const prefix = b.tipe === 'sub' ? '[AMBIL -] ' : '[+] ';
+        const star = isKhusus ? ' ★ Harga Mitra' : '';
+        return '<option value="' + escapeHtml(b.nama) + '">' + prefix + 'Rp ' + formatRupiahNumber(effHarga) + star + '</option>';
+      }).join('');
+
+      const dlPembeli = document.getElementById('datalistPembeli');
+      dlPembeli.innerHTML = masterPembeli.map(function(p) {
+        return '<option value="' + escapeHtml(p.nama) + '">' + escapeHtml(p.info || '') + '</option>';
+      }).join('');
+
+      const chipsContainer = document.getElementById('quickProductChips');
+      chipsContainer.innerHTML = masterBarang.map(function(b) {
+        const isSub = b.tipe === 'sub';
+        const resolved = resolveHargaUntukPembeli(b.nama, currentNota.pembeli);
+        const effHarga = resolved ? resolved.harga : b.harga;
+        const isKhusus = resolved && resolved.isKhusus;
+
+        let badgeStyle = isSub
+          ? 'bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-900 border-amber-300'
+          : 'bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-900 border-emerald-300';
+
+        if (isKhusus) {
+          badgeStyle = isSub
+            ? 'bg-amber-100 hover:bg-amber-700 hover:text-white text-amber-950 border-violet-400 ring-1 ring-violet-300'
+            : 'bg-violet-50 hover:bg-violet-700 hover:text-white text-violet-950 border-violet-400 ring-1 ring-violet-300';
+        }
+
+        const signSymbol = isSub ? '− ' : '+ ';
+        const starBadge = isKhusus ? '★ ' : '';
+        return '<button type="button" onclick="selectQuickChip(\'' + b.id + '\')" class="px-2.5 py-1 rounded-full ' + badgeStyle + ' text-[11px] font-bold border transition whitespace-nowrap shrink-0">' +
+          starBadge + signSymbol + escapeHtml(b.nama) + ' <span class="opacity-80 font-mono-receipt">(' + formatRupiahNumber(effHarga) + ')</span></button>';
+      }).join('');
+    }
+
+    function selectQuickChip(barangId) {
+      const item = masterBarang.find(function(b) { return b.id === barangId; });
+      if (!item) return;
+      const resolved = resolveHargaUntukPembeli(item.nama, currentNota.pembeli);
+      const effHarga = resolved ? resolved.harga : item.harga;
+      document.getElementById('quickNamaBarang').value = item.nama;
+      document.getElementById('quickHarga').value = effHarga;
+      setQuickItemTipe(item.tipe || 'add');
+      const badge = document.getElementById('quickHargaSourceBadge');
+      if (resolved && resolved.isKhusus) {
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+      const qtyInput = document.getElementById('quickQty');
+      if (!qtyInput.value || Number(qtyInput.value) < 1) qtyInput.value = 1;
+    }
+
+    function handleAddQuickItem() {
+      const qtyVal = Number(document.getElementById('quickQty').value) || 1;
+      const namaVal = document.getElementById('quickNamaBarang').value.trim();
+      const hargaVal = Number(document.getElementById('quickHarga').value) || 0;
+      const tipeVal = quickItemTipe || 'add';
+
+      if (!namaVal) {
+        showToast('Masukkan nama barang terlebih dahulu', 'error');
+        document.getElementById('quickNamaBarang').focus();
+        return;
+      }
+
+      const existingBrg = findBarangByName(namaVal);
+      if (document.getElementById('chkAutoSaveMaster').checked && namaVal && hargaVal > 0 && !existingBrg) {
+        upsertBarangMapping(namaVal, hargaVal, false, tipeVal);
+      }
+
+      if (document.getElementById('chkAutoSaveHargaMitra').checked && currentNota.pembeli && currentNota.pembeli.trim() && hargaVal > 0) {
+        saveHargaKhususForActivePembeli(namaVal, hargaVal);
+      }
+
+      let placed = false;
+      for (let i = 0; i < currentNota.rows.length; i++) {
+        const r = currentNota.rows[i];
+        const rTipe = r.tipe || 'add';
+        if (rTipe === tipeVal && r.nama.trim().toLowerCase() === namaVal.toLowerCase() && Number(r.harga) === hargaVal) {
+          r.qty = (Number(r.qty) || 0) + qtyVal;
+          placed = true;
+          break;
+        }
+      }
+
+      if (!placed) {
+        for (let i = 0; i < currentNota.rows.length; i++) {
+          const r = currentNota.rows[i];
+          const rTipe = r.tipe || 'add';
+          if (rTipe === tipeVal && !r.nama.trim() && !r.qty) {
+            r.qty = qtyVal;
+            r.nama = namaVal;
+            r.harga = hargaVal;
+            placed = true;
+            break;
+          }
+        }
+      }
+
+      if (!placed) {
+        currentNota.rows.push({
+          id: 'row-' + Date.now(),
+          qty: qtyVal,
+          nama: namaVal,
+          harga: hargaVal,
+          tipe: tipeVal
+        });
+      }
+
+      document.getElementById('quickQty').value = 1;
+      document.getElementById('quickNamaBarang').value = '';
+      document.getElementById('quickHarga').value = '';
+      document.getElementById('quickHargaSourceBadge').classList.add('hidden');
+
+      renderDatalistsAndChips();
+      renderNotaTable();
+      saveDraftState();
+      showToast((tipeVal === 'sub' ? 'Ambil Barang (−): ' : 'Barang (+): ') + qtyVal + 'x ' + namaVal, 'success');
+    }
+
+    function calculateNotaTotals() {
+      let subtotalAdd = 0;
+      let subtotalSub = 0;
+      currentNota.rows.forEach(function(r) {
+        const q = Number(r.qty) || 0;
+        const h = Number(r.harga) || 0;
+        if (q > 0 && h > 0 && r.nama && r.nama.trim() !== '') {
+          if (r.tipe === 'sub') {
+            subtotalSub += (q * h);
+          } else {
+            subtotalAdd += (q * h);
+          }
+        }
+      });
+      return {
+        subtotalAdd: subtotalAdd,
+        subtotalSub: subtotalSub,
+        grandTotal: subtotalAdd - subtotalSub
+      };
+    }
+
+    function toggleRowTipe(idx) {
+      const row = currentNota.rows[idx];
+      if (!row) return;
+      row.tipe = row.tipe === 'sub' ? 'add' : 'sub';
+      renderNotaTable();
+      saveDraftState();
+    }
+
+    function renderSingleRowHtml(row, idx, isLastFilledSubRow) {
+      const qtyNum = Number(row.qty) || 0;
+      const hargaNum = Number(row.harga) || 0;
+      const isFilled = qtyNum > 0 && hargaNum > 0 && row.nama && row.nama.trim() !== '';
+      const jumlah = isFilled ? (qtyNum * hargaNum) : 0;
+      const isSub = row.tipe === 'sub';
+
+      const resolved = row.nama ? resolveHargaUntukPembeli(row.nama, currentNota.pembeli) : null;
+      const isRowHargaKhusus = resolved && resolved.isKhusus && Number(resolved.harga) === hargaNum;
+
+      const jumlahClass = isLastFilledSubRow
+        ? 'nota-cell nota-subtotal-deduct-line text-right font-mono-receipt font-bold text-xs sm:text-sm px-1.5 text-stone-900'
+        : 'nota-cell text-right font-mono-receipt font-bold text-xs sm:text-sm px-1.5 text-stone-900';
+
+      const tipeBadgeClass = isSub
+        ? 'bg-amber-100 text-amber-800 border-amber-300'
+        : 'bg-emerald-100 text-emerald-800 border-emerald-300';
+
+      return '<tr class="nota-row ' + (isSub ? 'bg-amber-50/25' : '') + '">' +
+        '<td style="width: 15%;" class="nota-cell">' +
+          '<input type="number" inputmode="numeric" min="0" step="1" value="' + (row.qty !== '' ? row.qty : '') + '" placeholder=".." ' +
+            'oninput="onRowCellChange(' + idx + ', \'qty\', this.value)" ' +
+            'class="w-full bg-transparent text-center font-bold text-xs sm:text-sm focus:outline-none focus:bg-amber-50/70 rounded py-0.5" />' +
+        '</td>' +
+        '<td class="nota-cell">' +
+          '<div class="flex items-center gap-1">' +
+            '<button type="button" onclick="toggleRowTipe(' + idx + ')" title="Klik untuk ubah (+) Jual atau (-) Ambil Barang" class="no-print shrink-0 px-1 py-0.2 rounded text-[10px] font-extrabold border ' + tipeBadgeClass + '">' +
+              (isSub ? '−' : '+') +
+            '</button>' +
+            '<input type="text" list="datalistBarang" value="' + escapeHtml(row.nama || '') + '" placeholder="" ' +
+              'oninput="onRowCellChange(' + idx + ', \'nama\', this.value)" ' +
+              'class="w-full bg-transparent font-semibold text-xs sm:text-sm focus:outline-none focus:bg-amber-50/70 rounded px-1 py-0.5" />' +
+          '</div>' +
+        '</td>' +
+        '<td class="nota-cell">' +
+          '<div class="flex items-center justify-end gap-0.5">' +
+            (isRowHargaKhusus ? '<span class="no-print text-[9px] text-violet-700 font-extrabold" title="Harga Khusus Mitra">★</span>' : '') +
+            '<input type="number" inputmode="numeric" min="0" step="100" value="' + (row.harga !== '' ? row.harga : '') + '" placeholder="" ' +
+              'oninput="onRowCellChange(' + idx + ', \'harga\', this.value)" ' +
+              'class="w-full bg-transparent text-right font-mono-receipt text-xs sm:text-sm focus:outline-none focus:bg-amber-50/70 rounded px-1 py-0.5" />' +
+          '</div>' +
+        '</td>' +
+        '<td class="' + jumlahClass + '" id="rowJumlah-' + idx + '">' +
+          (jumlah > 0 ? (formatRupiahNumber(jumlah) + (isLastFilledSubRow ? ' −' : '')) : '') +
+        '</td>' +
+        '<td class="nota-cell no-print text-center">' +
+          '<button type="button" onclick="clearOrRemoveRow(' + idx + ')" class="text-stone-400 hover:text-red-600 font-bold text-xs px-1" title="Kosongkan/Hapus Baris">×</button>' +
+        '</td>' +
+      '</tr>';
+    }
+
+    function renderNotaTable() {
+      const tbody = document.getElementById('notaTableBody');
+      const totals = calculateNotaTotals();
+
+      const addIndices = [];
+      const subIndices = [];
+      let lastFilledSubIdx = -1;
+
+      currentNota.rows.forEach(function(r, idx) {
+        if (r.tipe === 'sub') {
+          subIndices.push(idx);
+          const q = Number(r.qty) || 0;
+          const h = Number(r.harga) || 0;
+          if (q > 0 && h > 0 && r.nama && r.nama.trim() !== '') {
+            lastFilledSubIdx = idx;
+          }
+        } else {
+          addIndices.push(idx);
+        }
+      });
+
+      const htmlParts = [];
+
+      addIndices.forEach(function(idx) {
+        htmlParts.push(renderSingleRowHtml(currentNota.rows[idx], idx, false));
+      });
+
+      const filledAddCount = addIndices.filter(function(i) {
+        const r = currentNota.rows[i];
+        return (Number(r.qty) || 0) > 0 && (Number(r.harga) || 0) > 0 && r.nama && r.nama.trim() !== '';
+      }).length;
+
+      if (filledAddCount > 1 && totals.subtotalSub > 0) {
+        htmlParts.push(
+          '<tr class="nota-row bg-stone-100/70">' +
+            '<td style="width: 15%;" class="nota-cell"></td>' +
+            '<td class="nota-cell text-right text-[11px] font-bold uppercase text-stone-600 px-2">Subtotal Barang (+)</td>' +
+            '<td class="nota-cell"></td>' +
+            '<td class="nota-cell text-right font-mono-receipt font-extrabold text-xs sm:text-sm px-1.5 text-stone-900">' + formatRupiahNumber(totals.subtotalAdd) + '</td>' +
+            '<td class="nota-cell no-print"></td>' +
+          '</tr>'
+        );
+      }
+
+      if (subIndices.length > 0) {
+        htmlParts.push(
+          '<tr class="nota-row bg-amber-50/50">' +
+            '<td style="width: 15%;" class="nota-cell"></td>' +
+            '<td class="nota-cell font-condensed font-extrabold text-sm sm:text-base tracking-wide text-stone-900 px-1.5 py-1 uppercase">' +
+              'AMBIL BARANG' +
+            '</td>' +
+            '<td class="nota-cell"></td>' +
+            '<td class="nota-cell"></td>' +
+            '<td class="nota-cell no-print"></td>' +
+          '</tr>'
+        );
+
+        subIndices.forEach(function(idx) {
+          htmlParts.push(renderSingleRowHtml(currentNota.rows[idx], idx, idx === lastFilledSubIdx));
+        });
+
+        if (totals.subtotalSub > 0) {
+          htmlParts.push(
+            '<tr class="nota-row bg-amber-50/40">' +
+              '<td style="width: 15%;" class="nota-cell"></td>' +
+              '<td class="nota-cell text-right text-[11px] font-semibold italic text-stone-500 px-2">Potongan Ambil Barang (−)</td>' +
+              '<td class="nota-cell"></td>' +
+              '<td id="notaSubtotalAmbilCell" class="nota-cell text-right font-mono-receipt font-extrabold text-xs sm:text-sm px-1.5 text-red-700">' +
+                formatRupiahNumber(totals.subtotalSub) +
+              '</td>' +
+              '<td class="nota-cell no-print"></td>' +
+            '</tr>'
+          );
+        }
+      }
+
+      tbody.innerHTML = htmlParts.join('');
+      updateTotalsDisplay(totals);
+    }
+
+    function updateTotalsDisplay(totals) {
+      document.getElementById('notaGrandTotal').textContent = formatRupiahNumber(totals.grandTotal);
+      document.getElementById('summarySubtotalAdd').textContent = 'Rp ' + formatRupiahNumber(totals.subtotalAdd);
+      document.getElementById('summarySubtotalSub').textContent = '− Rp ' + formatRupiahNumber(totals.subtotalSub);
+      document.getElementById('summaryGrandTotal').textContent = 'Rp ' + formatRupiahNumber(totals.grandTotal);
+    }
+
+    function onRowCellChange(rowIndex, field, value) {
+      const row = currentNota.rows[rowIndex];
+      if (!row) return;
+
+      if (field === 'nama') {
+        row.nama = value;
+        const resolved = resolveHargaUntukPembeli(value, currentNota.pembeli);
+        if (resolved) {
+          row.harga = resolved.harga;
+          if (resolved.tipe) row.tipe = resolved.tipe;
+          if (!row.qty) row.qty = 1;
+          renderNotaTable();
+          saveDraftState();
+          return;
+        }
+      } else if (field === 'qty') {
+        row.qty = value === '' ? '' : Number(value);
+      } else if (field === 'harga') {
+        row.harga = value === '' ? '' : Number(value);
+      }
+
+      let lastFilledSubIdx = -1;
+      currentNota.rows.forEach(function(r, idx) {
+        if (r.tipe === 'sub' && (Number(r.qty) || 0) > 0 && (Number(r.harga) || 0) > 0 && r.nama && r.nama.trim() !== '') {
+          lastFilledSubIdx = idx;
+        }
+      });
+
+      currentNota.rows.forEach(function(r, idx) {
+        const q = Number(r.qty) || 0;
+        const h = Number(r.harga) || 0;
+        const sub = (q > 0 && h > 0 && r.nama && r.nama.trim() !== '') ? (q * h) : 0;
+        const cellEl = document.getElementById('rowJumlah-' + idx);
+        if (cellEl) {
+          const suffix = (idx === lastFilledSubIdx && sub > 0) ? ' −' : '';
+          cellEl.textContent = sub > 0 ? (formatRupiahNumber(sub) + suffix) : '';
+        }
+      });
+
+      const totals = calculateNotaTotals();
+      const subAmbilEl = document.getElementById('notaSubtotalAmbilCell');
+      if (subAmbilEl) {
+        subAmbilEl.textContent = formatRupiahNumber(totals.subtotalSub);
+      } else if (totals.subtotalSub > 0) {
+        renderNotaTable();
+      }
+      updateTotalsDisplay(totals);
+      saveDraftState();
+    }
+
+    function addBlankRow(tipe) {
+      currentNota.rows.push({
+        id: 'row-' + Date.now(),
+        qty: '',
+        nama: '',
+        harga: '',
+        tipe: tipe === 'sub' ? 'sub' : 'add'
+      });
+      renderNotaTable();
+      saveDraftState();
+    }
+
+    function clearOrRemoveRow(idx) {
+      if (currentNota.rows.length <= 3) {
+        currentNota.rows[idx] = {
+          id: 'row-' + Date.now(),
+          qty: '',
+          nama: '',
+          harga: '',
+          tipe: currentNota.rows[idx].tipe || 'add'
+        };
+      } else {
+        currentNota.rows.splice(idx, 1);
+      }
+      renderNotaTable();
+      saveDraftState();
+    }
+
+    function resetCurrentNota() {
+      openConfirmModal(
+        'Buat Nota Baru?',
+        'Baris nota saat ini akan dikosongkan kembali ke default: 1 baris (+) dan 2 baris (−) Ambil Barang.',
+        function() {
+          currentNota = {
+            noNota: generateNotaNumber(),
+            tanggal: getTodayISO(),
+            pembeli: '',
+            catatanPembeli: '',
+            rows: createDefaultRows()
+          };
+          syncHeaderInputsFromState();
+          renderDatalistsAndChips();
+          renderNotaTable();
+          saveDraftState();
+          showToast('Siap mencatat nota baru (1 baris +, 2 baris −)', 'success');
+        }
+      );
+    }
+
+    // =========================================================================
+    // MASTER DATA BARANG & HARGA STANDAR (LOCAL STORAGE)
+    // =========================================================================
+    function upsertBarangMapping(nama, harga, notify, tipe) {
+      const cleanName = nama.trim();
+      if (!cleanName) return;
+      const existing = findBarangByName(cleanName);
+      if (existing) {
+        existing.nama = cleanName;
+        existing.harga = Number(harga) || 0;
+        if (tipe) existing.tipe = tipe;
+      } else {
+        masterBarang.unshift({
+          id: 'brg-' + Date.now() + '-' + Math.floor(Math.random() * 100),
+          nama: cleanName,
+          harga: Number(harga) || 0,
+          tipe: tipe || 'add'
+        });
+      }
+      safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
+      renderDatalistsAndChips();
+      renderMasterBarangList();
+      updateBadges();
+      if (notify) showToast('Mapping harga standar "' + cleanName + '" disimpan', 'success');
+    }
+
+    function handleSaveMasterBarang(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editBarangId').value;
+      const nama = document.getElementById('inputMasterNamaBarang').value.trim();
+      const harga = Number(document.getElementById('inputMasterHargaBarang').value) || 0;
+      const tipe = document.getElementById('inputMasterTipeBarang').value || 'add';
+
+      if (!nama) return;
+
+      if (editId) {
+        const idx = masterBarang.findIndex(function(b) { return b.id === editId; });
+        if (idx !== -1) {
+          masterBarang[idx].nama = nama;
+          masterBarang[idx].harga = harga;
+          masterBarang[idx].tipe = tipe;
+        }
+        showToast('Data barang diperbarui', 'success');
+      } else {
+        upsertBarangMapping(nama, harga, true, tipe);
+      }
+
+      safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
+      resetFormMasterBarang();
+      renderDatalistsAndChips();
+      renderMasterBarangList();
+      updateBadges();
+    }
+
+    function editMasterBarang(id) {
+      const item = masterBarang.find(function(b) { return b.id === id; });
+      if (!item) return;
+      document.getElementById('editBarangId').value = item.id;
+      document.getElementById('inputMasterNamaBarang').value = item.nama;
+      document.getElementById('inputMasterHargaBarang').value = item.harga;
+      document.getElementById('inputMasterTipeBarang').value = item.tipe || 'add';
+      document.getElementById('btnSubmitMasterBarang').textContent = 'Simpan Perubahan';
+      document.getElementById('btnCancelEditBarang').classList.remove('hidden');
+      document.getElementById('inputMasterNamaBarang').focus();
+    }
+
+    function resetFormMasterBarang() {
+      document.getElementById('editBarangId').value = '';
+      document.getElementById('inputMasterNamaBarang').value = '';
+      document.getElementById('inputMasterHargaBarang').value = '';
+      document.getElementById('inputMasterTipeBarang').value = 'add';
+      document.getElementById('btnSubmitMasterBarang').textContent = '+ Simpan Barang & Harga';
+      document.getElementById('btnCancelEditBarang').classList.add('hidden');
+    }
+
+    function deleteMasterBarang(id) {
+      masterBarang = masterBarang.filter(function(b) { return b.id !== id; });
+      safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
+      renderDatalistsAndChips();
+      renderMasterBarangList();
+      updateBadges();
+      showToast('Barang dihapus dari daftar', 'info');
+    }
+
+    function renderMasterBarangList() {
+      const q = (document.getElementById('searchMasterBarang').value || '').trim().toLowerCase();
+      const container = document.getElementById('listMasterBarang');
+      const filtered = masterBarang.filter(function(b) {
+        return !q || b.nama.toLowerCase().includes(q);
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-xs text-stone-400 py-4 text-center">Belum ada barang yang cocok.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(function(b) {
+        const isSub = b.tipe === 'sub';
+        const badgeHtml = isSub
+          ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">− Ambil Barang</span>'
+          : '<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">+ Barang Masuk/Jual</span>';
+
+        return '<div class="py-2.5 flex items-center justify-between gap-2">' +
+          '<div>' +
+            '<div class="flex items-center gap-1.5">' +
+              '<span class="font-bold text-xs text-stone-800">' + escapeHtml(b.nama) + '</span>' +
+              badgeHtml +
+            '</div>' +
+            '<div class="font-mono-receipt text-xs text-[#ba5d4f] font-semibold mt-0.5">Harga Standar: Rp ' + formatRupiahNumber(b.harga) + '</div>' +
+          '</div>' +
+          '<div class="flex items-center gap-1.5">' +
+            '<button type="button" onclick="editMasterBarang(\'' + b.id + '\')" class="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold">Edit</button>' +
+            '<button type="button" onclick="deleteMasterBarang(\'' + b.id + '\')" class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold">Hapus</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // =========================================================================
+    // MASTER DATA PEMBELI & MODAL HARGA KHUSUS MITRA (LOCAL STORAGE)
+    // =========================================================================
+    function upsertPembeliMapping(nama, info) {
+      const cleanName = (nama || '').trim();
+      if (!cleanName) return null;
+      let existing = findPembeliByName(cleanName);
+      if (existing) {
+        if (info && info.trim()) existing.info = info.trim();
+        if (!existing.hargaKhusus) existing.hargaKhusus = {};
+      } else {
+        existing = {
+          id: 'pbl-' + Date.now() + '-' + Math.floor(Math.random() * 100),
+          nama: cleanName,
+          info: (info || '').trim(),
+          hargaKhusus: {}
+        };
+        masterPembeli.unshift(existing);
+      }
+      safeSetStorage(STORAGE_KEYS.PEMBELI, masterPembeli);
+      renderDatalistsAndChips();
+      renderMasterPembeliList();
+      updateBadges();
+      return existing;
+    }
+
+    function handleSaveMasterPembeli(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editPembeliId').value;
+      const nama = document.getElementById('inputMasterNamaPembeli').value.trim();
+      const info = document.getElementById('inputMasterInfoPembeli').value.trim();
+      if (!nama) return;
+
+      if (editId) {
+        const idx = masterPembeli.findIndex(function(p) { return p.id === editId; });
+        if (idx !== -1) {
+          masterPembeli[idx].nama = nama;
+          masterPembeli[idx].info = info;
+        }
+        showToast('Data pembeli diperbarui', 'success');
+      } else {
+        upsertPembeliMapping(nama, info);
+        showToast('Pembeli "' + nama + '" disimpan ke daftar dropdown', 'success');
+      }
+
+      safeSetStorage(STORAGE_KEYS.PEMBELI, masterPembeli);
+      resetFormMasterPembeli();
+      renderDatalistsAndChips();
+      renderMasterPembeliList();
+      updateBadges();
+      updateActiveMitraBanner();
+    }
+
+    function editMasterPembeli(id) {
+      const p = masterPembeli.find(function(item) { return item.id === id; });
+      if (!p) return;
+      document.getElementById('editPembeliId').value = p.id;
+      document.getElementById('inputMasterNamaPembeli').value = p.nama;
+      document.getElementById('inputMasterInfoPembeli').value = p.info || '';
+      document.getElementById('btnSubmitMasterPembeli').textContent = 'Simpan Perubahan';
+      document.getElementById('btnCancelEditPembeli').classList.remove('hidden');
+      document.getElementById('inputMasterNamaPembeli').focus();
+    }
+
+    function resetFormMasterPembeli() {
+      document.getElementById('editPembeliId').value = '';
+      document.getElementById('inputMasterNamaPembeli').value = '';
+      document.getElementById('inputMasterInfoPembeli').value = '';
+      document.getElementById('btnSubmitMasterPembeli').textContent = '+ Simpan Nama Pembeli';
+      document.getElementById('btnCancelEditPembeli').classList.add('hidden');
+    }
+
+    function deleteMasterPembeli(id) {
+      masterPembeli = masterPembeli.filter(function(p) { return p.id !== id; });
+      safeSetStorage(STORAGE_KEYS.PEMBELI, masterPembeli);
+      renderDatalistsAndChips();
+      renderMasterPembeliList();
+      updateBadges();
+      updateActiveMitraBanner();
+      showToast('Data pembeli dihapus', 'info');
+    }
+
+    function usePembeliInNota(id) {
+      const p = masterPembeli.find(function(item) { return item.id === id; });
+      if (!p) return;
+      currentNota.pembeli = p.nama;
+      currentNota.catatanPembeli = p.info || '';
+      syncHeaderInputsFromState();
+      applyActivePembeliPricesToNotaRows();
+      renderDatalistsAndChips();
+      renderNotaTable();
+      saveDraftState();
+      switchTab('nota');
+      showToast('Mitra dipilih: ' + p.nama + ' (Harga Khusus aktif)', 'success');
+    }
+
+    function openActivePembeliHargaModal() {
+      const nama = (currentNota.pembeli || '').trim();
+      if (!nama) {
+        switchTab('pembeli');
+        showToast('Pilih nama Mitra pada dropdown "Kepada Yth" terlebih dahulu', 'info');
+        return;
+      }
+      const pbl = upsertPembeliMapping(nama, currentNota.catatanPembeli || '');
+      if (pbl) {
+        openHargaKhususModal(pbl.id);
+      }
+    }
+
+    function openHargaKhususModal(pembeliId) {
+      const pbl = masterPembeli.find(function(p) { return p.id === pembeliId; });
+      if (!pbl) return;
+      if (!pbl.hargaKhusus || typeof pbl.hargaKhusus !== 'object') {
+        pbl.hargaKhusus = {};
+      }
+
+      document.getElementById('modalHargaKhususPembeliId').value = pbl.id;
+      document.getElementById('modalHargaKhususTitle').textContent = pbl.nama;
+
+      const listContainer = document.getElementById('modalHargaKhususList');
+      listContainer.innerHTML = masterBarang.map(function(b, idx) {
+        let customVal = '';
+        const keys = Object.keys(pbl.hargaKhusus);
+        for (let i = 0; i < keys.length; i++) {
+          if (keys[i].trim().toLowerCase() === b.nama.trim().toLowerCase()) {
+            customVal = pbl.hargaKhusus[keys[i]];
+            break;
+          }
+        }
+
+        const isSub = b.tipe === 'sub';
+        const badge = isSub
+          ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold">− Ambil</span>'
+          : '<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold">+ Jual/Setor</span>';
+
+        return '<div class="py-2.5 flex items-center justify-between gap-2">' +
+          '<div class="min-w-0 flex-1">' +
+            '<div class="flex items-center gap-1.5">' +
+              '<span class="font-bold text-xs text-stone-800 truncate">' + escapeHtml(b.nama) + '</span>' +
+              badge +
+            '</div>' +
+            '<div class="text-[11px] text-stone-400 font-mono-receipt">Standar: Rp ' + formatRupiahNumber(b.harga) + '</div>' +
+          '</div>' +
+          '<div class="w-36 shrink-0">' +
+            '<input type="number" inputmode="numeric" min="0" step="100" data-barang-nama="' + escapeHtml(b.nama) + '" ' +
+              'id="hkInput-' + idx + '" value="' + (customVal !== '' ? customVal : '') + '" ' +
+              'placeholder="Standar (' + b.harga + ')" ' +
+              'class="hk-modal-input w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs font-mono-receipt font-bold text-right focus:outline-none focus:border-violet-600 focus:bg-violet-50/40" />' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      document.getElementById('modalHargaKhusus').classList.remove('hidden');
+    }
+
+    function closeHargaKhususModal() {
+      document.getElementById('modalHargaKhusus').classList.add('hidden');
+    }
+
+    function resetAllHargaKhususInModal() {
+      const inputs = document.querySelectorAll('.hk-modal-input');
+      inputs.forEach(function(inp) {
+        inp.value = '';
+      });
+    }
+
+    function saveHargaKhususFromModal() {
+      const pembeliId = document.getElementById('modalHargaKhususPembeliId').value;
+      const pbl = masterPembeli.find(function(p) { return p.id === pembeliId; });
+      if (!pbl) return;
+
+      const newMap = {};
+      const inputs = document.querySelectorAll('.hk-modal-input');
+      inputs.forEach(function(inp) {
+        const namaBrg = inp.getAttribute('data-barang-nama');
+        const val = Number(inp.value);
+        if (namaBrg && inp.value !== '' && val > 0) {
+          newMap[namaBrg] = val;
+        }
+      });
+
+      pbl.hargaKhusus = newMap;
+      safeSetStorage(STORAGE_KEYS.PEMBELI, masterPembeli);
+      closeHargaKhususModal();
+
+      if (currentNota.pembeli && currentNota.pembeli.trim().toLowerCase() === pbl.nama.trim().toLowerCase()) {
+        applyActivePembeliPricesToNotaRows();
+      }
+      checkCustomerBadge(currentNota.pembeli);
+      updateActiveMitraBanner();
+      renderDatalistsAndChips();
+      renderNotaTable();
+      renderMasterPembeliList();
+      showToast('Harga Khusus untuk ' + pbl.nama + ' berhasil disimpan!', 'success');
+    }
+
+    function renderMasterPembeliList() {
+      const container = document.getElementById('listMasterPembeli');
+      if (masterPembeli.length === 0) {
+        container.innerHTML = '<p class="text-xs text-stone-400 py-4 text-center">Belum ada pelanggan/mitra tersimpan.</p>';
+        return;
+      }
+
+      container.innerHTML = masterPembeli.map(function(p) {
+        const hk = p.hargaKhusus || {};
+        const hkKeys = Object.keys(hk);
+        const hkPills = hkKeys.length > 0
+          ? '<div class="flex flex-wrap gap-1 mt-1.5">' +
+              hkKeys.map(function(k) {
+                return '<span class="text-[10px] px-2 py-0.5 rounded-md bg-violet-50 text-violet-900 border border-violet-200 font-mono-receipt font-semibold">' +
+                  '★ ' + escapeHtml(k) + ': <strong>' + formatRupiahNumber(hk[k]) + '</strong></span>';
+              }).join('') +
+            '</div>'
+          : '<div class="text-[10px] text-stone-400 italic mt-1">Mengikuti harga standar (belum ada harga khusus)</div>';
+
+        return '<div class="py-3 flex flex-col gap-2">' +
+          '<div class="flex items-start justify-between gap-2">' +
+            '<div>' +
+              '<div class="font-bold text-xs text-stone-900">' + escapeHtml(p.nama) + '</div>' +
+              '<div class="text-[11px] text-stone-500">' + escapeHtml(p.info || 'Tanpa keterangan alamat/kontak') + '</div>' +
+            '</div>' +
+            '<div class="flex items-center gap-1.5 shrink-0">' +
+              '<button type="button" onclick="usePembeliInNota(\'' + p.id + '\')" class="px-2.5 py-1 rounded-lg bg-[#ba5d4f] hover:bg-[#99463a] text-white text-xs font-bold shadow-sm">Pakai di Nota</button>' +
+              '<button type="button" onclick="openHargaKhususModal(\'' + p.id + '\')" class="px-2.5 py-1 rounded-lg bg-violet-100 hover:bg-violet-200 text-violet-900 text-xs font-bold border border-violet-300">🏷️ Harga Khusus (' + hkKeys.length + ')</button>' +
+              '<button type="button" onclick="editMasterPembeli(\'' + p.id + '\')" class="px-2 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold">Edit</button>' +
+              '<button type="button" onclick="deleteMasterPembeli(\'' + p.id + '\')" class="px-2 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold">×</button>' +
+            '</div>' +
+          '</div>' +
+          hkPills +
+        '</div>';
+      }).join('');
+    }
+
+    // =========================================================================
+    // SAVE & MANAGE RIWAYAT NOTA
+    // =========================================================================
+    function getFilledItemsFromCurrentNota() {
+      return currentNota.rows.filter(function(r) {
+        return r.nama && r.nama.trim() !== '' && (Number(r.qty) || 0) > 0;
+      }).map(function(r) {
+        const q = Number(r.qty) || 0;
+        const h = Number(r.harga) || 0;
+        return {
+          qty: q,
+          nama: r.nama.trim(),
+          harga: h,
+          tipe: r.tipe === 'sub' ? 'sub' : 'add',
+          jumlah: q * h
+        };
+      });
+    }
+
+    function saveCurrentNotaToHistory(silent) {
+      saveDraftState();
+      const items = getFilledItemsFromCurrentNota();
+      if (items.length === 0) {
+        if (!silent) showToast('Isi minimal 1 baris barang pada nota', 'error');
+        return false;
+      }
+
+      if (document.getElementById('chkAutoSaveMaster').checked) {
+        if (currentNota.pembeli && currentNota.pembeli.trim()) {
+          upsertPembeliMapping(currentNota.pembeli.trim(), currentNota.catatanPembeli || '');
+        }
+        items.forEach(function(it) {
+          if (it.nama && it.harga > 0 && !findBarangByName(it.nama)) {
+            upsertBarangMapping(it.nama, it.harga, false, it.tipe);
+          }
+        });
+      }
+
+      if (document.getElementById('chkAutoSaveHargaMitra').checked && currentNota.pembeli && currentNota.pembeli.trim()) {
+        items.forEach(function(it) {
+          if (it.nama && it.harga > 0) {
+            saveHargaKhususForActivePembeli(it.nama, it.harga);
+          }
+        });
+      }
+
+      const totals = calculateNotaTotals();
+      const record = {
+        id: 'nota-' + Date.now(),
+        noNota: currentNota.noNota || generateNotaNumber(),
+        tanggal: currentNota.tanggal || getTodayISO(),
+        pembeli: (currentNota.pembeli || 'Umum').trim(),
+        catatanPembeli: (currentNota.catatanPembeli || '').trim(),
+        items: items,
+        subtotalAdd: totals.subtotalAdd,
+        subtotalSub: totals.subtotalSub,
+        total: totals.grandTotal,
+        savedAt: new Date().toISOString()
+      };
+
+      const existingIdx = riwayatNota.findIndex(function(n) { return n.noNota === record.noNota; });
+      if (existingIdx !== -1) {
+        riwayatNota[existingIdx] = record;
+      } else {
+        riwayatNota.unshift(record);
+      }
+
+      safeSetStorage(STORAGE_KEYS.RIWAYAT, riwayatNota);
+      renderDatalistsAndChips();
+      renderRiwayatList();
+      updateBadges();
+      checkCustomerBadge(currentNota.pembeli);
+      updateActiveMitraBanner();
+
+      if (!silent) {
+        showToast('Nota ' + record.noNota + ' berhasil disimpan!', 'success');
+      }
+      return true;
+    }
+
+    function loadNotaFromHistory(id) {
+      const rec = riwayatNota.find(function(n) { return n.id === id; });
+      if (!rec) return;
+
+      const rows = rec.items.map(function(it, i) {
+        return {
+          id: 'row-hist-' + i,
+          qty: it.qty,
+          nama: it.nama,
+          harga: it.harga,
+          tipe: it.tipe || 'add'
+        };
+      });
+      rows.push({ id: 'row-pad-' + rows.length, qty: '', nama: '', harga: '', tipe: 'add' });
+      rows.push({ id: 'row-pad-sub', qty: '', nama: '', harga: '', tipe: 'sub' });
+
+      currentNota = {
+        noNota: rec.noNota,
+        tanggal: rec.tanggal,
+        pembeli: rec.pembeli,
+        catatanPembeli: rec.catatanPembeli || '',
+        rows: rows
+      };
+
+      syncHeaderInputsFromState();
+      renderDatalistsAndChips();
+      renderNotaTable();
+      saveDraftState();
+      switchTab('nota');
+      showToast('Nota ' + rec.noNota + ' dibuka kembali', 'info');
+    }
+
+    function deleteHistoryItem(id) {
+      riwayatNota = riwayatNota.filter(function(n) { return n.id !== id; });
+      safeSetStorage(STORAGE_KEYS.RIWAYAT, riwayatNota);
+      renderRiwayatList();
+      updateBadges();
+      showToast('Riwayat nota dihapus', 'info');
+    }
+
+    function confirmClearAllHistory() {
+      if (riwayatNota.length === 0) return;
+      openConfirmModal(
+        'Hapus Semua Riwayat?',
+        'Seluruh daftar riwayat nota akan dihapus dari perangkat ini. Data Master Barang & Pembeli tetap aman.',
+        function() {
+          riwayatNota = [];
+          safeSetStorage(STORAGE_KEYS.RIWAYAT, riwayatNota);
+          renderRiwayatList();
+          updateBadges();
+          showToast('Semua riwayat nota dihapus', 'info');
+        }
+      );
+    }
+
+    function renderRiwayatList() {
+      const container = document.getElementById('listRiwayatNota');
+      const totalOmzet = riwayatNota.reduce(function(acc, cur) { return acc + (Number(cur.total) || 0); }, 0);
+      document.getElementById('riwayatTotalOmzet').textContent = 'Rp ' + formatRupiahNumber(totalOmzet);
+
+      if (riwayatNota.length === 0) {
+        container.innerHTML = '<p class="text-xs text-stone-400 py-6 text-center">Belum ada riwayat nota tersimpan.</p>';
+        return;
+      }
+
+      container.innerHTML = riwayatNota.map(function(n) {
+        const ringkasan = n.items.map(function(it) {
+          return (it.tipe === 'sub' ? '[-]' : '[+]') + ' ' + it.qty + 'x ' + it.nama;
+        }).join(', ');
+        return '<div class="p-3 rounded-xl border border-stone-200 bg-stone-50/60 flex flex-col gap-2">' +
+          '<div class="flex items-start justify-between gap-2">' +
+            '<div>' +
+              '<span class="text-[10px] font-mono-receipt px-1.5 py-0.5 rounded bg-stone-200 text-stone-700 font-bold">' + escapeHtml(n.noNota) + '</span>' +
+              '<span class="text-[11px] text-stone-500 ml-1.5">' + escapeHtml(n.tanggal) + '</span>' +
+              '<h4 class="font-bold text-xs text-stone-900 mt-1">Kepada: ' + escapeHtml(n.pembeli || 'Umum') + '</h4>' +
+              '<p class="text-[11px] text-stone-500 line-clamp-1">' + escapeHtml(ringkasan) + '</p>' +
+            '</div>' +
+            '<div class="text-right shrink-0">' +
+              '<div class="font-mono-receipt font-extrabold text-sm text-[#ba5d4f]">Rp ' + formatRupiahNumber(n.total) + '</div>' +
+              (n.subtotalSub > 0 ? '<div class="text-[10px] text-amber-700 font-mono-receipt">Potong: −' + formatRupiahNumber(n.subtotalSub) + '</div>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="flex items-center justify-end gap-1.5 pt-1 border-t border-stone-200/70">' +
+            '<button type="button" onclick="loadNotaFromHistory(\'' + n.id + '\')" class="px-2.5 py-1 rounded-lg bg-white border border-stone-300 hover:bg-stone-100 text-xs font-bold text-stone-800">📂 Buka / Cetak Ulang</button>' +
+            '<button type="button" onclick="deleteHistoryItem(\'' + n.id + '\')" class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-xs font-semibold text-red-600">Hapus</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // =========================================================================
+    // BACKUP & RESTORE JSON (LOCAL STORAGE PORTABILITY)
+    // =========================================================================
+    function exportBackupJSON() {
+      const payload = {
+        app: 'SBR PUTRA FOOD Nota Digital',
+        exportedAt: new Date().toISOString(),
+        masterBarang: masterBarang,
+        masterPembeli: masterPembeli,
+        riwayatNota: riwayatNota
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'backup-nota-sbr-putra-' + getTodayISO() + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('File backup berhasil diunduh', 'success');
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (Array.isArray(data.masterBarang)) {
+            masterBarang = data.masterBarang;
+            safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
+          }
+          if (Array.isArray(data.masterPembeli)) {
+            masterPembeli = data.masterPembeli;
+            safeSetStorage(STORAGE_KEYS.PEMBELI, masterPembeli);
+          }
+          if (Array.isArray(data.riwayatNota)) {
+            riwayatNota = data.riwayatNota;
+            safeSetStorage(STORAGE_KEYS.RIWAYAT, riwayatNota);
+          }
+          renderDatalistsAndChips();
+          renderMasterBarangList();
+          renderMasterPembeliList();
+          renderRiwayatList();
+          updateBadges();
+          updateActiveMitraBanner();
+          showToast('Data backup berhasil dipulihkan!', 'success');
+        } catch (err) {
+          showToast('Format file backup tidak valid', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    // =========================================================================
+    // ESC/POS THERMAL RECEIPT BUILDER (3 MODES + DOUBLE HEIGHT/WEIGHT TOTAL DI TERIMA)
+    // =========================================================================
+    function padRight(str, len) {
+      const s = String(str || '');
+      return s.length >= len ? s.slice(0, len) : s + ' '.repeat(len - s.length);
+    }
+
+    function padLeft(str, len) {
+      const s = String(str || '');
+      return s.length >= len ? s.slice(0, len) : ' '.repeat(len - s.length) + s;
+    }
+
+    function centerText(str, width) {
+      const s = String(str || '');
+      if (s.length >= width) return s.slice(0, width);
+      const leftPad = Math.floor((width - s.length) / 2);
+      return ' '.repeat(leftPad) + s;
+    }
+
+    function resolvePrintModeParams(modeOrWidth) {
+      const adminOffset = Math.max(0, Number(document.getElementById('inputAdminOffset').value || printerSettings.adminOffset || 15));
+      if (modeOrWidth === '80mm' || modeOrWidth === 48 || modeOrWidth === '48') {
+        return { charWidth: 48, leftPad: 0, autoCut: false, modeLabel: 'Kertas 80mm' };
+      }
+      if (modeOrWidth === '58mm_admin' || modeOrWidth === '58_admin') {
+        return { charWidth: 32, leftPad: adminOffset, autoCut: true, modeLabel: 'Kertas 58mm Admin (+' + adminOffset + ' spasi & Auto-Cutter)' };
+      }
+      return { charWidth: 32, leftPad: 0, autoCut: false, modeLabel: 'Kertas 58mm' };
+    }
+
+    function buildPlainTextReceipt(modeOrWidth) {
+      const params = resolvePrintModeParams(modeOrWidth);
+      const w = params.charWidth;
+      const margin = ' '.repeat(params.leftPad);
+      const divider = '-'.repeat(w);
+      const doubleDivider = '='.repeat(w);
+      const items = getFilledItemsFromCurrentNota();
+      const addItems = items.filter(function(it) { return it.tipe !== 'sub'; });
+      const subItems = items.filter(function(it) { return it.tipe === 'sub'; });
+      const totals = calculateNotaTotals();
+
+      const lines = [];
+      lines.push(margin + centerText('SBR PUTRA FOOD', w));
+      lines.push(margin + centerText('ARUMANIS SUSU LEMBANG SIPUTRA', w));
+      lines.push(margin + centerText('Lembang, Bandung Barat', w));
+      lines.push(margin + doubleDivider);
+      lines.push(margin + 'No     : ' + (currentNota.noNota || '-'));
+      lines.push(margin + 'Tanggal: ' + (currentNota.tanggal || getTodayISO()));
+      lines.push(margin + 'Kepada : ' + (currentNota.pembeli || 'Umum'));
+      if (currentNota.catatanPembeli) {
+        lines.push(margin + 'Ket    : ' + currentNota.catatanPembeli);
+      }
+      lines.push(margin + divider);
+      lines.push(margin + padRight('QTY NAMA BARANG', w - 10) + padLeft('JUMLAH', 10));
+      lines.push(margin + divider);
+
+      if (addItems.length > 0) {
+        addItems.forEach(function(it) {
+          lines.push(margin + it.nama.slice(0, w));
+          const leftDetail = '  ' + it.qty + ' x ' + formatRupiahNumber(it.harga);
+          const rightSub = formatRupiahNumber(it.jumlah);
+          const spaceLeft = Math.max(1, w - rightSub.length);
+          lines.push(margin + padRight(leftDetail, spaceLeft) + rightSub);
+        });
+      }
+
+      if (subItems.length > 0) {
+        if (addItems.length > 1) {
+          lines.push(margin + divider);
+          const sAddStr = formatRupiahNumber(totals.subtotalAdd);
+          lines.push(margin + padRight('SUBTOTAL (+)', Math.max(1, w - sAddStr.length)) + sAddStr);
+        }
+        lines.push(margin + divider);
+        lines.push(margin + 'AMBIL BARANG (-):');
+        subItems.forEach(function(it) {
+          lines.push(margin + it.nama.slice(0, w));
+          const leftDetail = '  ' + it.qty + ' x ' + formatRupiahNumber(it.harga);
+          const rightSub = formatRupiahNumber(it.jumlah);
+          const spaceLeft = Math.max(1, w - rightSub.length);
+          lines.push(margin + padRight(leftDetail, spaceLeft) + rightSub);
+        });
+        lines.push(margin + padLeft('-'.repeat(Math.min(14, w)), w));
+        const sSubStr = '-' + formatRupiahNumber(totals.subtotalSub);
+        lines.push(margin + padRight('POTONGAN AMBIL', Math.max(1, w - sSubStr.length)) + sSubStr);
+      }
+
+      lines.push(margin + doubleDivider);
+      // Preview representation of Double Height & Double Weight TOTAL DI TERIMA
+      const totalStr = 'Rp ' + formatRupiahNumber(totals.grandTotal);
+      lines.push(margin + 'TOTAL DI TERIMA');
+      lines.push(margin + padLeft(totalStr, w));
+      lines.push(margin + doubleDivider);
+      lines.push(margin + centerText('Mulus Rahayu Berkah Salamet', w));
+      lines.push(margin + centerText('Terima Kasih', w));
+      lines.push('');
+      lines.push('');
+      return lines.join('\n');
+    }
+
+    function buildEscPosBytes(modeOrWidth) {
+      const params = resolvePrintModeParams(modeOrWidth || printerSettings.paperWidth);
+      const w = params.charWidth;
+      const margin = ' '.repeat(params.leftPad);
+      const divider = '-'.repeat(w);
+      const doubleDivider = '='.repeat(w);
+      const items = getFilledItemsFromCurrentNota();
+      const addItems = items.filter(function(it) { return it.tipe !== 'sub'; });
+      const subItems = items.filter(function(it) { return it.tipe === 'sub'; });
+      const totals = calculateNotaTotals();
+
+      const preTotalLines = [];
+      preTotalLines.push(margin + centerText('SBR PUTRA FOOD', w));
+      preTotalLines.push(margin + centerText('ARUMANIS SUSU LEMBANG SIPUTRA', w));
+      preTotalLines.push(margin + centerText('Lembang, Bandung Barat', w));
+      preTotalLines.push(margin + doubleDivider);
+      preTotalLines.push(margin + 'No     : ' + (currentNota.noNota || '-'));
+      preTotalLines.push(margin + 'Tanggal: ' + (currentNota.tanggal || getTodayISO()));
+      preTotalLines.push(margin + 'Kepada : ' + (currentNota.pembeli || 'Umum'));
+      if (currentNota.catatanPembeli) {
+        preTotalLines.push(margin + 'Ket    : ' + currentNota.catatanPembeli);
+      }
+      preTotalLines.push(margin + divider);
+      preTotalLines.push(margin + padRight('QTY NAMA BARANG', w - 10) + padLeft('JUMLAH', 10));
+      preTotalLines.push(margin + divider);
+
+      if (addItems.length > 0) {
+        addItems.forEach(function(it) {
+          preTotalLines.push(margin + it.nama.slice(0, w));
+          const leftDetail = '  ' + it.qty + ' x ' + formatRupiahNumber(it.harga);
+          const rightSub = formatRupiahNumber(it.jumlah);
+          const spaceLeft = Math.max(1, w - rightSub.length);
+          preTotalLines.push(margin + padRight(leftDetail, spaceLeft) + rightSub);
+        });
+      }
+
+      if (subItems.length > 0) {
+        if (addItems.length > 1) {
+          preTotalLines.push(margin + divider);
+          const sAddStr = formatRupiahNumber(totals.subtotalAdd);
+          preTotalLines.push(margin + padRight('SUBTOTAL (+)', Math.max(1, w - sAddStr.length)) + sAddStr);
+        }
+        preTotalLines.push(margin + divider);
+        preTotalLines.push(margin + 'AMBIL BARANG (-):');
+        subItems.forEach(function(it) {
+          preTotalLines.push(margin + it.nama.slice(0, w));
+          const leftDetail = '  ' + it.qty + ' x ' + formatRupiahNumber(it.harga);
+          const rightSub = formatRupiahNumber(it.jumlah);
+          const spaceLeft = Math.max(1, w - rightSub.length);
+          preTotalLines.push(margin + padRight(leftDetail, spaceLeft) + rightSub);
+        });
+        preTotalLines.push(margin + padLeft('-'.repeat(Math.min(14, w)), w));
+        const sSubStr = '-' + formatRupiahNumber(totals.subtotalSub);
+        preTotalLines.push(margin + padRight('POTONGAN AMBIL', Math.max(1, w - sSubStr.length)) + sSubStr);
+      }
+
+      preTotalLines.push(margin + doubleDivider);
+
+      // ESC/POS Double Height + Double Width + Bold (Double Weight) for TOTAL DI TERIMA & Nominal
+      // ESC E 1 (\x1B\x45\x01) = Bold / Double Weight ON
+      // GS ! 0x11 (\x1D\x21\x11) & ESC ! 0x38 (\x1B\x21\x38) = Double Height + Double Width + Emphasized
+      // Normal Reset = \x1B\x21\x00\x1D\x21\x00\x1B\x45\x00
+      const dblOn = '\x1B\x45\x01\x1B\x21\x38\x1D\x21\x11';
+      const dblOff = '\x1B\x21\x00\x1D\x21\x00\x1B\x45\x00';
+      const dblCharCapacity = Math.floor(w / 2); // 16 chars for 58mm, 24 chars for 80mm
+      const totalLabelDbl = 'TOTAL DI TERIMA';
+      const nominalStr = formatRupiahNumber(totals.grandTotal);
+      const nominalDbl = padLeft(nominalStr, dblCharCapacity);
+
+      const totalBlock =
+        margin + dblOn + totalLabelDbl + dblOff + '\n' +
+        margin + dblOn + nominalDbl + dblOff + '\n';
+
+      const postTotalLines = [
+        margin + doubleDivider,
+        margin + centerText('Mulus Rahayu Berkah Salamet', w),
+        margin + centerText('Terima Kasih', w),
+        '\n\n'
+      ];
+
+      const fullPayloadString =
+        '\x1B\x40' + // ESC @ Initialize printer
+        preTotalLines.join('\n') + '\n' +
+        totalBlock +
+        postTotalLines.join('\n');
+
+      const encoder = new TextEncoder();
+      const textBytes = encoder.encode(fullPayloadString);
+      if (!params.autoCut) {
+        return textBytes;
+      }
+      // Append ESC/POS Auto-Cutter command for 58mm Admin on 80mm printer: feed + GS V 66 0 (0x1D, 0x56, 0x42, 0x00)
+      const cutCmd = new Uint8Array([0x0A, 0x0A, 0x1D, 0x56, 0x42, 0x00]);
+      const combined = new Uint8Array(textBytes.length + cutCmd.length);
+      combined.set(textBytes, 0);
+      combined.set(cutCmd, textBytes.length);
+      return combined;
+    }
+
+    function openPrintChoicesModal() {
+      document.getElementById('modalPrintChoices').classList.remove('hidden');
+    }
+
+    function closePrintChoicesModal() {
+      document.getElementById('modalPrintChoices').classList.add('hidden');
+    }
+
+    function adjustAdminOffset(delta) {
+      const inp = document.getElementById('inputAdminOffset');
+      const cur = Number(inp.value) || 0;
+      const next = Math.max(0, Math.min(24, cur + delta));
+      inp.value = String(next);
+      savePrinterSettings();
+    }
+
+    function openBluetoothModal() {
+      document.getElementById('modalBluetooth').classList.remove('hidden');
+    }
+
+    function closeBluetoothModal() {
+      document.getElementById('modalBluetooth').classList.add('hidden');
+    }
+
+    function savePrinterSettings() {
+      printerSettings.paperWidth = document.getElementById('selectPaperWidth').value || '32';
+      printerSettings.chunkSize = Number(document.getElementById('selectChunkSize').value) || 20;
+      printerSettings.adminOffset = Math.max(0, Number(document.getElementById('inputAdminOffset').value) || 0);
+      safeSetStorage(STORAGE_KEYS.SETTINGS, printerSettings);
+    }
+
+    function updateBleStatusUI(connected, deviceName) {
+      const dot = document.getElementById('bleStatusDot');
+      const topText = document.getElementById('bleStatusText');
+      const modalStatus = document.getElementById('modalBleStatus');
+      const modalName = document.getElementById('modalBleDeviceName');
+
+      if (connected) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        topText.textContent = deviceName || 'Terhubung';
+        modalStatus.textContent = 'Terhubung (Siap Cetak)';
+        modalStatus.className = 'font-bold text-emerald-600';
+        modalName.textContent = deviceName || 'Bluetooth Printer';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+        topText.textContent = 'Printer BLE';
+        modalStatus.textContent = 'Belum Terhubung';
+        modalStatus.className = 'font-bold text-amber-600';
+        modalName.textContent = '-';
+      }
+    }
+
+    async function connectBluetoothPrinter() {
+      if (!navigator.bluetooth) {
+        showToast('Browser ini belum mendukung Web Bluetooth. Gunakan Chrome di Android / Desktop.', 'error');
+        return false;
+      }
+
+      try {
+        const OPTIONAL_SERVICES = [
+          '000018f0-0000-1000-8000-00805f9b34fb',
+          'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+          '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+          '0000ff00-0000-1000-8000-00805f9b34fb',
+          '0000ffe0-0000-1000-8000-00805f9b34fb'
+        ];
+
+        bleDevice = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: OPTIONAL_SERVICES
+        });
+
+        bleDevice.addEventListener('gattserverdisconnected', function() {
+          bleCharacteristic = null;
+          updateBleStatusUI(false, '');
+          showToast('Printer Bluetooth terputus', 'info');
+        });
+
+        const server = await bleDevice.gatt.connect();
+        const services = await server.getPrimaryServices();
+
+        let foundChar = null;
+        for (let s = 0; s < services.length; s++) {
+          const chars = await services[s].getCharacteristics();
+          for (let c = 0; c < chars.length; c++) {
+            const props = chars[c].properties;
+            if (props.write || props.writeWithoutResponse) {
+              foundChar = chars[c];
+              break;
+            }
+          }
+          if (foundChar) break;
+        }
+
+        if (!foundChar) {
+          showToast('Karakteristik tulis (write) tidak ditemukan pada perangkat BLE ini', 'error');
+          return false;
+        }
+
+        bleCharacteristic = foundChar;
+        updateBleStatusUI(true, bleDevice.name || 'Printer BLE');
+        showToast('Terhubung ke ' + (bleDevice.name || 'Printer Bluetooth'), 'success');
+        return true;
+      } catch (err) {
+        if (err && err.name !== 'NotFoundError') {
+          showToast('Gagal menghubungkan BLE: ' + (err.message || 'Error'), 'error');
+        }
+        return false;
+      }
+    }
+
+    async function sendBytesToBlePrinter(uint8Data) {
+      if (!bleCharacteristic) {
+        const ok = await connectBluetoothPrinter();
+        if (!ok || !bleCharacteristic) return false;
+      }
+
+      const chunkSize = Number(printerSettings.chunkSize) || 20;
+      try {
+        for (let offset = 0; offset < uint8Data.length; offset += chunkSize) {
+          const slice = uint8Data.slice(offset, offset + chunkSize);
+          if (bleCharacteristic.properties.writeWithoutResponse) {
+            await bleCharacteristic.writeValueWithoutResponse(slice);
+          } else {
+            await bleCharacteristic.writeValue(slice);
+          }
+          await new Promise(function(r) { setTimeout(r, 18); });
+        }
+        return true;
+      } catch (err) {
+        showToast('Gagal mengirim data cetak: ' + (err.message || 'Error'), 'error');
+        return false;
+      }
+    }
+
+    // Clicking "Print Bluetooth (ESC/POS)" opens the 3-choice dialog as requested in point #4
+    function printViaBluetooth() {
+      const items = getFilledItemsFromCurrentNota();
+      if (items.length === 0) {
+        showToast('Isi minimal 1 barang sebelum mencetak nota', 'error');
+        return;
+      }
+      openPrintChoicesModal();
+    }
+
+    async function executeBluetoothPrintWithMode(modeKey) {
+      closePrintChoicesModal();
+      const savedOk = saveCurrentNotaToHistory(true);
+      if (!savedOk) return;
+
+      const bytes = buildEscPosBytes(modeKey);
+      const printed = await sendBytesToBlePrinter(bytes);
+      if (printed) {
+        const params = resolvePrintModeParams(modeKey);
+        showToast('Nota dicetak (' + params.modeLabel + ')!', 'success');
+      } else if (!navigator.bluetooth) {
+        previewThermalByMode(modeKey);
+        document.getElementById('modalThermalPreview').classList.remove('hidden');
+      }
+    }
+
+    async function testPrintBluetooth() {
+      const modeVal = document.getElementById('selectPaperWidth').value || '32';
+      const params = resolvePrintModeParams(modeVal);
+      const w = params.charWidth;
+      const margin = ' '.repeat(params.leftPad);
+      const dblOn = '\x1B\x45\x01\x1B\x21\x38\x1D\x21\x11';
+      const dblOff = '\x1B\x21\x00\x1D\x21\x00\x1B\x45\x00';
+
+      const sample = [
+        margin + centerText('SBR PUTRA FOOD', w),
+        margin + centerText('TEST PRINT BLUETOOTH OK', w),
+        margin + '-'.repeat(w),
+        margin + 'Mode : ' + params.modeLabel,
+        margin + '-'.repeat(w),
+        margin + dblOn + 'TOTAL DI TERIMA' + dblOff,
+        margin + dblOn + padLeft('1.323.000', Math.floor(w / 2)) + dblOff,
+        margin + '='.repeat(w),
+        '\n\n'
+      ].join('\n');
+
+      const encoder = new TextEncoder();
+      const rawBytes = encoder.encode('\x1B\x40' + sample);
+      let bytes = rawBytes;
+      if (params.autoCut) {
+        const cutCmd = new Uint8Array([0x0A, 0x0A, 0x1D, 0x56, 0x42, 0x00]);
+        bytes = new Uint8Array(rawBytes.length + cutCmd.length);
+        bytes.set(rawBytes, 0);
+        bytes.set(cutCmd, rawBytes.length);
+      }
+      const ok = await sendBytesToBlePrinter(bytes);
+      if (ok) showToast('Test print berhasil!', 'success');
+    }
+
+    // =========================================================================
+    // THERMAL PREVIEW & IMAGE DOWNLOAD (HTML2CANVAS)
+    // =========================================================================
+    function previewThermalByMode(modeKey) {
+      const text = buildPlainTextReceipt(modeKey);
+      document.getElementById('thermalPreviewText').textContent = text;
+    }
+
+    function openThermalPreviewModal() {
+      saveDraftState();
+      previewThermalByMode(printerSettings.paperWidth || '58mm');
+      document.getElementById('modalThermalPreview').classList.remove('hidden');
+    }
+
+    function closeThermalPreviewModal() {
+      document.getElementById('modalThermalPreview').classList.add('hidden');
+    }
+
+    async function downloadNotaAsImage() {
+      const target = document.getElementById('notaPrintableArea');
+      if (!window.html2canvas || !target) {
+        showToast('Fitur gambar sedang dimuat', 'error');
+        return;
+      }
+      try {
+        showToast('Membuat gambar nota...', 'info');
+        const canvas = await window.html2canvas(target, {
+          scale: 2,
+          backgroundColor: '#fcfbfa'
+        });
+        const link = document.createElement('a');
+        link.download = (currentNota.noNota || 'Nota-SBR-Putra') + '.png';
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Gambar nota berhasil diunduh!', 'success');
+      } catch (e) {
+        showToast('Gagal mengunduh gambar nota', 'error');
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    window.onload = initApp;
+  </script>
+</body>
+</html>
