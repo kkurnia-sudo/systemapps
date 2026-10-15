@@ -198,8 +198,12 @@
         </div>
       </div>
 
-      <!-- Bluetooth Connection Status Pill -->
+      <!-- Cloud Firebase & Bluetooth Connection Status Pills -->
       <div class="flex items-center gap-1.5">
+        <button id="btnFirebaseTop" type="button" onclick="openFirebaseModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-800 hover:bg-stone-700 border border-stone-600 transition">
+          <span id="fbStatusDot" class="w-2 h-2 rounded-full bg-stone-400"></span>
+          <span id="fbStatusText">☁️ Firebase</span>
+        </button>
         <button id="btnConnectBleTop" type="button" onclick="openBluetoothModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-800 hover:bg-stone-700 border border-stone-600 transition">
           <span id="bleStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
           <span id="bleStatusText">Printer BLE</span>
@@ -230,12 +234,31 @@
     <!-- ==================== TAB 1: BUAT NOTA ==================== -->
     <section id="viewNota" class="space-y-3">
 
-      <!-- Quick Item Adder Bar with (+) Masuk/Jual vs (-) Ambil Barang Toggle -->
-      <div class="no-print bg-white rounded-xl p-3 shadow-sm border border-stone-200">
-        <div class="flex items-center justify-between gap-1 mb-2">
-          <div class="flex items-center gap-1.5">
-            <span class="text-xs font-bold uppercase tracking-wider text-stone-600">⚡ Input Cepat</span>
-            <!-- Mode Toggle: (+) Barang Utama vs (-) Ambil Barang -->
+      <!-- Compact Top Bar + Collapsible Quick Item Adder (Hidden by default so initial screen is clean) -->
+      <div class="no-print bg-white rounded-xl p-2.5 shadow-sm border border-stone-200">
+        <div class="flex items-center justify-between gap-1">
+          <button type="button" id="btnToggleQuickInput" onclick="toggleQuickInputPanel()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold transition">
+            <span>⚡ Input Cepat</span>
+            <span id="iconToggleQuickInput" class="text-[10px] text-stone-500">▼ Buka</span>
+          </button>
+
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="openActivePembeliHargaModal()" class="text-[11px] font-bold text-violet-800 bg-violet-50 hover:bg-violet-100 border border-violet-200 px-2 py-1 rounded-lg">
+              🏷️ Harga Mitra
+            </button>
+            <!--<button type="button" onclick="loadSampleSimpingNota()" class="text-[11px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2 py-1 rounded-lg" title="Muat contoh nota Simping & Ambil Barang seperti foto">
+              Contoh Foto
+            </button>-->
+            <button type="button" onclick="resetCurrentNota()" class="text-xs font-semibold text-red-600 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50">
+              Reset Nota Baru
+            </button>
+          </div>
+        </div>
+
+        <!-- Collapsible Body (Hidden by default) -->
+        <div id="quickInputBody" class="hidden mt-2.5 pt-2.5 border-t border-stone-100">
+          <div class="flex items-center justify-between gap-1 mb-2">
+            <span class="text-[11px] font-semibold text-stone-500">Pilih Kelompok Input:</span>
             <div class="inline-flex rounded-lg p-0.5 bg-stone-100 border border-stone-200">
               <button type="button" id="btnQuickModeAdd" onclick="setQuickItemTipe('add')" class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-600 text-white transition">
                 + Masuk / Jual
@@ -245,16 +268,6 @@
               </button>
             </div>
           </div>
-
-          <div class="flex items-center gap-1">
-            <button type="button" onclick="loadSampleSimpingNota()" class="text-[11px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2 py-0.5 rounded" title="Muat contoh nota Simping & Ambil Barang seperti foto">
-              Contoh Foto
-            </button>
-            <button type="button" onclick="resetCurrentNota()" class="text-xs font-semibold text-red-600 hover:text-red-700 px-2 py-0.5 rounded hover:bg-red-50">
-              Reset Nota Baru
-            </button>
-          </div>
-        </div>
 
         <!-- Active Customer Custom Price Banner -->
         <div id="activeMitraPriceBanner" class="mb-2 px-2.5 py-1.5 rounded-lg bg-violet-50 border border-violet-200 flex items-center justify-between gap-2 text-[11px]">
@@ -304,6 +317,7 @@
           <button type="button" id="btnAddQuickSubmit" onclick="handleAddQuickItem()" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-sm transition shrink-0">
             + Masuk Baris
           </button>
+        </div>
         </div>
       </div>
 
@@ -386,7 +400,6 @@
                 <option value="">-- Pilih Pembeli / Mitra --</option>
               </select>
               <datalist id="datalistPembeli" class="hidden"></datalist>
-              <input id="notaCatatanPembeli" type="text" placeholder="Alamat / No. HP / Ket (opsional)..." oninput="saveDraftState()" class="dotted-input mt-1 text-[11px] font-normal text-stone-600" />
             </div>
           </div>
         </div>
@@ -435,12 +448,17 @@
           <span id="notaNoRef" class="text-[11px] font-mono-receipt text-stone-400"></span>
         </div>
 
-        <!-- NOTA FOOTER: TOTAL DI TERIMA -->
+        <!-- NOTA FOOTER: TOTAL DI TERIMA + KETERANGAN OPSIONAL DI BAWAH TOTAL -->
         <div class="flex justify-end items-center mt-2">
           <div class="nota-total-box">
             <div class="nota-total-label">TOTAL DI TERIMA</div>
             <div id="notaGrandTotal" class="nota-total-value font-mono-receipt">0</div>
           </div>
+        </div>
+
+        <div class="mt-2.5 pt-2 border-t border-dashed border-stone-300 flex items-center gap-2">
+          <label for="notaCatatanPembeli" class="text-[11px] font-bold text-stone-600 shrink-0">Keterangan (Opsional):</label>
+          <input id="notaCatatanPembeli" type="text" placeholder="Tulis keterangan tambahan sebelum footer (opsional)..." oninput="saveDraftState()" class="dotted-input text-xs font-normal text-stone-700" />
         </div>
       </div>
 
@@ -560,7 +578,10 @@
           <p class="text-[11px] text-stone-400 uppercase tracking-wider font-semibold">Total Nilai Bersih Tersimpan</p>
           <p id="riwayatTotalOmzet" class="text-xl font-extrabold font-mono-receipt text-amber-400 mt-0.5">Rp 0</p>
         </div>
-        <div class="flex gap-1.5">
+        <div class="flex flex-wrap justify-end gap-1.5">
+          <button type="button" onclick="openFirebaseModal()" class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-stone-950 text-[11px] font-extrabold">
+            ☁️ Cloud Firebase
+          </button>
           <button type="button" onclick="exportBackupJSON()" class="px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-[11px] font-semibold border border-stone-600">
             ⬇️ Backup Data
           </button>
@@ -646,7 +667,7 @@
       </div>
 
       <div class="flex items-center justify-between pt-1 text-[11px] text-stone-500">
-        <span>Total Di Terima dicetak <strong>Double Height &amp; Weight</strong></span>
+        <span>Total Di Terima dicetak <strong>Double Height</strong></span>
         <button type="button" onclick="closePrintChoicesModal(); openBluetoothModal();" class="text-sky-700 font-semibold hover:underline">
           ⚙️ Pengaturan BLE
         </button>
@@ -685,6 +706,57 @@
             💾 Simpan Harga Mitra
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: FIREBASE CLOUD DATABASE SETUP ==================== -->
+  <div id="modalFirebase" class="no-print fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-stone-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">☁️</span>
+          <div>
+            <h3 class="font-bold text-sm text-stone-900">Sinkronisasi Database Firebase</h3>
+            <p class="text-[11px] text-stone-500">Realtime Database Cloud (Otomatis &amp; Gratis)</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeFirebaseModal()" class="w-7 h-7 rounded-full hover:bg-stone-100 text-stone-500 font-bold">✕</button>
+      </div>
+
+      <div class="bg-stone-50 rounded-xl p-3 border border-stone-200 text-xs space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-stone-500">Status Cloud:</span>
+          <span id="modalFbStatus" class="font-bold text-stone-600">Belum Dihubungkan</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-stone-500">Sinkron Terakhir:</span>
+          <span id="modalFbLastSync" class="font-mono-receipt text-[11px] text-stone-700">-</span>
+        </div>
+      </div>
+
+      <div>
+        <label for="inputFirebaseUrl" class="block text-[11px] font-bold text-stone-700 mb-1">
+          URL Firebase Realtime Database Anda:
+        </label>
+        <input id="inputFirebaseUrl" type="text" placeholder="https://nama-project-default-rtdb.asia-southeast1.firebasedatabase.app" class="w-full px-3 py-2 rounded-lg border border-stone-300 text-xs font-mono-receipt focus:outline-none focus:border-[#ba5d4f]" />
+        <p class="text-[10px] text-stone-500 mt-1">
+          Tempelkan link <strong>Realtime Database URL</strong> dari Firebase Console (berakhiran <code>.firebasedatabase.app</code> atau <code>.firebaseio.com</code>).
+        </p>
+      </div>
+
+      <label class="flex items-center gap-2 text-xs text-stone-700 font-semibold cursor-pointer select-none">
+        <input id="chkAutoSyncFirebase" type="checkbox" checked onchange="saveFirebaseConfig()" class="rounded text-[#ba5d4f] focus:ring-[#ba5d4f]" />
+        <span>Sinkron otomatis ke Firebase setiap simpan/cetak nota &amp; ubah harga</span>
+      </label>
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button type="button" onclick="saveAndPushToFirebase()" class="py-2.5 px-3 rounded-xl bg-[#ba5d4f] hover:bg-[#99463a] text-white font-bold text-xs shadow-sm transition">
+          ☁️ Simpan &amp; Upload ke Cloud
+        </button>
+        <button type="button" onclick="pullFromFirebase()" class="py-2.5 px-3 rounded-xl bg-stone-800 hover:bg-stone-900 text-white font-bold text-xs shadow-sm transition">
+          📥 Tarik Data dari Cloud
+        </button>
       </div>
     </div>
   </div>
@@ -804,8 +876,9 @@
       BARANG: 'sbr_putra_master_barang_v3',
       PEMBELI: 'sbr_putra_master_pembeli_v3',
       RIWAYAT: 'sbr_putra_riwayat_nota_v3',
-      DRAFT: 'sbr_putra_current_draft_v4',
-      SETTINGS: 'sbr_putra_printer_settings_v3'
+      DRAFT: 'sbr_putra_current_draft_v5',
+      SETTINGS: 'sbr_putra_printer_settings_v3',
+      FIREBASE: 'sbr_putra_firebase_config_v1'
     };
 
     const memoryStorageFallback = {};
@@ -911,6 +984,34 @@
       return yyyy + '-' + mm + '-' + dd;
     }
 
+    function formatHariTanggalIndo(isoStr) {
+      const HARI_LIST = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      const BULAN_LIST = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      let d = new Date();
+      if (isoStr && typeof isoStr === 'string' && isoStr.includes('-')) {
+        const parts = isoStr.split('-');
+        if (parts.length === 3) {
+          d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        }
+      }
+      if (isNaN(d.getTime())) d = new Date();
+      const namaHari = HARI_LIST[d.getDay()];
+      const tgl = String(d.getDate()).padStart(2, '0');
+      const namaBulan = BULAN_LIST[d.getMonth()];
+      const thn2 = String(d.getFullYear()).slice(-2);
+      return namaHari + ', ' + tgl + '-' + namaBulan + '-' + thn2;
+    }
+
+    function getWaktuHHMM(customWaktu) {
+      if (customWaktu && typeof customWaktu === 'string' && customWaktu.trim() !== '') {
+        return customWaktu.trim();
+      }
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return hh + ':' + min;
+    }
+
     function generateNotaNumber() {
       const d = new Date();
       const ymd = String(d.getFullYear()).slice(-2) +
@@ -973,7 +1074,7 @@
           noNota: generateNotaNumber(),
           tanggal: getTodayISO(),
           pembeli: 'Mitra Pengrajin Simping',
-          catatanPembeli: 'Setor Simping & Ambil Bahan (Lembang)',
+          catatanPembeli: '',
           rows: createDefaultRows()
         };
       }
@@ -986,6 +1087,7 @@
       renderMasterPembeliList();
       renderRiwayatList();
       updateBadges();
+      initFirebaseConfig();
     }
 
     function loadSampleSimpingNota() {
@@ -993,7 +1095,7 @@
         noNota: generateNotaNumber(),
         tanggal: '2026-09-15',
         pembeli: 'Mitra Pengrajin Simping',
-        catatanPembeli: 'Setor Simping & Ambil Bahan Baku',
+        catatanPembeli: '',
         rows: buildPhotoExampleRows()
       };
       renderDatalistsAndChips();
@@ -1006,6 +1108,20 @@
     // =========================================================================
     // UI TABS & TOASTS
     // =========================================================================
+    function toggleQuickInputPanel() {
+      const body = document.getElementById('quickInputBody');
+      const icon = document.getElementById('iconToggleQuickInput');
+      if (!body) return;
+      const isHidden = body.classList.contains('hidden');
+      if (isHidden) {
+        body.classList.remove('hidden');
+        if (icon) icon.textContent = '▲ Tutup';
+      } else {
+        body.classList.add('hidden');
+        if (icon) icon.textContent = '▼ Buka';
+      }
+    }
+
     function switchTab(tabName) {
       const tabs = ['nota', 'barang', 'pembeli', 'riwayat'];
       tabs.forEach(function(t) {
@@ -1278,18 +1394,9 @@
 
     function onPembeliInput(val) {
       currentNota.pembeli = val;
-      const found = findPembeliByName(val);
       checkCustomerBadge(val);
       updateActiveMitraBanner();
-      if (found) {
-        document.getElementById('notaCatatanPembeli').value = found.info || '';
-        currentNota.catatanPembeli = found.info || '';
-        applyActivePembeliPricesToNotaRows();
-      } else if (!val) {
-        document.getElementById('notaCatatanPembeli').value = '';
-        currentNota.catatanPembeli = '';
-        applyActivePembeliPricesToNotaRows();
-      }
+      applyActivePembeliPricesToNotaRows();
       renderDatalistsAndChips();
       renderNotaTable();
       saveDraftState();
@@ -1908,7 +2015,6 @@
       const p = masterPembeli.find(function(item) { return item.id === id; });
       if (!p) return;
       currentNota.pembeli = p.nama;
-      currentNota.catatanPembeli = p.info || '';
       syncHeaderInputsFromState();
       applyActivePembeliPricesToNotaRows();
       renderDatalistsAndChips();
@@ -2015,6 +2121,7 @@
       renderDatalistsAndChips();
       renderNotaTable();
       renderMasterPembeliList();
+      triggerAutoPushFirebase();
       showToast('Harga Khusus untuk ' + pbl.nama + ' berhasil disimpan!', 'success');
     }
 
@@ -2102,10 +2209,13 @@
       }
 
       const totals = calculateNotaTotals();
+      const waktuNow = getWaktuHHMM(currentNota.waktu);
+      currentNota.waktu = waktuNow;
       const record = {
         id: 'nota-' + Date.now(),
         noNota: currentNota.noNota || generateNotaNumber(),
         tanggal: currentNota.tanggal || getTodayISO(),
+        waktu: waktuNow,
         pembeli: (currentNota.pembeli || 'Umum').trim(),
         catatanPembeli: (currentNota.catatanPembeli || '').trim(),
         items: items,
@@ -2129,6 +2239,7 @@
       checkCustomerBadge(currentNota.pembeli);
       updateActiveMitraBanner();
 
+      triggerAutoPushFirebase();
       if (!silent) {
         showToast('Nota ' + record.noNota + ' berhasil disimpan!', 'success');
       }
@@ -2154,6 +2265,7 @@
       currentNota = {
         noNota: rec.noNota,
         tanggal: rec.tanggal,
+        waktu: rec.waktu || '',
         pembeli: rec.pembeli,
         catatanPembeli: rec.catatanPembeli || '',
         rows: rows
@@ -2283,6 +2395,190 @@
     }
 
     // =========================================================================
+    // FIREBASE REALTIME DATABASE CLOUD SYNC (REST API - ZERO CONFIG SDK)
+    // =========================================================================
+    let firebaseConfigState = {
+      dbUrl: '',
+      autoSync: true,
+      lastSync: ''
+    };
+
+    function cleanFirebaseDatabaseUrl(rawInput) {
+      if (!rawInput) return '';
+      let s = String(rawInput).trim();
+      // If user pasted full firebaseConfig code block, extract databaseURL
+      const match = s.match(/https:\/\/[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.(?:firebasedatabase\.app|firebaseio\.com)/);
+      if (match) {
+        return match[0].replace(/\/+$/, '');
+      }
+      if (s.startsWith('http://') || s.startsWith('https://')) {
+        return s.replace(/\/+$/, '').replace(/\/sbr_putra_db\.json$/, '');
+      }
+      return '';
+    }
+
+    function initFirebaseConfig() {
+      const saved = safeGetStorage(STORAGE_KEYS.FIREBASE, null);
+      if (saved && typeof saved === 'object') {
+        firebaseConfigState = {
+          dbUrl: saved.dbUrl || '',
+          autoSync: saved.autoSync !== false,
+          lastSync: saved.lastSync || ''
+        };
+      }
+      document.getElementById('inputFirebaseUrl').value = firebaseConfigState.dbUrl || '';
+      document.getElementById('chkAutoSyncFirebase').checked = firebaseConfigState.autoSync !== false;
+      updateFirebaseStatusUI();
+      if (firebaseConfigState.dbUrl && firebaseConfigState.autoSync) {
+        pullFromFirebase(true);
+      }
+    }
+
+    function updateFirebaseStatusUI() {
+      const dot = document.getElementById('fbStatusDot');
+      const topTxt = document.getElementById('fbStatusText');
+      const modalStatus = document.getElementById('modalFbStatus');
+      const modalLast = document.getElementById('modalFbLastSync');
+
+      if (firebaseConfigState.dbUrl) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        topTxt.textContent = '☁️ Cloud Aktif';
+        modalStatus.textContent = 'Terhubung ke Firebase';
+        modalStatus.className = 'font-bold text-emerald-600';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-stone-400';
+        topTxt.textContent = '☁️ Firebase';
+        modalStatus.textContent = 'Belum Dihubungkan';
+        modalStatus.className = 'font-bold text-stone-500';
+      }
+      modalLast.textContent = firebaseConfigState.lastSync || '-';
+    }
+
+    function openFirebaseModal() {
+      document.getElementById('inputFirebaseUrl').value = firebaseConfigState.dbUrl || '';
+      document.getElementById('chkAutoSyncFirebase').checked = firebaseConfigState.autoSync !== false;
+      updateFirebaseStatusUI();
+      document.getElementById('modalFirebase').classList.remove('hidden');
+    }
+
+    function closeFirebaseModal() {
+      document.getElementById('modalFirebase').classList.add('hidden');
+    }
+
+    function saveFirebaseConfig() {
+      const rawUrl = document.getElementById('inputFirebaseUrl').value;
+      const cleaned = cleanFirebaseDatabaseUrl(rawUrl);
+      firebaseConfigState.dbUrl = cleaned;
+      firebaseConfigState.autoSync = document.getElementById('chkAutoSyncFirebase').checked;
+      if (cleaned) {
+        document.getElementById('inputFirebaseUrl').value = cleaned;
+      }
+      safeSetStorage(STORAGE_KEYS.FIREBASE, firebaseConfigState);
+      updateFirebaseStatusUI();
+      return cleaned;
+    }
+
+    async function saveAndPushToFirebase(silent) {
+      const dbUrl = saveFirebaseConfig();
+      if (!dbUrl) {
+        if (!silent) showToast('Masukkan URL Firebase Realtime Database terlebih dahulu', 'error');
+        return false;
+      }
+
+      const endpoint = dbUrl + '/sbr_putra_db.json';
+      const payload = {
+        updatedAt: new Date().toISOString(),
+        masterBarang: masterBarang,
+        masterPembeli: masterPembeli,
+        riwayatNota: riwayatNota
+      };
+
+      try {
+        if (!silent) showToast('Mengirim data ke Cloud Firebase...', 'info');
+        const res = await fetch(endpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          throw new Error('HTTP ' + res.status + ' (Pastikan Rules Firebase disetel ke true)');
+        }
+        const nowStr = formatHariTanggalIndo(getTodayISO()) + ' ' + getWaktuHHMM();
+        firebaseConfigState.lastSync = nowStr;
+        safeSetStorage(STORAGE_KEYS.FIREBASE, firebaseConfigState);
+        updateFirebaseStatusUI();
+        if (!silent) showToast('Data berhasil disimpan ke Cloud Firebase!', 'success');
+        return true;
+      } catch (err) {
+        if (!silent) showToast('Gagal upload Firebase: ' + (err.message || 'Cek koneksi/Rules'), 'error');
+        return false;
+      }
+    }
+
+    async function pullFromFirebase(silent) {
+      const dbUrl = saveFirebaseConfig();
+      if (!dbUrl) {
+        if (!silent) showToast('Masukkan URL Firebase Realtime Database terlebih dahulu', 'error');
+        return false;
+      }
+
+      const endpoint = dbUrl + '/sbr_putra_db.json';
+      try {
+        if (!silent) showToast('Mengambil data dari Cloud Firebase...', 'info');
+        const res = await fetch(endpoint);
+        if (!res.ok) {
+          throw new Error('HTTP ' + res.status);
+        }
+        const data = await res.json();
+        if (!data) {
+          if (!silent) showToast('Database Firebase masih kosong, silakan klik Simpan & Upload ke Cloud terlebih dahulu', 'info');
+          return false;
+        }
+
+        if (Array.isArray(data.masterBarang) && data.masterBarang.length > 0) {
+          masterBarang = data.masterBarang;
+          safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
+        }
+        if (Array.isArray(data.masterPembeli) && data.masterPembeli.length > 0) {
+          masterPembeli = data.masterPembeli;
+          masterPembeli.forEach(function(p) {
+            if (!p.hargaKhusus || typeof p.hargaKhusus !== 'object') p.hargaKhusus = {};
+          });
+          safeSetStorage(STORAGE_KEYS.PEMBELI, masterPembeli);
+        }
+        if (Array.isArray(data.riwayatNota)) {
+          riwayatNota = data.riwayatNota;
+          safeSetStorage(STORAGE_KEYS.RIWAYAT, riwayatNota);
+        }
+
+        const nowStr = formatHariTanggalIndo(getTodayISO()) + ' ' + getWaktuHHMM();
+        firebaseConfigState.lastSync = nowStr;
+        safeSetStorage(STORAGE_KEYS.FIREBASE, firebaseConfigState);
+        updateFirebaseStatusUI();
+
+        renderDatalistsAndChips();
+        syncHeaderInputsFromState();
+        renderNotaTable();
+        renderMasterBarangList();
+        renderMasterPembeliList();
+        renderRiwayatList();
+        updateBadges();
+
+        if (!silent) showToast('Data dari Cloud Firebase berhasil dimuat ke HP ini!', 'success');
+        return true;
+      } catch (err) {
+        if (!silent) showToast('Gagal menarik data Firebase: ' + (err.message || 'Error'), 'error');
+        return false;
+      }
+    }
+
+    function triggerAutoPushFirebase() {
+      if (firebaseConfigState.dbUrl && firebaseConfigState.autoSync) {
+        saveAndPushToFirebase(true);
+      }
+    }
+
+    // =========================================================================
     // ESC/POS THERMAL RECEIPT BUILDER (3 MODES + DOUBLE HEIGHT/WEIGHT TOTAL DI TERIMA)
     // =========================================================================
     function padRight(str, len) {
@@ -2326,15 +2622,12 @@
 
       const lines = [];
       lines.push(margin + centerText('SBR PUTRA FOOD', w));
-      lines.push(margin + centerText('ARUMANIS SUSU LEMBANG SIPUTRA', w));
       lines.push(margin + centerText('Lembang, Bandung Barat', w));
       lines.push(margin + doubleDivider);
       lines.push(margin + 'No     : ' + (currentNota.noNota || '-'));
-      lines.push(margin + 'Tanggal: ' + (currentNota.tanggal || getTodayISO()));
+      lines.push(margin + 'Hari   : ' + formatHariTanggalIndo(currentNota.tanggal || getTodayISO()));
+      lines.push(margin + 'Waktu  : ' + getWaktuHHMM(currentNota.waktu));
       lines.push(margin + 'Kepada : ' + (currentNota.pembeli || 'Umum'));
-      if (currentNota.catatanPembeli) {
-        lines.push(margin + 'Ket    : ' + currentNota.catatanPembeli);
-      }
       lines.push(margin + divider);
       lines.push(margin + padRight('QTY NAMA BARANG', w - 10) + padLeft('JUMLAH', 10));
       lines.push(margin + divider);
@@ -2370,13 +2663,21 @@
       }
 
       lines.push(margin + doubleDivider);
-      // Preview representation of Double Height & Double Weight TOTAL DI TERIMA
+      // TOTAL DI TERIMA & nominal in Double Height (single line, normal width)
+      const totalLabel = 'TOTAL DI TERIMA';
       const totalStr = 'Rp ' + formatRupiahNumber(totals.grandTotal);
-      lines.push(margin + 'TOTAL DI TERIMA');
-      lines.push(margin + padLeft(totalStr, w));
+      lines.push(margin + padRight(totalLabel, Math.max(1, w - totalStr.length)) + totalStr);
       lines.push(margin + doubleDivider);
+
+      // Optional Keterangan placed below TOTAL DI TERIMA before footer
+      const ketOpt = (currentNota.catatanPembeli || '').trim();
+      if (ketOpt) {
+        lines.push(margin + 'Ket: ' + ketOpt);
+        lines.push(margin + divider);
+      }
+
       lines.push(margin + centerText('Mulus Rahayu Berkah Salamet', w));
-      lines.push(margin + centerText('Terima Kasih', w));
+      lines.push(margin + centerText('Hatur Nuhun', w));
       lines.push('');
       lines.push('');
       return lines.join('\n');
@@ -2395,15 +2696,12 @@
 
       const preTotalLines = [];
       preTotalLines.push(margin + centerText('SBR PUTRA FOOD', w));
-      preTotalLines.push(margin + centerText('ARUMANIS SUSU LEMBANG SIPUTRA', w));
       preTotalLines.push(margin + centerText('Lembang, Bandung Barat', w));
       preTotalLines.push(margin + doubleDivider);
       preTotalLines.push(margin + 'No     : ' + (currentNota.noNota || '-'));
-      preTotalLines.push(margin + 'Tanggal: ' + (currentNota.tanggal || getTodayISO()));
+      preTotalLines.push(margin + 'Hari   : ' + formatHariTanggalIndo(currentNota.tanggal || getTodayISO()));
+      preTotalLines.push(margin + 'Waktu  : ' + getWaktuHHMM(currentNota.waktu));
       preTotalLines.push(margin + 'Kepada : ' + (currentNota.pembeli || 'Umum'));
-      if (currentNota.catatanPembeli) {
-        preTotalLines.push(margin + 'Ket    : ' + currentNota.catatanPembeli);
-      }
       preTotalLines.push(margin + divider);
       preTotalLines.push(margin + padRight('QTY NAMA BARANG', w - 10) + padLeft('JUMLAH', 10));
       preTotalLines.push(margin + divider);
@@ -2440,27 +2738,29 @@
 
       preTotalLines.push(margin + doubleDivider);
 
-      // ESC/POS Double Height + Double Width + Bold (Double Weight) for TOTAL DI TERIMA & Nominal
-      // ESC E 1 (\x1B\x45\x01) = Bold / Double Weight ON
-      // GS ! 0x11 (\x1D\x21\x11) & ESC ! 0x38 (\x1B\x21\x38) = Double Height + Double Width + Emphasized
-      // Normal Reset = \x1B\x21\x00\x1D\x21\x00\x1B\x45\x00
-      const dblOn = '\x1B\x45\x01\x1B\x21\x38\x1D\x21\x11';
-      const dblOff = '\x1B\x21\x00\x1D\x21\x00\x1B\x45\x00';
-      const dblCharCapacity = Math.floor(w / 2); // 16 chars for 58mm, 24 chars for 80mm
-      const totalLabelDbl = 'TOTAL DI TERIMA';
-      const nominalStr = formatRupiahNumber(totals.grandTotal);
-      const nominalDbl = padLeft(nominalStr, dblCharCapacity);
+      // ESC/POS Double Height ONLY (normal width): ESC ! 0x10 (\x1B\x21\x10) & GS ! 0x01 (\x1D\x21\x01)
+      const dblHeightOn = '\x1B\x21\x10\x1D\x21\x01';
+      const dblOff = '\x1B\x21\x00\x1D\x21\x00';
+      const totalLabel = 'TOTAL DI TERIMA';
+      const nominalStr = 'Rp ' + formatRupiahNumber(totals.grandTotal);
+      const totalLineText = padRight(totalLabel, Math.max(1, w - nominalStr.length)) + nominalStr;
 
-      const totalBlock =
-        margin + dblOn + totalLabelDbl + dblOff + '\n' +
-        margin + dblOn + nominalDbl + dblOff + '\n';
+      const totalBlock = margin + dblHeightOn + totalLineText + dblOff + '\n';
 
       const postTotalLines = [
-        margin + doubleDivider,
-        margin + centerText('Mulus Rahayu Berkah Salamet', w),
-        margin + centerText('Terima Kasih', w),
-        '\n\n'
+        margin + doubleDivider
       ];
+
+      // Optional Keterangan placed below TOTAL DI TERIMA before footer
+      const ketOpt = (currentNota.catatanPembeli || '').trim();
+      if (ketOpt) {
+        postTotalLines.push(margin + 'Ket: ' + ketOpt);
+        postTotalLines.push(margin + divider);
+      }
+
+      postTotalLines.push(margin + centerText('Mulus Rahayu Berkah Salamet', w));
+      postTotalLines.push(margin + centerText('Hatur Nuhun', w));
+      postTotalLines.push('\n\n');
 
       const fullPayloadString =
         '\x1B\x40' + // ESC @ Initialize printer
@@ -2636,6 +2936,24 @@
       if (printed) {
         const params = resolvePrintModeParams(modeKey);
         showToast('Nota dicetak (' + params.modeLabel + ')!', 'success');
+        openConfirmModal(
+          'Cetak Berhasil! Reset Nota?',
+          'Nota sudah berhasil dicetak ke printer Bluetooth. Kosongkan form nota untuk transaksi berikutnya?',
+          function() {
+            currentNota = {
+              noNota: generateNotaNumber(),
+              tanggal: getTodayISO(),
+              pembeli: '',
+              catatanPembeli: '',
+              rows: createDefaultRows()
+            };
+            syncHeaderInputsFromState();
+            renderDatalistsAndChips();
+            renderNotaTable();
+            saveDraftState();
+            showToast('Form nota direset untuk transaksi baru', 'success');
+          }
+        );
       } else if (!navigator.bluetooth) {
         previewThermalByMode(modeKey);
         document.getElementById('modalThermalPreview').classList.remove('hidden');
@@ -2647,18 +2965,20 @@
       const params = resolvePrintModeParams(modeVal);
       const w = params.charWidth;
       const margin = ' '.repeat(params.leftPad);
-      const dblOn = '\x1B\x45\x01\x1B\x21\x38\x1D\x21\x11';
-      const dblOff = '\x1B\x21\x00\x1D\x21\x00\x1B\x45\x00';
+      const dblHeightOn = '\x1B\x21\x10\x1D\x21\x01';
+      const dblOff = '\x1B\x21\x00\x1D\x21\x00';
+      const tLine = padRight('TOTAL DI TERIMA', Math.max(1, w - 12)) + 'Rp 1.323.000';
 
       const sample = [
         margin + centerText('SBR PUTRA FOOD', w),
-        margin + centerText('TEST PRINT BLUETOOTH OK', w),
+        margin + centerText('Lembang, Bandung Barat', w),
         margin + '-'.repeat(w),
         margin + 'Mode : ' + params.modeLabel,
         margin + '-'.repeat(w),
-        margin + dblOn + 'TOTAL DI TERIMA' + dblOff,
-        margin + dblOn + padLeft('1.323.000', Math.floor(w / 2)) + dblOff,
+        margin + dblHeightOn + tLine + dblOff,
         margin + '='.repeat(w),
+        margin + centerText('Mulus Rahayu Berkah Salamet', w),
+        margin + centerText('Hatur Nuhun', w),
         '\n\n'
       ].join('\n');
 
