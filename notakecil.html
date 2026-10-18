@@ -210,6 +210,19 @@
 </head>
 <body class="min-h-screen pb-24">
 
+  <!-- Shared Datalist for UOM (Satuan Barang) -->
+  <datalist id="datalistUom">
+    <option value="Toros"></option>
+    <option value="Sak"></option>
+    <option value="Ball"></option>
+    <option value="Pak"></option>
+    <option value="Kg"></option>
+    <option value="Bks"></option>
+    <option value="Dus"></option>
+    <option value="Ikat"></option>
+    <option value="Pcs"></option>
+  </datalist>
+
   <!-- Top App Bar -->
   <header class="no-print sticky top-0 z-30 bg-[#2b2927] text-white shadow-md">
     <div class="max-w-xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2">
@@ -226,9 +239,9 @@
       <!-- Cloud Firebase & Bluetooth Connection Status Pills -->
       <div class="flex items-center gap-1.5">
         <button id="btnFirebaseTop" type="button" onclick="openFirebaseModal()" class="group flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-800 hover:bg-stone-700 active:scale-95 border border-stone-600 transition">
-          <span id="fbStatusDot" class="w-2 h-2 rounded-full bg-stone-400"></span>
+          <span id="fbStatusDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
           <i data-lucide="cloud" class="w-3.5 h-3.5 text-sky-300 icon-interactive"></i>
-          <span id="fbStatusText">Firebase</span>
+          <span id="fbStatusText">Cloud Aktif</span>
         </button>
         <button id="btnConnectBleTop" type="button" onclick="openBluetoothModal()" class="group flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-800 hover:bg-stone-700 active:scale-95 border border-stone-600 transition">
           <span id="bleStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
@@ -319,21 +332,25 @@
             </button>
           </div>
 
-          <div class="grid grid-cols-12 gap-2 items-end">
+          <div class="grid grid-cols-12 gap-1.5 items-end">
             <div class="col-span-2">
               <label for="quickQty" class="block text-[10px] font-semibold text-stone-500 mb-0.5">QTY</label>
-              <input id="quickQty" type="number" inputmode="numeric" min="1" step="1" value="1" class="w-full px-2 py-2 rounded-lg border border-stone-300 text-sm font-bold text-center focus:outline-none focus:border-[#ba5d4f]" />
+              <input id="quickQty" type="number" inputmode="numeric" min="1" step="1" value="1" class="w-full px-1.5 py-2 rounded-lg border border-stone-300 text-sm font-bold text-center focus:outline-none focus:border-[#ba5d4f]" />
             </div>
-            <div class="col-span-6 relative">
-              <label for="quickNamaBarang" class="block text-[10px] font-semibold text-stone-500 mb-0.5">Nama Barang (Auto-Harga Mitra)</label>
-              <input id="quickNamaBarang" type="text" list="datalistBarang" placeholder="Ketik: Simping / Aci / Plastik..." oninput="onQuickBarangInput(this.value)" class="w-full px-2.5 py-2 rounded-lg border border-stone-300 text-sm font-medium focus:outline-none focus:border-[#ba5d4f]" />
+            <div class="col-span-2">
+              <label for="quickUom" class="block text-[10px] font-semibold text-stone-500 mb-0.5">Satuan</label>
+              <input id="quickUom" type="text" list="datalistUom" placeholder="Toros/Sak" class="w-full px-1.5 py-2 rounded-lg border border-stone-300 text-xs font-semibold text-center focus:outline-none focus:border-[#ba5d4f]" />
+            </div>
+            <div class="col-span-5 relative">
+              <label for="quickNamaBarang" class="block text-[10px] font-semibold text-stone-500 mb-0.5">Nama Barang</label>
+              <input id="quickNamaBarang" type="text" list="datalistBarang" placeholder="Ketik: Simping / Aci..." oninput="onQuickBarangInput(this.value)" class="w-full px-2.5 py-2 rounded-lg border border-stone-300 text-sm font-medium focus:outline-none focus:border-[#ba5d4f]" />
               <datalist id="datalistBarang"></datalist>
             </div>
-            <div class="col-span-4">
+            <div class="col-span-3">
               <div class="flex items-center justify-between mb-0.5">
                 <label for="quickHarga" class="block text-[10px] font-semibold text-stone-500">Harga (Rp)</label>
                 <span id="quickHargaSourceBadge" class="hidden inline-flex items-center gap-0.5 text-[9px] px-1 rounded bg-violet-100 text-violet-800 font-bold">
-                  <i data-lucide="sparkles" class="w-2.5 h-2.5"></i> Khusus
+                  <i data-lucide="sparkles" class="w-2.5 h-2.5"></i>
                 </span>
               </div>
               <input id="quickHarga" type="number" inputmode="numeric" min="0" step="100" placeholder="0" class="w-full px-2 py-2 rounded-lg border border-stone-300 text-sm font-bold text-right focus:outline-none focus:border-[#ba5d4f]" />
@@ -450,7 +467,7 @@
           </div>
         </div>
 
-        <!-- NOTA TABLE -->
+        <!-- NOTA TABLE (Kolom QTY kini memuat QTY + UOM di sebelah kanannya) -->
         <div class="nota-table-wrap">
           
           <!-- Center Watermark -->
@@ -468,10 +485,10 @@
           <table class="w-full border-collapse relative z-10 table-fixed">
             <thead class="nota-thead">
               <tr>
-                <th style="width: 15%;" class="text-center">QTY</th>
+                <th style="width: 22%;" class="text-center">QTY / SATUAN</th>
                 <th class="text-center">NAMA BARANG</th>
                 <th class="w-24 sm:w-28 text-center">HARGA<br/>SATUAN</th>
-                <th class="w-28 sm:w-32 text-center">JUMLAH</th>
+                <th class="w-24 sm:w-28 text-center">JUMLAH</th>
                 <th class="w-7 no-print text-center" title="Hapus Baris">
                   <i data-lucide="trash-2" class="w-3.5 h-3.5 mx-auto"></i>
                 </th>
@@ -534,27 +551,31 @@
       </div>
     </section>
 
-    <!-- ==================== TAB 2: MASTER BARANG & HARGA ==================== -->
+    <!-- ==================== TAB 2: MASTER BARANG, UOM & HARGA ==================== -->
     <section id="viewBarang" class="hidden space-y-3">
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200">
         <h2 class="font-bold text-sm text-stone-800 flex items-center justify-between">
           <span class="flex items-center gap-1.5">
             <i data-lucide="package-check" class="w-4 h-4 text-[#ba5d4f]"></i>
-            <span>Mapping Nama Barang, Harga Standar &amp; Jenis</span>
+            <span>Mapping Nama Barang, Satuan (UOM) &amp; Harga</span>
           </span>
-          <span class="text-[11px] font-normal text-stone-500">LocalStorage</span>
+          <span class="text-[11px] font-normal text-stone-500">Cloud &amp; Local</span>
         </h2>
         <p class="text-xs text-stone-500 mt-0.5 mb-3">
-          Harga di bawah adalah <strong>Harga Standar/Umum</strong>. Untuk mengatur harga berbeda tiap mitra/pembeli, buka tab <strong>Pembeli</strong>.
+          Atur <strong>Nama Barang</strong>, <strong>Satuan / UOM</strong> (Toros, Sak, Ball, Pak, dll.), serta <strong>Harga Standar</strong>.
         </p>
 
         <form id="formMasterBarang" onsubmit="handleSaveMasterBarang(event)" class="grid grid-cols-12 gap-2">
           <input type="hidden" id="editBarangId" value="" />
-          <div class="col-span-12 sm:col-span-5">
+          <div class="col-span-8 sm:col-span-4">
             <label for="inputMasterNamaBarang" class="block text-[11px] font-semibold text-stone-600 mb-1">Nama Barang</label>
-            <input id="inputMasterNamaBarang" type="text" required placeholder="Contoh: SIMPING / ACI / PLASTIK" class="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-[#ba5d4f]" />
+            <input id="inputMasterNamaBarang" type="text" required placeholder="Contoh: SIMPING / ACI" class="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-[#ba5d4f]" />
           </div>
-          <div class="col-span-6 sm:col-span-4">
+          <div class="col-span-4 sm:col-span-2">
+            <label for="inputMasterUomBarang" class="block text-[11px] font-semibold text-stone-600 mb-1">Satuan (UOM)</label>
+            <input id="inputMasterUomBarang" type="text" list="datalistUom" placeholder="Toros / Sak" class="w-full px-2.5 py-2 rounded-lg border border-stone-300 text-xs font-bold text-center focus:outline-none focus:border-[#ba5d4f]" />
+          </div>
+          <div class="col-span-6 sm:col-span-3">
             <label for="inputMasterHargaBarang" class="block text-[11px] font-semibold text-stone-600 mb-1">Harga Standar (Rp)</label>
             <input id="inputMasterHargaBarang" type="number" required min="0" step="100" placeholder="5800" class="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm font-bold text-right focus:outline-none focus:border-[#ba5d4f]" />
           </div>
@@ -571,7 +592,7 @@
             </button>
             <button type="submit" id="btnSubmitMasterBarang" class="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#ba5d4f] hover:bg-[#99463a] active:scale-95 text-white font-bold text-xs transition">
               <i data-lucide="plus" class="w-3.5 h-3.5 icon-interactive"></i>
-              <span>Simpan Barang &amp; Harga</span>
+              <span>Simpan Barang &amp; UOM</span>
             </button>
           </div>
         </form>
@@ -581,7 +602,7 @@
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200">
         <div class="relative mb-3">
           <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-          <input id="searchMasterBarang" type="text" placeholder="Cari nama barang (Simping, Aci, Plastik)..." oninput="renderMasterBarangList()" class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-stone-200 text-xs focus:outline-none focus:border-[#ba5d4f]" />
+          <input id="searchMasterBarang" type="text" placeholder="Cari nama barang atau satuan (Simping, Toros, Sak)..." oninput="renderMasterBarangList()" class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-stone-200 text-xs focus:outline-none focus:border-[#ba5d4f]" />
         </div>
         <div id="listMasterBarang" class="divide-y divide-stone-100"></div>
       </div>
@@ -595,7 +616,7 @@
             <i data-lucide="user-check" class="w-4 h-4 text-[#ba5d4f]"></i>
             <span>Data Mitra / Pembeli &amp; Mapping Harga Khusus</span>
           </span>
-          <span class="text-[11px] font-normal text-stone-500">Tersimpan di LocalStorage</span>
+          <span class="text-[11px] font-normal text-stone-500">Cloud &amp; Local</span>
         </h2>
         <p class="text-xs text-stone-500 mt-0.5 mb-3">
           Daftar pembeli di sini akan muncul di dropdown <strong>Kepada Yth</strong> pada nota beserta Harga Khususnya.
@@ -920,17 +941,17 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL: FIREBASE CLOUD DATABASE SETUP ==================== -->
+  <!-- ==================== MODAL: FIREBASE CLOUD DATABASE SETUP (PERMANENT MULTI-DEVICE) ==================== -->
   <div id="modalFirebase" class="no-print fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-stone-100 pb-2.5">
         <div class="flex items-center gap-2.5">
-          <span class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
-            <i data-lucide="cloud" class="w-4 h-4"></i>
+          <span class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <i data-lucide="cloud-check" class="w-4 h-4"></i>
           </span>
           <div>
-            <h3 class="font-bold text-sm text-stone-900">Sinkronisasi Database Firebase</h3>
-            <p class="text-[11px] text-stone-500">Realtime Database Cloud (Otomatis &amp; Gratis)</p>
+            <h3 class="font-bold text-sm text-stone-900">Database Cloud Multi-Device</h3>
+            <p class="text-[11px] text-stone-500">Terhubung Permanen ke Firebase SBR PUTRA FOOD</p>
           </div>
         </div>
         <button type="button" onclick="closeFirebaseModal()" class="w-7 h-7 rounded-full hover:bg-stone-100 text-stone-500 flex items-center justify-center">
@@ -941,7 +962,7 @@
       <div class="bg-stone-50 rounded-xl p-3 border border-stone-200 text-xs space-y-1">
         <div class="flex items-center justify-between">
           <span class="text-stone-500">Status Cloud:</span>
-          <span id="modalFbStatus" class="font-bold text-stone-600">Belum Dihubungkan</span>
+          <span id="modalFbStatus" class="font-bold text-emerald-600">Terhubung Permanen</span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-stone-500">Sinkron Terakhir:</span>
@@ -950,18 +971,21 @@
       </div>
 
       <div>
-        <label for="inputFirebaseUrl" class="block text-[11px] font-bold text-stone-700 mb-1">
-          URL Firebase Realtime Database Anda:
-        </label>
-        <input id="inputFirebaseUrl" type="text" placeholder="https://nama-project-default-rtdb.asia-southeast1.firebasedatabase.app" class="w-full px-3 py-2 rounded-lg border border-stone-300 text-xs font-mono-receipt focus:outline-none focus:border-[#ba5d4f]" />
+        <div class="flex items-center justify-between mb-1">
+          <label for="inputFirebaseUrl" class="block text-[11px] font-bold text-stone-700">
+            URL Firebase Realtime Database (Permanen):
+          </label>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Default Multi-Device</span>
+        </div>
+        <input id="inputFirebaseUrl" type="text" value="https://sbr-putra-food-default-rtdb.asia-southeast1.firebasedatabase.app" class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-stone-50 text-xs font-mono-receipt focus:outline-none focus:border-[#ba5d4f]" />
         <p class="text-[10px] text-stone-500 mt-1">
-          Tempelkan link <strong>Realtime Database URL</strong> dari Firebase Console (berakhiran <code>.firebasedatabase.app</code> atau <code>.firebaseio.com</code>).
+          URL ini sudah ditanam permanen untuk sinkronisasi otomatis di semua HP/perangkat Anda.
         </p>
       </div>
 
       <label class="flex items-center gap-2 text-xs text-stone-700 font-semibold cursor-pointer select-none">
         <input id="chkAutoSyncFirebase" type="checkbox" checked onchange="saveFirebaseConfig()" class="rounded text-[#ba5d4f] focus:ring-[#ba5d4f]" />
-        <span>Sinkron otomatis ke Firebase setiap simpan/cetak nota &amp; ubah harga</span>
+        <span>Sinkron otomatis ke Firebase setiap simpan/cetak nota &amp; ubah barang/harga</span>
       </label>
 
       <div class="grid grid-cols-2 gap-2 pt-1">
@@ -1117,8 +1141,10 @@
     }
 
     // =========================================================================
-    // SAFE LOCAL STORAGE WRAPPER & INITIAL STATE
+    // PERMANENT FIREBASE URL & LOCAL STORAGE KEYS
     // =========================================================================
+    const PERMANENT_FIREBASE_DB_URL = 'https://sbr-putra-food-default-rtdb.asia-southeast1.firebasedatabase.app';
+
     const STORAGE_KEYS = {
       BARANG: 'sbr_putra_master_barang_v3',
       PEMBELI: 'sbr_putra_master_pembeli_v3',
@@ -1148,14 +1174,14 @@
       }
     }
 
-    // Default Master Barang & Harga Standar
+    // Default Master Barang & Harga Standar dilengkapi UOM (Satuan)
     const DEFAULT_BARANG = [
-      { id: 'brg-1', nama: 'SIMPING', harga: 5800, tipe: 'add' },
-      { id: 'brg-2', nama: 'ACI', harga: 329000, tipe: 'sub' },
-      { id: 'brg-3', nama: 'PLASTIK', harga: 44000, tipe: 'sub' },
-      { id: 'brg-4', nama: 'Arumanis Susu Original', harga: 15000, tipe: 'add' },
-      { id: 'brg-5', nama: 'Arumanis Susu Strawberry', harga: 15000, tipe: 'add' },
-      { id: 'brg-6', nama: 'Gula Pasir (Karung)', harga: 720000, tipe: 'sub' }
+      { id: 'brg-1', nama: 'SIMPING', uom: 'Toros', harga: 5800, tipe: 'add' },
+      { id: 'brg-2', nama: 'ACI', uom: 'Sak', harga: 329000, tipe: 'sub' },
+      { id: 'brg-3', nama: 'PLASTIK', uom: 'Pak', harga: 44000, tipe: 'sub' },
+      { id: 'brg-4', nama: 'Arumanis Susu Original', uom: 'Ball', harga: 15000, tipe: 'add' },
+      { id: 'brg-5', nama: 'Arumanis Susu Strawberry', uom: 'Ball', harga: 15000, tipe: 'add' },
+      { id: 'brg-6', nama: 'Gula Pasir (Karung)', uom: 'Sak', harga: 720000, tipe: 'sub' }
     ];
 
     // Default Master Pembeli / Mitra with Per-Customer Custom Price Mapping (hargaKhusus)
@@ -1237,6 +1263,12 @@
       return String(n);
     }
 
+    function formatQtyWithUom(qty, uom) {
+      const q = String(qty || '');
+      const u = String(uom || '').trim();
+      return u ? (q + ' ' + u) : q;
+    }
+
     function getTodayISO() {
       const d = new Date();
       const yyyy = d.getFullYear();
@@ -1305,10 +1337,27 @@
     // Default: 1 row (+) and 2 rows (-) / Ambil Barang
     function createDefaultRows() {
       return [
-        { id: 'row-' + Date.now() + '-1', qty: '', nama: '', harga: '', tipe: 'add' },
-        { id: 'row-' + Date.now() + '-2', qty: '', nama: '', harga: '', tipe: 'sub' },
-        { id: 'row-' + Date.now() + '-3', qty: '', nama: '', harga: '', tipe: 'sub' }
+        { id: 'row-' + Date.now() + '-1', qty: '', uom: '', nama: '', harga: '', tipe: 'add' },
+        { id: 'row-' + Date.now() + '-2', qty: '', uom: '', nama: '', harga: '', tipe: 'sub' },
+        { id: 'row-' + Date.now() + '-3', qty: '', uom: '', nama: '', harga: '', tipe: 'sub' }
       ];
+    }
+
+    function ensureMasterBarangHasUom() {
+      const defaultUomMap = {
+        'simping': 'Toros',
+        'aci': 'Sak',
+        'plastik': 'Pak',
+        'arumanis susu original': 'Ball',
+        'arumanis susu strawberry': 'Ball',
+        'gula pasir (karung)': 'Sak'
+      };
+      masterBarang.forEach(function(b) {
+        if (b.uom === undefined || b.uom === null) {
+          const key = (b.nama || '').trim().toLowerCase();
+          b.uom = defaultUomMap[key] || '';
+        }
+      });
     }
 
     // Helper function to reset the current nota form immediately
@@ -1334,6 +1383,9 @@
       if (!Array.isArray(masterBarang) || masterBarang.length === 0) {
         masterBarang = DEFAULT_BARANG.slice();
         safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
+      } else {
+        ensureMasterBarangHasUom();
+        safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
       }
 
       masterPembeli = safeGetStorage(STORAGE_KEYS.PEMBELI, null);
@@ -1358,6 +1410,9 @@
       const savedDraft = safeGetStorage(STORAGE_KEYS.DRAFT, null);
       if (savedDraft && Array.isArray(savedDraft.rows) && savedDraft.rows.length > 0) {
         currentNota = savedDraft;
+        currentNota.rows.forEach(function(r) {
+          if (r.uom === undefined) r.uom = '';
+        });
       } else {
         currentNota = {
           noNota: generateNotaNumber(),
@@ -1481,7 +1536,7 @@
     }
 
     // =========================================================================
-    // HARGA KHUSUS PER MITRA/PEMBELI RESOLUTION LOGIC
+    // HARGA KHUSUS PER MITRA/PEMBELI & UOM RESOLUTION LOGIC
     // =========================================================================
     function findBarangByName(nama) {
       if (!nama) return null;
@@ -1521,6 +1576,7 @@
       if (customPrice !== null) {
         return {
           harga: customPrice,
+          uom: brg ? (brg.uom || '') : '',
           isKhusus: true,
           tipe: brg ? (brg.tipe || 'add') : 'add',
           barangObj: brg
@@ -1530,6 +1586,7 @@
       if (brg) {
         return {
           harga: Number(brg.harga) || 0,
+          uom: brg.uom || '',
           isKhusus: false,
           tipe: brg.tipe || 'add',
           barangObj: brg
@@ -1605,9 +1662,14 @@
       currentNota.rows.forEach(function(r) {
         if (r.nama && r.nama.trim() !== '') {
           const resolved = resolveHargaUntukPembeli(r.nama, currentNota.pembeli);
-          if (resolved && resolved.harga > 0 && Number(r.harga) !== resolved.harga) {
-            r.harga = resolved.harga;
-            updatedCount++;
+          if (resolved) {
+            if (!r.uom && resolved.uom) {
+              r.uom = resolved.uom;
+            }
+            if (resolved.harga > 0 && Number(r.harga) !== resolved.harga) {
+              r.harga = resolved.harga;
+              updatedCount++;
+            }
           }
         }
       });
@@ -1619,7 +1681,7 @@
     }
 
     // =========================================================================
-    // NOTA TABLE & AUTO-MAPPING BARANG <-> HARGA & TIPE (+ / - AMBIL BARANG)
+    // NOTA TABLE & AUTO-MAPPING BARANG <-> UOM <-> HARGA & TIPE (+ / - AMBIL BARANG)
     // =========================================================================
     function setQuickItemTipe(tipe) {
       quickItemTipe = tipe === 'sub' ? 'sub' : 'add';
@@ -1712,6 +1774,7 @@
       const badge = document.getElementById('quickHargaSourceBadge');
       if (resolved) {
         document.getElementById('quickHarga').value = resolved.harga;
+        document.getElementById('quickUom').value = resolved.uom || '';
         setQuickItemTipe(resolved.tipe || 'add');
         if (resolved.isKhusus) {
           badge.classList.remove('hidden');
@@ -1732,8 +1795,9 @@
         const effHarga = resolved ? resolved.harga : b.harga;
         const isKhusus = resolved && resolved.isKhusus;
         const prefix = b.tipe === 'sub' ? '[AMBIL -] ' : '[+] ';
+        const uomInfo = b.uom ? (' / ' + b.uom) : '';
         const star = isKhusus ? ' (Harga Mitra)' : '';
-        return '<option value="' + escapeHtml(b.nama) + '">' + prefix + 'Rp ' + formatRupiahNumber(effHarga) + star + '</option>';
+        return '<option value="' + escapeHtml(b.nama) + '">' + prefix + 'Rp ' + formatRupiahNumber(effHarga) + uomInfo + star + '</option>';
       }).join('');
 
       const dlPembeli = document.getElementById('datalistPembeli');
@@ -1747,6 +1811,7 @@
         const resolved = resolveHargaUntukPembeli(b.nama, currentNota.pembeli);
         const effHarga = resolved ? resolved.harga : b.harga;
         const isKhusus = resolved && resolved.isKhusus;
+        const uomLabel = b.uom ? ('/' + b.uom) : '';
 
         let badgeStyle = isSub
           ? 'bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-900 border-amber-300'
@@ -1761,7 +1826,7 @@
         const signSymbol = isSub ? '− ' : '+ ';
         const starBadge = isKhusus ? '<i data-lucide="sparkles" class="w-3 h-3 inline mr-0.5"></i>' : '';
         return '<button type="button" onclick="selectQuickChip(\'' + b.id + '\')" class="px-2.5 py-1 rounded-full ' + badgeStyle + ' text-[11px] font-bold border transition whitespace-nowrap shrink-0 flex items-center gap-0.5">' +
-          starBadge + '<span>' + signSymbol + escapeHtml(b.nama) + '</span> <span class="opacity-80 font-mono-receipt ml-0.5">(' + formatRupiahNumber(effHarga) + ')</span></button>';
+          starBadge + '<span>' + signSymbol + escapeHtml(b.nama) + '</span> <span class="opacity-80 font-mono-receipt ml-0.5">(' + formatRupiahNumber(effHarga) + escapeHtml(uomLabel) + ')</span></button>';
       }).join('');
       refreshIcons();
     }
@@ -1772,6 +1837,7 @@
       const resolved = resolveHargaUntukPembeli(item.nama, currentNota.pembeli);
       const effHarga = resolved ? resolved.harga : item.harga;
       document.getElementById('quickNamaBarang').value = item.nama;
+      document.getElementById('quickUom').value = item.uom || '';
       document.getElementById('quickHarga').value = effHarga;
       setQuickItemTipe(item.tipe || 'add');
       const badge = document.getElementById('quickHargaSourceBadge');
@@ -1786,6 +1852,7 @@
 
     function handleAddQuickItem() {
       const qtyVal = Number(document.getElementById('quickQty').value) || 1;
+      const uomVal = (document.getElementById('quickUom').value || '').trim();
       const namaVal = document.getElementById('quickNamaBarang').value.trim();
       const hargaVal = Number(document.getElementById('quickHarga').value) || 0;
       const tipeVal = quickItemTipe || 'add';
@@ -1797,8 +1864,13 @@
       }
 
       const existingBrg = findBarangByName(namaVal);
+      const finalUom = uomVal || (existingBrg ? (existingBrg.uom || '') : '');
+
       if (document.getElementById('chkAutoSaveMaster').checked && namaVal && hargaVal > 0 && !existingBrg) {
-        upsertBarangMapping(namaVal, hargaVal, false, tipeVal);
+        upsertBarangMapping(namaVal, hargaVal, false, tipeVal, finalUom);
+      } else if (existingBrg && finalUom && !existingBrg.uom) {
+        existingBrg.uom = finalUom;
+        safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
       }
 
       if (document.getElementById('chkAutoSaveHargaMitra').checked && currentNota.pembeli && currentNota.pembeli.trim() && hargaVal > 0) {
@@ -1809,8 +1881,9 @@
       for (let i = 0; i < currentNota.rows.length; i++) {
         const r = currentNota.rows[i];
         const rTipe = r.tipe || 'add';
-        if (rTipe === tipeVal && r.nama.trim().toLowerCase() === namaVal.toLowerCase() && Number(r.harga) === hargaVal) {
+        if (rTipe === tipeVal && r.nama.trim().toLowerCase() === namaVal.toLowerCase() && Number(r.harga) === hargaVal && (r.uom || '') === finalUom) {
           r.qty = (Number(r.qty) || 0) + qtyVal;
+          r.uom = finalUom;
           placed = true;
           break;
         }
@@ -1822,6 +1895,7 @@
           const rTipe = r.tipe || 'add';
           if (rTipe === tipeVal && !r.nama.trim() && !r.qty) {
             r.qty = qtyVal;
+            r.uom = finalUom;
             r.nama = namaVal;
             r.harga = hargaVal;
             placed = true;
@@ -1834,6 +1908,7 @@
         currentNota.rows.push({
           id: 'row-' + Date.now(),
           qty: qtyVal,
+          uom: finalUom,
           nama: namaVal,
           harga: hargaVal,
           tipe: tipeVal
@@ -1841,6 +1916,7 @@
       }
 
       document.getElementById('quickQty').value = 1;
+      document.getElementById('quickUom').value = '';
       document.getElementById('quickNamaBarang').value = '';
       document.getElementById('quickHarga').value = '';
       document.getElementById('quickHargaSourceBadge').classList.add('hidden');
@@ -1848,7 +1924,7 @@
       renderDatalistsAndChips();
       renderNotaTable();
       saveDraftState();
-      showToast((tipeVal === 'sub' ? 'Ambil Barang (−): ' : 'Barang (+): ') + qtyVal + 'x ' + namaVal, 'success');
+      showToast((tipeVal === 'sub' ? 'Ambil Barang (−): ' : 'Barang (+): ') + formatQtyWithUom(qtyVal, finalUom) + ' ' + namaVal, 'success');
     }
 
     function calculateNotaTotals() {
@@ -1899,10 +1975,15 @@
         : 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200';
 
       return '<tr class="nota-row ' + (isSub ? 'bg-amber-50/25' : '') + '">' +
-        '<td style="width: 15%;" class="nota-cell">' +
-          '<input type="number" inputmode="numeric" min="0" step="1" value="' + (row.qty !== '' ? row.qty : '') + '" placeholder=".." ' +
-            'oninput="onRowCellChange(' + idx + ', \'qty\', this.value)" ' +
-            'class="w-full bg-transparent text-center font-bold text-xs sm:text-sm focus:outline-none focus:bg-amber-50/70 rounded py-0.5" />' +
+        '<td style="width: 22%;" class="nota-cell">' +
+          '<div class="flex items-center gap-0.5">' +
+            '<input type="number" inputmode="numeric" min="0" step="1" value="' + (row.qty !== '' ? row.qty : '') + '" placeholder=".." ' +
+              'oninput="onRowCellChange(' + idx + ', \'qty\', this.value)" ' +
+              'class="w-1/2 bg-transparent text-right font-bold text-xs sm:text-sm focus:outline-none focus:bg-amber-50/70 rounded py-0.5 pr-0.5" />' +
+            '<input type="text" list="datalistUom" value="' + escapeHtml(row.uom || '') + '" placeholder="satuan" ' +
+              'oninput="onRowCellChange(' + idx + ', \'uom\', this.value)" ' +
+              'class="w-1/2 bg-transparent text-left text-[10px] sm:text-xs font-semibold text-stone-600 focus:outline-none focus:bg-amber-50/70 rounded py-0.5 pl-0.5" />' +
+          '</div>' +
         '</td>' +
         '<td class="nota-cell">' +
           '<div class="flex items-center gap-1">' +
@@ -1968,7 +2049,7 @@
       if (filledAddCount > 1 && totals.subtotalSub > 0) {
         htmlParts.push(
           '<tr class="nota-row bg-stone-100/70">' +
-            '<td style="width: 15%;" class="nota-cell"></td>' +
+            '<td style="width: 22%;" class="nota-cell"></td>' +
             '<td class="nota-cell text-right text-[11px] font-bold uppercase text-stone-600 px-2">Subtotal Barang (+)</td>' +
             '<td class="nota-cell"></td>' +
             '<td class="nota-cell text-right font-mono-receipt font-extrabold text-xs sm:text-sm px-1.5 text-stone-900">' + formatRupiahNumber(totals.subtotalAdd) + '</td>' +
@@ -1980,7 +2061,7 @@
       if (subIndices.length > 0) {
         htmlParts.push(
           '<tr class="nota-row bg-amber-50/50">' +
-            '<td style="width: 15%;" class="nota-cell"></td>' +
+            '<td style="width: 22%;" class="nota-cell"></td>' +
             '<td class="nota-cell font-condensed font-extrabold text-sm sm:text-base tracking-wide text-stone-900 px-1.5 py-1 uppercase">' +
               'AMBIL BARANG' +
             '</td>' +
@@ -1997,7 +2078,7 @@
         if (totals.subtotalSub > 0) {
           htmlParts.push(
             '<tr class="nota-row bg-amber-50/40">' +
-              '<td style="width: 15%;" class="nota-cell"></td>' +
+              '<td style="width: 22%;" class="nota-cell"></td>' +
               '<td class="nota-cell text-right text-[11px] font-semibold italic text-stone-500 px-2">Potongan Ambil Barang (−)</td>' +
               '<td class="nota-cell"></td>' +
               '<td id="notaSubtotalAmbilCell" class="nota-cell text-right font-mono-receipt font-extrabold text-xs sm:text-sm px-1.5 text-red-700">' +
@@ -2030,6 +2111,7 @@
         const resolved = resolveHargaUntukPembeli(value, currentNota.pembeli);
         if (resolved) {
           row.harga = resolved.harga;
+          row.uom = resolved.uom || '';
           if (resolved.tipe) row.tipe = resolved.tipe;
           if (!row.qty) row.qty = 1;
           renderNotaTable();
@@ -2038,6 +2120,8 @@
         }
       } else if (field === 'qty') {
         row.qty = value === '' ? '' : Number(value);
+      } else if (field === 'uom') {
+        row.uom = value;
       } else if (field === 'harga') {
         row.harga = value === '' ? '' : Number(value);
       }
@@ -2075,6 +2159,7 @@
       currentNota.rows.push({
         id: 'row-' + Date.now(),
         qty: '',
+        uom: '',
         nama: '',
         harga: '',
         tipe: tipe === 'sub' ? 'sub' : 'add'
@@ -2088,6 +2173,7 @@
         currentNota.rows[idx] = {
           id: 'row-' + Date.now(),
           qty: '',
+          uom: '',
           nama: '',
           harga: '',
           tipe: currentNota.rows[idx].tipe || 'add'
@@ -2110,20 +2196,23 @@
     }
 
     // =========================================================================
-    // MASTER DATA BARANG & HARGA STANDAR (LOCAL STORAGE)
+    // MASTER DATA BARANG, UOM & HARGA STANDAR (CLOUD & LOCAL STORAGE)
     // =========================================================================
-    function upsertBarangMapping(nama, harga, notify, tipe) {
+    function upsertBarangMapping(nama, harga, notify, tipe, uom) {
       const cleanName = nama.trim();
       if (!cleanName) return;
+      const cleanUom = (uom || '').trim();
       const existing = findBarangByName(cleanName);
       if (existing) {
         existing.nama = cleanName;
         existing.harga = Number(harga) || 0;
         if (tipe) existing.tipe = tipe;
+        if (cleanUom) existing.uom = cleanUom;
       } else {
         masterBarang.unshift({
           id: 'brg-' + Date.now() + '-' + Math.floor(Math.random() * 100),
           nama: cleanName,
+          uom: cleanUom,
           harga: Number(harga) || 0,
           tipe: tipe || 'add'
         });
@@ -2132,13 +2221,15 @@
       renderDatalistsAndChips();
       renderMasterBarangList();
       updateBadges();
-      if (notify) showToast('Mapping harga standar "' + cleanName + '" disimpan', 'success');
+      triggerAutoPushFirebase();
+      if (notify) showToast('Mapping "' + cleanName + '" disimpan', 'success');
     }
 
     function handleSaveMasterBarang(e) {
       e.preventDefault();
       const editId = document.getElementById('editBarangId').value;
       const nama = document.getElementById('inputMasterNamaBarang').value.trim();
+      const uom = (document.getElementById('inputMasterUomBarang').value || '').trim();
       const harga = Number(document.getElementById('inputMasterHargaBarang').value) || 0;
       const tipe = document.getElementById('inputMasterTipeBarang').value || 'add';
 
@@ -2148,12 +2239,13 @@
         const idx = masterBarang.findIndex(function(b) { return b.id === editId; });
         if (idx !== -1) {
           masterBarang[idx].nama = nama;
+          masterBarang[idx].uom = uom;
           masterBarang[idx].harga = harga;
           masterBarang[idx].tipe = tipe;
         }
-        showToast('Data barang diperbarui', 'success');
+        showToast('Data barang & satuan diperbarui', 'success');
       } else {
-        upsertBarangMapping(nama, harga, true, tipe);
+        upsertBarangMapping(nama, harga, true, tipe, uom);
       }
 
       safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
@@ -2161,6 +2253,7 @@
       renderDatalistsAndChips();
       renderMasterBarangList();
       updateBadges();
+      triggerAutoPushFirebase();
     }
 
     function editMasterBarang(id) {
@@ -2168,6 +2261,7 @@
       if (!item) return;
       document.getElementById('editBarangId').value = item.id;
       document.getElementById('inputMasterNamaBarang').value = item.nama;
+      document.getElementById('inputMasterUomBarang').value = item.uom || '';
       document.getElementById('inputMasterHargaBarang').value = item.harga;
       document.getElementById('inputMasterTipeBarang').value = item.tipe || 'add';
       document.getElementById('btnSubmitMasterBarang').innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 icon-interactive"></i><span>Simpan Perubahan</span>';
@@ -2179,9 +2273,10 @@
     function resetFormMasterBarang() {
       document.getElementById('editBarangId').value = '';
       document.getElementById('inputMasterNamaBarang').value = '';
+      document.getElementById('inputMasterUomBarang').value = '';
       document.getElementById('inputMasterHargaBarang').value = '';
       document.getElementById('inputMasterTipeBarang').value = 'add';
-      document.getElementById('btnSubmitMasterBarang').innerHTML = '<i data-lucide="plus" class="w-3.5 h-3.5 icon-interactive"></i><span>Simpan Barang &amp; Harga</span>';
+      document.getElementById('btnSubmitMasterBarang').innerHTML = '<i data-lucide="plus" class="w-3.5 h-3.5 icon-interactive"></i><span>Simpan Barang &amp; UOM</span>';
       document.getElementById('btnCancelEditBarang').classList.add('hidden');
       refreshIcons();
     }
@@ -2192,6 +2287,7 @@
       renderDatalistsAndChips();
       renderMasterBarangList();
       updateBadges();
+      triggerAutoPushFirebase();
       showToast('Barang dihapus dari daftar', 'info');
     }
 
@@ -2199,7 +2295,7 @@
       const q = (document.getElementById('searchMasterBarang').value || '').trim().toLowerCase();
       const container = document.getElementById('listMasterBarang');
       const filtered = masterBarang.filter(function(b) {
-        return !q || b.nama.toLowerCase().includes(q);
+        return !q || b.nama.toLowerCase().includes(q) || (b.uom && b.uom.toLowerCase().includes(q));
       });
 
       if (filtered.length === 0) {
@@ -2213,15 +2309,20 @@
           ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">− Ambil Barang</span>'
           : '<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">+ Barang Masuk/Jual</span>';
 
+        const uomBadge = b.uom
+          ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-stone-200 text-stone-800 font-bold">UOM: ' + escapeHtml(b.uom) + '</span>'
+          : '<span class="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-400">Tanpa UOM</span>';
+
         return '<div class="py-2.5 flex items-center justify-between gap-2">' +
           '<div>' +
-            '<div class="flex items-center gap-1.5">' +
+            '<div class="flex flex-wrap items-center gap-1.5">' +
               '<span class="font-bold text-xs text-stone-800">' + escapeHtml(b.nama) + '</span>' +
+              uomBadge +
               badgeHtml +
             '</div>' +
-            '<div class="font-mono-receipt text-xs text-[#ba5d4f] font-semibold mt-0.5">Harga Standar: Rp ' + formatRupiahNumber(b.harga) + '</div>' +
+            '<div class="font-mono-receipt text-xs text-[#ba5d4f] font-semibold mt-0.5">Harga Standar: Rp ' + formatRupiahNumber(b.harga) + (b.uom ? (' / ' + escapeHtml(b.uom)) : '') + '</div>' +
           '</div>' +
-          '<div class="flex items-center gap-1.5">' +
+          '<div class="flex items-center gap-1.5 shrink-0">' +
             '<button type="button" onclick="editMasterBarang(\'' + b.id + '\')" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold transition">' +
               '<i data-lucide="pencil" class="w-3 h-3 icon-interactive"></i><span>Edit</span>' +
             '</button>' +
@@ -2235,7 +2336,7 @@
     }
 
     // =========================================================================
-    // MASTER DATA PEMBELI & MODAL HARGA KHUSUS MITRA (LOCAL STORAGE)
+    // MASTER DATA PEMBELI & MODAL HARGA KHUSUS MITRA
     // =========================================================================
     function upsertPembeliMapping(nama, info) {
       const cleanName = (nama || '').trim();
@@ -2285,6 +2386,7 @@
       renderMasterPembeliList();
       updateBadges();
       updateActiveMitraBanner();
+      triggerAutoPushFirebase();
     }
 
     function editMasterPembeli(id) {
@@ -2315,6 +2417,7 @@
       renderMasterPembeliList();
       updateBadges();
       updateActiveMitraBanner();
+      triggerAutoPushFirebase();
       showToast('Data pembeli dihapus', 'info');
     }
 
@@ -2370,13 +2473,15 @@
           ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold">− Ambil</span>'
           : '<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold">+ Jual/Setor</span>';
 
+        const uomInfo = b.uom ? (' / ' + escapeHtml(b.uom)) : '';
+
         return '<div class="py-2.5 flex items-center justify-between gap-2">' +
           '<div class="min-w-0 flex-1">' +
             '<div class="flex items-center gap-1.5">' +
               '<span class="font-bold text-xs text-stone-800 truncate">' + escapeHtml(b.nama) + '</span>' +
               badge +
             '</div>' +
-            '<div class="text-[11px] text-stone-400 font-mono-receipt">Standar: Rp ' + formatRupiahNumber(b.harga) + '</div>' +
+            '<div class="text-[11px] text-stone-400 font-mono-receipt">Standar: Rp ' + formatRupiahNumber(b.harga) + uomInfo + '</div>' +
           '</div>' +
           '<div class="w-36 shrink-0">' +
             '<input type="number" inputmode="numeric" min="0" step="100" data-barang-nama="' + escapeHtml(b.nama) + '" ' +
@@ -2488,8 +2593,11 @@
       }).map(function(r) {
         const q = Number(r.qty) || 0;
         const h = Number(r.harga) || 0;
+        const brg = findBarangByName(r.nama);
+        const uomVal = (r.uom !== undefined && r.uom !== '') ? String(r.uom).trim() : (brg ? (brg.uom || '') : '');
         return {
           qty: q,
+          uom: uomVal,
           nama: r.nama.trim(),
           harga: h,
           tipe: r.tipe === 'sub' ? 'sub' : 'add',
@@ -2511,8 +2619,12 @@
           upsertPembeliMapping(currentNota.pembeli.trim(), currentNota.catatanPembeli || '');
         }
         items.forEach(function(it) {
-          if (it.nama && it.harga > 0 && !findBarangByName(it.nama)) {
-            upsertBarangMapping(it.nama, it.harga, false, it.tipe);
+          const foundBrg = findBarangByName(it.nama);
+          if (it.nama && it.harga > 0 && !foundBrg) {
+            upsertBarangMapping(it.nama, it.harga, false, it.tipe, it.uom);
+          } else if (foundBrg && it.uom && !foundBrg.uom) {
+            foundBrg.uom = it.uom;
+            safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
           }
         });
       }
@@ -2575,16 +2687,18 @@
       if (!rec) return;
 
       const rows = rec.items.map(function(it, i) {
+        const brg = findBarangByName(it.nama);
         return {
           id: 'row-hist-' + i,
           qty: it.qty,
+          uom: it.uom !== undefined ? it.uom : (brg ? (brg.uom || '') : ''),
           nama: it.nama,
           harga: it.harga,
           tipe: it.tipe || 'add'
         };
       });
-      rows.push({ id: 'row-pad-' + rows.length, qty: '', nama: '', harga: '', tipe: 'add' });
-      rows.push({ id: 'row-pad-sub', qty: '', nama: '', harga: '', tipe: 'sub' });
+      rows.push({ id: 'row-pad-' + rows.length, qty: '', uom: '', nama: '', harga: '', tipe: 'add' });
+      rows.push({ id: 'row-pad-sub', qty: '', uom: '', nama: '', harga: '', tipe: 'sub' });
 
       currentNota = {
         noNota: rec.noNota,
@@ -2734,9 +2848,7 @@
       let monthSubQty = 0;
       let monthNotaCount = 0;
 
-      // Daily buckets within selectedYM
       const dailyMap = {};
-      // Monthly buckets across all history
       const monthlyMap = {};
 
       riwayatNota.forEach(function(n) {
@@ -2758,7 +2870,7 @@
           monthSubQty += bd.subQty;
           monthNotaCount += 1;
 
-          const dayKey = tgl.slice(8, 10); // '01'..'31'
+          const dayKey = tgl.slice(8, 10);
           if (!dailyMap[dayKey]) {
             dailyMap[dayKey] = { addVal: 0, subVal: 0, fullDate: tgl };
           }
@@ -2775,7 +2887,6 @@
       document.getElementById('analisaMonthNet').textContent = 'Rp ' + formatRupiahNumber(monthNet);
       document.getElementById('analisaMonthNotaCount').textContent = monthNotaCount + ' transaksi nota';
 
-      // Horizontal comparison ratio bar
       const totalVolume = monthAdd + monthSub;
       let addPct = 50;
       let subPct = 50;
@@ -2791,7 +2902,6 @@
       document.getElementById('analisaBarAddPct').style.width = (totalVolume > 0 ? addPct : 50) + '%';
       document.getElementById('analisaBarSubPct').style.width = (totalVolume > 0 ? subPct : 50) + '%';
 
-      // Build Bar Chart Items
       const chartContainer = document.getElementById('analisaChartContainer');
       let chartSeries = [];
 
@@ -2843,17 +2953,14 @@
         const hSub = item.subVal > 0 ? Math.max(8, Math.round((item.subVal / maxVal) * 100)) : 2;
 
         return '<div class="flex flex-col items-center flex-1 min-w-[46px] group">' +
-          '<!-- Top compact value labels -->' +
           '<div class="text-[9px] font-mono-receipt leading-tight text-center mb-1 space-y-0.5">' +
             '<div class="text-emerald-700 font-bold">+' + formatCompactRupiah(item.addVal) + '</div>' +
             '<div class="text-amber-700 font-bold">−' + formatCompactRupiah(item.subVal) + '</div>' +
           '</div>' +
-          '<!-- Side-by-side bars -->' +
           '<div class="w-full h-28 flex items-end justify-center gap-1 border-b border-stone-300 px-1 pt-2 bg-white/60 rounded-t-lg group-hover:bg-stone-100/80 transition" title="' + escapeHtml(item.tooltipTitle) + ' | Masuk: Rp ' + formatRupiahNumber(item.addVal) + ' | Ambil: Rp ' + formatRupiahNumber(item.subVal) + '">' +
             '<div class="w-3.5 sm:w-4 rounded-t-md bg-emerald-500 hover:bg-emerald-600 chart-bar-anim shadow-sm" style="height: ' + hAdd + '%;"></div>' +
             '<div class="w-3.5 sm:w-4 rounded-t-md bg-amber-500 hover:bg-amber-600 chart-bar-anim shadow-sm" style="height: ' + hSub + '%;"></div>' +
           '</div>' +
-          '<!-- X-axis label -->' +
           '<div class="text-[10px] font-bold text-stone-700 mt-1.5 whitespace-nowrap">' + escapeHtml(item.label) + '</div>' +
         '</div>';
       }).join('');
@@ -2879,7 +2986,10 @@
 
       container.innerHTML = riwayatNota.map(function(n) {
         const ringkasan = n.items.map(function(it) {
-          return (it.tipe === 'sub' ? '[-]' : '[+]') + ' ' + it.qty + 'x ' + it.nama;
+          const brg = findBarangByName(it.nama);
+          const uomStr = it.uom !== undefined ? it.uom : (brg ? (brg.uom || '') : '');
+          const qtyUom = uomStr ? (it.qty + ' ' + uomStr) : (it.qty + 'x');
+          return (it.tipe === 'sub' ? '[-]' : '[+]') + ' ' + qtyUom + ' ' + it.nama;
         }).join(', ');
         return '<div class="p-3 rounded-xl border border-stone-200 bg-stone-50/60 flex flex-col gap-2">' +
           '<div class="flex items-start justify-between gap-2">' +
@@ -2939,6 +3049,7 @@
           const data = JSON.parse(e.target.result);
           if (Array.isArray(data.masterBarang)) {
             masterBarang = data.masterBarang;
+            ensureMasterBarangHasUom();
             safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
           }
           if (Array.isArray(data.masterPembeli)) {
@@ -2955,6 +3066,7 @@
           renderRiwayatList();
           updateBadges();
           updateActiveMitraBanner();
+          triggerAutoPushFirebase();
           showToast('Data backup berhasil dipulihkan!', 'success');
         } catch (err) {
           showToast('Format file backup tidak valid', 'error');
@@ -2965,16 +3077,16 @@
     }
 
     // =========================================================================
-    // FIREBASE REALTIME DATABASE CLOUD SYNC
+    // FIREBASE REALTIME DATABASE CLOUD SYNC (PERMANENT MULTI-DEVICE URL)
     // =========================================================================
     let firebaseConfigState = {
-      dbUrl: '',
+      dbUrl: PERMANENT_FIREBASE_DB_URL,
       autoSync: true,
       lastSync: ''
     };
 
     function cleanFirebaseDatabaseUrl(rawInput) {
-      if (!rawInput) return '';
+      if (!rawInput) return PERMANENT_FIREBASE_DB_URL;
       let s = String(rawInput).trim();
       const match = s.match(/https:\/\/[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.(?:firebasedatabase\.app|firebaseio\.com)/);
       if (match) {
@@ -2983,21 +3095,31 @@
       if (s.startsWith('http://') || s.startsWith('https://')) {
         return s.replace(/\/+$/, '').replace(/\/sbr_putra_db\.json$/, '');
       }
-      return '';
+      return PERMANENT_FIREBASE_DB_URL;
     }
 
     function initFirebaseConfig() {
       const saved = safeGetStorage(STORAGE_KEYS.FIREBASE, null);
       if (saved && typeof saved === 'object') {
         firebaseConfigState = {
-          dbUrl: saved.dbUrl || '',
+          dbUrl: saved.dbUrl ? cleanFirebaseDatabaseUrl(saved.dbUrl) : PERMANENT_FIREBASE_DB_URL,
           autoSync: saved.autoSync !== false,
           lastSync: saved.lastSync || ''
         };
+      } else {
+        firebaseConfigState = {
+          dbUrl: PERMANENT_FIREBASE_DB_URL,
+          autoSync: true,
+          lastSync: ''
+        };
+        safeSetStorage(STORAGE_KEYS.FIREBASE, firebaseConfigState);
       }
-      document.getElementById('inputFirebaseUrl').value = firebaseConfigState.dbUrl || '';
+
+      document.getElementById('inputFirebaseUrl').value = firebaseConfigState.dbUrl;
       document.getElementById('chkAutoSyncFirebase').checked = firebaseConfigState.autoSync !== false;
       updateFirebaseStatusUI();
+
+      // Always pull latest cloud data on startup for multi-device synchronization
       if (firebaseConfigState.dbUrl && firebaseConfigState.autoSync) {
         pullFromFirebase(true);
       }
@@ -3012,7 +3134,7 @@
       if (firebaseConfigState.dbUrl) {
         dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
         topTxt.textContent = 'Cloud Aktif';
-        modalStatus.textContent = 'Terhubung ke Firebase';
+        modalStatus.textContent = 'Terhubung Permanen (Multi-Device)';
         modalStatus.className = 'font-bold text-emerald-600';
       } else {
         dot.className = 'w-2 h-2 rounded-full bg-stone-400';
@@ -3024,7 +3146,7 @@
     }
 
     function openFirebaseModal() {
-      document.getElementById('inputFirebaseUrl').value = firebaseConfigState.dbUrl || '';
+      document.getElementById('inputFirebaseUrl').value = firebaseConfigState.dbUrl || PERMANENT_FIREBASE_DB_URL;
       document.getElementById('chkAutoSyncFirebase').checked = firebaseConfigState.autoSync !== false;
       updateFirebaseStatusUI();
       document.getElementById('modalFirebase').classList.remove('hidden');
@@ -3040,9 +3162,7 @@
       const cleaned = cleanFirebaseDatabaseUrl(rawUrl);
       firebaseConfigState.dbUrl = cleaned;
       firebaseConfigState.autoSync = document.getElementById('chkAutoSyncFirebase').checked;
-      if (cleaned) {
-        document.getElementById('inputFirebaseUrl').value = cleaned;
-      }
+      document.getElementById('inputFirebaseUrl').value = cleaned;
       safeSetStorage(STORAGE_KEYS.FIREBASE, firebaseConfigState);
       updateFirebaseStatusUI();
       return cleaned;
@@ -3050,10 +3170,7 @@
 
     async function saveAndPushToFirebase(silent) {
       const dbUrl = saveFirebaseConfig();
-      if (!dbUrl) {
-        if (!silent) showToast('Masukkan URL Firebase Realtime Database terlebih dahulu', 'error');
-        return false;
-      }
+      if (!dbUrl) return false;
 
       const endpoint = dbUrl + '/sbr_putra_db.json';
       const payload = {
@@ -3087,10 +3204,7 @@
 
     async function pullFromFirebase(silent) {
       const dbUrl = saveFirebaseConfig();
-      if (!dbUrl) {
-        if (!silent) showToast('Masukkan URL Firebase Realtime Database terlebih dahulu', 'error');
-        return false;
-      }
+      if (!dbUrl) return false;
 
       const endpoint = dbUrl + '/sbr_putra_db.json';
       try {
@@ -3101,12 +3215,14 @@
         }
         const data = await res.json();
         if (!data) {
-          if (!silent) showToast('Database Firebase masih kosong, silakan klik Upload ke Cloud terlebih dahulu', 'info');
+          // If cloud DB is brand new / empty, seed it automatically with local defaults
+          saveAndPushToFirebase(true);
           return false;
         }
 
         if (Array.isArray(data.masterBarang) && data.masterBarang.length > 0) {
           masterBarang = data.masterBarang;
+          ensureMasterBarangHasUom();
           safeSetStorage(STORAGE_KEYS.BARANG, masterBarang);
         }
         if (Array.isArray(data.masterPembeli) && data.masterPembeli.length > 0) {
@@ -3134,7 +3250,7 @@
         renderRiwayatList();
         updateBadges();
 
-        if (!silent) showToast('Data dari Cloud Firebase berhasil dimuat ke HP ini!', 'success');
+        if (!silent) showToast('Data dari Cloud Firebase berhasil dimuat ke perangkat ini!', 'success');
         return true;
       } catch (err) {
         if (!silent) showToast('Gagal menarik data Firebase: ' + (err.message || 'Error'), 'error');
@@ -3149,7 +3265,7 @@
     }
 
     // =========================================================================
-    // ESC/POS THERMAL RECEIPT BUILDER
+    // ESC/POS THERMAL RECEIPT BUILDER (WITH UOM RIGHT OF QTY)
     // =========================================================================
     function padRight(str, len) {
       const s = String(str || '');
@@ -3199,13 +3315,14 @@
       lines.push(margin + 'Waktu  : ' + getWaktuHHMM(currentNota.waktu));
       lines.push(margin + 'Kepada : ' + (currentNota.pembeli || 'Umum'));
       lines.push(margin + divider);
-      lines.push(margin + padRight('QTY NAMA BARANG', w - 10) + padLeft('JUMLAH', 10));
+      lines.push(margin + padRight('QTY SATUAN & BARANG', w - 10) + padLeft('JUMLAH', 10));
       lines.push(margin + divider);
 
       if (addItems.length > 0) {
         addItems.forEach(function(it) {
           lines.push(margin + it.nama.slice(0, w));
-          const leftDetail = '  ' + it.qty + ' x ' + formatRupiahNumber(it.harga);
+          const qtyWithUom = formatQtyWithUom(it.qty, it.uom);
+          const leftDetail = '  ' + qtyWithUom + ' x ' + formatRupiahNumber(it.harga);
           const rightSub = formatRupiahNumber(it.jumlah);
           const spaceLeft = Math.max(1, w - rightSub.length);
           lines.push(margin + padRight(leftDetail, spaceLeft) + rightSub);
@@ -3222,7 +3339,8 @@
         lines.push(margin + 'AMBIL BARANG (-):');
         subItems.forEach(function(it) {
           lines.push(margin + it.nama.slice(0, w));
-          const leftDetail = '  ' + it.qty + ' x ' + formatRupiahNumber(it.harga);
+          const qtyWithUom = formatQtyWithUom(it.qty, it.uom);
+          const leftDetail = '  ' + qtyWithUom + ' x ' + formatRupiahNumber(it.harga);
           const rightSub = formatRupiahNumber(it.jumlah);
           const spaceLeft = Math.max(1, w - rightSub.length);
           lines.push(margin + padRight(leftDetail, spaceLeft) + rightSub);
@@ -3271,13 +3389,14 @@
       preTotalLines.push(margin + 'Waktu  : ' + getWaktuHHMM(currentNota.waktu));
       preTotalLines.push(margin + 'Kepada : ' + (currentNota.pembeli || 'Umum'));
       preTotalLines.push(margin + divider);
-      preTotalLines.push(margin + padRight('QTY NAMA BARANG', w - 10) + padLeft('JUMLAH', 10));
+      preTotalLines.push(margin + padRight('QTY SATUAN & BARANG', w - 10) + padLeft('JUMLAH', 10));
       preTotalLines.push(margin + divider);
 
       if (addItems.length > 0) {
         addItems.forEach(function(it) {
           preTotalLines.push(margin + it.nama.slice(0, w));
-          const leftDetail = '  ' + it.qty + ' x ' + formatRupiahNumber(it.harga);
+          const qtyWithUom = formatQtyWithUom(it.qty, it.uom);
+          const leftDetail = '  ' + qtyWithUom + ' x ' + formatRupiahNumber(it.harga);
           const rightSub = formatRupiahNumber(it.jumlah);
           const spaceLeft = Math.max(1, w - rightSub.length);
           preTotalLines.push(margin + padRight(leftDetail, spaceLeft) + rightSub);
@@ -3294,7 +3413,8 @@
         preTotalLines.push(margin + 'AMBIL BARANG (-):');
         subItems.forEach(function(it) {
           preTotalLines.push(margin + it.nama.slice(0, w));
-          const leftDetail = '  ' + it.qty + ' x ' + formatRupiahNumber(it.harga);
+          const qtyWithUom = formatQtyWithUom(it.qty, it.uom);
+          const leftDetail = '  ' + qtyWithUom + ' x ' + formatRupiahNumber(it.harga);
           const rightSub = formatRupiahNumber(it.jumlah);
           const spaceLeft = Math.max(1, w - rightSub.length);
           preTotalLines.push(margin + padRight(leftDetail, spaceLeft) + rightSub);
@@ -3529,6 +3649,7 @@
         margin + centerText('Lembang, Bandung Barat', w),
         margin + '-'.repeat(w),
         margin + 'Mode : ' + params.modeLabel,
+        margin + '300 Toros x 5.800 = 1.740.000',
         margin + '-'.repeat(w),
         margin + dblHeightOn + tLine + dblOff,
         margin + '='.repeat(w),
