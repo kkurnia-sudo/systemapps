@@ -2500,6 +2500,13 @@
                         <i data-lucide="printer" class="w-4 h-4"></i>
                         <span class="hidden sm:inline">Print / Cetak</span>
                     </button>
+					<!-- Tambahkan tepat di sebelah tombol onclick="printNotaA5()" -->
+					<button type="button" id="btnPrintBTNota" onclick="printBluetoothNota80mm()"
+						title="Cetak ke Printer Thermal Bluetooth 80mm"
+						class="min-h-[40px] px-3.5 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 active:scale-[0.98]">
+						<i data-lucide="bluetooth" class="w-4 h-4"></i>
+						<span>Print BT 80mm</span>
+					</button>
                     <button type="button" onclick="closeModal('modalPratinjauA5')" title="Tutup pratinjau"
                         class="min-h-[40px] px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-xl transition flex items-center gap-1.5 active:scale-[0.98]">
                         <i data-lucide="x" class="w-4 h-4 sm:hidden"></i>
@@ -2609,6 +2616,13 @@
                         <i data-lucide="printer" class="w-3.5 h-3.5 text-emerald-400"></i>
                         <span class="hidden sm:inline">Cetak</span>
                     </button>
+					<!-- Tambahkan tepat di sebelah tombol onclick="printSlipFee()" -->
+					<button type="button" id="btnPrintBTFee" onclick="printBluetoothFee80mm()"
+						title="Cetak Slip Fee ke Printer Thermal Bluetooth 80mm"
+						class="min-h-[38px] px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 active:scale-[0.98]">
+						<i data-lucide="bluetooth" class="w-3.5 h-3.5 text-white"></i>
+						<span class="hidden sm:inline">BT 80mm</span>
+					</button>
                     <!-- Tombol Simpan: aksi utama (Hanya muncul saat pratinjau draf sebelum disimpan) -->
                     <button type="button" id="btnModalSimpanFee" onclick="konfirmasiSimpanFeeDariModal()"
                         title="Simpan Rekap Fee Ini ke Riwayat"
@@ -8162,6 +8176,443 @@
                 });
             }
         });
+		
+		// ========================================================
+		// ENGINE WEB BLUETOOTH THERMAL PRINTER 80MM (48 KOLOM PENUH)
+		// ========================================================
+		let btPrinterDevice = null;
+		let btPrinterCharacteristic = null;
+
+		// Kapasitas penuh kertas 80mm Font A = 48 karakter (menghilangkan ruang kosong di kanan)
+		const THERMAL_WIDTH = 48;
+		const SEP_DOUBLE = '='.repeat(THERMAL_WIDTH);
+		const SEP_SINGLE = '-'.repeat(THERMAL_WIDTH);
+
+		const BT_PRINTER_SERVICES = [
+			'000018f0-0000-1000-8000-00805f9b34fb',
+			'0000ff00-0000-1000-8000-00805f9b34fb',
+			'49535343-fe7d-4ae5-8fa9-9fafd205e455',
+			'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+			'0000ffe0-0000-1000-8000-00805f9b34fb',
+			'0000ae00-0000-1000-8000-00805f9b34fb'
+		];
+
+		async function connectBluetoothPrinter() {
+			if (!navigator.bluetooth) {
+				throw new Error('Browser ini tidak mendukung Web Bluetooth. Gunakan Chrome di Android / PC.');
+			}
+
+			if (btPrinterDevice && btPrinterDevice.gatt.connected && btPrinterCharacteristic) {
+				return btPrinterCharacteristic;
+			}
+
+			if (btPrinterDevice && !btPrinterDevice.gatt.connected) {
+				try {
+					const server = await btPrinterDevice.gatt.connect();
+					const char = await findWritableCharacteristic(server);
+					if (char) {
+						btPrinterCharacteristic = char;
+						return btPrinterCharacteristic;
+					}
+				} catch (e) {
+					console.warn('Auto-reconnect gagal, meminta pemilihan ulang...');
+				}
+			}
+
+			btPrinterDevice = await navigator.bluetooth.requestDevice({
+				acceptAllDevices: true,
+				optionalServices: BT_PRINTER_SERVICES
+			});
+
+			btPrinterDevice.addEventListener('gattserverdisconnected', () => {
+				btPrinterCharacteristic = null;
+			});
+
+			const server = await btPrinterDevice.gatt.connect();
+			const characteristic = await findWritableCharacteristic(server);
+
+			if (!characteristic) {
+				throw new Error('Tidak dapat menemukan karakteristik tulis (write) pada printer ini.');
+			}
+
+			btPrinterCharacteristic = characteristic;
+			return btPrinterCharacteristic;
+		}
+
+		async function findWritableCharacteristic(server) {
+			const services = await server.getPrimaryServices();
+			for (const service of services) {
+				try {
+					const characteristics = await service.getCharacteristics();
+					for (const c of characteristics) {
+						if (c.properties.write || c.properties.writeWithoutResponse) {
+							return c;
+						}
+					}
+				} catch (e) {
+					continue;
+				}
+			}
+			return null;
+		}
+
+		async function sendEscPosBuffer(uint8Array) {
+			const characteristic = await connectBluetoothPrinter();
+			const CHUNK_SIZE = 96;
+
+			for (let i = 0; i < uint8Array.length; i += CHUNK_SIZE) {
+				const chunk = uint8Array.slice(i, i + CHUNK_SIZE);
+				if (characteristic.properties.writeWithoutResponse) {
+					await characteristic.writeValueWithoutResponse(chunk);
+				} else {
+					await characteristic.writeValue(chunk);
+				}
+				await new Promise(r => setTimeout(r, 20));
+			}
+		}
+
+		// ========================================================
+		// HELPER FORMATTER TEKS 80MM (MEMPERTAHANKAN SPASI INDENTASI)
+		// ========================================================
+		function formatRpThermal(val) {
+			const num = Math.round(Number(val) || 0);
+			return 'Rp ' + num.toLocaleString('id-ID');
+		}
+
+		function formatQtyThermal(val) {
+			const num = Number(val) || 0;
+			return Number.isInteger(num) ? num.toLocaleString('id-ID') : num.toFixed(2).replace(/\.?0+$/, '');
+		}
+
+		// PENTING: Hanya hapus spasi di ujung kanan (trimEnd) agar spasi menjorok di kiri (indentasi) TIDAK hilang!
+		function cleanThermalStr(str, preserveLeadingSpaces = true) {
+			const cleaned = String(str || '')
+				.replace(/[•·]/g, '-')
+				.replace(/[^\x20-\x7E]/g, '');
+			return preserveLeadingSpaces ? cleaned.trimEnd() : cleaned.trim();
+		}
+
+		// Format Kiri - Kanan pas 48 karakter (mentok kiri & mentok kanan, mempertahankan indentasi kiri)
+		function formatLR(left, right, width = THERMAL_WIDTH) {
+			const l = cleanThermalStr(left, true);   // Pertahankan spasi awal di sisi kiri
+			const r = cleanThermalStr(right, false); // Rapatkan sisi kanan
+			if (!r) return l.slice(0, width);
+			const maxLeftLen = width - r.length - 1;
+			const cleanLeft = l.length > maxLeftLen ? l.slice(0, Math.max(1, maxLeftLen)) : l;
+			const spaces = Math.max(1, width - cleanLeft.length - r.length);
+			return cleanLeft + ' '.repeat(spaces) + r;
+		}
+
+		class EscPosBuilder {
+			constructor() {
+				this.bytes = [];
+				this.encoder = new TextEncoder();
+			}
+			raw(arr) {
+				this.bytes.push(...arr);
+				return this;
+			}
+			init() {
+				return this.raw([0x1B, 0x40]); // Reset printer
+			}
+			fontA() {
+				return this.raw([0x1B, 0x4D, 0x00]); // Font A (48 kolom pada 80mm)
+			}
+			align(mode = 'left') {
+				const map = { left: 0x00, center: 0x01, right: 0x02 };
+				return this.raw([0x1B, 0x61, map[mode] ?? 0x00]);
+			}
+			bold(on = true) {
+				return this.raw([0x1B, 0x45, on ? 0x01 : 0x00]);
+			}
+			size(mode = 'normal') {
+				const map = { normal: 0x00, tall: 0x01, wide: 0x10, large: 0x11 };
+				return this.raw([0x1D, 0x21, map[mode] ?? 0x00]);
+			}
+			line(str = '') {
+				const clean = cleanThermalStr(str, true);
+				if (clean.length > 0) {
+					const encoded = this.encoder.encode(clean);
+					this.bytes.push(...encoded);
+				}
+				this.bytes.push(0x0A); // LF standar
+				return this;
+			}
+			lr(left, right) {
+				return this.line(formatLR(left, right, THERMAL_WIDTH));
+			}
+			sepSingle() {
+				return this.line(SEP_SINGLE);
+			}
+			sepDouble() {
+				return this.line(SEP_DOUBLE);
+			}
+			feed(lines = 1) {
+				for (let i = 0; i < lines; i++) {
+					this.bytes.push(0x0A);
+				}
+				return this;
+			}
+			cut() {
+				this.feed(4);
+				return this.raw([0x1D, 0x56, 0x42, 0x00]);
+			}
+			toUint8Array() {
+				return new Uint8Array(this.bytes);
+			}
+		}
+
+		// ========================================================
+		// 1. CETAK NOTA PEMBAYARAN KE THERMAL 80MM (48 KARAKTER)
+		// ========================================================
+		async function printBluetoothNota80mm() {
+			if (currentDraftNotaData) {
+				const ok = await saveClassicNotaSettlement(true);
+				if (!ok) return;
+			}
+
+			const n = activeA5Nota;
+			if (!n) {
+				showToast('Data nota tidak ditemukan untuk dicetak!', 'error');
+				return;
+			}
+
+			const btn = document.getElementById('btnPrintBTNota');
+			const origHtml = btn ? btn.innerHTML : '';
+
+			try {
+				if (btn) {
+					btn.disabled = true;
+					btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Mencetak...</span>`;
+					if (window.lucide) lucide.createIcons();
+				}
+
+				const p = new EscPosBuilder();
+				p.init().fontA();
+
+				// 1. KOP HEADER (Rata Tengah)
+				p.align('center')
+				 .bold(true).size('large').line('SBR PUTRA FOOD')
+				 .size('normal').bold(false).line('Distribusi & Logistik Snack Makroni')
+				 .bold(true).line('BUKTI NOTA PEMBAYARAN').bold(false);
+
+				// 2. INFO NOTA (Rata Kiri-Kanan Penuh 48 Karakter)
+				p.align('left').sepDouble();
+				const statusStr = (n.status === 'Lunas' || n.sisaPembayaran <= 0) ? '[LUNAS]' : '[' + (n.status || 'BELUM').toUpperCase() + ']';
+				p.lr('No. Nota : ' + (n.nomor_nota || '-'), statusStr);
+				p.lr('Tgl Nota : ' + formatDateIndo(n.tanggal_nota), 'Supplier: ' + (n.supplier || 'Naruto'));
+				p.sepSingle();
+
+				// 3. RINCIAN BARANG KIRIMAN FISIK
+				p.bold(true).lr('RINCIAN BARANG KIRIMAN', 'SUBTOTAL').bold(false);
+				p.sepSingle();
+
+				const details = n.details || [];
+				const itemSummaryMap = new Map();
+
+				details.forEach((d, idx) => {
+					const noStr = `${idx + 1}. `;
+					const nama = `${noStr}${d.nama_barang_snapshot || 'Barang'}`;
+					const sat = d.nama_satuan_snapshot || 'Ball';
+					const qtyStr = `${formatQtyThermal(d.jumlah)} ${sat}`;
+					const hrgStr = formatRpThermal(d.harga_satuan);
+					const subStr = formatRpThermal(d.subtotal);
+
+					// Indentasi 4 spasi ("    ") agar Qty menjorok masuk tepat di bawah huruf nama barang
+					const indent = '    ';
+					p.bold(true).line(nama).bold(false);
+					p.lr(`${indent}${qtyStr} x ${hrgStr}`, subStr);
+
+					// Keterangan koreksi fisik (jika ada) juga menjorok 4 spasi
+					const kor = n.koreksiFisik && (n.koreksiFisik[d.id] || n.koreksiFisik[d.barang_id]);
+					if (kor && kor.selisih && kor.selisih !== 0) {
+						p.line(`${indent}* Koreksi: ${kor.keterangan} (Awal: ${kor.qty_awal})`);
+					}
+
+					const keyName = (d.nama_barang_snapshot || 'Barang').trim();
+					if (!itemSummaryMap.has(keyName)) {
+						itemSummaryMap.set(keyName, { qty: 0, sat });
+					}
+					itemSummaryMap.get(keyName).qty += (Number(d.jumlah) || 0);
+				});
+
+				// Total Fisik Masuk
+				if (itemSummaryMap.size > 0) {
+					p.sepSingle();
+					p.bold(true).line('TOTAL FISIK MASUK:').bold(false);
+					itemSummaryMap.forEach((v, k) => {
+						p.lr(`  - ${k}`, `${formatQtyThermal(v.qty)} ${v.sat}`);
+					});
+				}
+
+				// 4. POTONGAN RETUR / BS (Jika Ada)
+				const returs = n.returs || [];
+				if (returs.length > 0) {
+					p.sepSingle();
+					p.bold(true).lr('POTONGAN RETUR / BS', 'NILAI').bold(false);
+					returs.forEach(r => {
+						const namaRetur = (r.nama_barang_snapshot || 'Barang')
+							.replace('(Ball)', '')
+							.trim();
+						const labelRetur = `  - ${namaRetur} (${formatQtyThermal(r.jumlah)} ${r.nama_satuan_snapshot || 'Pcs'})`;
+						p.lr(labelRetur, '- ' + formatRpThermal(r.nilai_retur));
+						if (r.keterangan) {
+							p.line(`    Ket: ${r.keterangan}`);
+						}
+					});
+				}
+
+				// 5. REKAPITULASI TAGIHAN
+				p.sepDouble();
+				p.lr('Total Bruto Kiriman', formatRpThermal(n.totalBruto));
+				if ((n.totalReturBS || 0) > 0) {
+					p.lr('Potongan Retur / BS', '- ' + formatRpThermal(n.totalReturBS));
+				}
+				if ((n.potonganOngkir || 0) > 0) {
+					p.lr('Pot. Pengambilan Pabrik', '- ' + formatRpThermal(n.potonganOngkir));
+				}
+				p.sepSingle();
+				p.bold(true).size('tall');
+				p.lr('TOTAL NETTO TAGIHAN', formatRpThermal(n.totalNetto));
+				p.size('normal').bold(false);
+				p.sepSingle();
+
+				// 6. RINCIAN PEMBAYARAN / TRANSFER
+				p.bold(true).line('RINCIAN PEMBAYARAN / TRANSFER:').bold(false);
+				const payments = n.payments || [];
+				if (payments.length === 0) {
+					p.line('  - Belum ada pembayaran tercatat');
+				} else {
+					payments.forEach((pay, idx) => {
+						const ket = pay.alasan_revisi || pay.keterangan || `Bayar ${idx + 1}`;
+						const tgl = formatDateIndo(pay.tanggal_pembayaran);
+						p.lr(`  ${idx + 1}. ${ket} (${tgl})`, formatRpThermal(pay.nominal_final));
+					});
+				}
+
+				p.sepSingle();
+				p.bold(true);
+				p.lr('TOTAL TERBAYAR', formatRpThermal(n.totalDibayar));
+				const sisa = Math.max(0, (n.totalNetto || 0) - (n.totalDibayar || 0));
+				p.lr('SISA TAGIHAN', sisa <= 0 ? 'Rp 0 (LUNAS)' : formatRpThermal(sisa));
+				p.bold(false);
+				p.sepDouble();
+
+				// 7. FOOTER
+				const now = new Date();
+				const ts = `${formatDateIndo(now.toISOString().split('T')[0])} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
+				p.align('center')
+				 .line(`Dicetak: ${ts}`)
+				 .bold(true).line('Sbr Putra Food - Sbr Admin').bold(false)
+				 .cut();
+
+				await sendEscPosBuffer(p.toUint8Array());
+				showToast('Struk 80mm berhasil dicetak!');
+			} catch (err) {
+				console.error('Bluetooth Print Error:', err);
+				if (err.name !== 'NotFoundError') {
+					showToast(err.message || 'Gagal mencetak ke printer Bluetooth', 'error');
+				}
+			} finally {
+				if (btn) {
+					btn.disabled = false;
+					btn.innerHTML = origHtml;
+					if (window.lucide) lucide.createIcons();
+				}
+			}
+		}
+
+		// ========================================================
+		// 2. CETAK SLIP PENCAIRAN FEE KE THERMAL 80MM (48 KARAKTER)
+		// ========================================================
+		async function printBluetoothFee80mm() {
+			if (currentDraftFeeData) {
+				await konfirmasiSimpanFeeDariModal();
+			}
+
+			const d = activeSlipFeeData;
+			if (!d) {
+				showToast('Data slip fee tidak ditemukan!', 'error');
+				return;
+			}
+
+			const btn = document.getElementById('btnPrintBTFee');
+			const origHtml = btn ? btn.innerHTML : '';
+
+			try {
+				if (btn) {
+					btn.disabled = true;
+					btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>...</span>`;
+					if (window.lucide) lucide.createIcons();
+				}
+
+				const tarif = Number(d.tarif_per_bal) || 3000;
+				const q2000 = Number(d.qty_2000) || 0;
+				const q500 = Number(d.qty_500) || 0;
+				const totalBal = Number(d.total_bal) || (q2000 + q500);
+				const totalFeeBal = Number(d.total_fee_bal) || (totalBal * tarif);
+				const totalOngkir = Number(d.total_ongkir) || 0;
+				const grandTotal = Number(d.grand_total_fee) || (totalFeeBal + totalOngkir);
+				const notaList = d.nota_details || [];
+
+				const p = new EscPosBuilder();
+				p.init().fontA();
+
+				p.align('center')
+				 .bold(true).size('large').line('SBR PUTRA FOOD')
+				 .size('normal').bold(true).line('SLIP PENCAIRAN FEE KIRIMAN').bold(false);
+
+				p.align('left').sepDouble();
+				p.lr('No. Slip  : ' + (d.nomor_slip || '-'), '[TERBAYAR]');
+				p.lr('Tgl Bayar : ' + formatDateIndo(d.tgl_bayar), 'Penerima: ' + (d.penerima || '-'));
+				p.line('Keterangan: ' + (d.catatan || '-'));
+				p.line('Jml Nota  : ' + ((d.nota_ids || []).length) + ' Nota');
+				p.sepSingle();
+
+				p.bold(true).lr('URAIAN PERHITUNGAN FEE', 'SUBTOTAL').bold(false);
+				p.sepSingle();
+
+				p.bold(true).line('1. Fee Makroni 2000').bold(false);
+				p.lr(`    ${formatQtyThermal(q2000)} Ball x ${formatRpThermal(tarif)}`, formatRpThermal(q2000 * tarif));
+
+				p.bold(true).line('2. Fee Makroni 500 (Ball)').bold(false);
+				p.lr(`    ${formatQtyThermal(q500)} Ball x ${formatRpThermal(tarif)}`, formatRpThermal(q500 * tarif));
+
+				p.sepSingle();
+				p.bold(true).lr(`Subtotal Ball (${formatQtyThermal(totalBal)} Ball)`, formatRpThermal(totalFeeBal)).bold(false);
+
+				const notaOngkirCount = notaList.filter(x => (Number(x.ongkir) || 0) > 0).length;
+				p.lr(`Klaim Pengambilan Pabrik (${notaOngkirCount} Nota)`, formatRpThermal(totalOngkir));
+
+				p.sepDouble();
+				p.bold(true).size('tall');
+				p.lr('GRAND TOTAL FEE', formatRpThermal(grandTotal));
+				p.size('normal').bold(false);
+				p.sepDouble();
+
+				const now = new Date();
+				const ts = `${formatDateIndo(now.toISOString().split('T')[0])} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
+				p.align('center')
+				 .line(`Dicetak: ${ts}`)
+				 .bold(true).line('Sbr Putra Food - Sbr Admin').bold(false)
+				 .cut();
+
+				await sendEscPosBuffer(p.toUint8Array());
+				showToast('Slip Fee 80mm berhasil dicetak!');
+			} catch (err) {
+				console.error('Bluetooth Print Fee Error:', err);
+				if (err.name !== 'NotFoundError') {
+					showToast(err.message || 'Gagal mencetak slip fee ke Bluetooth', 'error');
+				}
+			} finally {
+				if (btn) {
+					btn.disabled = false;
+					btn.innerHTML = origHtml;
+					if (window.lucide) lucide.createIcons();
+				}
+			}
+		}
+				
     </script>
 </body>
 
