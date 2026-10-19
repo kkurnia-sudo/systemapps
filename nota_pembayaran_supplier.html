@@ -2222,7 +2222,12 @@
                 <input type="text" id="depKet" placeholder="Masukkan keterangan pembayaran...">
             </div>
             <div class="form-group">
-                <label>Nominal Deposit / Cicilan (Rp)</label>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label>Nominal Deposit / Cicilan (Rp)</label>
+                    <button type="button" class="btn btn-outline"
+                        style="padding: 4px 10px; font-size: 11.5px; color: var(--primary); border-color: var(--primary); border-radius: 8px;"
+                        onclick="setDepositLunas()">⚡ Isi Nominal Lunas</button>
+                </div>
                 <input type="text" id="depNom" placeholder="0" oninput="formatRibuanInput(this)"
                     style="font-size: 16px; font-weight: 700;">
             </div>
@@ -3602,6 +3607,30 @@
             toggleModal('depositModal');
         }
 
+        function setDepositLunas() {
+            let subtotalBarang = 0;
+            document.querySelectorAll('#itemsBody tr').forEach(row => {
+                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                subtotalBarang += qty * price;
+            });
+
+            let otherDeposits = 0;
+            depositList.forEach((dep, idx) => {
+                if (idx !== editingDepositIndex) {
+                    otherDeposits += dep.nom;
+                }
+            });
+
+            const sisaTagihan = Math.round((subtotalBarang + currentPiutang) - otherDeposits);
+
+            if (sisaTagihan > 0) {
+                document.getElementById('depNom').value = new Intl.NumberFormat('id-ID').format(sisaTagihan);
+            } else {
+                showWarningPopup("Informasi", "Tidak ada sisa tagihan untuk dilunasi.");
+            }
+        }
+
         function simpanDeposit() {
             const ket = document.getElementById('depKet').value || 'Deposit';
             const nom = getCleanNumber('depNom');
@@ -4112,51 +4141,197 @@
         // =========================================================================
         // MODUL SIMPAN PDF (FORMAT A4/2 ATAU A5) & GAMBAR (RESOLUSI 3:4 SEIMBANG)
         // =========================================================================
-        function exportToPDF() {
-            if (typeof html2pdf === 'undefined') {
-                showWarningPopup("Sistem Belum Siap", "Library html2pdf belum termuat sempurna. Pastikan koneksi internet aktif.");
+        async function exportToPDF() {
+            if (typeof html2pdf === 'undefined' || typeof html2canvas === 'undefined') {
+                showWarningPopup("Sistem Belum Siap", "Library html2pdf / html2canvas belum termuat sempurna. Pastikan koneksi internet aktif.");
                 return;
             }
 
-            showLoadingPopup("Menyiapkan Berkas PDF (A4/2)...");
+            showLoadingPopup("Menyiapkan PDF A5 Siap Cetak di Kertas A4...");
 
-            setTimeout(() => {
-                const element = document.getElementById('previewContent');
+            setTimeout(async () => {
+                const originalElement = document.getElementById('previewContent');
                 const invoiceNo = document.getElementById('prevInvNo')?.innerText || document.getElementById('invoiceNumber').value || 'Rekap';
 
-                const originalBorder = element.style.border;
-                const originalWidth = element.style.width;
-                const originalMaxWidth = element.style.maxWidth;
-                const originalPadding = element.style.padding;
+                // Buat wrapper off-screen seukuran separuh atas Kertas A4 Portrait (210mm x 148.5mm = A5)
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'fixed';
+                wrapper.style.top = '-9999px';
+                wrapper.style.left = '0';
+                wrapper.style.backgroundColor = '#ffffff';
+                wrapper.style.boxSizing = 'border-box';
+                wrapper.style.margin = '0';
+                wrapper.style.display = 'flex';
+                wrapper.style.flexDirection = 'column';
+                wrapper.style.justifyContent = 'space-between';
 
-                element.style.border = 'none';
-                element.style.width = '550px';
-                element.style.maxWidth = '550px';
-                element.style.padding = '14px 16px';
+                const clone = originalElement.cloneNode(true);
+                clone.style.border = 'none';
+                clone.style.boxShadow = 'none';
+                clone.style.padding = '0';
+                clone.style.margin = '0';
+                clone.style.width = '100%';
+                clone.style.maxWidth = '100%';
+                clone.style.flex = '1';
+                clone.style.boxSizing = 'border-box';
 
-                const opt = {
-                    margin: [8, 8, 8, 8],
-                    filename: `Nota_${invoiceNo}_A5.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2.5, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
-                    jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
-                };
+                // Pastikan tabel & kolom proporsional dan simetris
+                clone.querySelectorAll('table').forEach(tbl => {
+                    tbl.style.width = '100%';
+                    tbl.style.minWidth = '0';
+                    tbl.style.borderCollapse = 'collapse';
+                });
+                clone.querySelectorAll('h2').forEach(h => {
+                    h.style.fontSize = '19px';
+                    h.style.fontWeight = '800';
+                });
+                clone.querySelectorAll('h3').forEach(h => {
+                    h.style.fontSize = '15.5px';
+                    h.style.fontWeight = '700';
+                });
+                clone.querySelectorAll('#prevInvoiceTable th').forEach((th, idx) => {
+                    th.style.minWidth = '0';
+                    th.style.padding = '7px 6px';
+                    th.style.fontSize = '12px';
+                    th.style.fontWeight = '700';
+                    if (idx === 0) th.style.paddingLeft = '2px';
+                    if (idx === 4) th.style.paddingRight = '2px';
+                });
+                clone.querySelectorAll('#prevItemsBody tr').forEach(tr => {
+                    const tds = tr.querySelectorAll('td');
+                    tds.forEach((td, idx) => {
+                        td.style.minWidth = '0';
+                        td.style.padding = '6px 6px';
+                        td.style.fontSize = '12.5px';
+                        if (idx === 0) td.style.paddingLeft = '2px';
+                        if (idx === tds.length - 1) td.style.paddingRight = '2px';
+                    });
+                });
+                clone.querySelectorAll('.summary-table-container').forEach(sc => {
+                    sc.style.marginTop = '10px';
+                    sc.style.maxWidth = '360px';
+                });
+                clone.querySelectorAll('.summary-table-container td').forEach((td, idx) => {
+                    td.style.padding = '4px 4px';
+                    td.style.fontSize = '13.5px';
+                    if (idx % 2 === 1) td.style.paddingRight = '2px';
+                });
 
-                html2pdf().set(opt).from(element).save().then(() => {
-                    element.style.border = originalBorder;
-                    element.style.width = originalWidth;
-                    element.style.maxWidth = originalMaxWidth;
-                    element.style.padding = originalPadding;
-                    showSuccessPopup("PDF Berhasil Disimpan!", `File Nota_${invoiceNo}_A5.pdf (format A4/2) berhasil diunduh.`);
-                }).catch(err => {
-                    element.style.border = originalBorder;
-                    element.style.width = originalWidth;
-                    element.style.maxWidth = originalMaxWidth;
-                    element.style.padding = originalPadding;
+                const balLbl = clone.querySelector('#prevBalanceLabel');
+                const balVal = clone.querySelector('#prevBalance');
+                if (balLbl) {
+                    balLbl.style.fontSize = '16.5px';
+                    balLbl.style.padding = '8px 4px 4px 4px';
+                }
+                if (balVal) {
+                    balVal.style.fontSize = '17px';
+                    balVal.style.padding = '8px 2px 4px 4px';
+                }
+
+                // Susun grup konten utama di atas dan footer di bagian bawah area A5
+                const children = Array.from(clone.children);
+                if (children.length > 1) {
+                    if (children[0]) {
+                        children[0].style.paddingBottom = '10px';
+                        children[0].style.marginBottom = '12px';
+                    }
+                    if (children[1]) {
+                        children[1].style.marginBottom = '12px';
+                    }
+
+                    const mainGroup = document.createElement('div');
+                    mainGroup.style.display = 'flex';
+                    mainGroup.style.flexDirection = 'column';
+                    mainGroup.style.gap = '6px';
+                    mainGroup.style.width = '100%';
+
+                    const footerElement = children[children.length - 1];
+                    for (let i = 0; i < children.length - 1; i++) {
+                        mainGroup.appendChild(children[i]);
+                    }
+
+                    clone.innerHTML = '';
+                    clone.appendChild(mainGroup);
+
+                    footerElement.style.marginTop = 'auto';
+                    footerElement.style.paddingTop = '10px';
+                    footerElement.style.borderTop = '1px dashed #cbd5e1';
+                    footerElement.style.fontSize = '10.5px';
+                    clone.appendChild(footerElement);
+
+                    clone.style.display = 'flex';
+                    clone.style.flexDirection = 'column';
+                    clone.style.height = '100%';
+                    clone.style.justifyContent = 'space-between';
+                }
+
+                // Garis bantu potong di tengah kertas A4 (batas 148.5mm)
+                const cutLine = document.createElement('div');
+                cutLine.style.width = '100%';
+                cutLine.style.marginTop = '10px';
+                cutLine.style.paddingTop = '4px';
+                cutLine.style.borderBottom = '1px dashed #94a3b8';
+                cutLine.style.display = 'flex';
+                cutLine.style.alignItems = 'center';
+                cutLine.style.justifyContent = 'space-between';
+                cutLine.style.fontSize = '9.5px';
+                cutLine.style.color = '#94a3b8';
+                cutLine.style.letterSpacing = '0.5px';
+                cutLine.innerHTML = '<span>✂️ GARIS POTONG (A4/2 — UKURAN A5)</span><span>✂️</span>';
+
+                wrapper.appendChild(clone);
+                wrapper.appendChild(cutLine);
+                document.body.appendChild(wrapper);
+
+                // Kertas A4 Portrait = 210mm x 297mm -> Separuh atas (A5) = 210mm x 148.5mm
+                const a4WidthPx = 794; // 210mm pada 96 DPI
+                const halfA4HeightPx = Math.round(a4WidthPx * (148.5 / 210)); // 561px (tepat 148.5mm / separuh tinggi A4)
+
+                // Padding simetris kiri-kanan 38px (~10mm), atas 28px (~7.5mm), bawah 8px
+                wrapper.style.width = `${a4WidthPx}px`;
+                wrapper.style.padding = '28px 38px 8px 38px';
+
+                const measuredHeight = wrapper.scrollHeight;
+                const finalW = a4WidthPx;
+                const finalH = measuredHeight > halfA4HeightPx ? (measuredHeight + 12) : halfA4HeightPx;
+
+                wrapper.style.width = `${finalW}px`;
+                wrapper.style.height = `${finalH}px`;
+                wrapper.style.minHeight = `${finalH}px`;
+
+                try {
+                    const canvas = await html2canvas(wrapper, {
+                        scale: 2.5,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        width: finalW,
+                        height: finalH,
+                        windowWidth: 1024,
+                        scrollY: 0,
+                        scrollX: 0
+                    });
+
+                    // Gunakan kertas A4 Portrait dengan margin 0 (karena margin simetris sudah di dalam wrapper)
+                    // sehingga gambar berukuran tepat 210mm x 148.5mm menempati separuh ATAS kertas A4
+                    const opt = {
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                        margin: [0, 0, 0, 0],
+                        filename: `Nota_${invoiceNo}_A5_di_A4.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        enableLinks: false
+                    };
+
+                    await html2pdf().set(opt).from(canvas, 'canvas').save();
+                    showSuccessPopup("PDF Berhasil Disimpan!", `File Nota_${invoiceNo}_A5_di_A4.pdf siap dicetak langsung pada kertas A4.`);
+                } catch (err) {
                     closePopup();
                     showWarningPopup("Gagal Ekspor", "Terjadi kesalahan: " + err.message);
-                });
-            }, 400);
+                } finally {
+                    if (document.body.contains(wrapper)) {
+                        document.body.removeChild(wrapper);
+                    }
+                }
+            }, 350);
         }
 
         async function exportToPNG() {
