@@ -307,6 +307,88 @@
             resize: vertical;
         }
 
+        /* Google Maps Link Field Styles */
+        .maps-input-wrapper {
+            margin-top: 8px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 8px 10px;
+            transition: border-color 0.2s;
+        }
+
+        .maps-input-wrapper:focus-within {
+            border-color: var(--primary);
+        }
+
+        .maps-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .maps-label-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .maps-quick-test {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: none;
+            display: none;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .maps-quick-test:hover {
+            text-decoration: underline;
+        }
+
+        .maps-input-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .btn-maps-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 9px;
+            background: #ecfdf5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        body.dark-mode .btn-maps-link {
+            background: rgba(16, 185, 129, 0.18);
+            color: #34d399;
+            border-color: rgba(52, 211, 153, 0.35);
+        }
+
+        .btn-maps-link:hover {
+            background: #10b981;
+            color: #ffffff;
+            border-color: #10b981;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+        }
+
         /* Buttons */
         .btn {
             padding: 10px 16px;
@@ -540,7 +622,7 @@
             border-radius: var(--radius-md);
             cursor: pointer;
             user-select: none;
-            transition: var(--transition-fast);
+            transition: all 0.2s ease;
             white-space: nowrap;
         }
 
@@ -715,15 +797,16 @@
         .m-card-info {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 7px;
             font-size: 12px;
         }
 
         .m-info-row {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             color: var(--text-muted);
+            flex-wrap: wrap;
         }
 
         .m-card-actions {
@@ -813,6 +896,40 @@
         .close-btn:hover {
             background: var(--table-hover);
             color: var(--danger);
+        }
+
+        /* Detail Order Card in Modal */
+        .detail-meta-box {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .detail-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .detail-meta-label {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 12px;
+            min-width: 90px;
+        }
+
+        .detail-meta-value {
+            font-weight: 700;
+            color: var(--text-main);
+            text-align: right;
+            word-break: break-word;
         }
 
         /* Export Container & Preview */
@@ -998,6 +1115,32 @@
             font-size: 13px;
             font-weight: 500;
             border: 1px solid var(--border);
+            gap: 8px;
+        }
+
+        .master-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .master-item-name {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .master-item-link {
+            font-size: 11px;
+            color: #10b981;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .master-item-link:hover {
+            text-decoration: underline;
         }
 
         @keyframes fadeIn {
@@ -1230,11 +1373,45 @@
                         </select>
                     </div>
 
+                    <!-- LOKASI PENGIRIMAN & GOOGLE MAPS LINK -->
                     <div class="form-group">
                         <label>Lokasi Pengiriman</label>
-                        <select id="inputLokasi" class="form-control" required>
+                        <select id="inputLokasi" class="form-control" onchange="onLokasiSelectChange('inputLokasi', 'inputMaps')" required>
                             <option value="">-- Pilih Lokasi --</option>
                         </select>
+
+                        <!-- Kolom Isian Tautan Google Maps -->
+                        <div class="maps-input-wrapper">
+                            <div class="maps-label-row">
+                                <span class="maps-label-title">
+                                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    Tautan Google Maps (Opsional)
+                                </span>
+                                <a href="javascript:void(0)" id="inputMapsTestLink" class="maps-quick-test"
+                                    onclick="testBukaMaps('inputMaps')" title="Buka tautan ini di Google Maps">
+                                    <span>Tes Link ↗</span>
+                                </a>
+                            </div>
+                            <div class="maps-input-row">
+                                <input type="text" id="inputMaps" class="form-control"
+                                    placeholder="Tempel tautan Maps atau ketik alamat (cth: https://maps.app.goo.gl/... atau Jl. Sunter)"
+                                    oninput="onMapsInputTyped('inputMaps', 'inputMapsTestLink', 'btnOpenInputMaps')">
+                                <button type="button" class="btn-icon" id="btnOpenInputMaps"
+                                    style="display:none; width: 36px; height: 36px; flex-shrink: 0; color: #10b981; border-color: #10b981;"
+                                    onclick="testBukaMaps('inputMaps')" title="Buka Google Maps">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1344,7 +1521,7 @@
                                 <th style="width: 34px; text-align: center;">#</th>
                                 <th>Tanggal</th>
                                 <th>Kepada (Pembeli)</th>
-                                <th>Lokasi</th>
+                                <th>Lokasi & Tautan Maps</th>
                                 <th style="text-align:center;">Terkirim</th>
                                 <th style="width: 60px; text-align: center;">Aksi</th>
                             </tr>
@@ -1365,7 +1542,7 @@
                 </div>
 
                 <small style="display: block; margin-top: 10px; color: var(--text-muted); font-size: 12px;">💡 Ketuk
-                    nama pembeli untuk melihat rincian barang order.</small>
+                    nama pembeli untuk melihat rincian barang order atau klik tombol Google Maps untuk membuka rute langsung.</small>
             </div>
         </div>
 
@@ -1405,16 +1582,24 @@
 
     <!-- ================= MODALS ================= -->
 
-    <!-- Modal Rincian Barang -->
+    <!-- Modal Rincian Order -->
     <div class="modal-overlay" id="modalDetailOrder">
-        <div class="modal-content" style="max-width: 380px;">
+        <div class="modal-content" style="max-width: 440px;">
             <div class="modal-header">
-                <h2 id="detailJudul" style="font-size: 15px; color: var(--primary);">Rincian Kiriman</h2>
+                <h2 id="detailJudul" style="font-size: 15px; color: var(--primary);">Rincian Order</h2>
                 <button class="close-btn" onclick="closeModal('modalDetailOrder')">&times;</button>
+            </div>
+
+            <div class="detail-meta-box" id="detailMetaBox">
+                <!-- Meta data seperti tanggal dan lokasi -->
+            </div>
+
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Daftar Barang:
             </div>
             <div style="background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; font-size: 13px; white-space: pre-line; line-height: 1.6; color: var(--text-main);"
                 id="detailKonten">
-                <!-- Isi rincian -->
+                <!-- Isi rincian barang -->
             </div>
         </div>
     </div>
@@ -1429,14 +1614,22 @@
 
             <div class="tab-container">
                 <button class="tab-btn active" onclick="switchTab('kepada')" id="tab-kepada">Pembeli</button>
-                <button class="tab-btn" onclick="switchTab('lokasi')" id="tab-lokasi">Lokasi</button>
+                <button class="tab-btn" onclick="switchTab('lokasi')" id="tab-lokasi">Lokasi & Maps</button>
                 <button class="tab-btn" onclick="switchTab('barang')" id="tab-barang">Barang</button>
             </div>
 
             <div>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="inputMasterBaru" class="form-control" placeholder="Ketik nama data baru...">
-                    <button class="btn btn-primary" onclick="simpanDataMaster()">Tambah</button>
+                <!-- Form Input Master Baru -->
+                <div id="masterInputContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="inputMasterBaru" class="form-control" placeholder="Ketik nama data baru...">
+                        <button class="btn btn-primary" onclick="simpanDataMaster()" style="flex-shrink: 0;">Tambah</button>
+                    </div>
+                    <!-- Khusus Tab Lokasi: Input Google Maps Default -->
+                    <div id="masterMapsRow" style="display: none;">
+                        <input type="text" id="inputMasterMaps" class="form-control" style="font-size: 12px;"
+                            placeholder="Tautan Google Maps default (Opsional, cth: https://maps.app.goo.gl/...)">
+                    </div>
                 </div>
                 <ul class="master-list" id="listDataMaster"></ul>
             </div>
@@ -1496,14 +1689,50 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="form-group">
                     <label>Kepada (Pembeli)</label>
                     <select id="editKepada" class="form-control" required></select>
                 </div>
+
+                <!-- EDIT LOKASI & MAPS -->
                 <div class="form-group">
                     <label>Lokasi Pengiriman</label>
-                    <select id="editLokasi" class="form-control" required></select>
+                    <select id="editLokasi" class="form-control" onchange="onLokasiSelectChange('editLokasi', 'editMaps')" required></select>
+
+                    <div class="maps-input-wrapper">
+                        <div class="maps-label-row">
+                            <span class="maps-label-title">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Tautan Google Maps (Opsional)
+                            </span>
+                            <a href="javascript:void(0)" id="editMapsTestLink" class="maps-quick-test"
+                                onclick="testBukaMaps('editMaps')" title="Buka tautan ini di Google Maps">
+                                <span>Tes Link ↗</span>
+                            </a>
+                        </div>
+                        <div class="maps-input-row">
+                            <input type="text" id="editMaps" class="form-control"
+                                placeholder="Tempel tautan Maps atau ketik alamat (cth: https://maps.app.goo.gl/... atau Jl. Sunter)"
+                                oninput="onMapsInputTyped('editMaps', 'editMapsTestLink', 'btnOpenEditMaps')">
+                            <button type="button" class="btn-icon" id="btnOpenEditMaps"
+                                style="display:none; width: 36px; height: 36px; flex-shrink: 0; color: #10b981; border-color: #10b981;"
+                                onclick="testBukaMaps('editMaps')" title="Buka Google Maps">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="form-group">
                     <label>Barang</label>
                     <div class="item-builder">
@@ -1562,12 +1791,13 @@
                                     onclick="toggleAllArsip()"></th>
                             <th>Tanggal</th>
                             <th>Kepada</th>
+                            <th>Lokasi & Maps</th>
                             <th style="text-align:center;">Terkirim</th>
                         </tr>
                     </thead>
                     <tbody id="arsipBody">
                         <tr>
-                            <td colspan="4" style="text-align:center; padding: 20px;">Memuat data...</td>
+                            <td colspan="5" style="text-align:center; padding: 20px;">Memuat data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1619,7 +1849,231 @@
         };
         let currentMasterTab = 'kepada';
 
-        // Modern Toast & Alert Helpers dengan SweetAlert2
+        // ==========================================
+        // HELPER FUNGSI GOOGLE MAPS & PARSING LOKASI
+        // ==========================================
+
+        /**
+         * Standarisasi Tautan Google Maps
+         * Menangani:
+         * 1. URL resmi Google Maps (maps.google, maps.app.goo.gl, goo.gl/maps)
+         * 2. Koordinat GPS (-6.2088, 106.8456)
+         * 3. Alamat jalan / nama tempat biasa (cth: "Jl. Agung Indah...", "Marunda") -> otomatis dijadikan search query Google Maps
+         * 4. Pembersihan typo seperti "https://Jl."
+         */
+        function normalizeMapsUrl(rawUrl, fallbackQuery = '') {
+            if (!rawUrl && !fallbackQuery) return '';
+            let val = String(rawUrl || '').trim();
+
+            // Bersihkan jika ada typo peninggalan seperti "https://Jl." atau "https://jl."
+            if (/^https?:\/\/jl\.?\s*/i.test(val)) {
+                val = val.replace(/^https?:\/\/jl\.?\s*/i, 'Jl. ').trim();
+            }
+
+            if (!val) {
+                if (fallbackQuery) {
+                    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallbackQuery.trim())}`;
+                }
+                return '';
+            }
+
+            // 1. Tautan resmi Google Maps
+            if (/^(https?:\/\/)?((www\.)?google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(val)) {
+                if (!/^https?:\/\//i.test(val)) {
+                    val = 'https://' + val;
+                }
+                return val;
+            }
+
+            // 2. URL web umum yang valid (tanpa spasi di domain)
+            if (/^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/i.test(val) && !val.includes(' ')) {
+                return val;
+            }
+
+            // 3. Format koordinat (contoh: -6.2088, 106.8456)
+            const coordRegex = /^(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)$/;
+            if (coordRegex.test(val)) {
+                return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(val)}`;
+            }
+
+            // 4. Jika user mengetik alamat biasa (seperti "Jl. Agung Indah...", "Sunter", dsb):
+            // Buat query Google Maps Search yang valid agar BISA DIBUKA & tidak error DNS
+            return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(val)}`;
+        }
+
+        /**
+         * Parsing string lokasi menjadi { nama, maps }
+         * Menangani pemisah pipa " | ", typo "https://Jl.", maupun URL murni.
+         */
+        function parseLokasi(lokasiRaw) {
+            if (!lokasiRaw) return { nama: '', maps: '' };
+            let str = String(lokasiRaw).trim();
+            if (!str) return { nama: '', maps: '' };
+
+            // Bersihkan karakter pipa di awal jika ada format aneh " | ..."
+            if (str.startsWith('|')) {
+                str = str.replace(/^\|\s*/, '').trim();
+            }
+
+            // Format "Nama Lokasi | TautanMaps"
+            if (str.includes(' | ')) {
+                const parts = str.split(' | ');
+                let nama = parts[0].trim();
+                let mapsPart = parts.slice(1).join(' | ').trim();
+
+                // Jika nama kosong, coba gunakan mapsPart sebagai nama
+                if (!nama && mapsPart) {
+                    if (/^https?:\/\/jl\.?\s*/i.test(mapsPart)) {
+                        nama = mapsPart.replace(/^https?:\/\/jl\.?\s*/i, 'Jl. ').trim();
+                        mapsPart = normalizeMapsUrl(nama);
+                    } else if (!mapsPart.startsWith('http')) {
+                        nama = mapsPart;
+                        mapsPart = normalizeMapsUrl(mapsPart);
+                    }
+                }
+
+                return {
+                    nama: nama || 'Lokasi Pengiriman',
+                    maps: normalizeMapsUrl(mapsPart, nama)
+                };
+            }
+
+            // Cek apakah string diawali typo "https://Jl. ..."
+            if (/^https?:\/\/jl\.?\s*/i.test(str)) {
+                const cleanAlamat = str.replace(/^https?:\/\/jl\.?\s*/i, 'Jl. ').trim();
+                return {
+                    nama: cleanAlamat,
+                    maps: normalizeMapsUrl(cleanAlamat)
+                };
+            }
+
+            // Cek jika mengandung URL resmi Google Maps
+            const urlRegex = /(https?:\/\/[^\s]+)/i;
+            const match = str.match(urlRegex);
+            if (match) {
+                const foundUrl = match[0].trim();
+                if (/^https?:\/\/jl\.?$/i.test(foundUrl)) {
+                    let nama = str.replace(foundUrl, '').trim();
+                    nama = nama.replace(/\|\s*$/, '').replace(/^\s*\|\s*/, '').trim();
+                    return { nama: nama || str, maps: '' };
+                }
+                let nama = str.replace(foundUrl, '').trim();
+                nama = nama.replace(/\|\s*$/, '').replace(/^\s*\|\s*/, '').trim();
+                return {
+                    nama: nama || 'Lokasi Pengiriman',
+                    maps: normalizeMapsUrl(foundUrl, nama)
+                };
+            }
+
+            return { nama: str, maps: '' };
+        }
+
+        /**
+         * Tampilan yang mudah dibaca di kolom input maps (membongkar query search jika ada)
+         */
+        function getDisplayMapsInput(mapsUrl) {
+            if (!mapsUrl) return '';
+            let val = String(mapsUrl).trim();
+            if (/^https?:\/\/jl\.?\s*/i.test(val)) {
+                return val.replace(/^https?:\/\/jl\.?\s*/i, 'Jl. ').trim();
+            }
+            if (val.includes('google.com/maps/search/?api=1&query=')) {
+                try {
+                    const queryPart = val.split('query=')[1].split('&')[0];
+                    return decodeURIComponent(queryPart.replace(/\+/g, ' '));
+                } catch (e) {
+                    return val;
+                }
+            }
+            return val;
+        }
+
+        /**
+         * Mengambil objek informasi lokasi dari master item
+         * Mendukung string maupun objek { nama, maps }
+         */
+        function getMasterLokasiObj(item) {
+            if (!item) return { nama: '', maps: '' };
+            if (typeof item === 'object') {
+                return { nama: item.nama || '', maps: item.maps || '' };
+            }
+            return parseLokasi(item);
+        }
+
+        /**
+         * Handler saat user mengetik atau paste di input maps
+         */
+        function onMapsInputTyped(inputId, testLinkId, iconBtnId) {
+            const inputEl = document.getElementById(inputId);
+            const testLinkEl = document.getElementById(testLinkId);
+            const iconBtnEl = document.getElementById(iconBtnId);
+            const val = (inputEl ? inputEl.value : '').trim();
+
+            if (val.length > 2) {
+                if (testLinkEl) testLinkEl.style.display = 'inline-flex';
+                if (iconBtnEl) iconBtnEl.style.display = 'inline-flex';
+            } else {
+                if (testLinkEl) testLinkEl.style.display = 'none';
+                if (iconBtnEl) iconBtnEl.style.display = 'none';
+            }
+        }
+
+        /**
+         * Buka tautan Google Maps di tab baru untuk pengetesan instan
+         * Jika input kosong, otomatis mencari lokasi dari dropdown
+         */
+        function testBukaMaps(inputId) {
+            const inputEl = document.getElementById(inputId);
+            let rawVal = inputEl ? inputEl.value.trim() : '';
+
+            // Jika input maps kosong, fallback ke lokasi dari dropdown
+            const selectId = inputId === 'editMaps' ? 'editLokasi' : 'inputLokasi';
+            const selEl = document.getElementById(selectId);
+            let fallbackLokasi = '';
+            if (selEl && selEl.value && !selEl.value.toLowerCase().includes('pilih') && !selEl.value.toLowerCase().includes('menunggu')) {
+                fallbackLokasi = selEl.value;
+            }
+
+            if (!rawVal && !fallbackLokasi) {
+                showToast('Pilih lokasi atau isi tautan / alamat terlebih dahulu!', 'warning');
+                return;
+            }
+
+            const normalized = normalizeMapsUrl(rawVal, fallbackLokasi);
+            if (!normalized) {
+                showToast('Tautan atau alamat tidak dapat dibuka!', 'warning');
+                return;
+            }
+            window.open(normalized, '_blank', 'noopener,noreferrer');
+        }
+
+        /**
+         * Handler otomatis saat lokasi di dropdown dipilih:
+         * Mengisi input maps otomatis jika lokasi memiliki default maps di Master Data
+         */
+        function onLokasiSelectChange(selectId, mapsInputId) {
+            const selEl = document.getElementById(selectId);
+            const mapsEl = document.getElementById(mapsInputId);
+            if (!selEl || !mapsEl) return;
+
+            const selectedOption = selEl.options[selEl.selectedIndex];
+            if (selectedOption && selectedOption.dataset.maps) {
+                mapsEl.value = getDisplayMapsInput(selectedOption.dataset.maps);
+            } else {
+                if (!mapsEl.value || mapsEl.dataset.autoFilled === 'true') {
+                    mapsEl.value = '';
+                }
+            }
+            mapsEl.dataset.autoFilled = 'true';
+
+            const testLinkId = selectId === 'editLokasi' ? 'editMapsTestLink' : 'inputMapsTestLink';
+            const iconBtnId = selectId === 'editLokasi' ? 'btnOpenEditMaps' : 'btnOpenInputMaps';
+            onMapsInputTyped(mapsInputId, testLinkId, iconBtnId);
+        }
+
+        // ==========================================
+        // TOAST & ALERT SWEETALERT2
+        // ==========================================
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
@@ -1772,7 +2226,6 @@
             }
         }
 
-        // Function untuk beralih antara input Tanggal Fix (Date) dan Tanggal Estimasi
         function toggleEstimasiInput(dateInputId, containerId, isEstimasi, prefix = '') {
             const dateEl = document.getElementById(dateInputId);
             const containerEl = document.getElementById(containerId);
@@ -1807,7 +2260,6 @@
             }
         }
 
-        // Buka Modal Fix Tanggal
         function openFixTanggalModal(id, tanggalEstimasi) {
             document.getElementById('fixOrderId').value = id;
             document.getElementById('txtTanggalEstimasi').innerText = tanggalEstimasi || "Belum ada kepastian tanggal";
@@ -1815,7 +2267,6 @@
             document.getElementById('modalFixTanggal').style.display = 'flex';
         }
 
-        // Update Tanggal Pasti ke Supabase
         async function simpanTanggalFix() {
             const id = document.getElementById('fixOrderId').value;
             const tanggalBaru = document.getElementById('inputTanggalFix').value;
@@ -1872,13 +2323,23 @@
 
         function sortMasterData() {
             masterData.kepada.sort((a, b) => a.localeCompare(b));
-            masterData.lokasi.sort((a, b) => a.localeCompare(b));
+            masterData.lokasi.sort((a, b) => {
+                const nameA = typeof a === 'object' ? a.nama : a;
+                const nameB = typeof b === 'object' ? b.nama : b;
+                return nameA.localeCompare(nameB);
+            });
             masterData.barang.sort((a, b) => a.localeCompare(b));
         }
 
         function loadDataFromLocalStorage() {
             const savedData = localStorage.getItem('sbr_master_data');
-            if (savedData) masterData = JSON.parse(savedData);
+            if (savedData) {
+                try {
+                    masterData = JSON.parse(savedData);
+                } catch (e) {
+                    console.error("Gagal parse master data:", e);
+                }
+            }
         }
 
         function saveMasterData() {
@@ -1889,22 +2350,39 @@
         }
 
         function populateDropdowns() {
-            const selects = [
+            // Dropdown Pembeli & Barang
+            const selectsStandard = [
                 { id: 'inputKepada', data: masterData.kepada, placeholder: '-- Pilih Pembeli --' },
                 { id: 'editKepada', data: masterData.kepada, placeholder: '-- Pembeli --' },
-                { id: 'inputLokasi', data: masterData.lokasi, placeholder: '-- Pilih Lokasi --' },
-                { id: 'editLokasi', data: masterData.lokasi, placeholder: '-- Lokasi --' },
                 { id: 'pilihBarang', data: masterData.barang, placeholder: '-- Pilih Barang --' },
                 { id: 'editPilihBarang', data: masterData.barang, placeholder: '-- Pilih Barang --' }
             ];
 
-            selects.forEach(sel => {
+            selectsStandard.forEach(sel => {
                 const el = document.getElementById(sel.id);
                 if (el) {
                     el.innerHTML = `<option value="">${sel.placeholder}</option>`;
                     sel.data.forEach(item => el.innerHTML += `<option value="${item}">${item}</option>`);
                 }
             });
+
+            // Dropdown Lokasi Pengiriman (Membawa atribut data-maps untuk auto-fill)
+            const selectsLokasi = [
+                { id: 'inputLokasi', placeholder: '-- Pilih Lokasi --' },
+                { id: 'editLokasi', placeholder: '-- Lokasi --' }
+            ];
+
+            selectsLokasi.forEach(sel => {
+                const el = document.getElementById(sel.id);
+                if (el) {
+                    el.innerHTML = `<option value="">${sel.placeholder}</option>`;
+                    masterData.lokasi.forEach(item => {
+                        const obj = getMasterLokasiObj(item);
+                        el.innerHTML += `<option value="${obj.nama}" data-maps="${obj.maps}">${obj.nama}</option>`;
+                    });
+                }
+            });
+
             updateQtyUI();
         }
 
@@ -1917,30 +2395,88 @@
             currentMasterTab = tabName;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('tab-' + tabName).classList.add('active');
-            document.getElementById('inputMasterBaru').placeholder = `Ketik ${tabName} baru...`;
+
+            const mapsRow = document.getElementById('masterMapsRow');
+            const inputBaru = document.getElementById('inputMasterBaru');
+
+            if (tabName === 'lokasi') {
+                inputBaru.placeholder = 'Nama Lokasi baru (cth: Marunda)...';
+                if (mapsRow) mapsRow.style.display = 'block';
+            } else {
+                inputBaru.placeholder = `Ketik ${tabName} baru...`;
+                if (mapsRow) mapsRow.style.display = 'none';
+            }
             renderMasterList();
         }
 
         function renderMasterList() {
             const listEl = document.getElementById('listDataMaster');
             listEl.innerHTML = '';
+
             masterData[currentMasterTab].forEach((item, index) => {
-                listEl.innerHTML += `<li><span>${item}</span><span class="remove-item" onclick="hapusDataMaster(${index})" title="Hapus">&times;</span></li>`;
+                if (currentMasterTab === 'lokasi') {
+                    const obj = getMasterLokasiObj(item);
+                    const linkBadge = obj.maps ? `
+                        <a href="${obj.maps}" target="_blank" rel="noopener noreferrer" class="master-item-link" title="Buka tautan Google Maps">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <span>Google Maps ↗</span>
+                        </a>
+                    ` : '';
+
+                    listEl.innerHTML += `
+                        <li>
+                            <div class="master-item-info">
+                                <span class="master-item-name">${obj.nama}</span>
+                                ${linkBadge}
+                            </div>
+                            <span class="remove-item" onclick="hapusDataMaster(${index})" title="Hapus">&times;</span>
+                        </li>
+                    `;
+                } else {
+                    listEl.innerHTML += `
+                        <li>
+                            <span>${item}</span>
+                            <span class="remove-item" onclick="hapusDataMaster(${index})" title="Hapus">&times;</span>
+                        </li>
+                    `;
+                }
             });
         }
 
         function simpanDataMaster() {
             const input = document.getElementById('inputMasterBaru');
-            if (input.value.trim()) {
-                masterData[currentMasterTab].push(input.value.trim());
-                saveMasterData();
+            const namaVal = input.value.trim();
+
+            if (!namaVal) return;
+
+            if (currentMasterTab === 'lokasi') {
+                const mapsInput = document.getElementById('inputMasterMaps');
+                const mapsVal = normalizeMapsUrl(mapsInput.value.trim());
+
+                masterData.lokasi.push({
+                    nama: namaVal,
+                    maps: mapsVal
+                });
+
                 input.value = '';
-                showToast('Data master berhasil ditambahkan');
+                mapsInput.value = '';
+            } else {
+                masterData[currentMasterTab].push(namaVal);
+                input.value = '';
             }
+
+            saveMasterData();
+            showToast('Data master berhasil ditambahkan');
         }
 
         async function hapusDataMaster(index) {
-            const res = await showModernConfirm('Hapus Item Master?', `Item "${masterData[currentMasterTab][index]}" akan dihapus dari data opsi master.`, 'Hapus', true);
+            let labelItem = masterData[currentMasterTab][index];
+            if (typeof labelItem === 'object') labelItem = labelItem.nama;
+
+            const res = await showModernConfirm('Hapus Item Master?', `Item "${labelItem}" akan dihapus dari data opsi master.`, 'Hapus', true);
             if (res.isConfirmed) {
                 masterData[currentMasterTab].splice(index, 1);
                 saveMasterData();
@@ -2111,9 +2647,22 @@
             }
 
             data.forEach((order) => {
-                const lokasiMerah = order.lokasi ? order.lokasi.toLowerCase().includes('menunggu') : false;
+                const lokasiInfo = parseLokasi(order.lokasi);
+                const lokasiMerah = lokasiInfo.nama ? lokasiInfo.nama.toLowerCase().includes('menunggu') : false;
                 const badgeClass = lokasiMerah ? 'badge-red' : 'badge-green';
                 const statusKirimChecked = order.status_kirim === true ? 'checked' : '';
+
+                // Tombol Tautan Google Maps Instan
+                const mapsBtnHtml = lokasiInfo.maps ? `
+                    <a href="${lokasiInfo.maps}" target="_blank" rel="noopener noreferrer" 
+                       class="btn-maps-link" title="Buka tautan Google Maps di tab baru" onclick="event.stopPropagation();">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span>Google Maps ↗</span>
+                    </a>
+                ` : '';
 
                 let tampilanTanggal = "";
                 let mobileTanggalText = "";
@@ -2145,7 +2694,12 @@
                             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                         </a>
                     </td>
-                    <td><span class="status-badge ${badgeClass}">${order.lokasi}</span></td>
+                    <td>
+                        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-start;">
+                            <span class="status-badge ${badgeClass}">${lokasiInfo.nama}</span>
+                            ${mapsBtnHtml}
+                        </div>
+                    </td>
                     <td style="text-align:center;">
                         <input type="checkbox" class="check-kirim" ${statusKirimChecked} onchange="updateStatusKirim(${order.id}, this.checked)">
                     </td>
@@ -2182,7 +2736,8 @@
                         </div>
                         <div class="m-info-row">
                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            <span class="status-badge ${badgeClass}">${order.lokasi}</span>
+                            <span class="status-badge ${badgeClass}">${lokasiInfo.nama}</span>
+                            ${mapsBtnHtml}
                         </div>
                     </div>
 
@@ -2215,12 +2770,45 @@
 
         function lihatRincianOrder(id) {
             const order = globalOrders.find(o => o.id === id);
-            if (order) {
-                document.getElementById('detailJudul').innerText = "Rincian: " + order.kepada;
-                const barangArr = order.barang ? order.barang.split(NL).map(item => "• " + item) : [];
-                document.getElementById('detailKonten').innerText = barangArr.length > 0 ? barangArr.join(NL) : "Tidak ada catatan barang";
-                document.getElementById('modalDetailOrder').style.display = 'flex';
-            }
+            if (!order) return;
+
+            document.getElementById('detailJudul').innerText = "Rincian: " + order.kepada;
+
+            const tglDisplay = (order.tanggal_estimasi && order.tanggal_estimasi.trim() !== '')
+                ? `⏳ ${order.tanggal_estimasi}`
+                : formatTanggal(order.tanggal);
+
+            const lokasiInfo = parseLokasi(order.lokasi);
+            const mapsBtnInModal = lokasiInfo.maps ? `
+                <div style="margin-top: 6px;">
+                    <a href="${lokasiInfo.maps}" target="_blank" rel="noopener noreferrer" class="btn-maps-link" style="padding: 6px 12px; font-size: 12px;">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span>Buka Rute di Google Maps ↗</span>
+                    </a>
+                </div>
+            ` : '';
+
+            const metaBox = document.getElementById('detailMetaBox');
+            metaBox.innerHTML = `
+                <div class="detail-meta-row">
+                    <span class="detail-meta-label">Tanggal Order</span>
+                    <span class="detail-meta-value">${tglDisplay}</span>
+                </div>
+                <div class="detail-meta-row">
+                    <span class="detail-meta-label">Lokasi Kirim</span>
+                    <span class="detail-meta-value" style="display:flex; flex-direction:column; align-items:flex-end;">
+                        <span>${lokasiInfo.nama}</span>
+                        ${mapsBtnInModal}
+                    </span>
+                </div>
+            `;
+
+            const barangArr = order.barang ? order.barang.split(NL).map(item => "• " + item) : [];
+            document.getElementById('detailKonten').innerText = barangArr.length > 0 ? barangArr.join(NL) : "Tidak ada catatan barang";
+            document.getElementById('modalDetailOrder').style.display = 'flex';
         }
 
         async function simpanKeSupabase() {
@@ -2234,16 +2822,23 @@
                 return;
             }
 
+            const rawLokasi = document.getElementById('inputLokasi').value.trim();
+            const rawMapsInput = document.getElementById('inputMaps').value.trim();
+            const rawMaps = rawMapsInput ? normalizeMapsUrl(rawMapsInput, rawLokasi) : '';
+
+            // Format penyimpanan lokasi: jika ada maps link, gabungkan secara aman
+            const finalLokasi = rawMaps ? `${rawLokasi} | ${rawMaps}` : rawLokasi;
+
             const orderData = {
                 tanggal: isEstimasi ? null : (rawTanggal ? rawTanggal : null),
                 tanggal_estimasi: isEstimasi ? textEstimasi : null,
                 kepada: document.getElementById('inputKepada').value,
-                lokasi: document.getElementById('inputLokasi').value,
+                lokasi: finalLokasi,
                 barang: document.getElementById('inputBarang').value,
                 status_kirim: false
             };
 
-            if (!orderData.kepada || !orderData.lokasi || !orderData.barang) {
+            if (!orderData.kepada || !rawLokasi || !orderData.barang) {
                 showToast('Lengkapi pembeli, lokasi, dan minimal 1 barang!', 'warning');
                 return;
             }
@@ -2258,6 +2853,8 @@
                 document.getElementById('orderForm').reset();
                 document.getElementById('checkEstimasi').checked = false;
                 toggleEstimasiInput('inputTanggal', 'estimasiContainer', false);
+                document.getElementById('inputMaps').value = '';
+                onMapsInputTyped('inputMaps', 'inputMapsTestLink', 'btnOpenInputMaps');
                 tempItems = [];
                 renderListBarang();
                 showToast('Order baru berhasil disimpan!');
@@ -2330,9 +2927,16 @@
             if (![...selKepada.options].some(opt => opt.value === order.kepada)) selKepada.innerHTML += `<option value="${order.kepada}">${order.kepada}</option>`;
             selKepada.value = order.kepada;
 
+            // Parsing Lokasi dan Maps untuk form edit
+            const lokasiParsed = parseLokasi(order.lokasi);
             let selLokasi = document.getElementById('editLokasi');
-            if (![...selLokasi.options].some(opt => opt.value === order.lokasi)) selLokasi.innerHTML += `<option value="${order.lokasi}">${order.lokasi}</option>`;
-            selLokasi.value = order.lokasi;
+            if (![...selLokasi.options].some(opt => opt.value === lokasiParsed.nama)) {
+                selLokasi.innerHTML += `<option value="${lokasiParsed.nama}" data-maps="${lokasiParsed.maps}">${lokasiParsed.nama}</option>`;
+            }
+            selLokasi.value = lokasiParsed.nama;
+
+            document.getElementById('editMaps').value = getDisplayMapsInput(lokasiParsed.maps);
+            onMapsInputTyped('editMaps', 'editMapsTestLink', 'btnOpenEditMaps');
 
             if (order.barang) {
                 tempEditItems = order.barang.split(NL).filter(item => item.trim() !== '');
@@ -2356,11 +2960,16 @@
                 return;
             }
 
+            const rawLokasi = document.getElementById('editLokasi').value.trim();
+            const rawMapsInput = document.getElementById('editMaps').value.trim();
+            const rawMaps = rawMapsInput ? normalizeMapsUrl(rawMapsInput, rawLokasi) : '';
+            const finalLokasi = rawMaps ? `${rawLokasi} | ${rawMaps}` : rawLokasi;
+
             const dataEdit = {
                 tanggal: isEstimasi ? null : (rawTanggal ? rawTanggal : null),
                 tanggal_estimasi: isEstimasi ? textEstimasi : null,
                 kepada: document.getElementById('editKepada').value,
-                lokasi: document.getElementById('editLokasi').value,
+                lokasi: finalLokasi,
                 barang: document.getElementById('editBarang').value
             };
 
@@ -2501,7 +3110,8 @@
             selectedIds.forEach(id => {
                 const orderData = globalOrders.find(o => o.id === id);
                 if (orderData) {
-                    const lokasiMerah = orderData.lokasi ? orderData.lokasi.toLowerCase().includes('menunggu') : false;
+                    const lokasiInfo = parseLokasi(orderData.lokasi);
+                    const lokasiMerah = lokasiInfo.nama ? lokasiInfo.nama.toLowerCase().includes('menunggu') : false;
                     const textLokasiClass = lokasiMerah ? 'text-red' : '';
                     const barangFormat = orderData.barang ? orderData.barang.split(NL).join('<br>') : '-';
 
@@ -2509,11 +3119,15 @@
                         ? orderData.tanggal_estimasi
                         : formatTanggal(orderData.tanggal);
 
+                    const lokasiDisplay = lokasiInfo.maps 
+                        ? `<div><div>${lokasiInfo.nama}</div><div style="font-size:10px; color:#2563eb; font-weight:600; margin-top:2px; word-break:break-all;">📍 ${lokasiInfo.maps}</div></div>`
+                        : lokasiInfo.nama;
+
                     exportDataContainer.innerHTML += `
                     <div class="order-card" style="margin-bottom: 0;">
                         <div class="order-row"><div class="col-label">Hari/Tanggal</div><div class="col-value text-red">${tampilanTanggalRekap}</div></div>
                         <div class="order-row"><div class="col-label">Kepada</div><div class="col-value">${orderData.kepada}</div></div>
-                        <div class="order-row"><div class="col-label">Lokasi</div><div class="col-value ${textLokasiClass}">${orderData.lokasi}</div></div>
+                        <div class="order-row"><div class="col-label">Lokasi</div><div class="col-value ${textLokasiClass}">${lokasiDisplay}</div></div>
                         <div class="order-row"><div class="col-label">Barang</div><div class="col-value" style="font-weight: 500;">${barangFormat}</div></div>
                     </div>`;
                 }
@@ -2549,7 +3163,7 @@
         async function bukaModalArsip() {
             document.getElementById('modalArsipOrder').style.display = 'flex';
             const tbody = document.getElementById('arsipBody');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Memuat arsip...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Memuat arsip...</td></tr>';
 
             try {
                 const { data, error } = await sbClient.from('list_order')
@@ -2561,16 +3175,30 @@
 
                 tbody.innerHTML = '';
                 if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color:var(--text-muted);">Belum ada order selesai.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color:var(--text-muted);">Belum ada order selesai.</td></tr>';
                     return;
                 }
 
                 data.forEach(order => {
+                    const lokasiInfo = parseLokasi(order.lokasi);
+                    const mapsBtnHtml = lokasiInfo.maps ? `
+                        <a href="${lokasiInfo.maps}" target="_blank" rel="noopener noreferrer" 
+                           class="btn-maps-link" style="font-size:10px; padding:2px 6px;" title="Buka tautan Google Maps">
+                            <span>Maps ↗</span>
+                        </a>
+                    ` : '';
+
                     tbody.innerHTML += `
                     <tr style="opacity: 0.85;">
                         <td style="text-align:center;"><input type="checkbox" class="arsip-checkbox" value="${order.id}"></td>
                         <td>${order.tanggal_estimasi ? order.tanggal_estimasi : formatTanggal(order.tanggal)}</td>
                         <td><a class="link-detail" onclick="lihatRincianOrder(${order.id})">${order.kepada}</a></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span>${lokasiInfo.nama}</span>
+                                ${mapsBtnHtml}
+                            </div>
+                        </td>
                         <td style="text-align:center;">
                             <input type="checkbox" class="check-kirim" checked onchange="updateStatusKirim(${order.id}, this.checked)" title="Klik untuk mengembalikan ke order aktif">
                         </td>
