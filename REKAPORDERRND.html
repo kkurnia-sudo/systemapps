@@ -94,6 +94,12 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
         body {
             background-color: var(--bg-body);
             color: var(--text-main);
@@ -106,6 +112,8 @@
         .container {
             max-width: 1240px;
             margin: 0 auto;
+            width: 100%;
+            overflow-x: hidden;
         }
 
         /* Modern Glass Header */
@@ -732,15 +740,23 @@
         /* Status Badges */
         .status-badge {
             padding: 4px 10px;
-            border-radius: 20px;
+            border-radius: 8px;
             font-size: 11px;
             font-weight: 700;
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            text-align: center;
-            line-height: 1.2;
-            white-space: nowrap;
+            text-align: left;
+            line-height: 1.35;
+            white-space: normal;
+            word-break: break-word;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        table.history-table td:nth-child(4) {
+            max-width: 260px;
+            word-break: break-word;
         }
 
         .badge-green {
@@ -790,6 +806,10 @@
             flex-direction: column;
             gap: 10px;
             position: relative;
+            max-width: 100%;
+            overflow: hidden;
+            word-break: break-word;
+            box-sizing: border-box;
         }
 
         .m-card-top {
@@ -811,6 +831,7 @@
             flex-direction: column;
             gap: 7px;
             font-size: 12px;
+            max-width: 100%;
         }
 
         .m-info-row {
@@ -819,6 +840,17 @@
             gap: 8px;
             color: var(--text-muted);
             flex-wrap: wrap;
+            max-width: 100%;
+        }
+
+        .m-location-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            min-width: 0;
+            max-width: 100%;
         }
 
         .m-card-actions {
@@ -952,11 +984,27 @@
             text-align: center;
         }
 
-        .export-actions {
+        .export-actions-bottom {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 12px;
-            margin-bottom: 16px;
+            margin-top: 20px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn-rekap-download {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-rekap-close {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
         }
 
         #export-container {
@@ -1379,6 +1427,42 @@
                 grid-template-columns: 1fr;
             }
 
+            .export-actions-bottom {
+                flex-direction: column;
+                width: 100%;
+                max-width: 480px;
+                margin: 16px auto 30px;
+                gap: 10px;
+                padding: 0 10px;
+            }
+
+            .btn-rekap-download, .btn-rekap-close {
+                width: 100%;
+                justify-content: center;
+                padding: 13px;
+                font-size: 14px;
+            }
+
+            #export-container {
+                padding: 16px 12px;
+                border-radius: 10px;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+
+            .col-label {
+                width: 35%;
+                font-size: 10.5px;
+                padding: 6px 8px;
+            }
+
+            .col-value {
+                width: 65%;
+                font-size: 11px;
+                padding: 6px 8px;
+                word-break: break-word;
+            }
+
             .modal-content {
                 padding: 18px 16px;
                 border-radius: 16px;
@@ -1713,21 +1797,6 @@
 
         <!-- AREA PREVIEW & EXPORT PNG -->
         <div class="export-wrapper" id="exportWrapper">
-            <div class="export-actions">
-                <button class="btn-action-circle btn-dl" onclick="downloadPNG()" title="Download Gambar PNG">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                    </svg>
-                </button>
-                <button class="btn-action-circle btn-close" onclick="tutupPreview()" title="Tutup Pratinjau">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-
             <div id="export-container">
                 <div class="export-header">
                     <div class="header-left">
@@ -1741,6 +1810,23 @@
                     </div>
                 </div>
                 <div id="export-data-container"></div>
+            </div>
+
+            <!-- Tombol Aksi di Bawah Rekapan -->
+            <div class="export-actions-bottom">
+                <button type="button" class="btn btn-primary btn-rekap-download" onclick="downloadPNG()">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    <span>Download Gambar PNG</span>
+                </button>
+                <button type="button" class="btn btn-outline btn-rekap-close" onclick="tutupPreview()">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <span>Tutup Pratinjau</span>
+                </button>
             </div>
         </div>
     </div>
@@ -3129,10 +3215,12 @@
                             <span>${mobileTanggalText}</span>
                             ${estimasiBtnMobile}
                         </div>
-                        <div class="m-info-row">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            <span class="status-badge ${badgeClass}">${lokasiInfo.nama}</span>
-                            ${mapsBtnHtml}
+                        <div class="m-info-row" style="align-items: flex-start;">
+                            <svg width="14" height="14" style="margin-top: 3px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <div class="m-location-wrap">
+                                <span class="status-badge ${badgeClass}">${lokasiInfo.nama}</span>
+                                ${mapsBtnHtml}
+                            </div>
                         </div>
                         ${(() => {
                             const bLines = order.barang ? order.barang.split(NL).filter(b => b.trim() !== '') : [];
@@ -3527,8 +3615,8 @@
                         : formatTanggal(orderData.tanggal);
 
                     const lokasiDisplay = lokasiInfo.maps 
-                        ? `<div><div>${lokasiInfo.nama}</div><div style="font-size:10px; color:#2563eb; font-weight:600; margin-top:2px; word-break:break-all;">📍 ${lokasiInfo.maps}</div></div>`
-                        : lokasiInfo.nama;
+                        ? `<div style="width:100%;"><div style="word-break:break-word;">${lokasiInfo.nama}</div><div style="font-size:10px; color:#2563eb; font-weight:600; margin-top:3px; word-break:break-all;">📍 ${lokasiInfo.maps}</div></div>`
+                        : `<div style="width:100%; word-break:break-word;">${lokasiInfo.nama}</div>`;
 
                     exportDataContainer.innerHTML += `
                     <div class="order-card" style="margin-bottom: 0;">
@@ -3540,13 +3628,19 @@
                 }
             });
 
-            document.getElementById('exportWrapper').style.display = 'block';
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            const expWrapper = document.getElementById('exportWrapper');
+            expWrapper.style.display = 'block';
+            expWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
             showToast('Pratinjau rekapan gambar siap!');
         }
 
         function tutupPreview() {
-            document.getElementById('exportWrapper').style.display = 'none';
+            const expWrapper = document.getElementById('exportWrapper');
+            expWrapper.style.display = 'none';
+            const historyArea = document.getElementById('mobileCardsContainer') || document.querySelector('.card');
+            if (historyArea) {
+                historyArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
         function downloadPNG() {
