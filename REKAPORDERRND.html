@@ -1160,8 +1160,9 @@
         .master-list {
             list-style: none;
             margin-top: 12px;
-            max-height: 240px;
+            max-height: 290px;
             overflow-y: auto;
+            padding-right: 2px;
         }
 
         .master-list li {
@@ -1176,6 +1177,22 @@
             font-weight: 500;
             border: 1px solid var(--border);
             gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .master-list li:hover {
+            border-color: var(--border-focus);
+            background: var(--table-hover);
+        }
+
+        .master-list li.master-item-editing {
+            background: var(--card-bg);
+            border: 1.5px solid var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+            flex-direction: column;
+            align-items: stretch;
+            padding: 10px 12px;
+            gap: 8px;
         }
 
         .master-item-info {
@@ -1183,11 +1200,14 @@
             flex-direction: column;
             gap: 2px;
             flex: 1;
+            min-width: 0;
+            word-break: break-word;
         }
 
         .master-item-name {
             font-weight: 600;
             color: var(--text-main);
+            word-break: break-word;
         }
 
         .master-item-link {
@@ -1197,10 +1217,88 @@
             display: inline-flex;
             align-items: center;
             gap: 3px;
+            max-width: fit-content;
+            word-break: break-all;
         }
 
         .master-item-link:hover {
             text-decoration: underline;
+        }
+
+        .master-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .btn-master-action {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            padding: 0;
+        }
+
+        .btn-master-action:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-master-action.btn-master-delete:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: #fee2e2;
+        }
+
+        body.dark-mode .btn-master-action.btn-master-delete:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+
+        .master-inline-edit-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .master-inline-edit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--primary);
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .master-inline-edit-btns {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .btn-xs {
+            padding: 4px 10px;
+            font-size: 11.5px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
         }
 
         @keyframes fadeIn {
@@ -1903,9 +2001,14 @@
 
     <!-- Modal Manajemen Data Master -->
     <div class="modal-overlay" id="modalDataMaster">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 520px;">
             <div class="modal-header">
-                <h2>Manajemen Data Master</h2>
+                <h2>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display:inline-block; vertical-align:middle; margin-right:4px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                    </svg>
+                    Manajemen Data Master
+                </h2>
                 <button class="close-btn" onclick="closeModal('modalDataMaster')">&times;</button>
             </div>
 
@@ -1919,15 +2022,23 @@
                 <!-- Form Input Master Baru -->
                 <div id="masterInputContainer" style="display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="inputMasterBaru" class="form-control" placeholder="Ketik nama data baru...">
+                        <input type="text" id="inputMasterBaru" class="form-control" placeholder="Ketik nama data baru..."
+                               onkeydown="if(event.key==='Enter') simpanDataMaster()">
                         <button class="btn btn-primary" onclick="simpanDataMaster()" style="flex-shrink: 0;">Tambah</button>
                     </div>
                     <!-- Khusus Tab Lokasi: Input Google Maps Default -->
                     <div id="masterMapsRow" style="display: none;">
                         <input type="text" id="inputMasterMaps" class="form-control" style="font-size: 12px;"
-                            placeholder="Tautan Google Maps default (Opsional, cth: https://maps.app.goo.gl/...)">
+                            placeholder="Tautan Google Maps default (Opsional, cth: https://maps.app.goo.gl/...)"
+                            onkeydown="if(event.key==='Enter') simpanDataMaster()">
                     </div>
                 </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; margin-bottom: 2px;">
+                    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Daftar Item Master</span>
+                    <span id="masterItemCount" style="font-size: 11.5px; font-weight: 700; color: var(--primary);">0 item</span>
+                </div>
+
                 <ul class="master-list" id="listDataMaster"></ul>
             </div>
         </div>
@@ -2735,6 +2846,16 @@
             return d.toLocaleDateString('id-ID', options);
         }
 
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         async function initApp() {
             initTheme();
             document.getElementById('inputTanggal').value = "";
@@ -2751,6 +2872,8 @@
                 openModalFirebase();
             }
         }
+
+        let editingMasterIndex = null;
 
         function sortMasterData() {
             masterData.kepada.sort((a, b) => a.localeCompare(b));
@@ -2791,8 +2914,12 @@
             selectsStandard.forEach(sel => {
                 const el = document.getElementById(sel.id);
                 if (el) {
+                    const currentVal = el.value;
                     el.innerHTML = `<option value="">${sel.placeholder}</option>`;
-                    sel.data.forEach(item => el.innerHTML += `<option value="${item}">${item}</option>`);
+                    sel.data.forEach(item => el.innerHTML += `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`);
+                    if (currentVal && sel.data.includes(currentVal)) {
+                        el.value = currentVal;
+                    }
                 }
             });
 
@@ -2804,11 +2931,15 @@
             selectsLokasi.forEach(sel => {
                 const el = document.getElementById(sel.id);
                 if (el) {
+                    const currentVal = el.value;
                     el.innerHTML = `<option value="">${sel.placeholder}</option>`;
                     masterData.lokasi.forEach(item => {
                         const obj = getMasterLokasiObj(item);
-                        el.innerHTML += `<option value="${obj.nama}" data-maps="${obj.maps}">${obj.nama}</option>`;
+                        el.innerHTML += `<option value="${escapeHtml(obj.nama)}" data-maps="${escapeHtml(obj.maps)}">${escapeHtml(obj.nama)}</option>`;
                     });
+                    if (currentVal) {
+                        el.value = currentVal;
+                    }
                 }
             });
 
@@ -2816,12 +2947,14 @@
         }
 
         function openModalMaster() {
+            editingMasterIndex = null;
             document.getElementById('modalDataMaster').style.display = 'flex';
             switchTab('kepada');
         }
 
         function switchTab(tabName) {
             currentMasterTab = tabName;
+            editingMasterIndex = null;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('tab-' + tabName).classList.add('active');
 
@@ -2831,8 +2964,11 @@
             if (tabName === 'lokasi') {
                 inputBaru.placeholder = 'Nama Lokasi baru (cth: Marunda)...';
                 if (mapsRow) mapsRow.style.display = 'block';
+            } else if (tabName === 'kepada') {
+                inputBaru.placeholder = 'Nama Pembeli baru (cth: Lampung - Yeyen)...';
+                if (mapsRow) mapsRow.style.display = 'none';
             } else {
-                inputBaru.placeholder = `Ketik ${tabName} baru...`;
+                inputBaru.placeholder = 'Nama Barang baru (cth: Basreng Pedas)...';
                 if (mapsRow) mapsRow.style.display = 'none';
             }
             renderMasterList();
@@ -2842,46 +2978,233 @@
             const listEl = document.getElementById('listDataMaster');
             listEl.innerHTML = '';
 
-            masterData[currentMasterTab].forEach((item, index) => {
-                if (currentMasterTab === 'lokasi') {
-                    const obj = getMasterLokasiObj(item);
-                    const linkBadge = obj.maps ? `
-                        <a href="${obj.maps}" target="_blank" rel="noopener noreferrer" class="master-item-link" title="Buka tautan Google Maps">
-                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            <span>Google Maps ↗</span>
-                        </a>
-                    ` : '';
+            const items = masterData[currentMasterTab] || [];
+            const countEl = document.getElementById('masterItemCount');
+            if (countEl) {
+                countEl.innerText = `${items.length} item`;
+            }
 
-                    listEl.innerHTML += `
-                        <li>
-                            <div class="master-item-info">
-                                <span class="master-item-name">${obj.nama}</span>
-                                ${linkBadge}
-                            </div>
-                            <span class="remove-item" onclick="hapusDataMaster(${index})" title="Hapus">&times;</span>
-                        </li>
-                    `;
+            if (items.length === 0) {
+                listEl.innerHTML = `<li style="justify-content: center; color: var(--text-muted); font-size: 12.5px; padding: 18px 12px; background: var(--input-bg);">Belum ada data untuk kategori ini.</li>`;
+                return;
+            }
+
+            items.forEach((item, index) => {
+                if (editingMasterIndex === index) {
+                    // Render Mode Edit / Revisi
+                    if (currentMasterTab === 'lokasi') {
+                        const obj = getMasterLokasiObj(item);
+                        listEl.innerHTML += `
+                            <li class="master-item-editing" id="masterRowEditing">
+                                <div class="master-inline-edit-wrap">
+                                    <div class="master-inline-edit-header">
+                                        <span>✏️ Revisi Lokasi & Maps:</span>
+                                        <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">Tekan Enter (Simpan) / Esc (Batal)</span>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <input type="text" id="inlineEditNama" class="form-control" 
+                                               value="${escapeHtml(obj.nama)}" placeholder="Nama Lokasi..." 
+                                               style="font-size: 13px;"
+                                               onkeydown="handleMasterEditKey(event, ${index})">
+                                        <div style="display: flex; gap: 6px; align-items: center;">
+                                            <input type="text" id="inlineEditMaps" class="form-control" 
+                                                   value="${escapeHtml(obj.maps || '')}" 
+                                                   placeholder="Tautan Google Maps default (Opsional)..." 
+                                                   style="font-size: 11.5px;"
+                                                   onkeydown="handleMasterEditKey(event, ${index})">
+                                            ${obj.maps ? `
+                                                <a href="${obj.maps}" target="_blank" rel="noopener noreferrer" class="btn-master-action" title="Tes Tautan Maps" style="flex-shrink: 0;">
+                                                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                                </a>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="master-inline-edit-btns">
+                                        <button type="button" class="btn btn-outline btn-xs" onclick="batalEditMaster()">Batal</button>
+                                        <button type="button" class="btn btn-primary btn-xs" onclick="simpanEditMaster(${index})">
+                                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                            Simpan
+                                        </button>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                    } else {
+                        const valText = typeof item === 'object' ? item.nama : item;
+                        const labelTitle = currentMasterTab === 'kepada' ? 'Pembeli' : 'Barang';
+                        listEl.innerHTML += `
+                            <li class="master-item-editing" id="masterRowEditing">
+                                <div class="master-inline-edit-wrap">
+                                    <div class="master-inline-edit-header">
+                                        <span>✏️ Revisi ${labelTitle}:</span>
+                                        <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">Tekan Enter (Simpan) / Esc (Batal)</span>
+                                    </div>
+                                    <input type="text" id="inlineEditNama" class="form-control" 
+                                           value="${escapeHtml(valText)}" placeholder="Nama ${labelTitle}..." 
+                                           style="font-size: 13px;"
+                                           onkeydown="handleMasterEditKey(event, ${index})">
+                                    <div class="master-inline-edit-btns">
+                                        <button type="button" class="btn btn-outline btn-xs" onclick="batalEditMaster()">Batal</button>
+                                        <button type="button" class="btn btn-primary btn-xs" onclick="simpanEditMaster(${index})">
+                                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                            Simpan
+                                        </button>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                    }
                 } else {
-                    listEl.innerHTML += `
-                        <li>
-                            <span>${item}</span>
-                            <span class="remove-item" onclick="hapusDataMaster(${index})" title="Hapus">&times;</span>
-                        </li>
-                    `;
+                    // Render Mode Tampilan Biasa
+                    if (currentMasterTab === 'lokasi') {
+                        const obj = getMasterLokasiObj(item);
+                        const linkBadge = obj.maps ? `
+                            <a href="${obj.maps}" target="_blank" rel="noopener noreferrer" class="master-item-link" title="Buka tautan Google Maps" onclick="event.stopPropagation();">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span>Google Maps ↗</span>
+                            </a>
+                        ` : '';
+
+                        listEl.innerHTML += `
+                            <li>
+                                <div class="master-item-info">
+                                    <span class="master-item-name">${escapeHtml(obj.nama)}</span>
+                                    ${linkBadge}
+                                </div>
+                                <div class="master-item-actions">
+                                    <button type="button" class="btn-master-action" onclick="editDataMaster(${index})" title="Edit / Revisi Lokasi ini">
+                                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                    <button type="button" class="btn-master-action btn-master-delete" onclick="hapusDataMaster(${index})" title="Hapus Lokasi ini">
+                                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </li>
+                        `;
+                    } else {
+                        const valText = typeof item === 'object' ? item.nama : item;
+                        listEl.innerHTML += `
+                            <li>
+                                <div class="master-item-info">
+                                    <span class="master-item-name">${escapeHtml(valText)}</span>
+                                </div>
+                                <div class="master-item-actions">
+                                    <button type="button" class="btn-master-action" onclick="editDataMaster(${index})" title="Edit / Revisi item ini">
+                                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                    <button type="button" class="btn-master-action btn-master-delete" onclick="hapusDataMaster(${index})" title="Hapus item ini">
+                                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </li>
+                        `;
+                    }
                 }
             });
+
+            if (editingMasterIndex !== null) {
+                setTimeout(() => {
+                    const inputEl = document.getElementById('inlineEditNama');
+                    if (inputEl) {
+                        inputEl.focus();
+                        inputEl.select();
+                    }
+                }, 50);
+            }
+        }
+
+        function editDataMaster(index) {
+            editingMasterIndex = index;
+            renderMasterList();
+        }
+
+        function batalEditMaster() {
+            editingMasterIndex = null;
+            renderMasterList();
+        }
+
+        function handleMasterEditKey(event, index) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                simpanEditMaster(index);
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                batalEditMaster();
+            }
+        }
+
+        function simpanEditMaster(index) {
+            const inputNama = document.getElementById('inlineEditNama');
+            if (!inputNama) return;
+            const newNama = inputNama.value.trim();
+
+            if (!newNama) {
+                showToast('Nama data master tidak boleh kosong!', 'warning');
+                inputNama.focus();
+                return;
+            }
+
+            if (currentMasterTab === 'lokasi') {
+                const exists = masterData.lokasi.some((item, idx) => {
+                    if (idx === index) return false;
+                    const obj = getMasterLokasiObj(item);
+                    return obj.nama.toLowerCase() === newNama.toLowerCase();
+                });
+                if (exists) {
+                    showToast(`Lokasi "${newNama}" sudah ada di master!`, 'warning');
+                    inputNama.focus();
+                    return;
+                }
+
+                const inputMaps = document.getElementById('inlineEditMaps');
+                const newMaps = inputMaps ? normalizeMapsUrl(inputMaps.value.trim()) : '';
+                masterData.lokasi[index] = {
+                    nama: newNama,
+                    maps: newMaps
+                };
+            } else {
+                const exists = masterData[currentMasterTab].some((item, idx) => {
+                    if (idx === index) return false;
+                    const text = typeof item === 'object' ? item.nama : item;
+                    return text.toLowerCase() === newNama.toLowerCase();
+                });
+                if (exists) {
+                    showToast(`"${newNama}" sudah ada di data master!`, 'warning');
+                    inputNama.focus();
+                    return;
+                }
+                masterData[currentMasterTab][index] = newNama;
+            }
+
+            editingMasterIndex = null;
+            saveMasterData();
+            showToast('Data master berhasil direvisi!');
         }
 
         function simpanDataMaster() {
             const input = document.getElementById('inputMasterBaru');
             const namaVal = input.value.trim();
 
-            if (!namaVal) return;
+            if (!namaVal) {
+                showToast('Ketik nama data baru terlebih dahulu!', 'warning');
+                input.focus();
+                return;
+            }
 
             if (currentMasterTab === 'lokasi') {
+                const exists = masterData.lokasi.some(item => {
+                    const obj = getMasterLokasiObj(item);
+                    return obj.nama.toLowerCase() === namaVal.toLowerCase();
+                });
+                if (exists) {
+                    showToast(`Lokasi "${namaVal}" sudah ada di master!`, 'warning');
+                    input.focus();
+                    return;
+                }
+
                 const mapsInput = document.getElementById('inputMasterMaps');
                 const mapsVal = normalizeMapsUrl(mapsInput.value.trim());
 
@@ -2893,12 +3216,22 @@
                 input.value = '';
                 mapsInput.value = '';
             } else {
+                const exists = masterData[currentMasterTab].some(item => {
+                    const text = typeof item === 'object' ? item.nama : item;
+                    return text.toLowerCase() === namaVal.toLowerCase();
+                });
+                if (exists) {
+                    showToast(`"${namaVal}" sudah ada di data master!`, 'warning');
+                    input.focus();
+                    return;
+                }
+
                 masterData[currentMasterTab].push(namaVal);
                 input.value = '';
             }
 
             saveMasterData();
-            showToast('Data master berhasil ditambahkan');
+            showToast('Data master berhasil ditambahkan!');
         }
 
         async function hapusDataMaster(index) {
@@ -2907,6 +3240,9 @@
 
             const res = await showModernConfirm('Hapus Item Master?', `Item "${labelItem}" akan dihapus dari data opsi master.`, 'Hapus', true);
             if (res.isConfirmed) {
+                if (editingMasterIndex === index) {
+                    editingMasterIndex = null;
+                }
                 masterData[currentMasterTab].splice(index, 1);
                 saveMasterData();
                 showToast('Item berhasil dihapus');
@@ -2914,6 +3250,9 @@
         }
 
         function closeModal(modalId) {
+            if (modalId === 'modalDataMaster') {
+                editingMasterIndex = null;
+            }
             document.getElementById(modalId).style.display = 'none';
         }
 
