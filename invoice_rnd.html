@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Invoice System — SBR Putra Food</title>
     <!-- Import Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -942,34 +942,51 @@
         #pngExportWrap #previewContent > div:last-child { font-size: 16px !important; margin-top: 34px !important; }
 
         /* ========================================================================= */
-        /* RESPONSIVE BREAKPOINTS: TABLET (<= 1024px) & MOBILE (<= 768px)            */
+        /* RESPONSIVE DESIGN — MULTI DEVICE                                         */
+        /* 1024px: Tablet  |  768px: Ponsel/Phone  |  480px: Ponsel kecil        */
         /* ========================================================================= */
+
+        /* --- Tablet besar & landscape ponsel (sampai 1024px) --- */
         @media (max-width: 1024px) {
-            .workspace-grid {
-                grid-template-columns: 1fr;
+            body {
+                padding: 16px 18px 40px;
             }
+
+            .workspace-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
             .side-column {
                 position: static;
             }
+
             .summary-card {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 20px;
                 align-items: start;
             }
+
             .summary-card-header {
                 grid-column: 1 / -1;
                 margin-bottom: 0;
             }
+
             .summary-inner-box {
                 margin-bottom: 0;
             }
+
+            .action-buttons-container {
+                grid-column: 1 / -1;
+            }
         }
 
+        /* --- Ponsel (sampai 768px) --- */
         @media (max-width: 768px) {
             body {
                 padding: 10px 10px 32px;
                 font-size: 13.5px;
+                -webkit-text-size-adjust: 100%;
             }
 
             .app-topbar {
@@ -984,6 +1001,10 @@
 
             .brand-section {
                 justify-content: space-between;
+            }
+
+            .brand-text h1 {
+                font-size: 16px;
             }
 
             .top-actions {
@@ -1012,6 +1033,15 @@
                 border-radius: 16px;
             }
 
+            .card-header-title h3 {
+                font-size: 14.5px;
+            }
+
+            .card-header-title {
+                margin-bottom: 14px;
+                padding-bottom: 11px;
+            }
+
             /* Mencegah zoom otomatis browser mobile saat fokus input */
             input, select, textarea {
                 font-size: 16px !important;
@@ -1029,13 +1059,112 @@
                 gap: 14px;
             }
 
-            /* Bottom Sheet untuk Modal di Layar Ponsel */
+            .action-buttons-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* ---- Tabel Rincian Barang → kartu di ponsel ---- */
+            #invoiceTable {
+                min-width: 0;
+                display: block;
+            }
+
+            #invoiceTable thead {
+                display: none;
+            }
+
+            #invoiceTable tbody {
+                display: block;
+            }
+
+            #invoiceTable tbody tr {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px 12px;
+                padding: 14px;
+                margin-bottom: 12px;
+                border: 1px solid var(--border-color);
+                border-radius: var(--radius-md);
+                background: var(--bg-elevated);
+                position: relative;
+            }
+
+            #invoiceTable tbody tr:last-child {
+                margin-bottom: 0;
+            }
+
+            #invoiceTable tbody td {
+                display: flex !important;
+                flex-direction: column;
+                gap: 3px;
+                padding: 0 !important;
+                border: none !important;
+                background: transparent !important;
+            }
+
+            /* Label kecil di atas tiap nilai */
+            #invoiceTable tbody td::before {
+                content: attr(data-label);
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                color: var(--text-muted);
+                letter-spacing: 0.4px;
+            }
+
+            /* Nama Barang: lebar penuh di baris pertama */
+            #invoiceTable tbody td:nth-child(3) {
+                grid-column: 1 / -1;
+                order: 1;
+                padding-right: 76px !important;
+            }
+
+            #invoiceTable tbody td:nth-child(1) { order: 2; } /* Tanggal */
+            #invoiceTable tbody td:nth-child(2) { order: 3; } /* Qty */
+            #invoiceTable tbody td:nth-child(4) { order: 4; } /* Tujuan */
+            #invoiceTable tbody td:nth-child(5) { order: 5; } /* Harga */
+            #invoiceTable tbody td:nth-child(6) { order: 6; } /* Total */
+
+            /* Total menonjol, melebar penuh */
+            #invoiceTable tbody td:nth-child(6) {
+                grid-column: 1 / -1;
+                justify-content: flex-end;
+                align-items: flex-end;
+                border-top: 1px dashed var(--border-color) !important;
+                padding-top: 8px !important;
+            }
+
+            /* Tombol aksi di pojok kanan atas kartu */
+            #invoiceTable tbody td.action-col {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: auto;
+                flex-direction: row;
+                gap: 6px;
+            }
+
+            #invoiceTable tbody td.action-col::before {
+                display: none;
+            }
+
+            /* Kolom Tujuan disembunyikan otomatis (bukan agen Pak Rachmat) */
+            #invoiceTable tbody td.td-tujuan {
+                display: none !important;
+            }
+
+            .empty-items-state {
+                padding: 26px 14px;
+            }
+
+            /* ---- Bottom Sheet untuk Modal di Layar Ponsel ---- */
             .modal {
                 padding: 0;
                 align-items: flex-end;
             }
+
             .modal-content {
-                padding: 20px 16px 24px;
+                padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
                 margin: 0;
                 max-width: 100% !important;
                 width: 100%;
@@ -1046,9 +1175,19 @@
                 max-height: 92vh;
                 animation: sheetUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             }
+
             @keyframes sheetUp {
                 from { transform: translateY(100%); }
                 to { transform: translateY(0); }
+            }
+
+            .modal-header {
+                position: sticky;
+                top: 0;
+                background: var(--bg-card);
+                z-index: 5;
+                padding-top: 4px;
+                margin-top: -4px;
             }
 
             .modal-content .btn {
@@ -1056,11 +1195,108 @@
                 font-size: 14px;
             }
 
+            /* Grid 2 kolom di modal jadi 1 kolom supaya tidak sempit */
+            #itemModal .modal-content > div > div[style*="grid-template-columns: 1fr 1fr"],
+            #depositModal .modal-content > div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+            }
+
             #previewContent { padding: 14px !important; }
             #previewContent h2 { font-size: 17px !important; }
             #previewContent h3 { font-size: 15px !important; }
             #previewContent table th, #previewContent table td { padding: 6px 4px !important; font-size: 11px !important; }
             .summary-table-container { max-width: 100% !important; margin-top: 14px; }
+
+            /* Tabel riwayat & master tetap boleh scroll horizontal */
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* --- Ponsel kecil (sampai 480px) --- */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px 8px 28px;
+                font-size: 13px;
+            }
+
+            .app-topbar {
+                padding: 12px;
+                border-radius: 14px;
+            }
+
+            .logo {
+                width: 42px;
+                height: 42px;
+                border-radius: 12px;
+            }
+
+            .brand-text h1 {
+                font-size: 15px;
+            }
+
+            .brand-text p {
+                font-size: 11.5px;
+            }
+
+            .invoice-subtitle {
+                font-size: 9.5px;
+                padding: 2px 7px;
+            }
+
+            .top-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .top-actions .btn-theme-toggle {
+                grid-column: span 1;
+            }
+
+            .card {
+                padding: 14px 12px;
+                border-radius: 14px;
+            }
+
+            .summary-card {
+                padding: 14px 12px;
+            }
+
+            /* Kartu item menjadi satu kolom penuh */
+            #invoiceTable tbody tr {
+                grid-template-columns: 1fr;
+                gap: 9px;
+                padding: 12px;
+            }
+
+            #invoiceTable tbody td:nth-child(3) {
+                padding-right: 72px !important;
+            }
+
+            /* Jumlah & Satuan tetap berdua agar ringkas */
+            #invoiceTable tbody td:nth-child(1),
+            #invoiceTable tbody td:nth-child(2) {
+                grid-column: span 1;
+            }
+
+            .modal-content {
+                padding: 18px 13px calc(20px + env(safe-area-inset-bottom));
+            }
+
+            .modal-header h3 {
+                font-size: 15.5px !important;
+            }
+
+            .summary-row {
+                font-size: 12.5px;
+            }
+        }
+
+        /* --- Tablet kecil & ponsel besar (landscape) --- */
+        @media (min-width: 481px) and (max-width: 1024px) {
+            .customer-info-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
         @media print {
@@ -1562,6 +1798,11 @@
                 <label>Nominal Deposit (Rp)</label>
                 <input type="text" id="depNom" placeholder="0" oninput="formatRibuanInput(this)">
             </div>
+            <button type="button" class="btn btn-outline" onclick="bayarFull()"
+                style="width: 100%; justify-content: center; border-style: dashed; border-color: var(--primary); color: var(--primary);">
+                💰 Bayar Full (Sisa Tagihan Otomatis)
+            </button>
+            <p id="depSisaInfo" style="font-size: 12px; color: var(--text-muted); text-align: center; margin: -6px 0 0;"></p>
         </div>
         <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
             <button class="btn btn-danger" style="margin-right: auto; display: none;" id="btnHapusDeposit" onclick="hapusDeposit()">Hapus</button>
@@ -1724,8 +1965,12 @@
         <div id="qpFormArea" style="display: none; flex-direction: column; gap: 12px;">
             <div class="form-group">
                 <label>Nominal Pembayaran (Rp)</label>
-                <input type="text" id="qpNominal" oninput="formatRibuanInput(this)" style="font-size: 16px; font-weight: 700; color: var(--primary);">
+                <input type="text" id="qpNominal" value="0" oninput="formatRibuanInput(this)" style="font-size: 16px; font-weight: 700; color: var(--primary);">
             </div>
+            <button type="button" class="btn btn-outline" onclick="qpBayarFull()"
+                style="width: 100%; justify-content: center; border-style: dashed; border-color: var(--primary); color: var(--primary);">
+                💰 Bayar Full (Sisa Tagihan Otomatis)
+            </button>
             <div class="form-group" style="margin-top: 12px;">
                 <label>Keterangan (Opsional)</label>
                 <input type="text" id="qpKet" placeholder="Cth: Transfer BCA, Cash, dsb...">
@@ -3206,8 +3451,58 @@
             document.getElementById('depNom').value = '';
             document.getElementById('btnHapusDeposit').style.display = 'none';
         }
+        updateSisaBayarInfo();
         toggleModal('depositModal');
     }
+
+    // Hitung sisa tagihan yang belum terbayar (subtotal barang - semua deposit yang sudah tercatat,
+    // kecuali deposit yang sedang diedit supaya nilainya tidak dobel)
+    function hitungSisaTagihan() {
+        let subtotal = 0;
+        document.querySelectorAll('#itemsBody tr').forEach(row => {
+            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            subtotal += qty * price;
+        });
+
+        let totalDeposit = 0;
+        depositList.forEach((dep, idx) => {
+            if (editingDepositIndex >= 0 && idx === editingDepositIndex) return;
+            totalDeposit += dep.nom;
+        });
+
+        return Math.max(0, Math.round(subtotal - totalDeposit));
+    }
+
+    function updateSisaBayarInfo() {
+        const infoEl = document.getElementById('depSisaInfo');
+        if (!infoEl) return;
+        const sisa = hitungSisaTagihan();
+        if (sisa <= 0) {
+            infoEl.innerHTML = '<span style="color: var(--primary); font-weight: 700;">✔ Tagihan sudah lunas</span>';
+        } else {
+            infoEl.innerHTML = `Sisa tagihan saat ini: <b style="color: var(--primary);">${formatMoney(sisa)}</b>`;
+        }
+    }
+
+    // Shortcut: isi otomatis nominal dengan sisa tagihan penuh
+    function bayarFull() {
+        const sisa = hitungSisaTagihan();
+        if (sisa <= 0) {
+            showWarningPopup('Tagihan Sudah Lunas', 'Tidak ada sisa tagihan yang perlu dibayar.');
+            return;
+        }
+        const depNom = document.getElementById('depNom');
+        depNom.value = new Intl.NumberFormat('id-ID').format(sisa);
+
+        const depKet = document.getElementById('depKet');
+        if (!depKet.value.trim()) depKet.value = 'Bayar Full';
+
+        updateSisaBayarInfo();
+        depNom.focus();
+        depNom.select();
+    }
+
     function simpanDeposit() {
         const ket = document.getElementById('depKet').value.trim() || 'Deposit';
         const nom = getCleanNumber('depNom');
@@ -3618,7 +3913,7 @@
         document.getElementById('qpNoDataMsg').style.display = 'none';
         document.getElementById('btnProsesQP').disabled = true;
         document.getElementById('qpKet').value = '';
-        document.getElementById('qpNominal').value = '';
+        document.getElementById('qpNominal').value = '0';
         qpSelectedInvoice = null;
         
         let options = '<option value="">-- Pilih Agen --</option>';
@@ -3628,6 +3923,29 @@
         document.getElementById('qpCustomer').innerHTML = options;
         
         toggleModal('quickPayModal');
+    }
+
+    // Shortcut: isi otomatis nominal Quick Pay dengan sisa tagihan penuh
+    function qpBayarFull() {
+        if (!qpSelectedInvoice) {
+            showWarningPopup("Pilih Agen", "Silakan pilih agen terlebih dahulu untuk melihat sisa tagihan.");
+            return;
+        }
+
+        const sisa = Math.max(0, Math.round(parseFloat(qpSelectedInvoice.balance_due) || 0));
+        if (sisa <= 0) {
+            showWarningPopup('Tagihan Sudah Lunas', 'Tidak ada sisa tagihan yang perlu dibayar.');
+            return;
+        }
+
+        const qpNominal = document.getElementById('qpNominal');
+        qpNominal.value = new Intl.NumberFormat('id-ID').format(sisa);
+
+        const qpKet = document.getElementById('qpKet');
+        if (!qpKet.value.trim()) qpKet.value = 'Bayar Full';
+
+        qpNominal.focus();
+        qpNominal.select();
     }
 
     async function onQPCustomerChange() {
@@ -3669,7 +3987,7 @@
                     document.getElementById('qpTotalTagihan').innerText = formatMoney(inv.subtotal);
                     document.getElementById('qpSisaTagihan').innerText = formatMoney(inv.balance_due);
                     
-                    document.getElementById('qpNominal').value = new Intl.NumberFormat('id-ID').format(inv.balance_due);
+                    document.getElementById('qpNominal').value = '0';
                     document.getElementById('btnProsesQP').disabled = false;
                 }
             } else {
