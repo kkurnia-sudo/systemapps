@@ -12,8 +12,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
-    <!-- Supabase, html2canvas, & SweetAlert2 -->
+    <!-- Firebase SDK (Compat v10) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+    <!-- Supabase (Digunakan untuk fitur opsional migrasi data lama ke Firebase) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- html2canvas & SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -132,12 +138,12 @@
             width: 38px;
             height: 38px;
             border-radius: 10px;
-            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
         }
 
         .brand-title-wrap h1 {
@@ -173,6 +179,12 @@
             border: 1px solid var(--border);
             border-radius: 20px;
             color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .connection-status:hover {
+            border-color: var(--primary);
         }
 
         .status-dot {
@@ -1209,29 +1221,144 @@
             padding: 10px 20px !important;
         }
 
+        /* Responsive Styles & Mobile Navigation */
+        .mobile-section-nav {
+            display: none;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            margin-bottom: 16px;
+            gap: 6px;
+        }
+
+        .mobile-nav-btn {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mobile-nav-btn.active {
+            background: var(--card-bg);
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .mobile-nav-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+
+        .m-barang-pill {
+            font-size: 11.5px;
+            color: var(--text-main);
+            background: var(--input-bg);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px dashed var(--border);
+            margin-top: 3px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .mobile-section-nav {
+                display: flex;
+            }
+
+            .section-view-hidden {
+                display: none !important;
+            }
+        }
+
         @media (max-width: 640px) {
             body {
                 padding: 10px 10px 80px;
             }
 
             .app-header {
-                padding: 10px 12px;
+                padding: 8px 12px;
                 border-radius: 12px;
-                margin-bottom: 14px;
+                margin-bottom: 12px;
+                gap: 8px;
             }
 
             .brand-logo-wrap {
+                width: 32px;
+                height: 32px;
+            }
+
+            .brand-title-wrap h1 {
+                font-size: 14px;
+            }
+
+            .brand-title-wrap span {
+                font-size: 10px;
+            }
+
+            .connection-status {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+
+            .btn-icon {
                 width: 34px;
                 height: 34px;
             }
 
-            .brand-title-wrap h1 {
-                font-size: 15px;
+            .card {
+                padding: 14px;
+                border-radius: 12px;
             }
 
-            .card {
-                padding: 16px;
-                border-radius: 14px;
+            .form-control {
+                font-size: 16px !important; /* Mencegah auto-zoom layar pada iOS */
+                padding: 11px 12px;
+            }
+
+            .item-builder-inputs {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .item-builder-inputs button {
+                grid-column: span 2;
+                width: 100%;
+                padding: 11px;
+            }
+
+            .table-filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .search-box-wrap {
+                width: 100%;
+            }
+
+            .select-all-pill {
+                width: 100%;
+                justify-content: space-between;
             }
 
             .table-responsive {
@@ -1242,13 +1369,22 @@
                 display: flex;
             }
 
+            .m-order-card {
+                padding: 14px;
+                border-radius: 12px;
+                box-shadow: var(--card-shadow);
+            }
+
             #export-data-container.rekap-grid-2 {
                 grid-template-columns: 1fr;
             }
 
             .modal-content {
-                padding: 18px;
+                padding: 18px 16px;
                 border-radius: 16px;
+                max-height: 85vh;
+                overscroll-behavior: contain;
+                -webkit-overflow-scrolling: touch;
             }
         }
     </style>
@@ -1261,16 +1397,14 @@
         <!-- HEADER INTERAKTIF -->
         <header class="app-header">
             <div class="brand-container">
-                <div class="brand-logo-wrap">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-                        </path>
+                <div class="brand-logo-wrap" title="Firebase Firestore Database">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4.6 15.3l5.3-9.9c.4-.7 1.4-.7 1.8 0l3 5.6-7.3 4.3H4.6zm13.8 2.2L13 7.8c-.3-.7-1.3-.7-1.6 0l-2.1 4 9.1 5.7zM3.4 16.5l8 4.7c.4.2.9.2 1.3 0l8-4.7c.6-.3.7-1.1.2-1.6L18 13.1l-6 3.8-6-3.8-2.8 1.8c-.5.5-.4 1.3.2 1.6z"/>
                     </svg>
                 </div>
                 <div class="brand-title-wrap">
                     <h1>Dashboard Order</h1>
-                    <span>SBR Putra Food</span>
+                    <span>SBR Putra Food • Firebase</span>
                 </div>
             </div>
 
@@ -1290,7 +1424,20 @@
                         </path>
                     </svg>
                 </button>
-                <!-- TOMBOL MANAJEMEN DATA -->
+
+                <!-- PENGATURAN FIREBASE -->
+                <button class="btn-icon" onclick="openModalFirebase()" title="Pengaturan Database Firebase"
+                    aria-label="Pengaturan Firebase">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </button>
+
+                <!-- DATA MASTER -->
                 <button class="btn-icon" onclick="openModalMaster()" title="Manajemen Data Master"
                     aria-label="Data Master">
                     <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1299,16 +1446,35 @@
                         </path>
                     </svg>
                 </button>
-                <div class="connection-status" id="connStatusBox">
+
+                <!-- INDIKATOR KONEKSI -->
+                <div class="connection-status" id="connStatusBox" onclick="openModalFirebase()" title="Klik untuk cek konfigurasi Firebase">
                     <div class="status-dot" id="connDot"></div>
                     <span id="connText">Menghubungkan...</span>
                 </div>
             </div>
         </header>
 
+        <!-- Segmented Tab Nav Khusus Mobile / Layar Kecil -->
+        <div class="mobile-section-nav" id="mobileNavToggle">
+            <button type="button" class="mobile-nav-btn active" id="btnNavInput" onclick="switchMobileSection('form')">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span>Input Order</span>
+            </button>
+            <button type="button" class="mobile-nav-btn" id="btnNavList" onclick="switchMobileSection('list')">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <span>Daftar Order</span>
+                <span class="mobile-nav-badge" id="mobileOrderCountBadge">0</span>
+            </button>
+        </div>
+
         <div class="dashboard-grid">
             <!-- FORM INPUT ORDER -->
-            <div class="card">
+            <div class="card" id="cardFormOrder">
                 <div class="card-header-flex">
                     <h2 class="card-title">
                         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1320,7 +1486,7 @@
                     </h2>
                 </div>
 
-                <form id="orderForm" onsubmit="event.preventDefault(); simpanKeSupabase();">
+                <form id="orderForm" onsubmit="event.preventDefault(); simpanOrder();">
                     <div class="form-group">
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -1390,7 +1556,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     </svg>
-                                    Tautan Google Maps (Opsional)
+                                    Tautan Google Maps / Alamat (Opsional)
                                 </span>
                                 <a href="javascript:void(0)" id="inputMapsTestLink" class="maps-quick-test"
                                     onclick="testBukaMaps('inputMaps')" title="Buka tautan ini di Google Maps">
@@ -1447,19 +1613,19 @@
                         <textarea id="inputBarang" class="form-control" style="display:none;" required></textarea>
                     </div>
 
-                    <button type="button" class="btn btn-primary btn-full" onclick="simpanKeSupabase()" id="btnSimpan">
+                    <button type="button" class="btn btn-primary btn-full" onclick="simpanOrder()" id="btnSimpan">
                         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
                             </path>
                         </svg>
-                        Simpan Order
+                        Simpan Order ke Firebase
                     </button>
                 </form>
             </div>
 
             <!-- RIWAYAT ORDER AKTIF -->
-            <div class="card">
+            <div class="card" id="cardListOrder">
                 <div class="card-header-flex">
                     <h2 class="card-title">
                         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1529,7 +1695,7 @@
                         <tbody id="historyBody">
                             <tr>
                                 <td colspan="6" style="text-align:center; padding: 24px; color:var(--text-muted);">
-                                    Memuat data order...</td>
+                                    Memuat data order dari Firebase...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1541,8 +1707,7 @@
                         data...</div>
                 </div>
 
-                <small style="display: block; margin-top: 10px; color: var(--text-muted); font-size: 12px;">💡 Ketuk
-                    nama pembeli untuk melihat rincian barang order atau klik tombol Google Maps untuk membuka rute langsung.</small>
+                <small style="display: block; margin-top: 10px; color: var(--text-muted); font-size: 12px;">💡 Data tersimpan otomatis di Cloud Firestore (Firebase). Perubahan disinkronkan secara real-time.</small>
             </div>
         </div>
 
@@ -1581,6 +1746,52 @@
     </div>
 
     <!-- ================= MODALS ================= -->
+
+    <!-- Modal Konfigurasi Firebase -->
+    <div class="modal-overlay" id="modalFirebase">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#f59e0b">
+                        <path d="M4.6 15.3l5.3-9.9c.4-.7 1.4-.7 1.8 0l3 5.6-7.3 4.3H4.6zm13.8 2.2L13 7.8c-.3-.7-1.3-.7-1.6 0l-2.1 4 9.1 5.7zM3.4 16.5l8 4.7c.4.2.9.2 1.3 0l8-4.7c.6-.3.7-1.1.2-1.6L18 13.1l-6 3.8-6-3.8-2.8 1.8c-.5.5-.4 1.3.2 1.6z"/>
+                    </svg>
+                    Konfigurasi Firebase Firestore
+                </h2>
+                <button class="close-btn" onclick="closeModal('modalFirebase')">&times;</button>
+            </div>
+
+            <div style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px;">
+                Project ID terdeteksi: <strong style="color: var(--primary);">sbr-putra-food</strong>. Silakan masukkan <strong>API Key</strong> Web Anda dari Firebase Console atau tempel seluruh objek <code>firebaseConfig</code> di bawah:
+            </div>
+
+            <div class="form-group">
+                <label>API Key Firebase (Wajib):</label>
+                <input type="text" id="fbApiKeyInput" class="form-control" placeholder="AIzaSy...">
+            </div>
+
+            <div class="form-group">
+                <label>Atau Tempel Kode Snippet Lengkap dari Firebase:</label>
+                <textarea id="fbSnippetInput" class="form-control" rows="4" style="font-family: monospace; font-size: 11px;"
+                    placeholder='const firebaseConfig = {&#10;  apiKey: "AIzaSy...",&#10;  authDomain: "sbr-putra-food.firebaseapp.com",&#10;  projectId: "sbr-putra-food",&#10;  ...&#10;};'></textarea>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-primary btn-full" onclick="simpanConfigFirebase()">Simpan & Hubungkan</button>
+            </div>
+
+            <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border);">
+                <div style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">
+                    🔄 Migrasi Otomatis dari Supabase Lama
+                </div>
+                <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px;">
+                    Salin semua order yang sebelumnya ada di Supabase ke Cloud Firestore Firebase dengan 1 klik.
+                </p>
+                <button class="btn btn-outline btn-full" style="font-size: 12px;" onclick="migrasiDataSupabaseKeFirebase()">
+                    🚀 Pindahkan Data Supabase ke Firebase Sekarang
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Rincian Order -->
     <div class="modal-overlay" id="modalDetailOrder">
@@ -1709,7 +1920,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 </svg>
-                                Tautan Google Maps (Opsional)
+                                Tautan Google Maps / Alamat (Opsional)
                             </span>
                             <a href="javascript:void(0)" id="editMapsTestLink" class="maps-quick-test"
                                 onclick="testBukaMaps('editMaps')" title="Buka tautan ini di Google Maps">
@@ -1831,13 +2042,29 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://acpkdnktanrucyfyhckw.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U';
+        // ========================================================
+        // 🔑 KONFIGURASI PERMANEN FIREBASE (BERLAKU DI SEMUA PERANGKAT)
+        // Masukkan apiKey Anda di bawah ini agar langsung aktif permanen
+        // di semua HP, tablet, dan komputer tanpa perlu input ulang.
+        // ========================================================
+        const PERMANENT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAq9ECQCvqgMzEeIbM4QSsiMl8CbEWP8vw", // <-- MASUKKAN API KEY DI SINI (Contoh: "AIzaSy...")
+            authDomain: "sbr-putra-food.firebaseapp.com",
+            projectId: "sbr-putra-food",
+            storageBucket: "sbr-putra-food.firebasestorage.app",
+            messagingSenderId: "",
+            appId: ""
+        };
+
+        // Kredensial Supabase lama (untuk opsi migrasi data)
+        const OLD_SUPABASE_URL = 'https://acpkdnktanrucyfyhckw.supabase.co';
+        const OLD_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcGtkbmt0YW5ydWN5ZnloY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTE2NzksImV4cCI6MjA5OTc2NzY3OX0.CyBFYglE50qCnnj9gLjj0zDVZG4dmEs6pWYWkJns41U';
 
         // Konstanta baris baru aman dari pemecahan auto-formatter
         const NL = String.fromCharCode(10);
 
-        let sbClient;
+        let db;
+        let unsubscribeActiveOrders = null;
         let globalOrders = [];
         let tempItems = [];
         let tempEditItems = [];
@@ -1850,22 +2077,179 @@
         let currentMasterTab = 'kepada';
 
         // ==========================================
+        // NAVIGASI MOBILE (FORM VS DAFTAR ORDER)
+        // ==========================================
+        let currentMobileSection = 'form';
+        function switchMobileSection(section) {
+            currentMobileSection = section;
+            const btnForm = document.getElementById('btnNavInput');
+            const btnList = document.getElementById('btnNavList');
+            const cardForm = document.getElementById('cardFormOrder');
+            const cardList = document.getElementById('cardListOrder');
+
+            if (section === 'form') {
+                if (btnForm) btnForm.classList.add('active');
+                if (btnList) btnList.classList.remove('active');
+                if (cardForm) cardForm.classList.remove('section-view-hidden');
+                if (cardList) cardList.classList.add('section-view-hidden');
+            } else {
+                if (btnList) btnList.classList.add('active');
+                if (btnForm) btnForm.classList.remove('active');
+                if (cardList) cardList.classList.remove('section-view-hidden');
+                if (cardForm) cardForm.classList.add('section-view-hidden');
+            }
+        }
+
+        // ==========================================
+        // INITIALISASI FIREBASE
+        // ==========================================
+        function getFirebaseConfig() {
+            // 1. Cek konfigurasi permanen di kode file (Prioritas Utama untuk Multi-Device)
+            if (PERMANENT_FIREBASE_CONFIG.apiKey && PERMANENT_FIREBASE_CONFIG.apiKey.trim() !== "" && !PERMANENT_FIREBASE_CONFIG.apiKey.includes("MASUKKAN")) {
+                return PERMANENT_FIREBASE_CONFIG;
+            }
+
+            // 2. Fallback: Cek LocalStorage perangkat jika pernah diinput manual di browser tersebut
+            const saved = localStorage.getItem('sbr_firebase_config');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.apiKey) return parsed;
+                } catch (e) {
+                    console.error("Gagal parse saved firebase config:", e);
+                }
+            }
+            return PERMANENT_FIREBASE_CONFIG;
+        }
+
+        function initFirebase() {
+            try {
+                const config = getFirebaseConfig();
+                if (!config.apiKey) {
+                    setConnectionStatus(false, "API Key Firebase belum diisi");
+                    return false;
+                }
+
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(config);
+                }
+                db = firebase.firestore();
+                setConnectionStatus(true);
+                return true;
+            } catch (err) {
+                console.error("Firebase init error:", err);
+                setConnectionStatus(false, err.message);
+                return false;
+            }
+        }
+
+        function openModalFirebase() {
+            const cfg = getFirebaseConfig();
+            document.getElementById('fbApiKeyInput').value = cfg.apiKey || '';
+            document.getElementById('modalFirebase').style.display = 'flex';
+        }
+
+        function simpanConfigFirebase() {
+            const apiKeyVal = document.getElementById('fbApiKeyInput').value.trim();
+            const snippetVal = document.getElementById('fbSnippetInput').value.trim();
+
+            let targetConfig = getFirebaseConfig();
+
+            if (snippetVal) {
+                // Ekstraksi otomatis jika pengguna menempelkan snippet kode dari Firebase
+                const parseKey = (key) => {
+                    const match = snippetVal.match(new RegExp(`${key}\\s*:\\s*["']([^"']+)["']`));
+                    return match ? match[1] : '';
+                };
+
+                targetConfig.apiKey = parseKey('apiKey') || targetConfig.apiKey;
+                targetConfig.authDomain = parseKey('authDomain') || targetConfig.authDomain;
+                targetConfig.projectId = parseKey('projectId') || targetConfig.projectId;
+                targetConfig.storageBucket = parseKey('storageBucket') || targetConfig.storageBucket;
+                targetConfig.messagingSenderId = parseKey('messagingSenderId') || targetConfig.messagingSenderId;
+                targetConfig.appId = parseKey('appId') || targetConfig.appId;
+            }
+
+            if (apiKeyVal) {
+                targetConfig.apiKey = apiKeyVal;
+            }
+
+            if (!targetConfig.apiKey) {
+                showToast('Masukkan minimal API Key Firebase Anda!', 'warning');
+                return;
+            }
+
+            localStorage.setItem('sbr_firebase_config', JSON.stringify(targetConfig));
+            closeModal('modalFirebase');
+            showToast('Konfigurasi Firebase disimpan. Menghubungkan...');
+
+            setTimeout(() => {
+                location.reload();
+            }, 800);
+        }
+
+        // ==========================================
+        // MIGRASI DATA DARI SUPABASE KE FIREBASE
+        // ==========================================
+        async function migrasiDataSupabaseKeFirebase() {
+            if (!db) {
+                showModernAlert("Firebase Belum Terhubung", "Pastikan API Key Firebase sudah disimpan dan terhubung sebelum melakukan migrasi.", "warning");
+                return;
+            }
+
+            const confirm = await showModernConfirm(
+                "Mulai Migrasi Data?",
+                "Semua data order aktif dan selesai dari Supabase lama akan disalin ke Cloud Firestore Firebase. Data yang sudah ada tidak akan terhapus.",
+                "Ya, Mulai Salin Data"
+            );
+            if (!confirm.isConfirmed) return;
+
+            showToast("Mengambil data dari Supabase lama...", "info");
+
+            try {
+                const sbClient = supabase.createClient(OLD_SUPABASE_URL, OLD_SUPABASE_KEY);
+                const { data: oldOrders, error } = await sbClient.from('list_order').select('*');
+
+                if (error) throw error;
+                if (!oldOrders || oldOrders.length === 0) {
+                    showToast("Tidak ada data di Supabase untuk dimigrasikan.", "info");
+                    return;
+                }
+
+                showToast(`Menyalin ${oldOrders.length} order ke Firestore...`, "info");
+
+                const batch = db.batch();
+                oldOrders.forEach(ord => {
+                    // Gunakan ID asli atau buat doc baru
+                    const docRef = db.collection('list_order').doc(String(ord.id));
+                    batch.set(docRef, {
+                        tanggal: ord.tanggal || null,
+                        tanggal_estimasi: ord.tanggal_estimasi || null,
+                        kepada: ord.kepada || '',
+                        lokasi: ord.lokasi || '',
+                        barang: ord.barang || '',
+                        status_kirim: !!ord.status_kirim,
+                        migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+
+                await batch.commit();
+                closeModal('modalFirebase');
+                showModernAlert("Migrasi Berhasil!", `Sebanyak ${oldOrders.length} data order berhasil dipindahkan ke Cloud Firestore Firebase.`, "success");
+                await loadHistory();
+            } catch (err) {
+                console.error("Error migrasi:", err);
+                showModernAlert("Gagal Migrasi", err.message, "error");
+            }
+        }
+
+        // ==========================================
         // HELPER FUNGSI GOOGLE MAPS & PARSING LOKASI
         // ==========================================
-
-        /**
-         * Standarisasi Tautan Google Maps
-         * Menangani:
-         * 1. URL resmi Google Maps (maps.google, maps.app.goo.gl, goo.gl/maps)
-         * 2. Koordinat GPS (-6.2088, 106.8456)
-         * 3. Alamat jalan / nama tempat biasa (cth: "Jl. Agung Indah...", "Marunda") -> otomatis dijadikan search query Google Maps
-         * 4. Pembersihan typo seperti "https://Jl."
-         */
         function normalizeMapsUrl(rawUrl, fallbackQuery = '') {
             if (!rawUrl && !fallbackQuery) return '';
             let val = String(rawUrl || '').trim();
 
-            // Bersihkan jika ada typo peninggalan seperti "https://Jl." atau "https://jl."
             if (/^https?:\/\/jl\.?\s*/i.test(val)) {
                 val = val.replace(/^https?:\/\/jl\.?\s*/i, 'Jl. ').trim();
             }
@@ -1877,7 +2261,6 @@
                 return '';
             }
 
-            // 1. Tautan resmi Google Maps
             if (/^(https?:\/\/)?((www\.)?google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(val)) {
                 if (!/^https?:\/\//i.test(val)) {
                     val = 'https://' + val;
@@ -1885,43 +2268,32 @@
                 return val;
             }
 
-            // 2. URL web umum yang valid (tanpa spasi di domain)
             if (/^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/i.test(val) && !val.includes(' ')) {
                 return val;
             }
 
-            // 3. Format koordinat (contoh: -6.2088, 106.8456)
             const coordRegex = /^(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)$/;
             if (coordRegex.test(val)) {
                 return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(val)}`;
             }
 
-            // 4. Jika user mengetik alamat biasa (seperti "Jl. Agung Indah...", "Sunter", dsb):
-            // Buat query Google Maps Search yang valid agar BISA DIBUKA & tidak error DNS
             return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(val)}`;
         }
 
-        /**
-         * Parsing string lokasi menjadi { nama, maps }
-         * Menangani pemisah pipa " | ", typo "https://Jl.", maupun URL murni.
-         */
         function parseLokasi(lokasiRaw) {
             if (!lokasiRaw) return { nama: '', maps: '' };
             let str = String(lokasiRaw).trim();
             if (!str) return { nama: '', maps: '' };
 
-            // Bersihkan karakter pipa di awal jika ada format aneh " | ..."
             if (str.startsWith('|')) {
                 str = str.replace(/^\|\s*/, '').trim();
             }
 
-            // Format "Nama Lokasi | TautanMaps"
             if (str.includes(' | ')) {
                 const parts = str.split(' | ');
                 let nama = parts[0].trim();
                 let mapsPart = parts.slice(1).join(' | ').trim();
 
-                // Jika nama kosong, coba gunakan mapsPart sebagai nama
                 if (!nama && mapsPart) {
                     if (/^https?:\/\/jl\.?\s*/i.test(mapsPart)) {
                         nama = mapsPart.replace(/^https?:\/\/jl\.?\s*/i, 'Jl. ').trim();
@@ -1938,7 +2310,6 @@
                 };
             }
 
-            // Cek apakah string diawali typo "https://Jl. ..."
             if (/^https?:\/\/jl\.?\s*/i.test(str)) {
                 const cleanAlamat = str.replace(/^https?:\/\/jl\.?\s*/i, 'Jl. ').trim();
                 return {
@@ -1947,7 +2318,6 @@
                 };
             }
 
-            // Cek jika mengandung URL resmi Google Maps
             const urlRegex = /(https?:\/\/[^\s]+)/i;
             const match = str.match(urlRegex);
             if (match) {
@@ -1968,9 +2338,6 @@
             return { nama: str, maps: '' };
         }
 
-        /**
-         * Tampilan yang mudah dibaca di kolom input maps (membongkar query search jika ada)
-         */
         function getDisplayMapsInput(mapsUrl) {
             if (!mapsUrl) return '';
             let val = String(mapsUrl).trim();
@@ -1988,10 +2355,6 @@
             return val;
         }
 
-        /**
-         * Mengambil objek informasi lokasi dari master item
-         * Mendukung string maupun objek { nama, maps }
-         */
         function getMasterLokasiObj(item) {
             if (!item) return { nama: '', maps: '' };
             if (typeof item === 'object') {
@@ -2000,9 +2363,6 @@
             return parseLokasi(item);
         }
 
-        /**
-         * Handler saat user mengetik atau paste di input maps
-         */
         function onMapsInputTyped(inputId, testLinkId, iconBtnId) {
             const inputEl = document.getElementById(inputId);
             const testLinkEl = document.getElementById(testLinkId);
@@ -2018,15 +2378,10 @@
             }
         }
 
-        /**
-         * Buka tautan Google Maps di tab baru untuk pengetesan instan
-         * Jika input kosong, otomatis mencari lokasi dari dropdown
-         */
         function testBukaMaps(inputId) {
             const inputEl = document.getElementById(inputId);
             let rawVal = inputEl ? inputEl.value.trim() : '';
 
-            // Jika input maps kosong, fallback ke lokasi dari dropdown
             const selectId = inputId === 'editMaps' ? 'editLokasi' : 'inputLokasi';
             const selEl = document.getElementById(selectId);
             let fallbackLokasi = '';
@@ -2047,10 +2402,6 @@
             window.open(normalized, '_blank', 'noopener,noreferrer');
         }
 
-        /**
-         * Handler otomatis saat lokasi di dropdown dipilih:
-         * Mengisi input maps otomatis jika lokasi memiliki default maps di Master Data
-         */
         function onLokasiSelectChange(selectId, mapsInputId) {
             const selEl = document.getElementById(selectId);
             const mapsEl = document.getElementById(mapsInputId);
@@ -2142,11 +2493,11 @@
             dot.className = 'status-dot';
             if (isConnected) {
                 dot.classList.add('connected');
-                text.innerText = 'Tersambung';
+                text.innerText = 'Firebase: sbr-putra-food';
                 text.style.color = 'var(--success)';
             } else {
                 dot.classList.add('error');
-                text.innerText = 'Gagal';
+                text.innerText = errMsg ? 'Konfigurasi Firebase' : 'Gagal Konek';
                 text.style.color = 'var(--danger)';
             }
         }
@@ -2277,15 +2628,10 @@
             }
 
             try {
-                const { error } = await sbClient
-                    .from('list_order')
-                    .update({
-                        tanggal: tanggalBaru,
-                        tanggal_estimasi: null
-                    })
-                    .eq('id', id);
-
-                if (error) throw error;
+                await db.collection('list_order').doc(String(id)).update({
+                    tanggal: tanggalBaru,
+                    tanggal_estimasi: null
+                });
 
                 closeModal('modalFixTanggal');
                 showToast("Tanggal berhasil diperbarui menjadi pasti!");
@@ -2305,19 +2651,18 @@
 
         async function initApp() {
             initTheme();
-            try {
-                if (typeof supabase === 'undefined') throw new Error("Sistem gagal memuat library database.");
-                sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            document.getElementById('inputTanggal').value = "";
+            document.getElementById('headerDateRed').innerText = formatTanggal(new Date());
 
-                document.getElementById('inputTanggal').value = "";
-                document.getElementById('headerDateRed').innerText = formatTanggal(new Date());
+            loadDataFromLocalStorage();
+            sortMasterData();
+            populateDropdowns();
 
-                loadDataFromLocalStorage();
-                sortMasterData();
-                populateDropdowns();
-                await loadHistory();
-            } catch (error) {
-                setConnectionStatus(false, error.message);
+            const isConnected = initFirebase();
+            if (isConnected) {
+                await setupRealtimeListener();
+            } else {
+                openModalFirebase();
             }
         }
 
@@ -2350,7 +2695,6 @@
         }
 
         function populateDropdowns() {
-            // Dropdown Pembeli & Barang
             const selectsStandard = [
                 { id: 'inputKepada', data: masterData.kepada, placeholder: '-- Pilih Pembeli --' },
                 { id: 'editKepada', data: masterData.kepada, placeholder: '-- Pembeli --' },
@@ -2366,7 +2710,6 @@
                 }
             });
 
-            // Dropdown Lokasi Pengiriman (Membawa atribut data-maps untuk auto-fill)
             const selectsLokasi = [
                 { id: 'inputLokasi', placeholder: '-- Pilih Lokasi --' },
                 { id: 'editLokasi', placeholder: '-- Lokasi --' }
@@ -2608,28 +2951,81 @@
             textAreaArea.value = tempEditItems.join(NL);
         }
 
-        async function loadHistory() {
+        // ==========================================
+        // SINKRONISASI REAL-TIME CLOUD FIRESTORE
+        // ==========================================
+        async function setupRealtimeListener() {
+            if (!db) return;
+
             const tbody = document.getElementById('historyBody');
             const mobileContainer = document.getElementById('mobileCardsContainer');
             const badgeCount = document.getElementById('orderCountBadge');
 
-            try {
-                const { data, error } = await sbClient.from('list_order')
-                    .select('*')
-                    .eq('status_kirim', false)
-                    .order('tanggal', { ascending: true })
-                    .order('id', { ascending: true });
+            if (unsubscribeActiveOrders) {
+                unsubscribeActiveOrders();
+            }
 
-                if (error) throw error;
+            // Realtime listener pada koleksi 'list_order' yang berstatus aktif
+            unsubscribeActiveOrders = db.collection('list_order')
+                .where('status_kirim', '==', false)
+                .onSnapshot((snapshot) => {
+                    let orders = [];
+                    snapshot.forEach(doc => {
+                        orders.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+
+                    // Sorting aman di memori JavaScript tanpa perlu bikin Composite Index manual di Firebase
+                    orders.sort((a, b) => {
+                        const tglA = a.tanggal || '9999-99-99';
+                        const tglB = b.tanggal || '9999-99-99';
+                        return tglA.localeCompare(tglB);
+                    });
+
+                    setConnectionStatus(true);
+                    globalOrders = orders;
+                    badgeCount.innerText = orders.length;
+                    const mobBadge = document.getElementById('mobileOrderCountBadge');
+                    if (mobBadge) mobBadge.innerText = orders.length;
+                    renderOrderViews(orders);
+                }, (error) => {
+                    console.error("Firestore snapshot error:", error);
+                    setConnectionStatus(false, error.message);
+                });
+        }
+
+        async function loadHistory() {
+            if (!db) return;
+            try {
+                const snapshot = await db.collection('list_order')
+                    .where('status_kirim', '==', false)
+                    .get();
+
+                let orders = [];
+                snapshot.forEach(doc => {
+                    orders.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                orders.sort((a, b) => {
+                    const tglA = a.tanggal || '9999-99-99';
+                    const tglB = b.tanggal || '9999-99-99';
+                    return tglA.localeCompare(tglB);
+                });
 
                 setConnectionStatus(true);
-                globalOrders = data;
-                badgeCount.innerText = data.length;
-
-                renderOrderViews(data);
-            } catch (error) {
-                console.error("Detail Error:", error);
-                setConnectionStatus(false, error.message);
+                globalOrders = orders;
+                document.getElementById('orderCountBadge').innerText = orders.length;
+                const mobBadge = document.getElementById('mobileOrderCountBadge');
+                if (mobBadge) mobBadge.innerText = orders.length;
+                renderOrderViews(orders);
+            } catch (err) {
+                console.error("Gagal load history:", err);
+                setConnectionStatus(false, err.message);
             }
         }
 
@@ -2652,7 +3048,6 @@
                 const badgeClass = lokasiMerah ? 'badge-red' : 'badge-green';
                 const statusKirimChecked = order.status_kirim === true ? 'checked' : '';
 
-                // Tombol Tautan Google Maps Instan
                 const mapsBtnHtml = lokasiInfo.maps ? `
                     <a href="${lokasiInfo.maps}" target="_blank" rel="noopener noreferrer" 
                        class="btn-maps-link" title="Buka tautan Google Maps di tab baru" onclick="event.stopPropagation();">
@@ -2672,7 +3067,7 @@
                         <span style="color: var(--warning, #f59e0b); font-weight: 700; font-size: 11px;">
                             ⏳ ${order.tanggal_estimasi}
                         </span>
-                        <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 10px; width: fit-content; border-radius: 4px;" onclick="openFixTanggalModal(${order.id}, '${order.tanggal_estimasi}')">
+                        <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 10px; width: fit-content; border-radius: 4px;" onclick="openFixTanggalModal('${order.id}', '${order.tanggal_estimasi}')">
                             Fix Tanggal
                         </button>
                     </div>
@@ -2689,7 +3084,7 @@
                     <td style="text-align:center;"><input type="checkbox" class="order-checkbox" value="${order.id}" onchange="onOrderCheckboxChange(this)"></td>
                     <td style="font-weight: 500;">${tampilanTanggal}</td>
                     <td>
-                        <a class="link-detail" onclick="lihatRincianOrder(${order.id})">
+                        <a class="link-detail" onclick="lihatRincianOrder('${order.id}')">
                             ${order.kepada}
                             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                         </a>
@@ -2701,10 +3096,10 @@
                         </div>
                     </td>
                     <td style="text-align:center;">
-                        <input type="checkbox" class="check-kirim" ${statusKirimChecked} onchange="updateStatusKirim(${order.id}, this.checked)">
+                        <input type="checkbox" class="check-kirim" ${statusKirimChecked} onchange="updateStatusKirim('${order.id}', this.checked)">
                     </td>
                     <td style="text-align:center;">
-                        <button class="btn-icon" style="width:32px; height:32px;" onclick="openEditModal(${order.id})" title="Edit Order">
+                        <button class="btn-icon" style="width:32px; height:32px;" onclick="openEditModal('${order.id}')" title="Edit Order">
                             <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                         </button>
                     </td>
@@ -2713,7 +3108,7 @@
 
                 // Mobile Card View
                 const estimasiBtnMobile = (order.tanggal_estimasi && order.tanggal_estimasi.trim() !== '') ? `
-                <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 11px;" onclick="openFixTanggalModal(${order.id}, '${order.tanggal_estimasi}')">Fix Tanggal</button>
+                <button type="button" class="btn btn-outline" style="padding: 2px 8px; font-size: 11px;" onclick="openFixTanggalModal('${order.id}', '${order.tanggal_estimasi}')">Fix Tanggal</button>
             ` : '';
 
                 mobileContainer.innerHTML += `
@@ -2721,9 +3116,9 @@
                     <div class="m-card-top">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <input type="checkbox" class="order-checkbox" value="${order.id}" onchange="onOrderCheckboxChange(this)">
-                            <div class="m-card-title" onclick="lihatRincianOrder(${order.id})">${order.kepada}</div>
+                            <div class="m-card-title" onclick="lihatRincianOrder('${order.id}')">${order.kepada}</div>
                         </div>
-                        <button class="btn-icon" style="width:30px; height:30px;" onclick="openEditModal(${order.id})" title="Edit Order">
+                        <button class="btn-icon" style="width:30px; height:30px;" onclick="openEditModal('${order.id}')" title="Edit Order">
                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                         </button>
                     </div>
@@ -2739,13 +3134,23 @@
                             <span class="status-badge ${badgeClass}">${lokasiInfo.nama}</span>
                             ${mapsBtnHtml}
                         </div>
+                        ${(() => {
+                            const bLines = order.barang ? order.barang.split(NL).filter(b => b.trim() !== '') : [];
+                            if (bLines.length === 0) return '';
+                            return `
+                                <div style="display: flex; flex-direction: column; gap: 3px; margin-top: 2px;">
+                                    ${bLines.slice(0, 2).map(b => `<div class="m-barang-pill">📦 ${b}</div>`).join('')}
+                                    ${bLines.length > 2 ? `<span style="font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-left: 2px;">+ ${bLines.length - 2} barang lainnya...</span>` : ''}
+                                </div>
+                            `;
+                        })()}
                     </div>
 
                     <div class="m-card-actions">
-                        <span class="link-detail" style="font-size:12px;" onclick="lihatRincianOrder(${order.id})">🔍 Lihat Rincian</span>
+                        <span class="link-detail" style="font-size:12px;" onclick="lihatRincianOrder('${order.id}')">🔍 Lihat Rincian</span>
                         <label class="m-kirim-toggle">
                             <span>Terkirim</span>
-                            <input type="checkbox" class="check-kirim" ${statusKirimChecked} onchange="updateStatusKirim(${order.id}, this.checked)">
+                            <input type="checkbox" class="check-kirim" ${statusKirimChecked} onchange="updateStatusKirim('${order.id}', this.checked)">
                         </label>
                     </div>
                 </div>
@@ -2769,7 +3174,7 @@
         }
 
         function lihatRincianOrder(id) {
-            const order = globalOrders.find(o => o.id === id);
+            const order = globalOrders.find(o => String(o.id) === String(id));
             if (!order) return;
 
             document.getElementById('detailJudul').innerText = "Rincian: " + order.kepada;
@@ -2811,7 +3216,12 @@
             document.getElementById('modalDetailOrder').style.display = 'flex';
         }
 
-        async function simpanKeSupabase() {
+        async function simpanOrder() {
+            if (!db) {
+                openModalFirebase();
+                return;
+            }
+
             const btn = document.getElementById('btnSimpan');
             const isEstimasi = document.getElementById('checkEstimasi').checked;
             const rawTanggal = document.getElementById('inputTanggal').value;
@@ -2825,8 +3235,6 @@
             const rawLokasi = document.getElementById('inputLokasi').value.trim();
             const rawMapsInput = document.getElementById('inputMaps').value.trim();
             const rawMaps = rawMapsInput ? normalizeMapsUrl(rawMapsInput, rawLokasi) : '';
-
-            // Format penyimpanan lokasi: jika ada maps link, gabungkan secara aman
             const finalLokasi = rawMaps ? `${rawLokasi} | ${rawMaps}` : rawLokasi;
 
             const orderData = {
@@ -2835,7 +3243,8 @@
                 kepada: document.getElementById('inputKepada').value,
                 lokasi: finalLokasi,
                 barang: document.getElementById('inputBarang').value,
-                status_kirim: false
+                status_kirim: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
             if (!orderData.kepada || !rawLokasi || !orderData.barang) {
@@ -2843,12 +3252,11 @@
                 return;
             }
 
-            btn.innerHTML = 'Menyimpan...';
+            btn.innerHTML = 'Menyimpan ke Firebase...';
             btn.disabled = true;
 
             try {
-                const { error } = await sbClient.from('list_order').insert([orderData]);
-                if (error) throw error;
+                await db.collection('list_order').add(orderData);
 
                 document.getElementById('orderForm').reset();
                 document.getElementById('checkEstimasi').checked = false;
@@ -2857,12 +3265,16 @@
                 onMapsInputTyped('inputMaps', 'inputMapsTestLink', 'btnOpenInputMaps');
                 tempItems = [];
                 renderListBarang();
-                showToast('Order baru berhasil disimpan!');
-                await loadHistory();
+                showToast('Order baru berhasil disimpan ke Firebase!');
+
+                // Di layar HP/tablet, otomatis alihkan tampilan ke Daftar Order
+                if (window.innerWidth <= 900) {
+                    setTimeout(() => switchMobileSection('list'), 400);
+                }
             } catch (err) {
                 showModernAlert('Gagal Menyimpan Order', err.message, 'error');
             } finally {
-                btn.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> Simpan Order';
+                btn.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> Simpan Order ke Firebase';
                 btn.disabled = false;
             }
         }
@@ -2891,11 +3303,11 @@
             }
 
             try {
-                const { error } = await sbClient.from('list_order').update({ status_kirim: isChecked }).eq('id', id);
-                if (error) throw error;
+                await db.collection('list_order').doc(String(id)).update({
+                    status_kirim: isChecked
+                });
 
                 showToast(isChecked ? 'Pesanan dipindahkan ke Arsip' : 'Pesanan dikembalikan ke Aktif');
-                loadHistory();
                 if (!isChecked) bukaModalArsip();
             } catch (err) {
                 showModernAlert('Gagal Memperbarui Status', err.message, 'error');
@@ -2904,7 +3316,7 @@
         }
 
         function openEditModal(id) {
-            const order = globalOrders.find(o => o.id === id);
+            const order = globalOrders.find(o => String(o.id) === String(id));
             if (!order) return;
 
             document.getElementById('editId').value = order.id;
@@ -2927,7 +3339,6 @@
             if (![...selKepada.options].some(opt => opt.value === order.kepada)) selKepada.innerHTML += `<option value="${order.kepada}">${order.kepada}</option>`;
             selKepada.value = order.kepada;
 
-            // Parsing Lokasi dan Maps untuk form edit
             const lokasiParsed = parseLokasi(order.lokasi);
             let selLokasi = document.getElementById('editLokasi');
             if (![...selLokasi.options].some(opt => opt.value === lokasiParsed.nama)) {
@@ -2970,15 +3381,14 @@
                 tanggal_estimasi: isEstimasi ? textEstimasi : null,
                 kepada: document.getElementById('editKepada').value,
                 lokasi: finalLokasi,
-                barang: document.getElementById('editBarang').value
+                barang: document.getElementById('editBarang').value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
             try {
-                const { error } = await sbClient.from('list_order').update(dataEdit).eq('id', id);
-                if (error) throw error;
+                await db.collection('list_order').doc(String(id)).update(dataEdit);
                 closeModal('modalEditOrder');
-                showToast('Order berhasil diperbarui!');
-                loadHistory();
+                showToast('Order berhasil diperbarui di Firebase!');
             } catch (err) {
                 showModernAlert('Gagal Update Order', err.message, 'error');
             }
@@ -2988,18 +3398,16 @@
             const id = document.getElementById('editId').value;
             const result = await showModernConfirm(
                 'Hapus Order Ini?',
-                'Data order ini akan dihapus secara permanen dan tidak dapat dipulihkan.',
+                'Data order ini akan dihapus secara permanen dari Firebase.',
                 'Ya, Hapus',
                 true
             );
 
             if (result.isConfirmed) {
                 try {
-                    const { error } = await sbClient.from('list_order').delete().eq('id', id);
-                    if (error) throw error;
+                    await db.collection('list_order').doc(String(id)).delete();
                     closeModal('modalEditOrder');
                     showToast('Order telah dihapus permanen');
-                    loadHistory();
                 } catch (err) {
                     showModernAlert('Gagal Menghapus', err.message, 'error');
                 }
@@ -3008,8 +3416,8 @@
 
         function getSelectedOrderIds() {
             const checked = Array.from(document.querySelectorAll('.order-checkbox:checked'))
-                .map(cb => parseInt(cb.value))
-                .filter(id => !isNaN(id));
+                .map(cb => cb.value)
+                .filter(id => id && id.trim() !== '');
             return Array.from(new Set(checked));
         }
 
@@ -3063,24 +3471,23 @@
 
             const result = await showModernConfirm(
                 `Hapus ${selectedIds.length} Order Terpilih?`,
-                `Semua order terpilih (${selectedIds.length} data) akan dihapus secara permanen dari database.`,
+                `Semua order terpilih (${selectedIds.length} data) akan dihapus secara permanen dari Firebase.`,
                 `Ya, Hapus (${selectedIds.length})`,
                 true
             );
 
             if (result.isConfirmed) {
                 try {
-                    const { error } = await sbClient
-                        .from('list_order')
-                        .delete()
-                        .in('id', selectedIds);
-
-                    if (error) throw error;
+                    const batch = db.batch();
+                    selectedIds.forEach(id => {
+                        const ref = db.collection('list_order').doc(String(id));
+                        batch.delete(ref);
+                    });
+                    await batch.commit();
 
                     showToast(`${selectedIds.length} order berhasil dihapus`);
                     const checkAllBox = document.getElementById('checkAll');
                     if (checkAllBox) checkAllBox.checked = false;
-                    loadHistory();
                 } catch (err) {
                     showModernAlert('Gagal Menghapus Massal', err.message, 'error');
                 }
@@ -3108,7 +3515,7 @@
             }
 
             selectedIds.forEach(id => {
-                const orderData = globalOrders.find(o => o.id === id);
+                const orderData = globalOrders.find(o => String(o.id) === String(id));
                 if (orderData) {
                     const lokasiInfo = parseLokasi(orderData.lokasi);
                     const lokasiMerah = lokasiInfo.nama ? lokasiInfo.nama.toLowerCase().includes('menunggu') : false;
@@ -3163,23 +3570,34 @@
         async function bukaModalArsip() {
             document.getElementById('modalArsipOrder').style.display = 'flex';
             const tbody = document.getElementById('arsipBody');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Memuat arsip...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Memuat arsip dari Firebase...</td></tr>';
 
             try {
-                const { data, error } = await sbClient.from('list_order')
-                    .select('*')
-                    .eq('status_kirim', true)
-                    .order('tanggal', { ascending: false });
+                const snapshot = await db.collection('list_order')
+                    .where('status_kirim', '==', true)
+                    .get();
 
-                if (error) throw error;
+                let arsipData = [];
+                snapshot.forEach(doc => {
+                    arsipData.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                arsipData.sort((a, b) => {
+                    const tglA = a.tanggal || '';
+                    const tglB = b.tanggal || '';
+                    return tglB.localeCompare(tglA);
+                });
 
                 tbody.innerHTML = '';
-                if (data.length === 0) {
+                if (arsipData.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color:var(--text-muted);">Belum ada order selesai.</td></tr>';
                     return;
                 }
 
-                data.forEach(order => {
+                arsipData.forEach(order => {
                     const lokasiInfo = parseLokasi(order.lokasi);
                     const mapsBtnHtml = lokasiInfo.maps ? `
                         <a href="${lokasiInfo.maps}" target="_blank" rel="noopener noreferrer" 
@@ -3192,7 +3610,7 @@
                     <tr style="opacity: 0.85;">
                         <td style="text-align:center;"><input type="checkbox" class="arsip-checkbox" value="${order.id}"></td>
                         <td>${order.tanggal_estimasi ? order.tanggal_estimasi : formatTanggal(order.tanggal)}</td>
-                        <td><a class="link-detail" onclick="lihatRincianOrder(${order.id})">${order.kepada}</a></td>
+                        <td><a class="link-detail" onclick="lihatRincianOrder('${order.id}')">${order.kepada}</a></td>
                         <td>
                             <div style="display: flex; align-items: center; gap: 6px;">
                                 <span>${lokasiInfo.nama}</span>
@@ -3200,7 +3618,7 @@
                             </div>
                         </td>
                         <td style="text-align:center;">
-                            <input type="checkbox" class="check-kirim" checked onchange="updateStatusKirim(${order.id}, this.checked)" title="Klik untuk mengembalikan ke order aktif">
+                            <input type="checkbox" class="check-kirim" checked onchange="updateStatusKirim('${order.id}', this.checked)" title="Klik untuk mengembalikan ke order aktif">
                         </td>
                     </tr>
                 `;
@@ -3224,23 +3642,24 @@
 
             const result = await showModernConfirm(
                 'Hapus Arsip Terpilih?',
-                `Yakin ingin menghapus permanen ${checkboxes.length} data arsip ini? Data yang dihapus tidak bisa dikembalikan.`,
+                `Yakin ingin menghapus permanen ${checkboxes.length} data arsip ini dari Firebase?`,
                 'Ya, Hapus Permanen',
                 true
             );
             if (!result.isConfirmed) return;
 
-            const idsToDelete = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
             const btn = document.querySelector('#modalArsipOrder .btn-danger');
             btn.innerHTML = 'Menghapus...';
             btn.disabled = true;
 
             try {
-                const { error } = await sbClient.from('list_order')
-                    .delete()
-                    .in('id', idsToDelete);
-
-                if (error) throw error;
+                const batch = db.batch();
+                idsToDelete.forEach(id => {
+                    const ref = db.collection('list_order').doc(String(id));
+                    batch.delete(ref);
+                });
+                await batch.commit();
 
                 showToast(`${idsToDelete.length} data arsip berhasil dihapus`);
                 document.getElementById('checkAllArsip').checked = false;
