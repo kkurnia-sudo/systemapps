@@ -331,6 +331,27 @@
             border-color: #e2e8f0 !important;
         }
 
+        /* Layout struk 3 kolom: tampil normal di pratinjau; saat mencetak,
+           seluruh lembar diskalakan menempati bidang kertas terpilih. */
+        #a5PaperStruk:not(.hidden) {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            box-sizing: border-box !important;
+        }
+        #a5PaperStruk .thermal-item,
+        #a5PaperStruk .thermal-retur,
+        #a5PaperStruk .thermal-payment {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+        }
+        #modalPratinjauA5.struk-a4>div {
+            max-width: 297mm !important;
+        }
+
         /* Print Style Khusus A5 Landscape */
         @media print {
             body * {
@@ -393,6 +414,52 @@
                 box-shadow: none !important;
                 border: none !important;
                 border-radius: 0 !important;
+            }
+
+            /* Layout struk multi-halaman: modal mengalir bebas (bukan dikunci 100vh)
+               supaya blok halaman tambahan masuk ke lembar cetak berikutnya.
+               Konten aplikasi lain disembunyikan total agar tidak menambah halaman. */
+            body.printing-nota-struk-a5 > *:not(#modalPratinjauA5),
+            body.printing-nota-struk-a5:has(#modalPratinjauA5:not(.hidden)) > *:not(#modalPratinjauA5) {
+                display: none !important;
+            }
+            body.printing-nota-struk-a5 #modalPratinjauA5,
+            body.printing-nota-struk-a5:has(#modalPratinjauA5:not(.hidden)) #modalPratinjauA5 {
+                position: static !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                background: white !important;
+                backdrop-filter: none !important;
+                padding: 0 !important;
+            }
+            body.printing-nota-struk-a5 #modalPratinjauA5>div,
+            body.printing-nota-struk-a5 #modalPratinjauA5>div>div,
+            body.printing-nota-struk-a5:has(#modalPratinjauA5:not(.hidden)) #modalPratinjauA5>div,
+            body.printing-nota-struk-a5:has(#modalPratinjauA5:not(.hidden)) #modalPratinjauA5>div>div {
+                position: static !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                display: block !important;
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            /* Saat mencetak struk, hanya lembar nota yang ikut tercetak:
+               tombol, judul modal, dan area scroll disembunyikan. */
+            body.printing-nota-struk-a5 #modalPratinjauA5 .print-hide,
+            body.printing-nota-struk-a5:has(#modalPratinjauA5:not(.hidden)) #modalPratinjauA5 .print-hide {
+                display: none !important;
+            }
+            body.printing-nota-struk-a5 #modalPratinjauA5>div>div,
+            body.printing-nota-struk-a5:has(#modalPratinjauA5:not(.hidden)) #modalPratinjauA5>div>div {
+                padding: 0 !important;
+                margin: 0 !important;
+                background: white !important;
+                display: block !important;
+                overflow: visible !important;
             }
 
             /* HANYA TAMPILKAN MODAL SLIP FEE JIKA SEDANG DICETAK */
@@ -498,6 +565,71 @@
                 size: A4 portrait;
                 margin: 0;
             }
+
+            /* Layout struk 3 kolom: #a5PreviewPaper menjadi kotak halaman sized
+               kertas asli, isinya diposisikan absolut lalu diskalakan di dalamnya.
+               Isi tetap memakai lebar penuh, hanya mengecil bila tidak muat. */
+            #a5PaperStruk:not(.hidden) {
+                position: absolute !important;
+                top: 6mm !important;
+                left: 8mm !important;
+                transform-origin: top left !important;
+                display: flex !important;
+                flex-direction: column !important;
+                margin: 0 !important;
+            }
+            #a5PaperStruk .thermal-item,
+            #a5PaperStruk .thermal-retur,
+            #a5PaperStruk .thermal-payment {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* Kertas cetak menyesuaikan layout struk yang aktif */
+            body[data-struk-paper="A5 landscape"] #a5PreviewPaper {
+                width: 210mm !important;
+                height: 148mm !important;
+                min-height: 148mm !important;
+                max-height: 148mm !important;
+            }
+            body[data-struk-paper="A4 landscape"] #a5PreviewPaper {
+                width: 297mm !important;
+                height: 210mm !important;
+                min-height: 210mm !important;
+                max-height: 210mm !important;
+            }
+            body[data-struk-paper="A5 landscape"] #a5PaperStruk { width: 194mm !important; }
+            body[data-struk-paper="A4 landscape"] #a5PaperStruk { width: 281mm !important; }
+
+            /* Halaman tambahan (isi yang dipecah): satu blok = satu halaman cetak.
+               Setiap blok punya kotak halaman sendiri seukuran A4 landscape,
+               sehingga isinya tetap terbaca normal (tidak dipadatkan). */
+            .struk-page-wrap {
+                position: relative !important;
+                width: 297mm !important;
+                height: 210mm !important;
+                overflow: hidden !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .struk-page-wrap:last-of-type {
+                page-break-after: auto !important;
+                break-after: auto !important;
+            }
+            .struk-page-extra {
+                position: absolute !important;
+                top: 6mm !important;
+                left: 8mm !important;
+                width: 281mm !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+            }
+
         }
     </style>
 </head>
@@ -2190,16 +2322,36 @@
             <div
                 class="px-5 py-2.5 bg-slate-900 text-white flex items-center gap-2.5 border-b border-slate-800 print-hide">
                 <h3 class="font-bold text-xs tracking-tight text-white flex items-center gap-2 min-w-0 truncate">
-                    <span class="truncate">Pratinjau Nota A5 Landscape</span>
-                    <span id="a5TopStatusBadge"
-                        class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 shrink-0">Siap
-                        Cetak / Unduh</span>
-                </h3>
+                    <span id="a5ViewTitle" class="truncate">Pratinjau Nota A5 Landscape</span>
+                <span id="a5KertasInfo"
+                    class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 hidden"></span>
+                <span id="a5TopStatusBadge"
+                    class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 shrink-0">Siap Cetak / Unduh</span>
+            </h3>
+
+                <!-- PEMILIH LAYOUT CETAK -->
+                <div class="ml-auto flex items-center gap-1 shrink-0 rounded-lg bg-white/10 p-0.5 border border-white/15">
+                    <button type="button" id="btnViewTabel" onclick="gantiTampilanNotaA5('tabel')"
+                        title="Layout tabel (rincian barang dalam tabel)"
+                        class="h-[26px] px-2.5 rounded-md text-[10.5px] font-bold transition inline-flex items-center gap-1.5 bg-white text-slate-900 shadow-sm">
+                        <i data-lucide="table-2" class="w-3.5 h-3.5"></i>
+                        <span>Tabel</span>
+                    </button>
+                    <button type="button" id="btnViewStruk" onclick="gantiTampilanNotaA5('struk')"
+                        title="Layout struk 3 kolom (sama dengan format printer thermal)"
+                        class="h-[26px] px-2.5 rounded-md text-[10.5px] font-bold transition inline-flex items-center gap-1.5 text-slate-300 hover:text-white">
+                        <i data-lucide="columns-3" class="w-3.5 h-3.5"></i>
+                        <span>Struk 3 Kolom</span>
+                    </button>
+                </div>
             </div>
 
             <div class="p-3 sm:p-6 bg-slate-100 flex-1 overflow-y-auto flex justify-center items-start">
                 <div id="a5PreviewPaper"
                     class="bg-white w-full max-w-[210mm] min-h-[148mm] p-6 sm:p-7 rounded-xl shadow-md border border-slate-300 text-slate-800 flex flex-col justify-between text-xs space-y-2.5">
+
+                    <!-- ===== VIEW A: LAYOUT TABEL (A5 LANSKAP) ===== -->
+                    <div id="a5PaperTabel" class="flex-1 flex flex-col justify-between space-y-2.5">
 
                     <div>
                         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-2.5">
@@ -2347,6 +2499,121 @@
                             </div>
                         </div>
                     </div>
+
+                    </div><!-- /#a5PaperTabel -->
+
+                    <!-- ===== VIEW B: LAYOUT STRUK THERMAL 3 KOLOM ===== -->
+                    <div id="a5PaperStruk" class="flex-1 flex flex-col justify-between gap-1.5 hidden">
+
+                        <!-- KOP SURAT (menempel penuh di atas) -->
+                        <div class="struk-kop shrink-0">
+                            <div class="text-center border-b-[3px] border-double border-slate-900 pb-1.5">
+                                <div class="text-[17px] font-black uppercase tracking-[0.2em] text-slate-900 leading-tight">Sbr Putra Food</div>
+                                <div class="text-[9.5px] text-slate-500 italic tracking-wide">Distribusi &amp; Logistik Snack Makroni</div>
+                                <div class="text-[11px] font-black uppercase tracking-[0.15em] text-slate-900 mt-0.5">Bukti Nota Pembayaran</div>
+                            </div>
+                            <div class="flex items-center justify-between gap-3 py-1 border-b border-slate-400 text-[9.5px]">
+                                <div class="min-w-0 truncate">
+                                    <span class="text-slate-500 uppercase tracking-wider">No. Nota :</span>
+                                    <span id="strukNomorNota" class="font-black text-slate-900">-</span>
+                                    <span id="strukStatusBadge" class="ml-1.5 px-1.5 py-[1px] border-2 border-emerald-600 bg-emerald-50 text-emerald-800 font-black uppercase text-[8.5px] rounded tracking-wider">Lunas</span>
+                                </div>
+                                <div class="min-w-0 truncate text-right">
+                                    <span class="text-slate-500 uppercase tracking-wider">Tgl Nota :</span>
+                                    <span id="strukTanggalNota" class="font-bold text-slate-900">-</span>
+                                    <span class="text-slate-500 uppercase tracking-wider ml-2">Supplier :</span>
+                                    <span id="strukSupplier" class="font-bold text-slate-900">-</span>
+                                </div>
+                                <span class="struk-halman shrink-0 text-[8.5px] font-black uppercase tracking-wider text-slate-500"></span>
+                            </div>
+                        </div>
+
+                        <!-- ISI 3 KOLOM -->
+                        <div id="strukGrid" class="grid grid-cols-[1.3fr_1.15fr_1.15fr] gap-0 items-start">
+
+                            <!-- KOLOM 1 : RINCIAN BARANG KIRIMAN -->
+                            <div class="min-w-0 pr-2.5 flex flex-col self-stretch">
+                                <div class="flex items-center justify-between text-[9px] font-black uppercase tracking-wider text-slate-800 bg-slate-100 border border-slate-300 px-2 py-1 shrink-0">
+                                    <span>Rincian Barang Kiriman</span>
+                                    <span>Subtotal</span>
+                                </div>
+                                <div id="strukItemsList" class="struk-col-items divide-y divide-slate-200 text-[9.5px]"></div>
+                                <div id="strukFisikBox" class="struk-fisik shrink-0 border-t-2 border-slate-400 mt-1 pt-1 text-[8.5px]">
+                                    <div class="font-black uppercase tracking-wider text-slate-700">Total Fisik Masuk:</div>
+                                    <div id="strukFisikList" class="struk-fisik-list mt-0.5 space-y-[1px] text-slate-800 font-semibold"></div>
+                                </div>
+                            </div>
+
+                            <!-- KOLOM 2 : RETUR / BS + REKAPITULASI TAGIHAN -->
+                            <div class="min-w-0 px-2.5 border-x border-dashed border-slate-300 flex flex-col self-stretch">
+                                <div id="strukReturBox" class="struk-retur-box shrink-0 border border-rose-300 bg-rose-50/40 rounded overflow-hidden mb-1.5">
+                                    <div class="flex items-center justify-between text-[9px] font-black uppercase tracking-wider text-rose-800 bg-rose-100/70 px-2 py-1 border-b border-rose-200">
+                                        <span>Potongan Retur / BS</span>
+                                        <span>Nilai</span>
+                                    </div>
+                                    <div id="strukReturList" class="struk-col-retur divide-y divide-rose-100 text-[9px] text-rose-950"></div>
+                                </div>
+
+                                <div class="struk-rekap-box border-2 border-slate-800 rounded p-2 flex flex-col">
+                                    <div class="text-[9px] font-black uppercase tracking-[0.15em] text-slate-900 text-center border-b border-slate-400 pb-1">Rekapitulasi Tagihan</div>
+                                    <div class="space-y-1 py-1.5 text-[9.5px]">
+                                        <div class="flex justify-between items-baseline gap-2">
+                                            <span class="text-slate-600 uppercase tracking-wide text-[8.5px] leading-tight whitespace-nowrap">Total Bruto</span>
+                                            <span id="strukTotalBruto" class="font-bold text-slate-900 whitespace-nowrap">Rp 0</span>
+                                        </div>
+                                        <div class="flex justify-between items-baseline gap-2">
+                                            <span class="text-rose-600 uppercase tracking-wide text-[8.5px] leading-tight whitespace-nowrap">Potongan Retur</span>
+                                            <span id="strukTotalRetur" class="font-bold text-rose-700 whitespace-nowrap">- Rp 0</span>
+                                        </div>
+                                        <div id="strukOngkirRow" class="flex justify-between items-baseline gap-2 hidden">
+                                            <span class="text-amber-600 uppercase tracking-wide text-[8.5px] leading-tight whitespace-nowrap">Pot. Pabrik</span>
+                                            <span id="strukPotonganOngkir" class="font-bold text-amber-700 whitespace-nowrap">- Rp 0</span>
+                                        </div>
+                                    </div>
+                                    <div class="border-t-2 border-slate-900 pt-1 flex justify-between items-baseline gap-2">
+                                        <span class="text-slate-900 font-black uppercase text-[8.5px] tracking-wider leading-tight whitespace-nowrap">Total Netto</span>
+                                        <span id="strukTotalNetto" class="font-black text-[12px] text-slate-900 whitespace-nowrap">Rp 0</span>
+                                    </div>
+                                </div>
+
+                                <div id="strukLunasStamp" class="struk-lunas-stamp shrink-0 mt-1.5 self-start"></div>
+                            </div>
+
+                            <!-- KOLOM 3 : RINCIAN PEMBAYARAN / TRANSFER -->
+                            <div class="min-w-0 pl-2.5 flex flex-col self-stretch">
+                                <div class="flex items-center justify-between text-[9px] font-black uppercase tracking-wider text-slate-800 bg-slate-100 border border-slate-300 px-2 py-1 shrink-0">
+                                    <span>Rincian Pembayaran / TF</span>
+                                    <span>Nominal</span>
+                                </div>
+                                <div id="strukPayList" class="struk-col-pay divide-y divide-slate-200 text-[9.5px]"></div>
+                                <div class="struk-pay-totals shrink-0 border-t-2 border-slate-400 mt-1 pt-1 space-y-0.5 text-[9.5px] mt-auto">
+                                    <div class="flex justify-between items-baseline gap-1.5">
+                                        <span class="text-slate-700 font-bold uppercase tracking-wide text-[9px]">Total Terbayar</span>
+                                        <span id="strukTotalTerbayar" class="font-black text-emerald-700">Rp 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-baseline gap-1.5">
+                                        <span class="text-slate-800 font-black uppercase tracking-wide text-[9px]">Sisa Tagihan</span>
+                                        <span id="strukSisaTagihan" class="font-black text-[11px] text-amber-700">Rp 0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FOOTER (menempel penuh di bawah) -->
+                        <div class="struk-kaki shrink-0 border-t border-double border-slate-900 pt-1 flex items-end justify-between gap-4 text-[9px]">
+                            <div class="text-slate-500">
+                                <span class="font-semibold">Dicetak :</span>
+                                <span id="strukTimestamp" class="text-slate-700 font-medium">-</span>
+                                <span class="block italic text-slate-400 mt-0.5">Sbr Putra Food &bull; Admin</span>
+                            </div>
+                            <div class="text-center shrink-0 pr-2">
+                                <p class="text-slate-600 font-medium mb-6">Disiapkan oleh,</p>
+                                <div class="border-b border-slate-400 w-32 mx-auto"></div>
+                                <p class="font-bold text-slate-900 mt-0.5">Sbr Admin</p>
+                            </div>
+                        </div>
+
+                    </div><!-- /#a5PaperStruk -->
 
                 </div>
             </div>
@@ -6354,7 +6621,7 @@
 
             const div = document.createElement('div');
             div.id = rowId;
-            div.className = "payment-row p-2 sm:p-2.5 bg-white border border-slate-200 rounded-xl grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1.5 items-center transition hover:border-slate-300 shadow-2xs";
+            div.className = "payment-row p-2 sm:p-2.5 bg-white border border-slate-200 rounded-xl grid grid-cols-[minmax(72px,0.7fr)_minmax(120px,1fr)_minmax(150px,1.4fr)_minmax(200px,2.2fr)_30px] gap-2 items-center transition hover:border-slate-300 shadow-2xs";
             if (existingData?.id) {
                 div.setAttribute('data-payment-id', existingData.id);
             }
@@ -6365,22 +6632,7 @@
           <span class="pay-row-title truncate">Bayar 1</span>
         </div>
 
-        <div class="flex items-center gap-1.5 justify-end">
-          <div class="relative w-32 sm:w-36">
-            <span class="absolute left-2.5 top-1.5 text-xs font-bold text-slate-400">Rp</span>
-            <input type="text" inputmode="numeric" placeholder="0" value="${nominalVal > 0 ? formatNumberWithDots(nominalVal) : ''}"
-                   oninput="onNominalInput(this); recalcClassicNotaFinancials()"
-                   class="pay-nominal w-full pl-8 pr-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-emerald-700 outline-none focus:border-slate-800 bg-white">
-          </div>
-          <button type="button" onclick="removePaymentRow('${rowId}')" title="Hapus baris pembayaran ini" class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 font-bold text-lg transition active:scale-95">&times;</button>
-        </div>
-
-        <div class="min-w-0">
-          <input type="text" placeholder="Transfer / Cash" value="${ketVal}"
-                 class="pay-catatan w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs outline-none focus:border-slate-800 bg-white">
-        </div>
-
-        <div class="relative w-32 sm:w-36 custom-datepicker">
+        <div class="relative min-w-0 custom-datepicker">
           <div class="datepicker-display w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs bg-white flex items-center justify-between pointer-events-none">
             <span class="datepicker-label text-slate-700 font-semibold text-[11px] truncate">${formatDateIndo(dateVal)}</span>
             <i data-lucide="calendar" class="w-3 h-3 text-slate-400 shrink-0"></i>
@@ -6388,6 +6640,20 @@
           <input type="date" value="${dateVal}" oninput="syncDatepickerDisplay(this)" onchange="syncDatepickerDisplay(this)"
                  class="pay-tanggal absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
         </div>
+
+        <div class="min-w-0">
+          <input type="text" placeholder="Transfer / Cash" value="${ketVal}"
+                 class="pay-catatan w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs outline-none focus:border-slate-800 bg-white">
+        </div>
+
+        <div class="relative min-w-0">
+          <span class="absolute left-2.5 top-1.5 text-xs font-bold text-slate-400">Rp</span>
+          <input type="text" inputmode="numeric" placeholder="0" value="${nominalVal > 0 ? formatNumberWithDots(nominalVal) : ''}"
+                 oninput="onNominalInput(this); recalcClassicNotaFinancials()"
+                 class="pay-nominal w-full pl-8 pr-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-emerald-700 outline-none focus:border-slate-800 bg-white text-right">
+        </div>
+
+        <button type="button" onclick="removePaymentRow('${rowId}')" title="Hapus baris pembayaran ini" class="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 font-bold text-lg transition active:scale-95">&times;</button>
       `;
 
             container.appendChild(div);
@@ -7094,6 +7360,553 @@
             }
         }
 
+        /* ============================================================
+           LAYOUT CETAK STRUK 3 KOLOM (A5 LANDSCAPE)
+           Meniru format struk printer thermal 80mm, dipecah 3 kolom
+           supaya barang/retur/pembayaran yang banyak tetap terbaca.
+           ============================================================ */
+        let tampilanNotaA5 = 'tabel';
+
+        function gantiTampilanNotaA5(mode) {
+            tampilanNotaA5 = (mode === 'struk') ? 'struk' : 'tabel';
+            terapkanTampilanNotaA5();
+        }
+
+        function terapkanTampilanNotaA5() {
+            const tabel = document.getElementById('a5PaperTabel');
+            const struk = document.getElementById('a5PaperStruk');
+            const btnTabel = document.getElementById('btnViewTabel');
+            const btnStruk = document.getElementById('btnViewStruk');
+
+            const modeStruk = tampilanNotaA5 === 'struk';
+
+            if (tabel) tabel.classList.toggle('hidden', modeStruk);
+            if (struk) struk.classList.toggle('hidden', !modeStruk);
+            const paper = document.getElementById('a5PreviewPaper');
+            if (paper) paper.classList.remove('struk-mode', 'struk-mode-a4');
+
+            if (btnTabel) {
+                btnTabel.className = modeStruk
+                    ? "h-[26px] px-2.5 rounded-md text-[10.5px] font-bold transition inline-flex items-center gap-1.5 text-slate-300 hover:text-white"
+                    : "h-[26px] px-2.5 rounded-md text-[10.5px] font-bold transition inline-flex items-center gap-1.5 bg-white text-slate-900 shadow-sm";
+            }
+            if (btnStruk) {
+                btnStruk.className = modeStruk
+                    ? "h-[26px] px-2.5 rounded-md text-[10.5px] font-bold transition inline-flex items-center gap-1.5 bg-white text-slate-900 shadow-sm"
+                    : "h-[26px] px-2.5 rounded-md text-[10.5px] font-bold transition inline-flex items-center gap-1.5 text-slate-300 hover:text-white";
+            }
+
+            const lbl = document.getElementById('a5ViewTitle');
+            if (lbl) lbl.innerText = modeStruk ? 'Pratinjau Nota - Struk 3 Kolom' : 'Pratinjau Nota A5 Landscape';
+
+            const info = document.getElementById('a5KertasInfo');
+            if (modeStruk) {
+                // Tampilkan perkiraan kertas yang akan dipakai saat mencetak.
+                perkiraanKertasStruk();
+            } else {
+                paper?.classList.remove('struk-mode', 'struk-mode-a4');
+                const modal = document.getElementById('modalPratinjauA5');
+                if (modal) modal.classList.remove('struk-a4');
+                delete document.body.dataset.strukPaper;
+                setUkuranHalamanCetak('A5 landscape');
+                if (info) info.classList.add('hidden');
+            }
+        }
+
+        /* Perkiraan kertas & jumlah halaman untuk pratinjau
+           (tanpa mengubah geometri halaman). Hasil cetak sesungguhnya
+           dihitung ulang saat tombol Print ditekan. */
+        function perkiraanKertasStruk() {
+            const info = document.getElementById('a5KertasInfo');
+            const struk = document.getElementById('a5PaperStruk');
+            const grid = document.getElementById('strukGrid');
+            if (!info || !struk) return;
+
+            const h = Math.max(struk.scrollHeight, grid ? grid.scrollHeight : 0);
+            const a5Maks = mmToPx(148 - 12);
+            const a4Maks = mmToPx(210 - 12);
+
+            let kertas, halaman;
+            if (h <= a5Maks) {
+                kertas = 'A5'; halaman = 1;
+            } else if (h <= a4Maks) {
+                kertas = 'A4'; halaman = 1;
+            } else {
+                kertas = 'A4';
+                // Perkiraan kasar: ruang isi per halaman A4 landscape.
+                halaman = Math.max(1, Math.ceil(h / Math.max(1, a4Maks - 120)));
+            }
+
+            info.classList.remove('hidden');
+            info.innerText = halaman > 1
+                ? `Cetak: ${kertas} Landscape · ±${halaman} halaman`
+                : `Cetak: ${kertas} Landscape`;
+            info.className = `px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${kertas === 'A5'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                : 'bg-sky-500/20 text-sky-300 border-sky-500/30'}`;
+        }
+
+        /* ------------------------------------------------------------------
+           Cetak layout STRUK 3 KOLOM.
+           Isi diukur pada ukuran teks normal:
+             - muat di A5 landscape  -> dicetak A5 (hemat kertas)
+             - tidak muat            -> dicetak A4 landscape, teks tetap besar
+           Konten lalu diskalakan utuh agar pas di bidang kertas (sheet scaling).
+           ------------------------------------------------------------------ */
+        const STRUK_KERTAS = {
+            A5: { w: 210, h: 148, kelas: 'struk-mode', lebarIsi: 194 },
+            A4: { w: 297, h: 210, kelas: 'struk-mode-a4', lebarIsi: 281 }
+        };
+
+        /* Batas minimum skala: di bawah ini teks sudah tidak terbaca, lebih baik
+           contents dipecah ke beberapa halaman daripada dipadatkan. */
+        const STRUK_SKALA_MIN = 0.78;
+
+        async function siapkanCetakStruk(paperEl, strukEl) {
+            if (!paperEl || !strukEl) return null;
+
+            const grid = document.getElementById('strukGrid');
+            const simpan = [];
+            const setGaya = (el, prop, value) => {
+                simpan.push({ el, prop, value: el.style.getPropertyValue(prop), priority: el.style.getPropertyPriority(prop) });
+                el.style.setProperty(prop, value, 'important');
+            };
+
+            // 1. Ukur tinggi natural isi pada lebar A5 (paling sempit -> tinggi terbesar).
+            paperEl.classList.remove('struk-mode', 'struk-mode-a4');
+            paperEl.classList.add('struk-mode');
+            setGaya(paperEl, 'width', '210mm');
+            setGaya(paperEl, 'height', 'auto');
+            setGaya(paperEl, 'min-height', '0');
+            setGaya(paperEl, 'max-height', 'none');
+            setGaya(paperEl, 'padding', '0');
+            setGaya(strukEl, 'height', 'auto');
+            setGaya(strukEl, 'overflow', 'visible');
+            if (grid) {
+                setGaya(grid, 'flex', 'none');
+                setGaya(grid, 'align-items', 'start');
+                Array.from(grid.children).forEach(col => {
+                    setGaya(col, 'height', 'auto');
+                    setGaya(col, 'min-height', '0');
+                });
+            }
+
+            const tunggu = () => new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+            await tunggu();
+
+            const tinggiIsi = () => Math.max(strukEl.scrollHeight, grid ? grid.scrollHeight : 0);
+            const a5Maks = mmToPx(148 - 12);
+            const a4Maks = mmToPx(210 - 12);
+            const hA5 = tinggiIsi();
+
+            // 2. Ukur pada lebar A4 (lebih lapang).
+            paperEl.classList.remove('struk-mode');
+            paperEl.classList.add('struk-mode-a4');
+            setGaya(paperEl, 'width', '297mm');
+            await tunggu();
+            const hA4 = tinggiIsi();
+
+            // 3. Pilih kertas.
+            const kertas = hA5 <= a5Maks ? STRUK_KERTAS.A5 : STRUK_KERTAS.A4;
+            const tersedia = kertas === STRUK_KERTAS.A5 ? a5Maks : a4Maks;
+            let tinggi = kertas === STRUK_KERTAS.A5 ? hA5 : hA4;
+            // Skala vertikal: konten dipadatkan hanya jika masih terbaca.
+            let skala = Math.min(1, tersedia / Math.max(1, tinggi));
+
+            // 3a. Kalau setelah dipadatkan teks jadi terlalu kecil, pecah isi
+            //     menjadi beberapa halaman A4 dengan ukuran teks normal,
+            //     lalu hitung ulang skala dari tinggi per halaman.
+            let multiHalaman = null;
+            if (skala < STRUK_SKALA_MIN) {
+                multiHalaman = buatHalamanTambahanStruk(strukEl, tersedia);
+                await tunggu();
+                if (multiHalaman.count > 1) {
+                    const halamanTambahan = Array.from(document.querySelectorAll('.struk-page-wrap .struk-page-extra'));
+                    const tinggiPerHalaman = Math.max(
+                        strukEl.querySelector('#strukGrid')?.scrollHeight || 0,
+                        ...halamanTambahan.map(p => p.querySelector('[class*="grid"]')?.scrollHeight || p.scrollHeight || 0),
+                        0
+                    );
+                    tinggi = tinggiPerHalaman;
+                    // Setelah isi dibagi per halaman, pakai skala yang sama
+                    // untuk semua halaman; pertahankan teks besar bila masih muat.
+                    skala = Math.min(1, tersedia / Math.max(1, tinggiPerHalaman));
+                }
+            }
+
+            // 4. Kunci geometri & skalakan ISI di dalam kotak kertas.
+            //    Kotak halaman (#a5PreviewPaper) tetap sebesar kertas asli,
+            //    jadi hasil cetak mengisi seluruh halaman, bukan menyusut.
+            paperEl.classList.remove('struk-mode', 'struk-mode-a4', 'w-full', 'max-w-[210mm]', 'min-h-[148mm]', 'p-6');
+            paperEl.classList.add(kertas.kelas);
+            setGaya(paperEl, 'width', kertas.w + 'mm');
+            setGaya(paperEl, 'max-width', 'none');
+            setGaya(paperEl, 'height', kertas.h + 'mm');
+            setGaya(paperEl, 'min-height', kertas.h + 'mm');
+            setGaya(paperEl, 'max-height', kertas.h + 'mm');
+            setGaya(paperEl, 'padding', '0');
+            setGaya(paperEl, 'overflow', 'hidden');
+            setGaya(paperEl, 'box-sizing', 'border-box');
+            setGaya(strukEl, 'position', 'absolute');
+            setGaya(strukEl, 'top', '6mm');
+            setGaya(strukEl, 'left', '8mm');
+            setGaya(strukEl, 'width', kertas.lebarIsi + 'mm');
+            setGaya(strukEl, 'height', 'auto');
+            setGaya(strukEl, 'min-height', '0');
+            setGaya(strukEl, 'overflow', 'visible');
+            strukEl.style.setProperty('transform', `scale(${skala})`, 'important');
+            strukEl.style.setProperty('transform-origin', 'top left', 'important');
+
+            document.body.dataset.strukPaper = (kertas === STRUK_KERTAS.A5 ? 'A5' : 'A4') + ' landscape';
+            setUkuranHalamanCetak(kertas === STRUK_KERTAS.A5 ? 'A5 landscape' : 'A4 landscape');
+            const modal = document.getElementById('modalPratinjauA5');
+            if (modal) modal.classList.toggle('struk-a4', kertas === STRUK_KERTAS.A4);
+
+            return {
+                kertas: document.body.dataset.strukPaper,
+                skala,
+                jumlahHalaman: multiHalaman ? multiHalaman.count : 1,
+                restore() {
+                    if (multiHalaman) multiHalaman.cleanup();
+                    paperEl.style.removeProperty('transform');
+                    paperEl.style.removeProperty('transform-origin');
+                    paperEl.classList.remove('struk-mode', 'struk-mode-a4');
+                    simpan.forEach(g => {
+                        if (g.value) g.el.style.setProperty(g.prop, g.value, g.priority);
+                        else g.el.style.removeProperty(g.prop);
+                    });
+                    if (modal) modal.classList.remove('struk-a4');
+                    delete document.body.dataset.strukPaper;
+                }
+            };
+        }
+        /* Buat salinan halaman tambahan hanya untuk kolom yang terlalu panjang.
+           Item, retur, pembayaran dipaginasi per baris; rekap & total tetap di awal. */
+        function buatHalamanTambahanStruk(strukEl, targetHeight, scale = 1) {
+            const grid = document.getElementById('strukGrid');
+            if (!strukEl || !grid) return { count: 1, cleanup() {} };
+
+            const clones = [];
+            const header = strukEl.querySelector('.struk-kop');
+            const footer = strukEl.querySelector('.struk-kaki');
+            const cols = Array.from(grid.children);
+            const itemList = document.getElementById('strukItemsList');
+            const returList = document.getElementById('strukReturList');
+            const payList = document.getElementById('strukPayList');
+            const fisikList = document.getElementById('strukFisikList');
+
+            const rowsItems = Array.from(itemList?.children || []);
+            const rowsRetur = Array.from(returList?.children || []);
+            const rowsPay = Array.from(payList?.children || []);
+            const rowsFisik = Array.from(fisikList?.children || []);
+
+            const heightOf = el => el ? el.getBoundingClientRect().height : 0;
+            const fullContentHeight = Math.max(...cols.map(heightOf), 0);
+            const usable = Math.max(150, targetHeight - heightOf(header) - heightOf(footer) - 28);
+            const count = Math.max(1, Math.ceil(fullContentHeight / usable));
+            if (count <= 1) return { count: 1, cleanup() {} };
+
+            // Bagi baris tiap kolom menjadi beberapa halaman secara berurutan.
+            const split = (rows, pages) => {
+                const result = Array.from({ length: pages }, () => []);
+                if (!rows.length) return result;
+                const total = rows.reduce((s, e) => s + heightOf(e), 0);
+                const perPage = Math.max(1, total / pages);
+                let page = 0, used = 0;
+                rows.forEach(row => {
+                    const h = heightOf(row);
+                    if (page < pages - 1 && used > 0 && used + h > perPage) { page++; used = 0; }
+                    result[page].push(row);
+                    used += h;
+                });
+                return result;
+            };
+            const itemPages = split(rowsItems, count);
+            const returPages = split(rowsRetur, count);
+            const payPages = split(rowsPay, count);
+            const fisikPages = split(rowsFisik, count);
+
+            for (let i = 1; i < count; i++) {
+                const page = strukEl.cloneNode(true);
+                page.removeAttribute('id');
+                page.classList.add('struk-page-extra');
+                page.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+
+                const halman = page.querySelector('.struk-halman');
+                if (halman) halman.textContent = `Halaman ${i + 1} dari ${count}`;
+
+                const pItems = page.querySelector('.struk-col-items');
+                const pFisik = page.querySelector('.struk-fisik-list');
+                const pRetur = page.querySelector('.struk-col-retur');
+                const pReturBox = page.querySelector('.struk-retur-box');
+                const pRekap = page.querySelector('.struk-rekap-box');
+                const pStamp = page.querySelector('.struk-lunas-stamp');
+                const pPay = page.querySelector('.struk-col-pay');
+                const pTotals = page.querySelector('.struk-pay-totals');
+
+                if (pItems) pItems.replaceChildren(...(itemPages[i] || []).map(r => {
+                    const c = r.cloneNode(true); c.classList.add('thermal-item'); return c;
+                }));
+                if (pFisik) pFisik.replaceChildren(...(fisikPages[i] || []).map(r => r.cloneNode(true)));
+                if (pRetur) pRetur.replaceChildren(...(returPages[i] || []).map(r => {
+                    const c = r.cloneNode(true); c.classList.add('thermal-retur'); return c;
+                }));
+                if (pReturBox && !(returPages[i] || []).length) pReturBox.classList.add('hidden');
+                if (pRekap) pRekap.remove();
+                if (pStamp) pStamp.remove();
+                if (pPay) pPay.replaceChildren(...(payPages[i] || []).map(r => {
+                    const c = r.cloneNode(true); c.classList.add('thermal-payment'); return c;
+                }));
+                if (pTotals) pTotals.remove();
+
+                // Bungkus dalam blok halaman sendiri agar tercetak di lembar berikutnya.
+                const wrapper = document.createElement('div');
+                wrapper.className = 'struk-page-wrap';
+                wrapper.setAttribute('data-struk-page', String(i + 1));
+                const paper = document.getElementById('a5PreviewPaper');
+                (paper?.parentNode || strukEl.parentNode || document.body).appendChild(wrapper);
+                wrapper.appendChild(page);
+                clones.push(wrapper);
+            }
+
+            // Halaman pertama hanya berisi bagian halaman-1; sisanya di halaman tambahan.
+            const potongKe = (el, rows) => {
+                if (!el) return;
+                const sisa = rows[0] || [];
+                const buang = rows.slice(1).flat();
+                buang.forEach(r => r.remove());
+                el.replaceChildren(...sisa.map(r => r.cloneNode(true)));
+            };
+            potongKe(itemList, itemPages);
+            potongKe(returList, returPages);
+            potongKe(payList, payPages);
+            potongKe(fisikList, fisikPages);
+
+            // Halaman pertama diberi penomoran juga bila ada >1 halaman.
+            const halman1 = strukEl.querySelector('.struk-halman');
+            if (halman1) halman1.textContent = `Halaman 1 dari ${count}`;
+
+            return {
+                count,
+                cleanup() {
+                    clones.forEach(c => c.remove());
+                    const h = strukEl.querySelector('.struk-halman');
+                    if (h) h.textContent = '';
+                }
+            };
+        }
+
+        /* @page tidak bisa diubah lewat CSS class, jadi disuntik saat cetak. */
+        function setUkuranHalamanCetak(cssSize) {
+            let el = document.getElementById('dynamicPageSize');
+            if (!el) {
+                el = document.createElement('style');
+                el.id = 'dynamicPageSize';
+                document.head.appendChild(el);
+            }
+            el.textContent = cssSize
+                ? `@media print { @page { size: ${cssSize}; margin: 0; } }`
+                : '';
+        }
+
+        function escapeHtmlNota(str) {
+            return String(str === null || str === undefined ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderStrukNotaA5(n, isDraftMode) {
+            if (!n) return;
+
+            /* --- KOP --- */
+            const elNo = document.getElementById('strukNomorNota');
+            const elTgl = document.getElementById('strukTanggalNota');
+            const elSup = document.getElementById('strukSupplier');
+            const elBadge = document.getElementById('strukStatusBadge');
+
+            if (elNo) elNo.innerText = n.nomor_nota || '-';
+            if (elTgl) elTgl.innerText = formatDateIndo(n.tanggal_nota);
+            if (elSup) elSup.innerText = n.supplier || '-';
+
+            const isLunas = (n.status === 'Lunas' || (n.sisaPembayaran <= 0 && n.totalNetto > 0));
+            if (elBadge) {
+                if (isLunas) {
+                    elBadge.className = "ml-1.5 px-1.5 py-[1px] border-2 border-emerald-600 bg-emerald-50 text-emerald-800 font-black uppercase text-[8.5px] rounded tracking-wider";
+                    elBadge.innerText = isDraftMode ? 'Pratinjau (Lunas)' : 'Lunas';
+                } else {
+                    elBadge.className = "ml-1.5 px-1.5 py-[1px] border-2 border-amber-500 bg-amber-50 text-amber-800 font-black uppercase text-[8.5px] rounded tracking-wider";
+                    elBadge.innerText = (n.status || 'Belum Lunas').toUpperCase();
+                }
+            }
+
+            /* --- KOLOM 1: RINCIAN BARANG --- */
+            const itemsList = document.getElementById('strukItemsList');
+            const details = n.details || [];
+
+            if (itemsList) {
+                itemsList.innerHTML = '';
+                if (details.length === 0) {
+                    itemsList.innerHTML = `<div class="py-2 text-center italic text-slate-400">Tidak ada rincian barang.</div>`;
+                } else {
+                    details.forEach((d, idx) => {
+                        const kor = (n.koreksiFisik && (n.koreksiFisik[d.id] || n.koreksiFisik[d.barang_id])) || null;
+                        const nama = escapeHtmlNota(d.nama_barang_snapshot || 'Barang');
+                        const sat = escapeHtmlNota(d.nama_satuan_snapshot || 'Ball');
+                        const qty = formatQtyThermal(d.jumlah);
+                        const hrg = formatRpThermal(d.harga_satuan);
+                        const sub = formatRpThermal(d.subtotal);
+
+                        let qtyBadge = `<span class="font-black text-slate-900">${qty}</span>`;
+                        let korBadge = '';
+                        if (kor && kor.selisih && kor.selisih !== 0) {
+                            const isKurang = kor.selisih < 0;
+                            qtyBadge = `<span class="inline-block px-1 py-[1px] rounded border font-black ${isKurang ? 'bg-rose-50 text-rose-700 border-rose-300' : 'bg-emerald-50 text-emerald-800 border-emerald-300'}">${qty}</span>`;
+                            korBadge = `<span class="block text-[8px] italic ${isKurang ? 'text-rose-600' : 'text-emerald-700'} leading-tight">* ${escapeHtmlNota(kor.keterangan || '')}</span>`;
+                        }
+
+                        itemsList.innerHTML += `
+                            <div class="thermal-item py-[3px] leading-tight">
+                                <div class="flex items-baseline justify-between gap-1.5">
+                                    <span class="font-bold text-slate-900 truncate">${idx + 1}. ${nama}</span>
+                                    <span class="font-black text-slate-900 whitespace-nowrap shrink-0">${sub}</span>
+                                </div>
+                                <div class="flex items-baseline justify-between gap-1.5 pl-3 text-slate-600">
+                                    <span class="truncate">${qtyBadge} ${sat} x ${hrg}</span>
+                                </div>
+                                ${korBadge}
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            /* --- TOTAL FISIK MASUK --- */
+            const fisikMap = new Map();
+            details.forEach(d => {
+                const key = (d.nama_barang_snapshot || 'Barang').trim();
+                const sat = d.nama_satuan_snapshot || 'Ball';
+                if (!fisikMap.has(key)) fisikMap.set(key, { qty: 0, sat });
+                fisikMap.get(key).qty += (Number(d.jumlah) || 0);
+            });
+            const elFisik = document.getElementById('strukFisikList');
+            if (elFisik) {
+                elFisik.innerHTML = '';
+                fisikMap.forEach((v, k) => {
+                    elFisik.innerHTML += `<div class="flex justify-between gap-1 leading-tight"><span class="truncate">- ${escapeHtmlNota(k)}</span><span class="shrink-0">${formatQtyThermal(v.qty)} ${escapeHtmlNota(v.sat)}</span></div>`;
+                });
+            }
+
+            /* --- KOLOM 2: RETUR / BS --- */
+            const returBox = document.getElementById('strukReturBox');
+            const returList = document.getElementById('strukReturList');
+            const returs = n.returs || [];
+            if (returBox) returBox.classList.toggle('hidden', returs.length === 0);
+            if (returList) {
+                returList.innerHTML = '';
+                returs.forEach(r => {
+                    const namaRetur = escapeHtmlNota((r.nama_barang_snapshot || 'Barang').replace('(Ball)', '').trim());
+                    const ket = r.keterangan ? `<div class="text-[8px] italic text-slate-500 leading-tight pl-2">Ket: ${escapeHtmlNota(r.keterangan)}</div>` : '';
+                    returList.innerHTML += `
+                        <div class="thermal-retur py-[3px] leading-tight">
+                            <div class="flex items-baseline justify-between gap-1.5">
+                                <span class="font-semibold truncate">• ${namaRetur}</span>
+                                <span class="font-bold text-rose-700 whitespace-nowrap shrink-0">- ${formatRpThermal(r.nilai_retur)}</span>
+                            </div>
+                            <div class="pl-2 text-rose-800">${formatQtyThermal(r.jumlah)} ${escapeHtmlNota(r.nama_satuan_snapshot || 'Pcs')}</div>
+                            ${ket}
+                        </div>
+                    `;
+                });
+            }
+
+            /* --- KOLOM 2: REKAPITULASI --- */
+            const elBruto = document.getElementById('strukTotalBruto');
+            const elRetur = document.getElementById('strukTotalRetur');
+            const elOngkirRow = document.getElementById('strukOngkirRow');
+            const elOngkir = document.getElementById('strukPotonganOngkir');
+            const elNetto = document.getElementById('strukTotalNetto');
+
+            if (elBruto) elBruto.innerText = formatRpThermal(n.totalBruto);
+            if (elRetur) elRetur.innerText = '- ' + formatRpThermal(n.totalReturBS);
+            if (elOngkir) elOngkir.innerText = '- ' + formatRpThermal(n.potonganOngkir);
+            if (elOngkirRow) elOngkirRow.classList.toggle('hidden', !(n.potonganOngkir > 0));
+            if (elNetto) elNetto.innerText = formatRpThermal(n.totalNetto);
+
+            /* --- STAMP LUNAS --- */
+            const strukStamp = document.getElementById('strukLunasStamp');
+            if (strukStamp) {
+                if (isLunas) {
+                    const subText = isDraftMode ? 'SIAP DISIMPAN' : 'SUDAH DIBAYAR';
+                    strukStamp.innerHTML = `
+                        <div class="px-2 py-1 border-2 border-emerald-600 bg-emerald-50 text-emerald-800 rounded flex items-center gap-1.5">
+                            <div class="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black shrink-0 text-[9px]">&#10003;</div>
+                            <div class="leading-tight">
+                                <div class="text-[8.5px] font-black tracking-widest uppercase">Lunas / Tuntas</div>
+                                <div class="text-[7.5px] font-bold text-emerald-600">${subText}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const subText = isDraftMode ? `Sisa: ${formatRpThermal(n.sisaPembayaran)} (DRAF)` : `Sisa: ${formatRpThermal(n.sisaPembayaran)}`;
+                    strukStamp.innerHTML = `
+                        <div class="px-2 py-1 border-2 border-amber-500 bg-amber-50 text-amber-800 rounded flex items-center gap-1.5">
+                            <div class="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center font-black shrink-0 text-[9px]">&#8987;</div>
+                            <div class="leading-tight">
+                                <div class="text-[8.5px] font-black tracking-widest uppercase">Belum Lunas</div>
+                                <div class="text-[7.5px] font-bold text-amber-600">${subText}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            /* --- KOLOM 3: PEMBAYARAN --- */
+            const payList = document.getElementById('strukPayList');
+            const payments = n.payments || [];
+            if (payList) {
+                payList.innerHTML = '';
+                if (payments.length === 0) {
+                    payList.innerHTML = `<div class="py-2 italic text-slate-400">Belum ada pembayaran tercatat.</div>`;
+                } else {
+                    payments.forEach((p, idx) => {
+                        const ket = p.alasan_revisi || p.keterangan || `Bayar ${idx + 1}`;
+                        const tgl = formatDateIndo(p.tanggal_pembayaran);
+                        payList.innerHTML += `
+                            <div class="thermal-payment py-[3px] leading-tight">
+                                <div class="flex items-baseline justify-between gap-1.5">
+                                    <span class="font-bold text-slate-900 truncate">${idx + 1}. ${escapeHtmlNota(ket)}</span>
+                                    <span class="font-black text-emerald-700 whitespace-nowrap shrink-0">${formatRpThermal(p.nominal_final)}</span>
+                                </div>
+                                <div class="text-[8px] text-slate-500 pl-2">(${escapeHtmlNota(tgl)})</div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            const totalDibayar = payments.reduce((sum, p) => sum + (Number(p.nominal_final) || 0), 0);
+            const sisa = Math.max(0, (n.totalNetto || 0) - totalDibayar);
+            const elTerbayar = document.getElementById('strukTotalTerbayar');
+            const elSisa = document.getElementById('strukSisaTagihan');
+            if (elTerbayar) elTerbayar.innerText = formatRpThermal(totalDibayar);
+            if (elSisa) {
+                elSisa.innerText = sisa <= 0 ? 'Rp 0 (Lunas)' : formatRpThermal(sisa);
+                elSisa.className = sisa <= 0
+                    ? "font-black text-[11px] text-emerald-700"
+                    : "font-black text-[11px] text-amber-700";
+            }
+
+            /* --- FOOTER --- */
+            const now = new Date();
+            const elTs = document.getElementById('strukTimestamp');
+            if (elTs) {
+                elTs.innerText = `${formatDateIndo(now.toISOString())} ${now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
+            }
+        }
+
         async function openPratinjauA5(notaId, isDraft = false, draftData = null) {
             if (draftData) {
                 currentDraftNotaData = draftData;
@@ -7112,6 +7925,11 @@
             activeA5Nota = n;
 
             const isDraftMode = isDraft || Boolean(n.is_draft);
+
+            // Reset ke kertas A5 untuk layout tabel; mode struk akan memilih otomatis.
+            setUkuranHalamanCetak('A5 landscape');
+            renderStrukNotaA5(n, isDraftMode);
+            terapkanTampilanNotaA5();
 
             const elBtnBottomSimpan = document.getElementById('btnA5BottomSimpanNota');
             const elTopBadge = document.getElementById('a5TopStatusBadge');
@@ -7412,13 +8230,39 @@
             }
 
             const paperEl = document.getElementById('a5PreviewPaper');
-            const cetakSetup = await siapkanCetakSetengahA4(paperEl);
+            const strukView = tampilanNotaA5 === 'struk';
+
+            if (strukView) {
+                const tabel = document.getElementById('a5PaperTabel');
+                const struk = document.getElementById('a5PaperStruk');
+                tabel?.classList.add('hidden');
+                struk?.classList.remove('hidden');
+                document.body.classList.add('printing-nota-struk-a5');
+            } else {
+                document.body.classList.remove('printing-nota-struk-a5');
+            }
+
+            // Layout tabel: isi tabel dikecilkan per sel. Layout struk: pilih kertas
+            // otomatis (A5 bila muat, A4 bila perlu) lalu diskalakan utuh.
+            const cetakSetup = strukView
+                ? await siapkanCetakStruk(paperEl, document.getElementById('a5PaperStruk'))
+                : await siapkanCetakSetengahA4(paperEl);
 
             try {
                 window.print();
             } finally {
                 if (cetakSetup) cetakSetup.restore();
                 document.body.classList.remove('printing-nota-a5');
+                document.body.classList.remove('printing-nota-struk-a5');
+                if (strukView) {
+                    // Cetak multi-halaman memotong isi halaman 1; render ulang
+                    // supaya pratinjau kembali menampilkan nota lengkap.
+                    if (targetNota) {
+                        const isDraftMode = Boolean(currentDraftNotaData) || Boolean(targetNota.is_draft);
+                        renderStrukNotaA5(targetNota, isDraftMode);
+                    }
+                    perkiraanKertasStruk();
+                }
                 if (feeModal) feeModal.style.display = '';
                 if (a5Modal) a5Modal.style.display = '';
             }
@@ -8585,6 +9429,5 @@
         }
     </script>
 </body>
-
 </html>
 
