@@ -1149,7 +1149,7 @@
             }
 
             /* Kolom Tujuan disembunyikan otomatis (bukan agen Pak Rachmat) */
-            #invoiceTable tbody td.td-tujuan {
+            #invoiceTable:not(.show-tujuan) tbody td.td-tujuan {
                 display: none !important;
             }
 
@@ -1315,7 +1315,13 @@
             .form-group input, .form-group textarea, .form-group select { font-size: 13.5px !important; font-weight: 600 !important; color: #000000 !important; padding: 0 !important; background: transparent !important; }
             .table-wrapper { border: none !important; margin: 10px 0 !important; overflow: visible !important; background: #ffffff !important; border-radius: 0 !important; }
             table { width: 100% !important; border-collapse: collapse !important; }
-            #invoiceTable { min-width: unset !important; }
+            #invoiceTable { min-width: unset !important; display: table !important; }
+            #invoiceTable thead { display: table-header-group !important; }
+            #invoiceTable tbody { display: table-row-group !important; }
+            #invoiceTable tbody tr { display: table-row !important; border: none !important; padding: 0 !important; margin: 0 !important; }
+            #invoiceTable tbody td { display: table-cell !important; }
+            #invoiceTable tbody td::before { display: none !important; }
+            #invoiceTable:not(.show-tujuan) tbody td.td-tujuan { display: none !important; }
             th { background-color: transparent !important; color: #333333 !important; border-bottom: 2px solid #000000 !important; border-top: none !important; padding: 10px 6px !important; font-size: 11px !important; text-align: center !important;}
             td { border-bottom: 1px solid #e2e8f0 !important; padding: 10px 6px !important; font-size: 13px !important; }
             tr:hover td { background-color: transparent !important; }
@@ -1568,10 +1574,16 @@
             </div>
 
             <div class="form-group">
-                <label>Pilih Barang</label>
+                <label>
+                    <span>Pilih Barang</span>
+                    <span id="modalManageAgentPriceLink" style="font-size: 11px; color: var(--primary); cursor: pointer; text-decoration: underline;" onclick="if(currentCustomerId) openAgentPriceDetail(currentCustomerId)">⚙️ Atur Harga Khusus Agen</span>
+                </label>
                 <select id="modalItemProduct" onchange="onModalProductChange()">
                     <option value="">-- Pilih Barang --</option>
                 </select>
+                <div id="modalAgentPriceHint" style="display: none; font-size: 11.5px; color: #d97706; background: var(--amber-soft); padding: 7px 10px; border-radius: 8px; margin-top: 2px;">
+                    ℹ️ Agen ini belum memiliki harga khusus. Menampilkan daftar barang dengan <b>Harga Dasar Master</b>.
+                </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -1680,7 +1692,7 @@
 </div>
 
 <!-- Modal Detail Harga Khusus Agen -->
-<div class="modal" id="agentPriceDetailModal" style="z-index: 1250;">
+<div class="modal" id="agentPriceDetailModal" style="z-index: 1450;">
     <div class="modal-content" style="max-width: 620px;">
         <div class="modal-header">
             <h3 id="detailAgentTitle" style="font-size: 17px; font-weight: 700;">Rincian Harga Khusus Agen</h3>
@@ -2200,6 +2212,8 @@
     
     function toggleTujuanColumn(show) {
         const displayStyle = show ? 'table-cell' : 'none';
+        const invTable = document.getElementById('invoiceTable');
+        if (invTable) invTable.classList.toggle('show-tujuan', Boolean(show));
         const thTujuan = document.getElementById('thTujuan');
         if (thTujuan) thTujuan.style.display = displayStyle;
         const tdTujuan = document.querySelectorAll('.td-tujuan');
@@ -2305,16 +2319,16 @@
         const today = getTodayLocalISO();
         const isPakRachmat = customers.find(c => c.id === currentCustomerId)?.name === 'Pak Rachmat RnD';
         tr.innerHTML = `
-            <td class="text-center" style="font-weight: 500;">
+            <td data-label="Tanggal" class="text-center" style="font-weight: 500;">
                 <span class="date-label">${formatCustomDate(today)}</span>
                 <input type="hidden" class="item-date" value="${today}">
             </td>
-            <td class="text-center" style="font-weight: 500;">
+            <td data-label="Qty" class="text-center" style="font-weight: 500;">
                 <span class="qty-unit-label">1 -</span>
                 <input type="hidden" class="item-qty" value="1">
                 <input type="hidden" class="item-unit" value="-">
             </td>
-            <td>
+            <td data-label="Nama Barang">
                 <div class="prod-title" style="font-weight: 700;">Piutang Nota Sebelumnya</div>
                 <div class="desc-label" style="display: none;"></div>
                 <select class="item-select" style="display: none;">
@@ -2322,15 +2336,15 @@
                 </select>
                 <input type="hidden" class="item-desc" value="">
             </td>
-            <td class="td-tujuan" style="display: ${isPakRachmat ? 'table-cell' : 'none'};">
+            <td data-label="Tujuan" class="td-tujuan" style="display: ${isPakRachmat ? 'table-cell' : 'none'};">
                 <span class="dest-label">-</span>
                 <select class="item-destination" style="display: none;">${getDestOptionsHTML()}</select>
             </td>
-            <td class="text-right">
+            <td data-label="Harga Satuan" class="text-right mono-num">
                 <span class="price-label">${formatMoney(amount).replace('Rp ', '')}</span>
                 <input type="hidden" class="item-price" value="${amount}">
             </td>
-            <td class="item-total text-right mono-num" style="font-weight:700; font-style: italic;">${formatMoney(amount)}</td>
+            <td data-label="Total Harga" class="item-total text-right mono-num" style="font-weight:700; font-style: italic;">${formatMoney(amount)}</td>
             <td class="action-col text-center" style="white-space: nowrap;">
                 <button class="btn-icon-action" onclick="editRowFromTable(this)" title="Edit Baris Ini">✏️</button>
                 <button class="btn-icon-action btn-icon-danger" onclick="removeRow(this)" title="Hapus Baris">🗑️</button>
@@ -2384,9 +2398,13 @@
         monthSelect.innerHTML = options;
     }
     
-    async function fetchHistoryDataSilent() {
+    let historyHasMore = false;
+    let historySearchTimer = null;
+
+    async function fetchHistoryDataSilent(fetchAllForSearch = false) {
         const tbody = document.getElementById('historyTableBody');
         const selectedMonth = document.getElementById('filterMonth') ? document.getElementById('filterMonth').value : 'ALL';
+        const keyword = (document.getElementById('filterGlobal')?.value || '').toLowerCase().trim();
         
         tbody.innerHTML = `
             <tr>
@@ -2422,7 +2440,12 @@
                 query = query.gte('created_at', startDate).lte('created_at', endDate);
             }
 
-            query = query.limit(currentHistoryLimit + 1);
+            const useUnlimited = fetchAllForSearch || keyword.length > 0;
+            if (!useUnlimited) {
+                query = query.limit(currentHistoryLimit + 1);
+            } else {
+                query = query.limit(500);
+            }
 
             const { data, error } = await query;
             if (error) throw error;
@@ -2430,15 +2453,21 @@
             let rawData = data || [];
             const btnLoadMore = document.getElementById('btnLoadMore');
 
-            if (rawData.length > currentHistoryLimit) {
+            if (!useUnlimited && rawData.length > currentHistoryLimit) {
                 rawData.pop(); 
+                historyHasMore = true;
                 if (btnLoadMore) btnLoadMore.style.display = 'inline-flex';
             } else {
+                historyHasMore = false;
                 if (btnLoadMore) btnLoadMore.style.display = 'none';
             }
 
             allHistoryData = rawData;
-            renderHistoryTable(allHistoryData);
+            if (keyword.length > 0) {
+                applyHistoryKeywordFilter(keyword);
+            } else {
+                renderHistoryTable(allHistoryData);
+            }
 
         } catch (err) { 
             tbody.innerHTML = `
@@ -2454,7 +2483,7 @@
     function renderHistoryTable(data) {
         const tbody = document.getElementById('historyTableBody');
         if (!data || data.length === 0) { 
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding: 28px; color: var(--text-muted);">Belum ada riwayat invoice.</td></tr>'; 
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding: 28px; color: var(--text-muted);">Belum ada riwayat invoice yang sesuai.</td></tr>'; 
             return; 
         }
 
@@ -2476,9 +2505,7 @@
         }).join('');
     }
 
-    function filterHistoryTable() {
-        const keyword = document.getElementById('filterGlobal').value.toLowerCase().trim();
-
+    function applyHistoryKeywordFilter(keyword) {
         const filtered = allHistoryData.filter(inv => {
             const invNoMatch = (inv.invoice_no || '').toLowerCase().includes(keyword);
             const dateFormatted = formatCustomDate(inv.created_at).toLowerCase();
@@ -2489,6 +2516,22 @@
             return invNoMatch || dateMatch || nameMatch;
         });
         renderHistoryTable(filtered);
+    }
+
+    function filterHistoryTable() {
+        const keyword = document.getElementById('filterGlobal').value.toLowerCase().trim();
+        applyHistoryKeywordFilter(keyword);
+
+        if (historySearchTimer) clearTimeout(historySearchTimer);
+        if (keyword.length > 0 && historyHasMore && isSupabaseConnected) {
+            historySearchTimer = setTimeout(() => {
+                fetchHistoryDataSilent(true);
+            }, 300);
+        } else if (keyword.length === 0 && !historyHasMore && allHistoryData.length > currentHistoryLimit) {
+            historySearchTimer = setTimeout(() => {
+                fetchHistoryDataSilent(false);
+            }, 250);
+        }
     }
 
     async function loadInvoiceForEdit(invoiceNo) {
@@ -2648,7 +2691,7 @@
 
             const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
             if(btnSavePreview) {
-                btnSavePreview.innerHTML = isEditingMode ? '💾 Simpan Perubahan' : '💾 Simpan Invoice';
+                btnSavePreview.style.display = 'none';
             }
 
             toggleModal('previewModal');
@@ -2676,6 +2719,11 @@
                     await supabaseClient.from('invoices').delete().eq('invoice_no', invoiceNo);
                     await fetchDataFromSupabase();
                     renderDataManagement();
+                    if (isEditingMode && originalEditingInvoiceNo === invoiceNo) {
+                        buatInvoiceBaru();
+                    } else if (!isEditingMode && currentCustomerId) {
+                        await autoFillCustomer();
+                    }
                     showSuccessPopup("Berhasil Dihapus", `Invoice ${invoiceNo} berhasil dihapus.`);
                     await fetchHistoryDataSilent();
                 } catch(err) {
@@ -2791,7 +2839,7 @@
         });
 
         const tbody = document.getElementById('tblAgentPriceDetailBody');
-        tbody.innerHTML = items.map(ap => {
+        tbody.innerHTML = items.length ? items.map(ap => {
             const prod = products.find(p => p.id == ap.product_id);
             const prodName = prod ? prod.name : 'Barang Tidak Ditemukan';
             return `
@@ -2804,7 +2852,7 @@
                     </td>
                 </tr>
             `;
-        }).join('');
+        }).join('') : '<tr><td colspan="3" class="text-center text-muted" style="padding: 24px;">Belum ada harga khusus untuk agen ini. Klik "+ Tambah Barang" di bawah.</td></tr>';
 
         if (!document.getElementById('agentPriceDetailModal').classList.contains('active')) {
             toggleModal('agentPriceDetailModal');
@@ -2828,7 +2876,10 @@
                 }
                 agentPrices = agentPrices.filter(ap => !(ap.customer_id == custId && ap.product_id == prodId));
                 renderDataManagement();
-                openAgentPriceDetail(custId); 
+                openAgentPriceDetail(custId);
+                if (document.getElementById('itemModal').classList.contains('active')) {
+                    populateModalProductDropdown(document.getElementById('modalItemProduct').value);
+                }
             } catch (err) {
                 showWarningPopup("Gagal Menghapus", err.message);
             }
@@ -3013,20 +3064,35 @@
                 } else {
                     const oldCust = customers.find(c => c.id === editingId);
                     const oldName = oldCust ? oldCust.name : '';
+                    const prevBal = customerBalances[oldName] || 0;
 
                     if(isSupabaseConnected) {
                         await supabaseClient.from('customers').update({ name, phone, address }).eq('id', editingId);
                         
-                        if (oldName !== name) {
+                        if (oldName && oldName !== name) {
                             await supabaseClient.from('invoices').update({ customer_name: name }).eq('customer_name', oldName);
                             delete customerBalances[oldName];
                         }
 
-                        const { data: existingInv } = await supabaseClient.from('invoices').select('invoice_no').eq('customer_name', name).order('created_at', { ascending: false }).limit(1);
-                        if (existingInv && existingInv.length > 0) {
-                            await supabaseClient.from('invoices').update({ balance_due: finalBal }).eq('invoice_no', existingInv[0].invoice_no);
-                        } else if (finalBal !== 0) {
-                            await supabaseClient.from('invoices').insert([{ invoice_no: 'SALDO.' + Date.now(), customer_name: name, customer_phone: phone, customer_address: address, subtotal: balType==='piutang'?rawBal:0, deposit: balType==='deposit'?rawBal:0, balance_due: finalBal }]);
+                        if (finalBal !== prevBal) {
+                            const { data: existingInv } = await supabaseClient.from('invoices').select('*').eq('customer_name', name).order('created_at', { ascending: false }).limit(1);
+                            if (existingInv && existingInv.length > 0 && String(existingInv[0].invoice_no).startsWith('SALDO.')) {
+                                await supabaseClient.from('invoices').update({
+                                    subtotal: balType === 'piutang' ? rawBal : 0,
+                                    deposit: balType === 'deposit' ? rawBal : 0,
+                                    balance_due: finalBal
+                                }).eq('invoice_no', existingInv[0].invoice_no);
+                            } else if (existingInv && existingInv.length > 0) {
+                                const inv = existingInv[0];
+                                const sub = parseFloat(inv.subtotal) || 0;
+                                const newDep = Math.max(0, sub - finalBal);
+                                await supabaseClient.from('invoices').update({
+                                    deposit: newDep,
+                                    balance_due: finalBal
+                                }).eq('invoice_no', inv.invoice_no);
+                            } else if (finalBal !== 0) {
+                                await supabaseClient.from('invoices').insert([{ invoice_no: 'SALDO.' + Date.now(), customer_name: name, customer_phone: phone, customer_address: address, subtotal: balType==='piutang'?rawBal:0, deposit: balType==='deposit'?rawBal:0, balance_due: finalBal }]);
+                            }
                         }
                     }
                     const idx = customers.findIndex(c => c.id === editingId); 
@@ -3089,7 +3155,7 @@
 
             renderDataManagement(); 
             renderDropdownCustomers(); 
-            autoFillCustomer(); 
+            await autoFillCustomer(false); 
             toggleModal('formModal');
             
             if (editingType === 'agentPrice') {
@@ -3097,6 +3163,10 @@
                 if (document.getElementById('agentPriceDetailModal').classList.contains('active')) {
                     openAgentPriceDetail(activeCustId);
                 }
+            }
+            if (document.getElementById('itemModal').classList.contains('active')) {
+                populateModalProductDropdown(document.getElementById('modalItemProduct').value);
+                onModalProductChange();
             }
         } catch (error) { showWarningPopup("Gagal Menyimpan", error.message); } finally { btnSave.innerText = 'Simpan'; btnSave.disabled = false; }
     }
@@ -3113,6 +3183,7 @@
         document.getElementById('btnPopupConfirmYes').onclick = async function() {
             closePopup();
             try {
+                const deletedCustomerSelected = (editingType === 'customer' && editingId === currentCustomerId);
                 if(editingType === 'customer') {
                     if(isSupabaseConnected) await supabaseClient.from('customers').delete().eq('id', editingId);
                     customers = customers.filter(c => c.id !== editingId); agentPrices = agentPrices.filter(ap => ap.customer_id !== editingId);
@@ -3125,18 +3196,24 @@
                     toggleModal('formModal');
                     openAgentPriceDetail(editingId); 
                     renderDataManagement();
+                    if (document.getElementById('itemModal').classList.contains('active')) {
+                        populateModalProductDropdown(document.getElementById('modalItemProduct').value);
+                    }
                     return;
                 } else if (editingType === 'destination') {
                     savedDestinations = savedDestinations.filter(d => d !== editingId);
                     localStorage.setItem('savedDestinations', JSON.stringify(savedDestinations));
                     refreshAllDestinationDropdowns();
                 }
-                renderDataManagement(); renderDropdownCustomers(); autoFillCustomer(); toggleModal('formModal');
+                renderDataManagement();
+                renderDropdownCustomers();
+                await autoFillCustomer(deletedCustomerSelected);
+                toggleModal('formModal');
             } catch (error) { showWarningPopup("Gagal Menghapus", error.message); }
         };
     }
 
-    async function autoFillCustomer() {
+    async function autoFillCustomer(resetItems = true) {
         const select = document.getElementById('custName');
         currentCustomerId = parseInt(select.value) || null;
         const customer = customers.find(c => c.id === currentCustomerId);
@@ -3149,7 +3226,7 @@
             document.getElementById('custPhone').value = customer.phone || '';
             document.getElementById('custAddress').value = customer.address || '';
             document.getElementById('warningRow').style.color = 'var(--primary)';
-            document.getElementById('warningRow').innerText = '✓ Agen aktif, silakan tambah barang';
+            document.getElementById('warningRow').innerText = isEditingMode ? '✓ Mode Edit Agen Aktif' : '✓ Agen aktif, silakan tambah barang';
         } else {
             document.getElementById('custPhone').value = "";
             document.getElementById('custAddress').value = "";
@@ -3158,23 +3235,36 @@
             if (badgeEl) badgeEl.innerHTML = '';
         }
 
-        if(!isEditingMode) {
-            document.getElementById('itemsBody').innerHTML = '';
-            depositList = []; 
-            if(currentCustomerId && customer) {
-                const prevBalance = await fetchPreviousBalance(customer.name);
-                if (badgeEl) {
-                    if (prevBalance > 0) {
-                        badgeEl.innerHTML = `<span style="color:var(--danger);">Piutang: ${formatMoney(prevBalance)}</span>`;
-                    } else if (prevBalance < 0) {
-                        badgeEl.innerHTML = `<span style="color:var(--primary);">Deposit: ${formatMoney(Math.abs(prevBalance))}</span>`;
-                    } else {
-                        badgeEl.innerHTML = `<span style="color:var(--text-muted);">Saldo: Rp 0</span>`;
-                    }
+        if (currentCustomerId && customer) {
+            const prevBalance = await fetchPreviousBalance(customer.name);
+            if (badgeEl) {
+                if (prevBalance > 0) {
+                    badgeEl.innerHTML = `<span style="color:var(--danger);">Piutang: ${formatMoney(prevBalance)}</span>`;
+                } else if (prevBalance < 0) {
+                    badgeEl.innerHTML = `<span style="color:var(--primary);">Deposit: ${formatMoney(Math.abs(prevBalance))}</span>`;
+                } else {
+                    badgeEl.innerHTML = `<span style="color:var(--text-muted);">Saldo: Rp 0</span>`;
                 }
-                if (prevBalance > 0) addPiutangRow(prevBalance);
-                else if (prevBalance < 0) depositList.push({ ket: 'Deposit Nota Sebelum', nom: Math.abs(prevBalance) });
             }
+
+            if (!isEditingMode) {
+                const existingRows = Array.from(document.querySelectorAll('#itemsBody tr'));
+                const hasOnlyPiutangOrEmpty = existingRows.every(r => {
+                    const sel = r.querySelector('.item-select');
+                    return !sel || sel.value === 'null';
+                });
+
+                if (resetItems || hasOnlyPiutangOrEmpty) {
+                    document.getElementById('itemsBody').innerHTML = '';
+                    depositList = [];
+                    if (prevBalance > 0) addPiutangRow(prevBalance);
+                    else if (prevBalance < 0) depositList.push({ ket: 'Deposit Nota Sebelum', nom: Math.abs(prevBalance) });
+                }
+                calculate();
+            }
+        } else if (!isEditingMode && resetItems) {
+            document.getElementById('itemsBody').innerHTML = '';
+            depositList = [];
             calculate();
         }
     }
@@ -3185,6 +3275,50 @@
             const prod = products.find(p => p.id == ap.product_id);
             return prod ? { id: prod.id, name: prod.name, unit: prod.unit, custom_price: ap.custom_price } : null;
         }).filter(Boolean);
+    }
+
+    function populateModalProductDropdown(preserveVal = '') {
+        const modalProdSelect = document.getElementById('modalItemProduct');
+        const hintEl = document.getElementById('modalAgentPriceHint');
+        if (!modalProdSelect) return;
+
+        let productOptions = '<option value="">-- Pilih Barang --</option>';
+        const agentProds = getAvailableProductsForCurrentAgent().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        const specialIds = new Set(agentProds.map(p => String(p.id)));
+        const masterProds = [...products]
+            .filter(p => !specialIds.has(String(p.id)))
+            .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+        if (agentProds.length > 0) {
+            if (hintEl) hintEl.style.display = 'none';
+            productOptions += '<optgroup label="⭐ Harga Khusus Agen">';
+            agentProds.forEach(p => {
+                productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.custom_price}" data-unit="${p.unit}">${p.name} — ${formatMoney(p.custom_price)}</option>`;
+            });
+            productOptions += '</optgroup>';
+
+            if (masterProds.length > 0) {
+                productOptions += '<optgroup label="📦 Harga Dasar (Master Barang)">';
+                masterProds.forEach(p => {
+                    productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.default_price}" data-unit="${p.unit}">${p.name} — ${formatMoney(p.default_price)} (Master)</option>`;
+                });
+                productOptions += '</optgroup>';
+            }
+        } else {
+            if (hintEl) hintEl.style.display = 'block';
+            if (masterProds.length > 0) {
+                productOptions += '<optgroup label="📦 Harga Dasar (Master Barang)">';
+                masterProds.forEach(p => {
+                    productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.default_price}" data-unit="${p.unit}">${p.name} — ${formatMoney(p.default_price)}</option>`;
+                });
+                productOptions += '</optgroup>';
+            }
+        }
+
+        modalProdSelect.innerHTML = productOptions;
+        if (preserveVal && Array.from(modalProdSelect.options).some(opt => opt.value === String(preserveVal))) {
+            modalProdSelect.value = preserveVal;
+        }
     }
 
     // =========================================================================
@@ -3207,12 +3341,7 @@
         }
 
         const modalProdSelect = document.getElementById('modalItemProduct');
-        let productOptions = '<option value="">-- Pilih Barang --</option>';
-        const agentProds = getAvailableProductsForCurrentAgent();
-        agentProds.forEach(p => { 
-            productOptions += `<option value="${p.id}" data-name="${p.name}" data-price="${p.custom_price}" data-unit="${p.unit}">${p.name}</option>`; 
-        });
-        modalProdSelect.innerHTML = productOptions;
+        populateModalProductDropdown();
 
         const modalDestSelect = document.getElementById('modalItemDest');
         modalDestSelect.innerHTML = getDestOptionsHTML();
@@ -3393,30 +3522,30 @@
         const descDisplay = item.keterangan ? `<div class="desc-label" style="font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 2px;">Ket: ${item.keterangan}</div>` : `<div class="desc-label" style="display: none;"></div>`;
 
         tr.innerHTML = `
-            <td class="text-center" style="font-weight: 500;">
+            <td data-label="Tanggal" class="text-center" style="font-weight: 500;">
                 <span class="date-label">${formatCustomDate(item.tanggal)}</span>
                 <input type="hidden" class="item-date" value="${item.tanggal}">
             </td>
-            <td class="text-center">
+            <td data-label="Qty" class="text-center">
                 <span class="qty-unit-label" style="font-weight: 700;">${item.qty} ${item.unit || '-'}</span>
                 <input type="hidden" class="item-qty" value="${item.qty}">
                 <input type="hidden" class="item-unit" value="${item.unit || '-'}">
             </td>
-            <td>
+            <td data-label="Nama Barang">
                 <div class="prod-title" style="font-weight: 700;">${item.product_name}</div>
                 ${descDisplay}
                 <select class="item-select" style="display: none;">${productOptions}</select>
                 <input type="hidden" class="item-desc" value="${item.keterangan || ''}">
             </td>
-            <td class="td-tujuan" style="display: ${isPakRachmat ? 'table-cell' : 'none'};">
+            <td data-label="Tujuan" class="td-tujuan" style="display: ${isPakRachmat ? 'table-cell' : 'none'};">
                 <span class="dest-label" style="font-size: 12px; color: var(--text-muted);">${item.destination || '-'}</span>
                 <select class="item-destination" style="display: none;">${getDestOptionsHTML(item.destination)}</select>
             </td>
-            <td class="text-right mono-num">
+            <td data-label="Harga Satuan" class="text-right mono-num">
                 <span class="price-label">${formatMoney(item.price).replace('Rp ', '')}</span>
                 <input type="hidden" class="item-price" value="${item.price}">
             </td>
-            <td class="item-total text-right mono-num" style="font-weight:700; font-style: italic;">${formatMoney(item.total)}</td>
+            <td data-label="Total Harga" class="item-total text-right mono-num" style="font-weight:700; font-style: italic;">${formatMoney(item.total)}</td>
             <td class="action-col text-center" style="white-space: nowrap;">
                 <button class="btn-icon-action" onclick="editRowFromTable(this)" title="Edit Baris Ini">✏️</button>
                 <button class="btn-icon-action btn-icon-danger" onclick="removeRow(this)" title="Hapus Baris">🗑️</button>
@@ -3675,6 +3804,7 @@
         
         const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
         if(btnSavePreview) {
+            btnSavePreview.style.display = 'inline-flex';
             btnSavePreview.innerHTML = isEditingMode ? '💾 Simpan Perubahan' : '💾 Simpan Invoice';
         }
 
@@ -3868,6 +3998,9 @@
 
         const showSavedPreview = () => {
             if (previewReady && !document.getElementById('previewModal').classList.contains('active')) {
+                window.isPreviewFromHistory = true;
+                const btnSavePreview = document.getElementById('btnSaveInvoicePreview');
+                if (btnSavePreview) btnSavePreview.style.display = 'none';
                 toggleModal('previewModal');
             }
         };
@@ -4052,6 +4185,7 @@
             toggleModal('quickPayModal');
             
             renderDataManagement();
+            await autoFillCustomer(false);
             await fetchHistoryDataSilent();
             
             previewInvoiceFromHistory(invoiceNo);
@@ -4068,15 +4202,46 @@
     }
     
     async function exportHistoryToCSV() {
-        if (!allHistoryData || allHistoryData.length === 0) {
-            showWarningPopup("Data Kosong", "Tidak ada data riwayat yang tersedia untuk diekspor.");
-            return;
-        }
-
-        showLoadingPopup("Mengambil Rincian Barang & Menyiapkan CSV...");
+        showLoadingPopup("Mengambil Seluruh Rincian Riwayat & Menyiapkan CSV...");
 
         try {
-            const invoiceNos = allHistoryData.map(inv => inv.invoice_no);
+            let exportInvoices = [...allHistoryData];
+            const selectedMonth = document.getElementById('filterMonth') ? document.getElementById('filterMonth').value : 'ALL';
+            const keyword = (document.getElementById('filterGlobal')?.value || '').toLowerCase().trim();
+
+            if (isSupabaseConnected) {
+                let query = supabaseClient.from('invoices').select('*').order('created_at', { ascending: false });
+                if (selectedMonth && selectedMonth !== 'ALL') {
+                    const startDate = `${selectedMonth}-01T00:00:00`;
+                    const [y, m] = selectedMonth.split('-');
+                    const lastDay = new Date(y, m, 0).getDate();
+                    const endDate = `${selectedMonth}-${lastDay}T23:59:59`;
+                    query = query.gte('created_at', startDate).lte('created_at', endDate);
+                }
+                const { data: fullData, error: fullErr } = await query;
+                if (!fullErr && fullData) {
+                    exportInvoices = fullData;
+                }
+            }
+
+            if (keyword) {
+                exportInvoices = exportInvoices.filter(inv => {
+                    const invNoMatch = (inv.invoice_no || '').toLowerCase().includes(keyword);
+                    const dateFormatted = formatCustomDate(inv.created_at).toLowerCase();
+                    const rawDate = (inv.created_at || '').toLowerCase();
+                    const dateMatch = dateFormatted.includes(keyword) || rawDate.includes(keyword);
+                    const nameMatch = (inv.customer_name || '').toLowerCase().includes(keyword);
+                    return invNoMatch || dateMatch || nameMatch;
+                });
+            }
+
+            if (!exportInvoices || exportInvoices.length === 0) {
+                closePopup();
+                showWarningPopup("Data Kosong", "Tidak ada data riwayat yang tersedia untuk diekspor.");
+                return;
+            }
+
+            const invoiceNos = exportInvoices.map(inv => inv.invoice_no);
             
             let allItems = [];
             if (isSupabaseConnected && invoiceNos.length > 0) {
@@ -4090,7 +4255,7 @@
             }
 
             const invMap = {};
-            allHistoryData.forEach(inv => {
+            exportInvoices.forEach(inv => {
                 invMap[inv.invoice_no] = inv;
             });
 
@@ -4132,7 +4297,7 @@
                     ].join(";"));
                 });
             } else {
-                allHistoryData.forEach(inv => {
+                exportInvoices.forEach(inv => {
                     const invNo = `"${(inv.invoice_no || '').replace(/"/g, '""')}"`;
                     const date = `"${formatCustomDate(inv.created_at)}"`;
                     const cust = `"${(inv.customer_name || '').replace(/"/g, '""')}"`;
@@ -4157,7 +4322,7 @@
             document.body.removeChild(link);
 
             closePopup();
-            showSuccessPopup("Berhasil Ekspor Rinci!", "File CSV rincian barang berhasil diunduh.");
+            showSuccessPopup("Berhasil Ekspor Rinci!", `File CSV berhasil diunduh (${exportInvoices.length} nota).`);
 
         } catch (err) {
             closePopup();
@@ -4189,6 +4354,9 @@
                 const oldNos = oldInvs.map(i => i.invoice_no);
                 await supabaseClient.from('invoice_items').delete().in('invoice_no', oldNos);
                 await supabaseClient.from('invoices').delete().in('invoice_no', oldNos);
+                await fetchDataFromSupabase();
+                renderDataManagement();
+                await autoFillCustomer(false);
                 showSuccessPopup("Pembersihan Selesai", `${oldNos.length} invoice lama berhasil dibersihkan.`);
             } else {
                 showSuccessPopup("Informasi", "Tidak ditemukan data invoice yang lebih lama dari 6 bulan.");
@@ -4203,3 +4371,4 @@
 
 </body>
 </html>
+v
