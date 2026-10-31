@@ -19,6 +19,7 @@
                        radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.07) 0px, transparent 50%);
             --bg-card: #ffffff;
             --bg-elevated: #f8fafc;
+            --bg-card-subtle: #f8fafc;
             --bg-glass: rgba(255, 255, 255, 0.85);
             --text-main: #0f172a;
             --text-secondary: #334155;
@@ -33,8 +34,12 @@
             --indigo-hover: #4f46e5;
             --cyan: #06b6d4;
             --violet: #8b5cf6;
+            --info: #3b82f6;
+            --info-soft: rgba(59, 130, 246, 0.12);
             --amber: #f59e0b;
             --amber-soft: rgba(245, 158, 11, 0.12);
+            --warning: #f59e0b;
+            --warning-soft: rgba(245, 158, 11, 0.12);
             --danger: #ef4444;
             --danger-hover: #dc2626;
             --danger-soft: rgba(239, 68, 68, 0.12);
@@ -57,6 +62,7 @@
                        radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%);
             --bg-card: #151f32;
             --bg-elevated: #1e293b;
+            --bg-card-subtle: #1e293b;
             --bg-glass: rgba(21, 31, 50, 0.85);
             --text-main: #f8fafc;
             --text-secondary: #cbd5e1;
@@ -1677,16 +1683,103 @@
             </div>
             <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #777;"><p>Terima Kasih Atas Kepercayaannya<br>Mulus Rahayu, Berkah Salamet<br>**SBR SYSTEMS**</p></div>
         </div>
-        <div style="margin-top: 20px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-            <div style="display: flex; gap: 10px; width: 100%;">
-                <button class="btn btn-white" onclick="toggleModal('previewModal')" style="flex: 1;">Tutup</button>
-                <button class="btn btn-white" onclick="editFromPreview()" style="flex: 1;">✏️ Edit</button>
-                <button class="btn btn-primary" id="btnSaveInvoicePreview" onclick="simpanInvoiceAndClose()" style="flex: 1;">💾 Simpan</button>
+        <div class="preview-actions-container" style="margin-top: 18px; display: flex; flex-direction: column; gap: 9px; width: 100%;">
+            <div style="display: flex; gap: 8px; width: 100%;">
+                <button class="btn btn-top-print" onclick="openPrintBluetoothModal()" style="flex: 1; min-width: 0; padding: 10px 8px; font-size: 13px;" title="Cetak ke Printer Bluetooth via Web API">🖨️ Print Bluetooth</button>
+                <button class="btn btn-secondary" onclick="exportToPNG()" style="flex: 1; min-width: 0; padding: 10px 8px; font-size: 13px;" title="Simpan gambar PNG (lebar tetap, font besar)">📸 Simpan Gambar</button>
+                <button class="btn btn-danger" onclick="exportToPDF()" style="flex: 1; min-width: 0; padding: 10px 8px; font-size: 13px;" title="Simpan Berkas PDF">📄 Berkas PDF</button>
             </div>
-            <div style="display: flex; gap: 10px; width: 100%; margin-top: 4px;">
-                <button class="btn btn-secondary" onclick="exportToPNG()" title="Simpan gambar PNG (lebar tetap, font besar)" style="flex: 1;">🖼️ Gambar PNG (HD)</button>
-                <button class="btn btn-danger" onclick="exportToPDF()" title="Simpan PDF" style="flex: 1;">📄 Berkas PDF</button>
+            <div style="display: flex; gap: 8px; width: 100%;">
+                <button class="btn btn-white" onclick="toggleModal('previewModal')" style="flex: 1; min-width: 0; padding: 10px 8px; font-size: 13px;">Tutup</button>
+                <button class="btn btn-white" onclick="editFromPreview()" style="flex: 1; min-width: 0; padding: 10px 8px; font-size: 13px;">✏️ Edit</button>
+                <button class="btn btn-primary" id="btnSaveInvoicePreview" onclick="simpanInvoiceAndClose()" style="flex: 1.25; min-width: 0; padding: 10px 8px; font-size: 13px;">💾 Simpan</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pilihan Kertas Cetak Bluetooth -->
+<div class="modal" id="printPaperModal" style="z-index: 1700;">
+    <div class="modal-content" style="max-width: 440px;">
+        <div class="modal-header" style="margin-bottom: 14px;">
+            <h3 style="font-size: 16px; font-weight: 700;">🖨️ Cetak Print Bluetooth</h3>
+            <button class="close-modal" onclick="toggleModal('printPaperModal')">&times;</button>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+            Pilih format ukuran kertas sesuai printer Bluetooth thermal Anda:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Opsi 1: 58mm -->
+            <div onclick="eksekusiPrintBluetooth('58')"
+                style="display: flex; align-items: center; gap: 14px; padding: 13px 15px; border: 1.5px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.2s ease; background: var(--bg-card-subtle);"
+                onmouseover="this.style.borderColor='var(--primary)';"
+                onmouseout="this.style.borderColor='var(--border-color)';">
+                <div style="width: 42px; height: 42px; border-radius: 10px; background: var(--primary-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
+                    📱
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 700; font-size: 14px; color: var(--text-main);">Kertas 58mm</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Printer Mini / Portabel (32 Karakter)</div>
+                </div>
+                <div style="font-weight: 700; color: var(--primary); font-size: 13px;">Cetak ➔</div>
+            </div>
+
+            <!-- Opsi 2: 80mm -->
+            <div onclick="eksekusiPrintBluetooth('80')"
+                style="display: flex; align-items: center; gap: 14px; padding: 13px 15px; border: 1.5px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.2s ease; background: var(--bg-card-subtle);"
+                onmouseover="this.style.borderColor='var(--info)';"
+                onmouseout="this.style.borderColor='var(--border-color)';">
+                <div style="width: 42px; height: 42px; border-radius: 10px; background: var(--info-soft); color: var(--info); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
+                    🖨️
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 700; font-size: 14px; color: var(--text-main);">Kertas 80mm</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Printer Kasir Standar Lebar (48 Karakter)</div>
+                </div>
+                <div style="font-weight: 700; color: var(--info); font-size: 13px;">Cetak ➔</div>
+            </div>
+
+            <!-- Opsi 3: 58mm Admin -->
+            <div id="card58Admin"
+                style="border: 1.5px solid var(--border-color); border-radius: 12px; background: var(--bg-card-subtle); transition: all 0.2s ease; overflow: hidden;"
+                onmouseover="this.style.borderColor='var(--warning)';"
+                onmouseout="this.style.borderColor='var(--border-color)';">
+                <div onclick="eksekusiPrintBluetooth('58admin')"
+                    style="display: flex; align-items: center; gap: 14px; padding: 13px 15px; cursor: pointer;">
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: var(--warning-soft); color: var(--warning); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
+                        ⚙️
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--text-main);">58mm Admin</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Kertas 58mm pada Mesin Printer 80mm</div>
+                    </div>
+                    <div style="font-weight: 700; color: var(--warning); font-size: 13px; white-space: nowrap;">Cetak ➔</div>
+                </div>
+
+                <div style="padding: 10px 15px; background: var(--warning-soft); border-top: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;"
+                    onclick="event.stopPropagation();">
+                    <label for="shiftRight58Admin"
+                        style="font-size: 12px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 6px; user-select: none;">
+                        <span>👉 Geser Kanan (Spasi):</span>
+                    </label>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <button type="button" class="btn btn-outline"
+                            style="padding: 0 10px; height: 32px; min-height: 32px; font-size: 16px; font-weight: 800; border-radius: 8px;"
+                            onclick="ubahGeserKanan(-1)">−</button>
+                        <input type="number" id="shiftRight58Admin" value="15" min="0" max="30"
+                            style="width: 58px; text-align: center; padding: 4px 6px !important; font-size: 14px; font-weight: 700; border-radius: 8px; height: 32px; background: var(--bg-card);"
+                            onchange="simpanGeserKanan()" oninput="simpanGeserKanan()">
+                        <button type="button" class="btn btn-outline"
+                            style="padding: 0 10px; height: 32px; min-height: 32px; font-size: 16px; font-weight: 800; border-radius: 8px;"
+                            onclick="ubahGeserKanan(1)">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 18px;">
+            <button class="btn btn-outline" style="width: 100%;" onclick="toggleModal('printPaperModal')">Batal</button>
         </div>
     </div>
 </div>
@@ -3935,6 +4028,310 @@
         }, 350);
     }
 
+    // =========================================================================
+    // MODUL CETAK PRINT BLUETOOTH (WEB BLUETOOTH API)
+    // =========================================================================
+    function muatGeserKanan() {
+        const saved = localStorage.getItem('sbr_shift_right_58admin_v2');
+        const input = document.getElementById('shiftRight58Admin');
+        if (input) {
+            if (saved !== null && !isNaN(parseInt(saved))) {
+                input.value = Math.max(0, parseInt(saved));
+            } else {
+                input.value = 15;
+            }
+        }
+    }
+
+    function simpanGeserKanan() {
+        const input = document.getElementById('shiftRight58Admin');
+        if (input) {
+            let parsed = parseInt(input.value);
+            if (isNaN(parsed)) return;
+            let val = Math.max(0, parsed);
+            input.value = val;
+            localStorage.setItem('sbr_shift_right_58admin_v2', val);
+        }
+    }
+
+    function ubahGeserKanan(delta) {
+        const input = document.getElementById('shiftRight58Admin');
+        if (input) {
+            let current = isNaN(parseInt(input.value)) ? 15 : parseInt(input.value);
+            let val = Math.max(0, current + delta);
+            input.value = val;
+            simpanGeserKanan();
+        }
+    }
+
+    function openPrintBluetoothModal() {
+        muatGeserKanan();
+        toggleModal('printPaperModal');
+    }
+
+    async function eksekusiPrintBluetooth(paperType) {
+        toggleModal('printPaperModal');
+
+        if (!navigator.bluetooth) {
+            showWarningPopup("Browser Tidak Mendukung", "Fitur Web Bluetooth API hanya dapat digunakan pada Google Chrome di Android atau PC (melalui koneksi HTTPS atau localhost).");
+            return;
+        }
+
+        showLoadingPopup("Mencari Printer Bluetooth...");
+
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: [
+                    '000018f0-0000-1000-8000-00805f9b34fb',
+                    'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+                    '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+                    '0000ae00-0000-1000-8000-00805f9b34fb',
+                    '0000ff00-0000-1000-8000-00805f9b34fb'
+                ]
+            });
+
+            document.getElementById('popupLoadingText').innerText = "Menghubungkan ke Printer...";
+            const server = await device.gatt.connect();
+            const services = await server.getPrimaryServices();
+            let printCharacteristic = null;
+
+            for (const service of services) {
+                const characteristics = await service.getCharacteristics();
+                for (const char of characteristics) {
+                    if (char.properties.write || char.properties.writeWithoutResponse) {
+                        printCharacteristic = char;
+                        break;
+                    }
+                }
+                if (printCharacteristic) break;
+            }
+
+            if (!printCharacteristic) {
+                throw new Error("Karakteristik cetak (Write Characteristic) tidak ditemukan pada printer bluetooth ini.");
+            }
+
+            document.getElementById('popupLoadingText').innerText = "Menyiapkan & Mengirim Struk...";
+
+            const maxCols = (paperType === '80') ? 48 : 32;
+            const isAdminMode = (paperType === '58admin');
+
+            let shiftSpaces = 0;
+            if (isAdminMode) {
+                const shiftInput = document.getElementById('shiftRight58Admin');
+                const parsedShift = shiftInput ? parseInt(shiftInput.value) : 15;
+                shiftSpaces = !isNaN(parsedShift) ? Math.max(0, parsedShift) : 15;
+            }
+            const indentStr = ' '.repeat(shiftSpaces);
+
+            function format2Col(left, right, maxLen, indent = '') {
+                left = String(left || '');
+                right = String(right || '');
+                if (left.length + right.length + 1 <= maxLen) {
+                    return indent + left + ' '.repeat(maxLen - left.length - right.length) + right + '\n';
+                }
+                return indent + left + '\n' + indent + ' '.repeat(Math.max(0, maxLen - right.length)) + right + '\n';
+            }
+
+            function formatCenter(text, maxLen, indent = '') {
+                text = String(text || '').trim();
+                if (text.length >= maxLen) return indent + text + '\n';
+                const pad = Math.floor((maxLen - text.length) / 2);
+                return indent + ' '.repeat(pad) + text + '\n';
+            }
+
+            const docTitle = 'INVOICE';
+            const invNo = document.getElementById('prevInvNo')?.innerText || '-';
+            const dateStr = document.getElementById('prevDate')?.innerText || '-';
+            const customerObj = customers.find(c => c.id === currentCustomerId);
+            const custName = document.getElementById('prevCustName')?.innerText || (customerObj ? customerObj.name : '-') || '-';
+            const custPhone = document.getElementById('prevCustPhone')?.innerText || '';
+            const custAddress = document.getElementById('prevCustAddress')?.innerText || '';
+
+            const itemRows = document.querySelectorAll('#prevItemsBody tr');
+            let itemsData = [];
+            itemRows.forEach(row => {
+                const cols = row.querySelectorAll('td');
+                if (cols.length >= 4) {
+                    const strongEl = cols[1].querySelector('strong');
+                    let pName = strongEl ? strongEl.innerText.trim() : cols[1].innerText.trim();
+                    let extraNotes = [];
+                    if (strongEl) {
+                        const spans = cols[1].querySelectorAll('span');
+                        spans.forEach(sp => {
+                            const txt = sp.innerText.trim();
+                            if (!txt) return;
+                            if (txt.startsWith('Ket:') || txt.startsWith('Tujuan:')) {
+                                extraNotes.push(txt);
+                            } else {
+                                pName = `[${txt}] ${pName}`;
+                            }
+                        });
+                    }
+                    itemsData.push({
+                        qtyUnit: cols[0].innerText.trim(),
+                        name: pName,
+                        notes: extraNotes,
+                        price: cols[2].innerText.trim(),
+                        total: cols[3].innerText.trim()
+                    });
+                }
+            });
+
+            const subtotalText = document.getElementById('prevSubtotal')?.innerText || '';
+
+            const depositRows = document.querySelectorAll('#prevDepositBody tr');
+            let deposits = [];
+            depositRows.forEach(r => {
+                const c = r.querySelectorAll('td');
+                if (c.length >= 2) {
+                    deposits.push({ ket: c[0].innerText.trim(), nom: c[1].innerText.trim() });
+                }
+            });
+
+            const prevBalanceLabelEl = document.getElementById('prevBalanceLabel');
+            const prevBalanceRow = prevBalanceLabelEl ? prevBalanceLabelEl.parentElement : null;
+            const isBalanceRowHidden = prevBalanceRow && prevBalanceRow.style.display === 'none';
+            const balanceLabel = isBalanceRowHidden ? 'TOTAL TAGIHAN' : (prevBalanceLabelEl?.innerText || 'SISA PEMBAYARAN');
+            const balanceText = isBalanceRowHidden ? subtotalText : (document.getElementById('prevBalance')?.innerText || subtotalText || '-');
+
+            const encoder = new TextEncoder();
+            const initPrinter = new Uint8Array([0x1B, 0x40]);
+            const alignLeft = new Uint8Array([0x1B, 0x61, 0x00]);
+            const alignCenter = new Uint8Array([0x1B, 0x61, 0x01]);
+            const boldOn = new Uint8Array([0x1B, 0x45, 0x01]);
+            const boldOff = new Uint8Array([0x1B, 0x45, 0x00]);
+            const doubleHeight = new Uint8Array([0x1D, 0x21, 0x01]);
+            const normalText = new Uint8Array([0x1D, 0x21, 0x00]);
+            const cutPaper = new Uint8Array([0x1D, 0x56, 0x42, 0x00]);
+
+            async function sendBytes(bytes) {
+                const CHUNK_SIZE = 20;
+                for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+                    const chunk = bytes.slice(i, i + CHUNK_SIZE);
+                    await printCharacteristic.writeValue(chunk);
+                    await new Promise(r => setTimeout(r, 15));
+                }
+            }
+
+            await sendBytes(initPrinter);
+
+            if (isAdminMode) {
+                await sendBytes(alignLeft);
+            } else {
+                await sendBytes(alignCenter);
+            }
+
+            await sendBytes(boldOn);
+            await sendBytes(doubleHeight);
+            let headerStore = "SBR PUTRA FOOD\n";
+            if (isAdminMode) headerStore = formatCenter("SBR PUTRA FOOD", 32, indentStr);
+            await sendBytes(encoder.encode(headerStore));
+            await sendBytes(normalText);
+            await sendBytes(boldOff);
+
+            let subHeader = "Bandung Barat, Jawa Barat\n";
+            let titleText = `--- ${docTitle} ---\n`;
+            if (isAdminMode) {
+                subHeader = formatCenter("Bandung Barat, Jawa Barat", 32, indentStr);
+                titleText = formatCenter(`--- ${docTitle} ---`, 32, indentStr);
+            }
+            await sendBytes(encoder.encode(subHeader));
+            await sendBytes(encoder.encode(titleText));
+
+            await sendBytes(alignLeft);
+            const lineDiv = indentStr + "-".repeat(maxCols) + "\n";
+            await sendBytes(encoder.encode(lineDiv));
+
+            let infoText = "";
+            infoText += format2Col("No. Invoice:", invNo, maxCols, indentStr);
+            infoText += format2Col("Tgl Terbit:", dateStr, maxCols, indentStr);
+            if (custName && custName !== '-') {
+                infoText += format2Col("Kepada:", custName, maxCols, indentStr);
+            }
+            if (custPhone && custPhone !== '-') {
+                infoText += format2Col("No. Telp:", custPhone, maxCols, indentStr);
+            }
+            if (custAddress && custAddress !== '-') {
+                infoText += format2Col("Alamat:", custAddress, maxCols, indentStr);
+            }
+            infoText += lineDiv;
+            await sendBytes(encoder.encode(infoText));
+
+            if (itemsData.length > 0) {
+                let itemsText = "";
+                for (const itm of itemsData) {
+                    itemsText += indentStr + itm.name + "\n";
+                    if (itm.notes && itm.notes.length > 0) {
+                        for (const n of itm.notes) {
+                            itemsText += indentStr + "  (" + n + ")\n";
+                        }
+                    }
+                    const qtyDetail = `  ${itm.qtyUnit} x ${itm.price}`;
+                    itemsText += format2Col(qtyDetail, itm.total, maxCols, indentStr);
+                }
+                itemsText += lineDiv;
+                await sendBytes(encoder.encode(itemsText));
+            }
+
+            let summaryText = "";
+            if (subtotalText) {
+                summaryText += format2Col("Subtotal:", subtotalText, maxCols, indentStr);
+            }
+            if (deposits.length > 0) {
+                for (const dep of deposits) {
+                    summaryText += format2Col("- " + dep.ket + ":", dep.nom, maxCols, indentStr);
+                }
+            }
+            summaryText += lineDiv;
+            await sendBytes(encoder.encode(summaryText));
+
+            await sendBytes(boldOn);
+            await sendBytes(doubleHeight);
+            let balLine = format2Col(balanceLabel + ":", balanceText, maxCols, indentStr);
+            await sendBytes(encoder.encode(balLine));
+            await sendBytes(normalText);
+            await sendBytes(boldOff);
+
+            await sendBytes(encoder.encode(lineDiv));
+
+            if (!isAdminMode) {
+                await sendBytes(alignCenter);
+            }
+            let footerText = "";
+            const f1 = "Terima Kasih Atas Kepercayaannya";
+            const f2 = "Mulus Rahayu, Berkah Salamet";
+            const f3 = "** SBR SYSTEMS **";
+            if (isAdminMode) {
+                footerText += formatCenter(f1, 32, indentStr);
+                footerText += formatCenter(f2, 32, indentStr);
+                footerText += formatCenter(f3, 32, indentStr);
+            } else {
+                footerText += f1 + "\n" + f2 + "\n" + f3 + "\n";
+            }
+            footerText += "\n\n\n";
+            await sendBytes(encoder.encode(footerText));
+
+            try {
+                await sendBytes(cutPaper);
+            } catch (cutErr) {
+                console.log("Perintah autocut diabaikan oleh printer:", cutErr);
+            }
+
+            const labelKertas = (paperType === '58admin') ? `58mm Admin (Geser: ${shiftSpaces} spasi)` : (paperType + 'mm');
+            showSuccessPopup("Cetak Berhasil!", `Invoice ${invNo} berhasil dicetak pada printer bluetooth (${labelKertas}).`);
+
+        } catch (error) {
+            console.error(error);
+            closePopup();
+            if (error.name === 'NotFoundError') {
+                console.log("Pemilihan perangkat bluetooth dibatalkan oleh pengguna.");
+            } else {
+                showWarningPopup("Gagal Mencetak", error.message || "Gagal menghubungkan ke printer bluetooth.");
+            }
+        }
+    }
+
     async function simpanInvoice() {
         if(!currentCustomerId) return showWarningPopup("Pilih Agen!", "Pilih Agen terlebih dahulu sebelum menyimpan invoice!");
         const invoiceNo = document.getElementById('invoiceNumber').value;
@@ -4371,4 +4768,3 @@
 
 </body>
 </html>
-v
