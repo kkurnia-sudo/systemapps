@@ -106,7 +106,7 @@
         .form-collapsible {
             overflow: hidden;
             transition: max-height 0.3s ease, opacity 0.3s ease;
-            max-height: 500px;
+            max-height: 900px;
             opacity: 1;
         }
         .form-collapsible.hidden {
@@ -115,6 +115,88 @@
             margin: 0;
             padding: 0;
             border: none;
+        }
+
+        .konversi-banner {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: var(--accent);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .unit-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .unit-price-card {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 8px;
+        }
+
+        .unit-price-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .unit-badge-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .btn-calc-trigger {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-calc-trigger:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .helper-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-mini-helper {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-mini-helper:hover {
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
         .form-row { 
@@ -398,30 +480,54 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>NAMA AGEN</label>
-                    <select id="selAgen"><option value="">Pilih Agen...</option></select>
+                    <select id="selAgen" onchange="onAgenOrBarangChange()"><option value="">Pilih Agen...</option></select>
                 </div>
                 <div class="form-group">
                     <label>NAMA BARANG</label>
-                    <select id="selBarang"><option value="">Pilih Barang...</option></select>
+                    <select id="selBarang" onchange="onAgenOrBarangChange()"><option value="">Pilih Barang...</option></select>
                 </div>
             </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>SATUAN</label>
-                    <select id="selSatuan">
-                        <option value="Pcs">Pcs</option>
-                        <option value="Pack">Pack</option>
-                        <option value="Ball">Ball</option>
-                        <option value="Duz">Duz</option>
-                        <option value="Karung">Karung</option>
-                    </select>
+
+            <!-- Info Rasio Konversi Otomatis dari Data Barang -->
+            <div class="konversi-banner" id="infoKonversiBanner">
+                <span id="teksRasioKonversi">📦 Pilih barang untuk melihat rasio 3 satuan</span>
+                <span style="font-size: 11px; opacity: 0.85;">⚡ Auto-Konversi Aktif</span>
+            </div>
+
+            <!-- Input 3 Harga Satuan Sekaligus (Otomatis Menyesuaikan & Bisa Diedit/Dibulatkan) -->
+            <div class="unit-grid-3">
+                <div class="unit-price-card">
+                    <div class="unit-price-header">
+                        <span class="unit-badge-label" id="lblSatuan1">BALL</span>
+                        <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(1, 'main')" title="Hitung satuan lain dari harga ini">🔄 Patokan</button>
+                    </div>
+                    <input type="number" id="inpHarga1" placeholder="Rp 0" oninput="onInputHarga(1, 'main')">
                 </div>
-                <div class="form-group">
-                    <label>HARGA JUAL (RP)</label>
-                    <input type="number" id="inpHarga" placeholder="0">
+                <div class="unit-price-card">
+                    <div class="unit-price-header">
+                        <span class="unit-badge-label" id="lblSatuan2">PACK</span>
+                        <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(2, 'main')" title="Hitung satuan lain dari harga ini">🔄 Patokan</button>
+                    </div>
+                    <input type="number" id="inpHarga2" placeholder="Rp 0" oninput="onInputHarga(2, 'main')">
+                </div>
+                <div class="unit-price-card">
+                    <div class="unit-price-header">
+                        <span class="unit-badge-label" id="lblSatuan3">PCS</span>
+                        <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(3, 'main')" title="Hitung satuan lain dari harga ini">🔄 Patokan</button>
+                    </div>
+                    <input type="number" id="inpHarga3" placeholder="Rp 0" oninput="onInputHarga(3, 'main')">
                 </div>
             </div>
-            <button class="btn-save" id="btnSimpan" onclick="simpanHarga()">SIMPAN DATA BARGA</button>
+
+            <div class="helper-bar">
+                <span style="font-size: 11px; color: var(--text-muted);">💡 Ketik 1 harga, satuan lain otomatis terisi & tetap bisa diedit manual.</span>
+                <div style="display:flex; gap:4px;">
+                    <button type="button" class="btn-mini-helper" onclick="bulatkanHarga(100, 'main')">✨ Bulatkan 100</button>
+                    <button type="button" class="btn-mini-helper" onclick="bulatkanHarga(500, 'main')">✨ Bulatkan 500</button>
+                </div>
+            </div>
+
+            <button class="btn-save" id="btnSimpan" onclick="simpanHarga()">🚀 SIMPAN HARGA (3 SATUAN SEKALIGUS)</button>
         </div>
         
         <input type="text" id="cariData" class="search-box" placeholder="🔍 Cari Nama Agen..." onkeyup="filterAgen()">
@@ -442,6 +548,9 @@
             <button class="btn-close" onclick="closeModal()">✕</button>
         </div>
         <div class="modal-body">
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <input type="text" id="cariBarangModal" class="search-box" placeholder="🔍 Cari nama barang di agen ini..." oninput="filterBarangDiModal()">
+            </div>
             <div class="table-container">
                 <table>
                     <thead>
@@ -468,48 +577,70 @@
             <button class="btn-close" onclick="closeActionMenu()">✕</button>
         </div>
         <div style="display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px;">
-            <button class="btn-action-menu edit-opt" onclick="menuActionEdit()">✏️ Edit Data</button>
-            <button class="btn-action-menu delete-opt" onclick="menuActionDelete()">🗑️ Hapus</button>
+            <button class="btn-action-menu edit-opt" onclick="menuActionEdit()">✏️ Edit & Konversi 3 Satuan</button>
+            <button class="btn-action-menu delete-opt" onclick="menuActionDelete()">🗑️ Hapus Satuan Ini</button>
             <button class="btn-action-menu cancel-opt" onclick="closeActionMenu()">↩️ Kembali</button>
         </div>
     </div>
 </div>
 
-<!-- Modal Pop-up Terpisah untuk Edit Data -->
+<!-- Modal Pop-up Terpisah untuk Edit Data (Mendukung Konversi 3 Satuan Sekaligus) -->
 <div id="editModal" class="modal-overlay" onclick="outsideModalClick(event, 'editModal')">
-    <div class="modal-content" style="max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px;">
+    <div class="modal-content" style="max-width: 520px; border-radius: 20px 20px 0 0; padding: 20px;">
         <div class="modal-header" style="padding: 0 0 16px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 16px;">
-            <h3 style="margin: 0; font-size: 16px;">EDIT DATA HARGA</h3>
+            <h3 style="margin: 0; font-size: 16px;">EDIT HARGA (3 SATUAN OTOMATIS)</h3>
             <button class="btn-close" onclick="closeEditModal()">✕</button>
         </div>
         <input type="hidden" id="modalEditId">
         <div class="form-row">
             <div class="form-group">
                 <label>NAMA AGEN</label>
-                <select id="modalSelAgen"><option value="">Pilih Agen...</option></select>
+                <select id="modalSelAgen" onchange="onModalAgenOrBarangChange()"><option value="">Pilih Agen...</option></select>
             </div>
             <div class="form-group">
                 <label>NAMA BARANG</label>
-                <select id="modalSelBarang"><option value="">Pilih Barang...</option></select>
+                <select id="modalSelBarang" onchange="onModalAgenOrBarangChange()"><option value="">Pilih Barang...</option></select>
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>SATUAN</label>
-                <select id="modalSelSatuan">
-                    <option value="Pcs">Pcs</option>
-                    <option value="Pack">Pack</option>
-                    <option value="Ball">Ball</option>
-                    <option value="Duz">Duz</option>
-                    <option value="Karung">Karung</option>
-                </select>
+
+        <div class="konversi-banner">
+            <span id="modalTeksRasioKonversi">📦 1 Ball = 10 Pack = 100 Pcs</span>
+            <span style="font-size: 11px; opacity: 0.85;">⚡ Auto-Konversi</span>
+        </div>
+
+        <div class="unit-grid-3">
+            <div class="unit-price-card">
+                <div class="unit-price-header">
+                    <span class="unit-badge-label" id="modalLblSatuan1">BALL</span>
+                    <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(1, 'modal')">🔄 Patokan</button>
+                </div>
+                <input type="number" id="modalInpHarga1" placeholder="Rp 0" oninput="onInputHarga(1, 'modal')">
             </div>
-            <div class="form-group">
-                <label>HARGA JUAL (RP)</label>
-                <input type="number" id="modalInpHarga" placeholder="0">
+            <div class="unit-price-card">
+                <div class="unit-price-header">
+                    <span class="unit-badge-label" id="modalLblSatuan2">PACK</span>
+                    <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(2, 'modal')">🔄 Patokan</button>
+                </div>
+                <input type="number" id="modalInpHarga2" placeholder="Rp 0" oninput="onInputHarga(2, 'modal')">
+            </div>
+            <div class="unit-price-card">
+                <div class="unit-price-header">
+                    <span class="unit-badge-label" id="modalLblSatuan3">PCS</span>
+                    <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(3, 'modal')">🔄 Patokan</button>
+                </div>
+                <input type="number" id="modalInpHarga3" placeholder="Rp 0" oninput="onInputHarga(3, 'modal')">
             </div>
         </div>
-        <button class="btn-save" onclick="simpanEditModal()" style="margin-top: 10px; background: var(--warning); color: #0f172a;">UPDATE PERUBAHAN</button>
+
+        <div class="helper-bar">
+            <span style="font-size: 11px; color: var(--text-muted);">💡 Bisa disesuaikan manual per satuan sebelum update.</span>
+            <div style="display:flex; gap:4px;">
+                <button type="button" class="btn-mini-helper" onclick="bulatkanHarga(100, 'modal')">✨ Bulatkan 100</button>
+                <button type="button" class="btn-mini-helper" onclick="bulatkanHarga(500, 'modal')">✨ Bulatkan 500</button>
+            </div>
+        </div>
+
+        <button class="btn-save" id="btnUpdateModal" onclick="simpanEditModal()" style="margin-top: 6px; background: var(--warning); color: #0f172a;">💾 UPDATE HARGA (3 SATUAN)</button>
     </div>
 </div>
 
@@ -519,9 +650,30 @@
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
     let currentData = []; 
+    let barangMap = {};
     let isFormVisible = false;
     let currentSelectedAgent = "";
     let activeRowIndex = null;
+
+    // Helper baca konversi lokal jika kolom Supabase belum dijalankan
+    function getLocalKonversiMap() {
+        try {
+            return JSON.parse(localStorage.getItem('sbr_konversi_barang') || '{}');
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function getKonversiBarang(namaBarang) {
+        const b = barangMap[namaBarang] || {};
+        const local = getLocalKonversiMap()[namaBarang] || {};
+        const satuan_1 = b.satuan_1 || local.satuan_1 || 'Ball';
+        const satuan_2 = b.satuan_2 || local.satuan_2 || 'Pack';
+        const satuan_3 = b.satuan_3 || local.satuan_3 || 'Pcs';
+        const isi_1_ke_2 = Math.max(1, Number(b.isi_1_ke_2 || local.isi_1_ke_2 || 10));
+        const isi_2_ke_3 = Math.max(1, Number(b.isi_2_ke_3 || local.isi_2_ke_3 || 10));
+        return { satuan_1, satuan_2, satuan_3, isi_1_ke_2, isi_2_ke_3 };
+    }
 
     // Dark/Light Theme Handler
     function toggleTheme() {
@@ -562,13 +714,147 @@
             document.getElementById('modalSelAgen').innerHTML += `<option value="${a.nama_agen}">${a.nama_agen}</option>`;
         });
 
-        const { data: barangs } = await _sb.from('barang').select('nama_barang').order('nama_barang');
+        const { data: barangs } = await _sb.from('barang').select('*').order('nama_barang');
         barangs?.forEach(b => {
+            barangMap[b.nama_barang] = b;
             document.getElementById('selBarang').innerHTML += `<option value="${b.nama_barang}">${b.nama_barang}</option>`;
             document.getElementById('modalSelBarang').innerHTML += `<option value="${b.nama_barang}">${b.nama_barang}</option>`;
         });
 
-        muatDataHarga();
+        await muatDataHarga();
+    }
+
+    // === LOGIKA KONVERSI OTOMATIS 3 SATUAN ===
+    function getFormElements(mode) {
+        if (mode === 'modal') {
+            return {
+                agen: document.getElementById('modalSelAgen').value,
+                barang: document.getElementById('modalSelBarang').value,
+                lbl1: document.getElementById('modalLblSatuan1'),
+                lbl2: document.getElementById('modalLblSatuan2'),
+                lbl3: document.getElementById('modalLblSatuan3'),
+                inp1: document.getElementById('modalInpHarga1'),
+                inp2: document.getElementById('modalInpHarga2'),
+                inp3: document.getElementById('modalInpHarga3'),
+                banner: document.getElementById('modalTeksRasioKonversi')
+            };
+        }
+        return {
+            agen: document.getElementById('selAgen').value,
+            barang: document.getElementById('selBarang').value,
+            lbl1: document.getElementById('lblSatuan1'),
+            lbl2: document.getElementById('lblSatuan2'),
+            lbl3: document.getElementById('lblSatuan3'),
+            inp1: document.getElementById('inpHarga1'),
+            inp2: document.getElementById('inpHarga2'),
+            inp3: document.getElementById('inpHarga3'),
+            banner: document.getElementById('teksRasioKonversi')
+        };
+    }
+
+    function syncLabelDanHargaExisting(mode) {
+        const el = getFormElements(mode);
+        if (!el.barang) {
+            el.banner.innerText = '📦 Pilih barang untuk melihat rasio 3 satuan';
+            return;
+        }
+        const k = getKonversiBarang(el.barang);
+        const totalKecil = k.isi_1_ke_2 * k.isi_2_ke_3;
+
+        el.lbl1.innerText = k.satuan_1;
+        el.lbl2.innerText = k.satuan_2;
+        el.lbl3.innerText = k.satuan_3;
+        el.banner.innerText = `📦 1 ${k.satuan_1} = ${k.isi_1_ke_2} ${k.satuan_2} = ${totalKecil} ${k.satuan_3}`;
+
+        // Jika agen & barang sudah dipilih, tampilkan harga yang sudah pernah disimpan (jika ada)
+        if (el.agen && el.barang) {
+            const existing = currentData.filter(d => d.nama_agen === el.agen && d.nama_barang === el.barang);
+            const h1 = existing.find(d => d.satuan.toLowerCase() === k.satuan_1.toLowerCase());
+            const h2 = existing.find(d => d.satuan.toLowerCase() === k.satuan_2.toLowerCase());
+            const h3 = existing.find(d => d.satuan.toLowerCase() === k.satuan_3.toLowerCase());
+
+            el.inp1.value = h1 ? h1.harga_jual : '';
+            el.inp2.value = h2 ? h2.harga_jual : '';
+            el.inp3.value = h3 ? h3.harga_jual : '';
+        }
+    }
+
+    function onAgenOrBarangChange() {
+        syncLabelDanHargaExisting('main');
+    }
+
+    function onModalAgenOrBarangChange() {
+        syncLabelDanHargaExisting('modal');
+    }
+
+    // Saat user mengetik di salah satu kolom harga:
+    // - Ketik di Satuan 1 (Besar, misal Ball) -> otomatis menghitung Satuan 2 (Pack) & Satuan 3 (Pcs)
+    // - Ketik di Satuan 2 (Pack) -> otomatis menghitung Satuan 3 (Pcs), dan menghitung Satuan 1 jika Satuan 1 masih kosong
+    // - Ketik di Satuan 3 (Pcs) -> otomatis menghitung Satuan 1 & 2 jika keduanya masih kosong
+    // User juga bisa klik tombol "🔄 Patokan" di satuan mana saja untuk memaksa hitung ulang ke semua satuan!
+    function onInputHarga(unitIndex, mode) {
+        const el = getFormElements(mode);
+        const k = getKonversiBarang(el.barang);
+        const totalKecil = k.isi_1_ke_2 * k.isi_2_ke_3;
+
+        const val1 = Number(el.inp1.value) || 0;
+        const val2 = Number(el.inp2.value) || 0;
+        const val3 = Number(el.inp3.value) || 0;
+
+        if (unitIndex === 1) {
+            if (val1 > 0) {
+                el.inp2.value = Math.round(val1 / k.isi_1_ke_2);
+                el.inp3.value = Math.round(val1 / totalKecil);
+            } else {
+                el.inp2.value = '';
+                el.inp3.value = '';
+            }
+        } else if (unitIndex === 2) {
+            if (val2 > 0) {
+                el.inp3.value = Math.round(val2 / k.isi_2_ke_3);
+                if (!val1) {
+                    el.inp1.value = Math.round(val2 * k.isi_1_ke_2);
+                }
+            }
+        } else if (unitIndex === 3) {
+            if (val3 > 0 && !val1 && !val2) {
+                el.inp2.value = Math.round(val3 * k.isi_2_ke_3);
+                el.inp1.value = Math.round(val3 * totalKecil);
+            }
+        }
+    }
+
+    // Tombol paksa hitung ulang semua satuan dari salah satu satuan patokan
+    function hitungDariSatuan(unitIndex, mode) {
+        const el = getFormElements(mode);
+        const k = getKonversiBarang(el.barang);
+        const totalKecil = k.isi_1_ke_2 * k.isi_2_ke_3;
+
+        const val1 = Number(el.inp1.value) || 0;
+        const val2 = Number(el.inp2.value) || 0;
+        const val3 = Number(el.inp3.value) || 0;
+
+        if (unitIndex === 1 && val1 > 0) {
+            el.inp2.value = Math.round(val1 / k.isi_1_ke_2);
+            el.inp3.value = Math.round(val1 / totalKecil);
+        } else if (unitIndex === 2 && val2 > 0) {
+            el.inp1.value = Math.round(val2 * k.isi_1_ke_2);
+            el.inp3.value = Math.round(val2 / k.isi_2_ke_3);
+        } else if (unitIndex === 3 && val3 > 0) {
+            el.inp2.value = Math.round(val3 * k.isi_2_ke_3);
+            el.inp1.value = Math.round(val3 * totalKecil);
+        }
+    }
+
+    // Helper pembulatan harga ke kelipatan 100 atau 500 terdekat (ke atas) agar harga eceran rapi
+    function bulatkanHarga(kelipatan, mode) {
+        const el = getFormElements(mode);
+        [el.inp1, el.inp2, el.inp3].forEach(inp => {
+            const v = Number(inp.value) || 0;
+            if (v > 0) {
+                inp.value = Math.ceil(v / kelipatan) * kelipatan;
+            }
+        });
     }
 
     async function muatDataHarga() {
@@ -601,7 +887,8 @@
         }
 
         agentNames.forEach(agen => {
-            const itemCount = grouped[agen].length;
+            const items = grouped[agen];
+            const uniqueBarangCount = new Set(items.map(i => i.nama_barang)).size;
             const div = document.createElement('div');
             div.className = 'agent-card-item';
             div.setAttribute('data-agen', agen.toUpperCase());
@@ -609,7 +896,7 @@
             div.innerHTML = `
                 <div class="agent-info">
                     <h4>${agen}</h4>
-                    <p>${itemCount} jenis barang tercatat</p>
+                    <p>${uniqueBarangCount} barang (${items.length} harga satuan)</p>
                 </div>
                 <div class="agent-arrow">➔</div>
             `;
@@ -620,11 +907,26 @@
     function openAgentModal(agenName, isRefresh = false) {
         currentSelectedAgent = agenName;
         document.getElementById('modalAgentTitle').innerText = agenName;
+        if (!isRefresh) {
+            const searchInp = document.getElementById('cariBarangModal');
+            if (searchInp) searchInp.value = '';
+        }
         
+        renderTabelBarangAgen();
+
+        if (!isRefresh) {
+            document.getElementById('agentModal').classList.add('active');
+        }
+    }
+
+    function renderTabelBarangAgen() {
         const modalBodyTabel = document.getElementById('modalBodyTabel');
         modalBodyTabel.innerHTML = "";
 
-        const agentItems = currentData.filter(h => h.nama_agen === agenName);
+        const keyword = (document.getElementById('cariBarangModal')?.value || '').toLowerCase().trim();
+        const agentItems = currentData
+            .filter(h => h.nama_agen === currentSelectedAgent)
+            .filter(h => !keyword || (h.nama_barang || '').toLowerCase().includes(keyword) || (h.satuan || '').toLowerCase().includes(keyword));
 
         agentItems.forEach((h, index) => {
             const originalIndex = currentData.findIndex(item => item.id === h.id);
@@ -633,7 +935,7 @@
                 <td align="center" style="color: var(--text-muted); font-size: 11px;">${index + 1}</td>
                 <td><strong>${h.nama_barang}</strong></td>
                 <td align="center"><span class="badge-satuan">${h.satuan}</span></td>
-                <td class="price-text">Rp ${h.harga_jual.toLocaleString('id-ID')}</td>
+                <td class="price-text">Rp ${Number(h.harga_jual || 0).toLocaleString('id-ID')}</td>
                 <td align="center">
                     <div class="action-cell">
                         <button class="btn-action-pencil" onclick="openActionMenu(${originalIndex})" title="Aksi">✏️</button>
@@ -642,10 +944,10 @@
             `;
             modalBodyTabel.appendChild(tr);
         });
+    }
 
-        if (!isRefresh) {
-            document.getElementById('agentModal').classList.add('active');
-        }
+    function filterBarangDiModal() {
+        renderTabelBarangAgen();
     }
 
     function closeModal() {
@@ -670,8 +972,19 @@
         document.getElementById('modalEditId').value = targetData.id;
         document.getElementById('modalSelAgen').value = targetData.nama_agen;
         document.getElementById('modalSelBarang').value = targetData.nama_barang;
-        document.getElementById('modalSelSatuan').value = targetData.satuan;
-        document.getElementById('modalInpHarga').value = targetData.harga_jual;
+
+        // Muat ke-3 satuan barang untuk agen tersebut
+        syncLabelDanHargaExisting('modal');
+
+        // Pastikan harga dari baris yang diklik juga terisi jika satuannya kustom
+        const k = getKonversiBarang(targetData.nama_barang);
+        if (targetData.satuan.toLowerCase() === k.satuan_1.toLowerCase()) {
+            document.getElementById('modalInpHarga1').value = targetData.harga_jual;
+        } else if (targetData.satuan.toLowerCase() === k.satuan_2.toLowerCase()) {
+            document.getElementById('modalInpHarga2').value = targetData.harga_jual;
+        } else if (targetData.satuan.toLowerCase() === k.satuan_3.toLowerCase()) {
+            document.getElementById('modalInpHarga3').value = targetData.harga_jual;
+        }
 
         document.getElementById('editModal').classList.add('active');
     }
@@ -679,7 +992,7 @@
     async function menuActionDelete() {
         closeActionMenu();
         const targetData = currentData[activeRowIndex];
-        if(confirm(`Hapus harga ${targetData.nama_barang} untuk agen ${targetData.nama_agen}?`)) {
+        if(confirm(`Hapus harga ${targetData.nama_barang} (${targetData.satuan}) untuk agen ${targetData.nama_agen}?`)) {
             await _sb.from('harga').delete().eq('id', targetData.id);
             muatDataHarga();
         }
@@ -689,22 +1002,45 @@
         document.getElementById('editModal').classList.remove('active');
     }
 
+    async function simpanBatch3Satuan(mode) {
+        const el = getFormElements(mode);
+        if (!el.agen || !el.barang) {
+            alert("Pilih Nama Agen dan Nama Barang terlebih dahulu!");
+            return false;
+        }
+
+        const k = getKonversiBarang(el.barang);
+        const h1 = Number(el.inp1.value) || 0;
+        const h2 = Number(el.inp2.value) || 0;
+        const h3 = Number(el.inp3.value) || 0;
+
+        if (h1 <= 0 && h2 <= 0 && h3 <= 0) {
+            alert("Masukkan minimal 1 harga satuan!");
+            return false;
+        }
+
+        const rowsToSave = [];
+        if (h1 > 0) rowsToSave.push({ nama_agen: el.agen, nama_barang: el.barang, satuan: k.satuan_1, harga_jual: h1 });
+        if (h2 > 0) rowsToSave.push({ nama_agen: el.agen, nama_barang: el.barang, satuan: k.satuan_2, harga_jual: h2 });
+        if (h3 > 0) rowsToSave.push({ nama_agen: el.agen, nama_barang: el.barang, satuan: k.satuan_3, harga_jual: h3 });
+
+        const { error } = await _sb.from('harga').upsert(rowsToSave, { onConflict: 'nama_agen,nama_barang,satuan' });
+        if (error) {
+            alert("Gagal menyimpan harga: " + error.message);
+            return false;
+        }
+        return true;
+    }
+
     async function simpanEditModal() {
-        const id = document.getElementById('modalEditId').value;
-        const payload = { 
-            nama_agen: document.getElementById('modalSelAgen').value,
-            nama_barang: document.getElementById('modalSelBarang').value,
-            satuan: document.getElementById('modalSelSatuan').value,
-            harga_jual: document.getElementById('modalInpHarga').value
-        };
-        if(!payload.nama_agen || !payload.nama_barang || !payload.harga_jual) return alert("Input belum lengkap!");
-
-        if(id) payload.id = id;
-
-        await _sb.from('harga').upsert(payload, { onConflict: 'nama_agen,nama_barang,satuan' });
-        
-        closeEditModal();
-        muatDataHarga();
+        const btn = document.getElementById('btnUpdateModal');
+        btn.innerText = "MENYIMPAN...";
+        const ok = await simpanBatch3Satuan('modal');
+        btn.innerText = "💾 UPDATE HARGA (3 SATUAN)";
+        if (ok) {
+            closeEditModal();
+            await muatDataHarga();
+        }
     }
 
     function outsideModalClick(e, modalId) {
@@ -716,27 +1052,19 @@
     }
 
     async function simpanHarga() {
-        const id = document.getElementById('editId').value;
-        const payload = { 
-            nama_agen: document.getElementById('selAgen').value,
-            nama_barang: document.getElementById('selBarang').value,
-            satuan: document.getElementById('selSatuan').value,
-            harga_jual: document.getElementById('inpHarga').value
-        };
-        if(!payload.nama_agen || !payload.nama_barang || !payload.harga_jual) return alert("Input belum lengkap!");
-
-        if(id) payload.id = id;
-
         const btn = document.getElementById('btnSimpan');
         btn.innerText = "MENYIMPAN...";
 
-        await _sb.from('harga').upsert(payload, { onConflict: 'nama_agen,nama_barang,satuan' });
-        
-        document.getElementById('editId').value = "";
-        document.getElementById('inpHarga').value = "";
-        btn.innerText = "SIMPAN DATA HARGA";
+        const ok = await simpanBatch3Satuan('main');
 
-        muatDataHarga();
+        btn.innerText = "🚀 SIMPAN HARGA (3 SATUAN SEKALIGUS)";
+        if (ok) {
+            document.getElementById('editId').value = "";
+            document.getElementById('inpHarga1').value = "";
+            document.getElementById('inpHarga2').value = "";
+            document.getElementById('inpHarga3').value = "";
+            await muatDataHarga();
+        }
     }
 
     function filterAgen() {
