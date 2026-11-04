@@ -3158,7 +3158,7 @@
                             </div>
 
                             <!-- DAFTAR BARIS PEMBAYARAN -->
-                            <div id="mPaymentRowsContainer" class="space-y-2 max-h-[190px] overflow-y-auto pr-0.5">
+                            <div id="mPaymentRowsContainer" class="space-y-2.5 max-h-[290px] sm:max-h-[320px] overflow-y-auto pr-1">
                             </div>
                         </div>
                     </div>
@@ -8872,6 +8872,149 @@
             }
         }
 
+        function setPayCatatanShortcut(rowId, text) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+            const catInp = row.querySelector('.pay-catatan');
+            if (catInp) {
+                catInp.value = text;
+                syncPayRowShortcuts(rowId);
+                const nomInp = row.querySelector('.pay-nominal');
+                if (nomInp) nomInp.focus();
+            }
+        }
+
+        function setPayNominalShortcut(rowId, amount) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+            const nomInp = row.querySelector('.pay-nominal');
+            if (!nomInp) return;
+
+            let currentVal = parseFormattedNumber(nomInp.value) || 0;
+            currentVal += amount; // Akumulasi nominal (menambahkan, tidak menimpa)
+
+            nomInp.value = formatNumberWithDots(currentVal);
+            syncPayRowShortcuts(rowId);
+            recalcClassicNotaFinancials();
+        }
+
+        function clearPayNominal(rowId) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+            const nomInp = row.querySelector('.pay-nominal');
+            if (nomInp) {
+                nomInp.value = '';
+                syncPayRowShortcuts(rowId);
+                recalcClassicNotaFinancials();
+            }
+        }
+
+        function setPayRowRemainingSisa(rowId) {
+            if (!activeNotaModal) return;
+            const row = document.getElementById(rowId);
+            if (!row) return;
+
+            let currentBruto = 0;
+            document.querySelectorAll('#mClassicItemRows tr').forEach(r => {
+                const qty = parseFloat(r.querySelector('.m-item-qty')?.value) || 0;
+                const price = parseFormattedNumber(r.querySelector('.m-item-price')?.value) || 0;
+                currentBruto += Math.round(qty * price);
+            });
+            let totalRetur = 0;
+            document.querySelectorAll('#mReturRowsContainer .retur-nilai-input').forEach(inp => {
+                totalRetur += parseFormattedNumber(inp.value) || 0;
+            });
+            const currentOngkir = parseFormattedNumber(document.getElementById('payPotonganOngkir')?.value) || 0;
+            const currentNetto = Math.max(0, currentBruto - totalRetur - currentOngkir);
+
+            let otherPayments = 0;
+            document.querySelectorAll('#mPaymentRowsContainer .payment-row').forEach(r => {
+                if (r.id !== rowId) {
+                    const inp = r.querySelector('.pay-nominal');
+                    otherPayments += parseFormattedNumber(inp?.value) || 0;
+                }
+            });
+
+            const remaining = Math.max(0, currentNetto - otherPayments);
+            const nomInp = row.querySelector('.pay-nominal');
+            if (nomInp) {
+                nomInp.value = remaining > 0 ? formatNumberWithDots(remaining) : '';
+                syncPayRowShortcuts(rowId);
+                recalcClassicNotaFinancials();
+            }
+        }
+
+        function syncPayRowShortcuts(rowId) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+
+            const catVal = (row.querySelector('.pay-catatan')?.value || '').trim().toLowerCase();
+            const nomVal = parseFormattedNumber(row.querySelector('.pay-nominal')?.value) || 0;
+
+            row.querySelectorAll('.pay-chip-ket').forEach(btn => {
+                const target = (btn.getAttribute('data-shortcut-ket') || '').toLowerCase();
+                if (catVal && catVal === target) {
+                    btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+                    btn.classList.add('bg-slate-900', 'text-white', 'border-slate-900', 'shadow-xs');
+                } else {
+                    btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                    btn.classList.remove('bg-slate-900', 'text-white', 'border-slate-900', 'shadow-xs');
+                }
+            });
+
+            row.querySelectorAll('.pay-chip-nom').forEach(btn => {
+                const target = parseInt(btn.getAttribute('data-shortcut-nom') || '0', 10);
+                if (nomVal > 0 && nomVal === target) {
+                    btn.classList.remove('bg-emerald-50/90', 'text-emerald-700', 'border-emerald-200');
+                    btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-700', 'shadow-xs');
+                } else {
+                    btn.classList.add('bg-emerald-50/90', 'text-emerald-700', 'border-emerald-200');
+                    btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-700', 'shadow-xs');
+                }
+            });
+        }
+
+        function expandNominalShorthand(input) {
+            if (!input || !input.value) return;
+            let str = String(input.value).trim().toLowerCase();
+            let multiplier = 1;
+            if (str.includes('jt') || str.includes('juta') || str.includes('m')) {
+                multiplier = 1000000;
+                str = str.replace(/jt|juta|m/g, '').trim();
+            } else if (str.includes('k') || str.includes('rb') || str.includes('ribu')) {
+                multiplier = 1000;
+                str = str.replace(/k|rb|ribu/g, '').trim();
+            }
+            if (multiplier > 1) {
+                const cleaned = str.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+                const num = parseFloat(cleaned);
+                if (!isNaN(num) && num > 0) {
+                    const total = Math.round(num * multiplier);
+                    input.value = formatNumberWithDots(total);
+                }
+            }
+        }
+
+        function handlePayCatatanKeydown(event, rowId) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const row = document.getElementById(rowId);
+                if (row) {
+                    const nomInp = row.querySelector('.pay-nominal');
+                    if (nomInp) nomInp.focus();
+                }
+            }
+        }
+
+        function handlePayNominalKeydown(event, rowId) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                expandNominalShorthand(event.target);
+                syncPayRowShortcuts(rowId);
+                recalcClassicNotaFinancials();
+            }
+        }
+
         function addPaymentRow(existingData = null) {
             const container = document.getElementById('mPaymentRowsContainer');
             if (!container) return;
@@ -8882,13 +9025,26 @@
             const rowId = 'payRow_' + Math.random().toString(36).substr(2, 7);
             const nominalVal = existingData ? (existingData.nominal || 0) : 0;
             const ketVal = existingData ? (existingData.keterangan || '') : '';
-            const dateVal = existingData && existingData.tanggal
-                ? new Date(existingData.tanggal).toISOString().slice(0, 10)
-                : new Date().toISOString().slice(0, 10);
+
+            // Optimasi tanggal lokal (Mencegah bug tanggal mundur karena UTC)
+            let dateVal;
+            if (existingData && existingData.tanggal) {
+                if (typeof existingData.tanggal === 'string' && /^\d{4}-\d{2}-\d{2}/.test(existingData.tanggal)) {
+                    dateVal = existingData.tanggal.slice(0, 10);
+                } else {
+                    const d = new Date(existingData.tanggal);
+                    dateVal = !isNaN(d.getTime())
+                        ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                        : new Date().toLocaleDateString('en-CA');
+                }
+            } else {
+                const now = new Date();
+                dateVal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            }
 
             const div = document.createElement('div');
             div.id = rowId;
-            div.className = "payment-row p-2.5 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-xl space-y-2 transition shadow-2xs";
+            div.className = "payment-row p-3 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-xl space-y-2.5 transition shadow-2xs";
             if (existingData?.id) {
                 div.setAttribute('data-payment-id', existingData.id);
             }
@@ -8915,21 +9071,79 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-          <div class="sm:col-span-6">
-            <input type="text" placeholder="Catatan (BCA / Mandiri / Cash)" value="${ketVal}"
+          <!-- INPUT & SHORTCUT CATATAN / KETERANGAN -->
+          <div class="sm:col-span-6 space-y-1.5">
+            <input type="text" placeholder="Catatan (BCA / Mandiri / Cash)" value="${escapeHtmlNota(ketVal)}"
+                   oninput="syncPayRowShortcuts('${rowId}')"
+                   onkeydown="handlePayCatatanKeydown(event, '${rowId}')"
                    class="pay-catatan w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs outline-none bg-white focus:border-slate-800 focus:ring-1 focus:ring-slate-800">
+            
+            <div class="flex flex-wrap items-center gap-1">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider select-none">Ket:</span>
+              <button type="button" onclick="setPayCatatanShortcut('${rowId}', 'Tf BRI')" title="Isi catatan: Tf BRI"
+                      data-shortcut-ket="Tf BRI"
+                      class="pay-chip-ket text-[9.5px] font-semibold px-1.5 py-0.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition active:scale-95 cursor-pointer">
+                Tf BRI
+              </button>
+              <button type="button" onclick="setPayCatatanShortcut('${rowId}', 'Tf BCA')" title="Isi catatan: Tf BCA"
+                      data-shortcut-ket="Tf BCA"
+                      class="pay-chip-ket text-[9.5px] font-semibold px-1.5 py-0.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition active:scale-95 cursor-pointer">
+                Tf BCA
+              </button>
+              <button type="button" onclick="setPayCatatanShortcut('${rowId}', 'Tf BNI')" title="Isi catatan: Tf BNI"
+                      data-shortcut-ket="Tf BNI"
+                      class="pay-chip-ket text-[9.5px] font-semibold px-1.5 py-0.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200 transition active:scale-95 cursor-pointer">
+                Tf BNI
+              </button>
+              <button type="button" onclick="setPayCatatanShortcut('${rowId}', 'CASH')" title="Isi catatan: CASH"
+                      data-shortcut-ket="CASH"
+                      class="pay-chip-ket text-[9.5px] font-semibold px-1.5 py-0.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition active:scale-95 cursor-pointer">
+                CASH
+              </button>
+            </div>
           </div>
-          <div class="sm:col-span-6 relative">
-            <span class="absolute left-2.5 top-1.5 text-xs font-bold text-slate-400">Rp</span>
-            <input type="text" inputmode="numeric" placeholder="0" value="${nominalVal > 0 ? formatNumberWithDots(nominalVal) : ''}"
-                   oninput="onNominalInput(this); recalcClassicNotaFinancials()"
-                   class="pay-nominal w-full pl-8 pr-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-emerald-700 outline-none bg-white focus:border-slate-800 focus:ring-1 focus:ring-slate-800 text-right">
+
+          <!-- INPUT & SHORTCUT NOMINAL -->
+          <div class="sm:col-span-6 space-y-1.5">
+            <div class="relative">
+              <span class="absolute left-2.5 top-1.5 text-xs font-bold text-slate-400">Rp</span>
+              <input type="text" inputmode="numeric" placeholder="0" value="${nominalVal > 0 ? formatNumberWithDots(nominalVal) : ''}"
+                     oninput="onNominalInput(this); syncPayRowShortcuts('${rowId}'); recalcClassicNotaFinancials()"
+                     onblur="expandNominalShorthand(this); syncPayRowShortcuts('${rowId}'); recalcClassicNotaFinancials()"
+                     onkeydown="handlePayNominalKeydown(event, '${rowId}')"
+                     class="pay-nominal w-full pl-8 pr-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-emerald-700 outline-none bg-white focus:border-slate-800 focus:ring-1 focus:ring-slate-800 text-right">
+            </div>
+
+            <div class="flex flex-wrap items-center justify-end gap-1">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider select-none">Nom:</span>
+              <button type="button" onclick="setPayNominalShortcut('${rowId}', 50000000)" title="Tambah +Rp 50.000.000"
+                      class="pay-chip-nom text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-emerald-200 bg-emerald-50/90 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition active:scale-95 cursor-pointer">
+                +50jt
+              </button>
+              <button type="button" onclick="setPayNominalShortcut('${rowId}', 10000000)" title="Tambah +Rp 10.000.000"
+                      class="pay-chip-nom text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-emerald-200 bg-emerald-50/90 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition active:scale-95 cursor-pointer">
+                +10jt
+              </button>
+              <button type="button" onclick="setPayNominalShortcut('${rowId}', 5000000)" title="Tambah +Rp 5.000.000"
+                      class="pay-chip-nom text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-emerald-200 bg-emerald-50/90 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition active:scale-95 cursor-pointer">
+                +5jt
+              </button>
+              <button type="button" onclick="setPayRowRemainingSisa('${rowId}')" title="Isi pas sisa tagihan akhir"
+                      class="text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition active:scale-95 cursor-pointer">
+                Sisa
+              </button>
+              <button type="button" onclick="clearPayNominal('${rowId}')" title="Reset nominal ke 0"
+                      class="text-[9px] font-bold px-1 py-0.5 rounded-md border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition active:scale-95 cursor-pointer">
+                C
+              </button>
+            </div>
           </div>
         </div>
       `;
 
             container.appendChild(div);
             updatePaymentRowLabels();
+            syncPayRowShortcuts(rowId);
             recalcClassicNotaFinancials();
             if (window.lucide && typeof lucide.createIcons === 'function') {
                 lucide.createIcons();
@@ -8965,10 +9179,23 @@
             if (!container) return;
             if (container.querySelectorAll('.payment-row').length === 0) {
                 container.innerHTML = `
-          <div id="mPaymentEmptyNotice" class="p-3 text-center text-slate-400 italic text-[11px] bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-            Belum ada pembayaran dicatat. Klik <strong>"+ Tambah Baris Pembayaran / TF"</strong> atau <strong>"Isi Sisa Tagihan (Lunas)"</strong>.
+          <div id="mPaymentEmptyNotice" class="p-4 text-center text-slate-400 text-xs bg-slate-50/50 rounded-xl border border-dashed border-slate-200 space-y-2.5">
+            <p class="italic text-[11px]">Belum ada pembayaran dicatat.</p>
+            <div class="flex items-center justify-center gap-2">
+              <button type="button" onclick="addPaymentRow()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold text-xs shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                <i data-lucide="plus" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Tambah Pembayaran</span>
+              </button>
+              <button type="button" onclick="setPayFullAmount()" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-lg font-bold text-xs shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>1-Klik Lunasi</span>
+              </button>
+            </div>
           </div>
         `;
+                if (window.lucide && typeof lucide.createIcons === 'function') {
+                    lucide.createIcons();
+                }
             }
         }
 
@@ -9083,6 +9310,7 @@
                 if (catInput && (!catInput.value || !catInput.value.trim())) {
                     catInput.value = `Bayar ${rowIndex}`;
                 }
+                syncPayRowShortcuts(emptyRow.id);
             } else {
                 // Semua baris yang ada sudah memiliki pembayaran (nominal > 0)
                 // Tambahkan baris baru tanpa menimpa baris sebelumnya
