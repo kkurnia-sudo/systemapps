@@ -1377,15 +1377,22 @@
         document.getElementById('isiKartuMobile').innerHTML = "<div class='empty-message'>Memuat data setoran... ⏳</div>";
 
         try {
-            // Ambil semua data sekaligus (Driver, Normal Transaksi, DP Transaksi, Armada)
+            // Buffer tanggal mulai mundur 3 hari untuk mengantisipasi transaksi lintas tengah malam
+            // (contoh: nota diinput kasir/admin malam H-1 jam 23.00, lalu supir jalan/rekap subuh hari H jam 02.00)
+            const [y, m, d] = tglMulai.split('-').map(Number);
+            const dMulai = new Date(y, m - 1, d);
+            dMulai.setDate(dMulai.getDate() - 3);
+            const tglMulaiBuffer = formatTanggalLokal(dMulai);
+
+            // Ambil semua data perjalanan driver, transaksi (+ buffer tanggal), dan armada
             const [resDriver, resNormal, resDp, resArmada] = await Promise.all([
                 _sb.from('rekap_laporan_driver')
                     .select('*')
                     .gte('created_at', `${tglMulai}T00:00:00`)
                     .lte('created_at', `${tglSelesai}T23:59:59`)
                     .order('created_at', { ascending: false }),
-                _sb.from('transaksi').select('*').gte('tanggal', tglMulai).lte('tanggal', tglSelesai),
-                _sb.from('transaksi_dp').select('*').gte('tanggal', tglMulai).lte('tanggal', tglSelesai),
+                _sb.from('transaksi').select('*').gte('tanggal', tglMulaiBuffer).lte('tanggal', tglSelesai),
+                _sb.from('transaksi_dp').select('*').gte('tanggal', tglMulaiBuffer).lte('tanggal', tglSelesai),
                 _sb.from('monitoring_kendaraan').select('plat_nomor, nama_unit')
             ]);
 
@@ -1396,6 +1403,30 @@
             const armadaList = resArmada.data || [];
             const rawDrivers = resDriver.data || [];
 
+            // Kumpulkan nomor nota supir yang belum ditemukan di allNotas (misal jika nota dibuat > 3 hari lalu)
+            const knownNotaSet = new Set(allNotas.map(n => (n.no_nota || '').trim().toUpperCase()));
+            const missingNotas = [];
+            rawDrivers.forEach(r => {
+                if (r.no_nota && r.no_nota !== '-') {
+                    r.no_nota.split(/[,;/]+/).map(s => s.trim()).filter(Boolean).forEach(notaNo => {
+                        const upper = notaNo.toUpperCase();
+                        if (!knownNotaSet.has(upper) && !missingNotas.includes(notaNo)) {
+                            missingNotas.push(notaNo);
+                        }
+                    });
+                }
+            });
+
+            // Ambil nota yang tertinggal langsung by no_nota
+            if (missingNotas.length > 0) {
+                const [resMissingTx, resMissingDp] = await Promise.all([
+                    _sb.from('transaksi').select('*').in('no_nota', missingNotas),
+                    _sb.from('transaksi_dp').select('*').in('no_nota', missingNotas)
+                ]);
+                if (resMissingTx.data) allNotas.push(...resMissingTx.data.map(d => ({ ...d, _tabelAsal: 'transaksi' })));
+                if (resMissingDp.data) allNotas.push(...resMissingDp.data.map(d => ({ ...d, _tabelAsal: 'transaksi_dp' })));
+            }
+
             // Bentuk Relasi Master-Detail
             masterDataCache = rawDrivers.map(r => {
                 let matchedNotas = [];
@@ -1405,9 +1436,10 @@
                 let totalReturTrip = 0;
 
                 if (r.no_nota && r.no_nota !== '-') {
-                    const rawList = r.no_nota.split(',').map(s => s.trim()).filter(Boolean);
+                    const rawList = r.no_nota.split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
                     rawList.forEach(notaNo => {
-                        const match = allNotas.find(t => t.no_nota === notaNo);
+                        const targetUpper = notaNo.toUpperCase();
+                        const match = allNotas.find(t => (t.no_nota || '').trim().toUpperCase() === targetUpper);
                         if (match) {
                             matchedNotas.push(match);
                             totalCashNota += parseInt(match.bayar_cash || 0);
@@ -1611,8 +1643,9 @@
                         </div>
                     </td>
                     <td style="font-size:10px; color:#fbbf24; font-weight:600;">${r.kas_dari}</td>
-                    <td style="text-align:right; font-weight:800; font-size:12.5px; color:var(--total-setor-color); background:rgba(251,191,36,0.06);">
+                    <td style="text-align:right; font-weight:800; font-size:12.5px; color:${r.sisa_bersih < 0 ? '#ef4444' : 'var(--total-setor-color)'}; background:${r.sisa_bersih < 0 ? 'rgba(239,68,68,0.08)' : 'rgba(251,191,36,0.06)'};">
                         Rp ${(r.sisa_bersih).toLocaleString('id-ID')}
+                        ${r.sisa_bersih < 0 ? '<div style="font-size:9px; color:#ef4444; font-weight:700;">⚠️ Klaim Defisit</div>' : ''}
                     </td>
                     <td>
                         <div class="setoran-wrapper" onclick="event.stopPropagation()">
@@ -1738,9 +1771,9 @@
                                             <span class="calc-val-biaya">- Rp ${(r.total_biaya).toLocaleString('id-ID')}</span>
                                         </div>
                                         <div class="calc-divider"></div>
-                                        <div class="calc-net-box">
-                                            <span class="calc-net-label">UANG BERSIH WAJIB DI LACI:</span>
-                                            <span class="calc-net-val">Rp ${(r.sisa_bersih).toLocaleString('id-ID')}</span>
+                                        <div class="calc-net-box" style="${r.sisa_bersih < 0 ? 'background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.3);' : ''}">
+                                            <span class="calc-net-label" style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : ''}">${r.sisa_bersih < 0 ? '⚠️ KLAIM DEFISIT KASIR:' : 'UANG BERSIH WAJIB DI LACI:'}</span>
+                                            <span class="calc-net-val" style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : ''}">Rp ${(r.sisa_bersih).toLocaleString('id-ID')}</span>
                                         </div>
                                     </div>
                                     <div class="audit-action-zone">
@@ -1879,8 +1912,8 @@
                     <span style="font-weight:700; color:#f97316;">-Rp ${(d.total_biaya).toLocaleString('id-ID')}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; padding-top:5px; border-top:1px dashed var(--border-color); font-size:13.5px; font-weight:800;">
-                    <span style="color:var(--total-setor-color);">Wajib Setor Bersih:</span>
-                    <span style="color:var(--total-setor-color);">Rp ${(d.sisa_bersih).toLocaleString('id-ID')}</span>
+                    <span style="${d.sisa_bersih < 0 ? 'color:#ef4444;' : 'color:var(--total-setor-color);'}">${d.sisa_bersih < 0 ? '⚠️ Klaim Defisit Kasir:' : 'Wajib Setor Bersih:'}</span>
+                    <span style="${d.sisa_bersih < 0 ? 'color:#ef4444;' : 'color:var(--total-setor-color);'}">Rp ${(d.sisa_bersih).toLocaleString('id-ID')}</span>
                 </div>
             </div>
 
@@ -1957,9 +1990,9 @@
                     </div>
 
                     <div style="display:flex; flex-direction:column; gap:5px;">
-                        <div class="driver-net-row">
-                            <span class="driver-net-label">Wajib Setor Bersih:</span>
-                            <span class="driver-net-value">Rp ${(r.sisa_bersih).toLocaleString('id-ID')}</span>
+                        <div class="driver-net-row" style="${r.sisa_bersih < 0 ? 'background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.3);' : ''}">
+                            <span class="driver-net-label" style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : ''}">${r.sisa_bersih < 0 ? '⚠️ Klaim Defisit:' : 'Wajib Setor Bersih:'}</span>
+                            <span class="driver-net-value" style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : ''}">Rp ${(r.sisa_bersih).toLocaleString('id-ID')}</span>
                         </div>
 
                         <div style="display:flex; justify-content:space-between; align-items:center; font-size:10px; color:var(--text-muted);">
@@ -1999,7 +2032,7 @@
                             </div>
 
                             <!-- Slip Audit Kasir Ringkas di Mobile -->
-                            <div style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.3); padding:7px 8px; border-radius:6px; margin-bottom:5px; font-size:10.5px;">
+                            <div class="audit-rekon-box" style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.3); padding:7px 8px; border-radius:6px; margin-bottom:5px; font-size:10.5px;">
                                 <div style="font-weight:800; font-size:10px; color:var(--total-setor-color); margin-bottom:4px;">💰 REKONSILIASI KASIR:</div>
                                 <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
                                     <span style="color:var(--text-muted);">Cash Ditagih:</span>
@@ -2010,8 +2043,8 @@
                                     <b style="color:#f97316;">- Rp ${(r.total_biaya).toLocaleString('id-ID')}</b>
                                 </div>
                                 <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:4px; font-weight:800; font-size:11.5px;">
-                                    <span style="color:var(--total-setor-color);">Wajib Bersih Laci:</span>
-                                    <span style="color:var(--total-setor-color);">Rp ${(r.sisa_bersih).toLocaleString('id-ID')}</span>
+                                    <span style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : 'color:var(--total-setor-color);'}">${r.sisa_bersih < 0 ? '⚠️ Klaim Defisit:' : 'Wajib Bersih Laci:'}</span>
+                                    <span style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : 'color:var(--total-setor-color);'}">Rp ${(r.sisa_bersih).toLocaleString('id-ID')}</span>
                                 </div>
                             </div>
 
