@@ -31,8 +31,9 @@
     <!-- SweetAlert2 untuk Popup Notifikasi -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- Html2Canvas untuk Export PNG -->
+    <!-- Html2Canvas untuk Export PNG & jsPDF untuk Export PDF A4 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <!-- SheetJS (xlsx) untuk Export Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -549,11 +550,34 @@
                         <option value="1">Zoom 100%</option>
                     </select>
 
-                    <button onclick="downloadRekapA4PNG()" class="flex-1 sm:flex-initial justify-center px-2.5 sm:px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-[11px] sm:text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-image"></i> <span>PNG A4</span>
-                    </button>
-                    <button onclick="printRekapA4()" class="flex-1 sm:flex-initial justify-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] sm:text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-pdf"></i> <span>Cetak / PDF</span>
+                    <!-- Dropdown Simpan A4 (PNG / PDF) -->
+                    <div class="relative flex-1 sm:flex-initial" id="a4SaveDropdownWrapper">
+                        <button type="button" onclick="toggleA4SaveMenu(event)" class="w-full justify-center px-2.5 sm:px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-[11px] sm:text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i>
+                            <span>PNG / PDF A4</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
+                        </button>
+                        <div id="a4SaveDropdownMenu" class="hidden absolute right-0 mt-1.5 w-52 bg-gray-800 border border-gray-600 rounded-xl shadow-2xl py-1.5 z-[130] text-xs text-white overflow-hidden">
+                            <button type="button" onclick="closeA4SaveMenu(); downloadRekapA4PNG();" class="w-full px-3.5 py-2 text-left hover:bg-indigo-600 transition flex items-center gap-2.5">
+                                <i class="fa-solid fa-image text-indigo-300 w-4 text-center text-sm"></i>
+                                <div>
+                                    <div class="font-semibold">Simpan PNG A4</div>
+                                    <div class="text-[10px] text-gray-300">Unduh gambar per lembar (.png)</div>
+                                </div>
+                            </button>
+                            <div class="border-t border-gray-700 my-1"></div>
+                            <button type="button" onclick="closeA4SaveMenu(); downloadRekapA4PDF();" class="w-full px-3.5 py-2 text-left hover:bg-indigo-600 transition flex items-center gap-2.5">
+                                <i class="fa-solid fa-file-pdf text-rose-400 w-4 text-center text-sm"></i>
+                                <div>
+                                    <div class="font-semibold">Simpan PDF A4</div>
+                                    <div class="text-[10px] text-gray-300">Gabung semua lembar (.pdf)</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button onclick="printRekapA4()" class="flex-1 sm:flex-initial justify-center px-3 sm:px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] sm:text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i> <span>Cetak</span>
                     </button>
                     <button onclick="closeRekapA4Modal()" class="hidden lg:flex ml-1 w-8 h-8 rounded-lg bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white transition items-center justify-center">
                         <i class="fa-solid fa-xmark text-base"></i>
@@ -1011,11 +1035,11 @@
                         <td class="p-2.5 text-right">${piutangBadge}</td>
                         <td class="p-2.5 text-center whitespace-nowrap">
                             <div class="inline-flex items-center gap-1.5">
-                                <button onclick="shareAgenPiutangWhatsApp('${safeAgen}')" class="px-2 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-[11px] font-medium transition flex items-center gap-1" title="Kirim Rekap / Tagihan Agen via WhatsApp">
+                                <button type="button" onclick="shareAgenPiutangWhatsApp('${safeAgen}')" class="cursor-pointer px-2.5 py-1 rounded-md bg-green-600 hover:bg-green-700 active:scale-95 text-white text-[11px] font-semibold transition flex items-center gap-1 shadow-sm" title="Kirim Rekap / Tagihan Agen via WhatsApp">
                                     <i class="fa-brands fa-whatsapp"></i> WA
                                 </button>
-                                <button onclick="filterByAgentFromRecap('${safeAgen}')" class="px-2 py-1 rounded bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-700 dark:bg-gray-700 dark:text-gray-200 text-[11px] font-medium transition" title="Lihat Nota Agen Ini">
-                                    Lihat Nota
+                                <button type="button" onclick="filterByAgentFromRecap('${safeAgen}')" class="cursor-pointer px-2.5 py-1 rounded-md bg-blue-50 hover:bg-blue-600 active:scale-95 text-blue-700 hover:text-white border border-blue-200 dark:bg-gray-700 dark:border-gray-600 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white text-[11px] font-semibold transition flex items-center gap-1 shadow-sm" title="Buka Pratinjau Struk Nota Agen Ini">
+                                    <i class="fa-solid fa-receipt text-[10px]"></i> Lihat Nota
                                 </button>
                             </div>
                         </td>
@@ -1045,8 +1069,24 @@
             if (searchInput) {
                 searchInput.value = agenName;
                 renderInvoiceCards();
-                document.getElementById('transactionFlexContainer')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
+
+            // Ambil semua nota milik agen ini (urutkan terbaru lebih dulu)
+            const agenInvoices = Object.values(groupedInvoices)
+                .filter(inv => inv.agen === agenName)
+                .sort((a, b) => {
+                    const dateDiff = new Date(b.tanggal) - new Date(a.tanggal);
+                    if (dateDiff === 0) return String(b.no_nota).localeCompare(String(a.no_nota));
+                    return dateDiff;
+                });
+
+            if (agenInvoices.length === 0) {
+                Swal.fire('Nota Tidak Ditemukan', `Tidak ada nota untuk agen ${agenName}.`, 'info');
+                return;
+            }
+
+            // Langsung buka Modal Preview Struk Thermal (dilengkapi navigasi jika > 1 nota)
+            openModal(agenInvoices[0].invoiceKey, agenName);
         }
 
         function renderTables(terjual, retur) {
@@ -1189,15 +1229,15 @@
             const itemsHtml = inv.items_kirim.map(i => {
                 if (isCompactOneLine) {
                     return `
-                        <div class="flex justify-between items-baseline gap-1 mb-0.5 text-black leading-tight">
-                            <span class="truncate"><b class="font-bold">${i.nama_barang}</b> <span class="text-[7.5px] text-gray-700">(${i.qty}x${formatTitik(i.harga_satuan)})</span></span>
-                            <span class="font-bold shrink-0">${formatTitik(i.subtotal)}</span>
+                        <div class="flex justify-between items-start gap-1.5 mb-0.5 text-black" style="line-height: 1.35; padding-bottom: 1px;">
+                            <span class="break-words"><b class="font-bold">${i.nama_barang}</b> <span class="text-[7.5px] text-gray-700 whitespace-nowrap">(${i.qty}x${formatTitik(i.harga_satuan)})</span></span>
+                            <span class="font-bold shrink-0 whitespace-nowrap">${formatTitik(i.subtotal)}</span>
                         </div>
                     `;
                 }
                 return `
-                    <div class="mb-1">
-                        <div class="font-bold text-black leading-tight">${i.nama_barang}</div>
+                    <div class="mb-1" style="line-height: 1.3;">
+                        <div class="font-bold text-black">${i.nama_barang}</div>
                         <div class="flex justify-between text-gray-900">
                             <span>${i.qty} ${i.satuan} x ${formatTitik(i.harga_satuan)}</span>
                             <span class="font-bold text-black">${formatTitik(i.subtotal)}</span>
@@ -1210,19 +1250,19 @@
             if (inv.items_retur.length > 0) {
                 returHtml = `
                     <div class="mt-1 border-t border-dashed border-gray-400 pt-1">
-                        <div class="font-bold text-red-600 mb-0.5 uppercase text-[8px]">PENGEMBALIAN (RETUR)</div>
+                        <div class="font-bold text-red-600 mb-0.5 uppercase text-[8px]" style="line-height: 1.3;">PENGEMBALIAN (RETUR)</div>
                         ${inv.items_retur.map(i => {
                             if (isCompactOneLine) {
                                 return `
-                                    <div class="flex justify-between items-baseline gap-1 mb-0.5 text-red-600 leading-tight">
-                                        <span class="truncate"><b>${i.nama_barang}</b> <span class="text-[7.5px]">(${Math.abs(i.qty)}x${formatTitik(i.harga_satuan)})</span></span>
-                                        <span class="font-bold shrink-0">-${formatTitik(Math.abs(i.subtotal))}</span>
+                                    <div class="flex justify-between items-start gap-1.5 mb-0.5 text-red-600" style="line-height: 1.35; padding-bottom: 1px;">
+                                        <span class="break-words"><b>${i.nama_barang}</b> <span class="text-[7.5px] whitespace-nowrap">(${Math.abs(i.qty)}x${formatTitik(i.harga_satuan)})</span></span>
+                                        <span class="font-bold shrink-0 whitespace-nowrap">-${formatTitik(Math.abs(i.subtotal))}</span>
                                     </div>
                                 `;
                             }
                             return `
-                                <div class="mb-0.5 text-red-600">
-                                    <div class="font-bold leading-tight">${i.nama_barang}</div>
+                                <div class="mb-0.5 text-red-600" style="line-height: 1.3;">
+                                    <div class="font-bold">${i.nama_barang}</div>
                                     <div class="flex justify-between">
                                         <span>${Math.abs(i.qty)} ${i.satuan} x ${formatTitik(i.harga_satuan)}</span>
                                         <span class="font-bold">-${formatTitik(Math.abs(i.subtotal))}</span>
@@ -1230,7 +1270,7 @@
                                 </div>
                             `;
                         }).join('')}
-                        <div class="flex justify-between font-bold text-red-600 mt-0.5">
+                        <div class="flex justify-between font-bold text-red-600 mt-0.5" style="line-height: 1.3;">
                             <span>Total Retur</span>
                             <span>-Rp ${formatTitik(inv.total_retur)}</span>
                         </div>
@@ -1415,7 +1455,26 @@
             applyA4PreviewZoom();
         }
 
+        function toggleA4SaveMenu(event) {
+            if (event) event.stopPropagation();
+            const menu = document.getElementById('a4SaveDropdownMenu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        function closeA4SaveMenu() {
+            const menu = document.getElementById('a4SaveDropdownMenu');
+            if (menu) menu.classList.add('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('a4SaveDropdownWrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                closeA4SaveMenu();
+            }
+        });
+
         function printRekapA4() {
+            closeA4SaveMenu();
             window.print();
         }
 
@@ -1428,7 +1487,7 @@
             if (wrapper) wrapper.style.zoom = 1;
 
             Swal.fire({
-                title: `Menyiapkan ${sheets.length} Lembar A4...`,
+                title: `Menyiapkan ${sheets.length} Gambar PNG A4...`,
                 text: 'Mohon tunggu sebentar.',
                 allowOutsideClick: false,
                 didOpen: () => { Swal.showLoading(); }
@@ -1436,7 +1495,15 @@
 
             try {
                 for (let i = 0; i < sheets.length; i++) {
-                    const canvas = await html2canvas(sheets[i], { scale: 2.5, backgroundColor: '#ffffff' });
+                    const sheetEl = sheets[i];
+                    const canvas = await html2canvas(sheetEl, {
+                        scale: 2.5,
+                        backgroundColor: '#ffffff',
+                        scrollX: 0,
+                        scrollY: 0,
+                        width: sheetEl.scrollWidth,
+                        height: sheetEl.scrollHeight
+                    });
                     const link = document.createElement('a');
                     link.download = `Rekap_Nota_A4_SBR_Hal_${i + 1}.png`;
                     link.href = canvas.toDataURL('image/png');
@@ -1449,7 +1516,7 @@
                 }
                 Swal.fire({
                     icon: 'success',
-                    title: 'Berhasil Disimpan!',
+                    title: 'PNG Berhasil Disimpan!',
                     text: `${sheets.length} lembar rekap nota A4 telah diunduh sebagai gambar PNG.`,
                     timer: 2000,
                     showConfirmButton: false
@@ -1462,9 +1529,138 @@
             }
         }
 
-        function openModal(invoiceKey) {
+        async function downloadRekapA4PDF() {
+            const wrapper = document.getElementById('a4PrintWrapper');
+            const sheets = document.querySelectorAll('#a4PrintWrapper .a4-sheet');
+            if (!sheets.length) return;
+
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                Swal.fire('Library PDF Belum Siap', 'Pastikan koneksi internet aktif untuk memuat pembuat PDF.', 'warning');
+                return;
+            }
+
+            const prevZoom = wrapper ? wrapper.style.zoom : '1';
+            if (wrapper) wrapper.style.zoom = 1;
+
+            const layoutMode = document.getElementById('a4LayoutMode')?.value || 'landscape-5x1';
+            const isPortrait = layoutMode === 'portrait-4x2';
+            const orientation = isPortrait ? 'portrait' : 'landscape';
+            const pageWidthMm = isPortrait ? 210 : 297;
+            const pageHeightMm = isPortrait ? 297 : 210;
+
+            Swal.fire({
+                title: `Menyusun ${sheets.length} Halaman PDF A4...`,
+                text: 'Sedang menggabungkan seluruh lembar A4 ke dalam 1 dokumen PDF.',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: orientation,
+                    unit: 'mm',
+                    format: 'a4',
+                    compress: true
+                });
+
+                for (let i = 0; i < sheets.length; i++) {
+                    const sheetEl = sheets[i];
+                    const canvas = await html2canvas(sheetEl, {
+                        scale: 2.5,
+                        backgroundColor: '#ffffff',
+                        scrollX: 0,
+                        scrollY: 0,
+                        width: sheetEl.scrollWidth,
+                        height: sheetEl.scrollHeight
+                    });
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                    if (i > 0) {
+                        pdf.addPage('a4', orientation);
+                    }
+
+                    // Hitung skala proporsional (contain) agar jika lembar 2-baris lebih tinggi dari 210mm tidak pernah terpotong di bagian bawah
+                    const imgRatio = canvas.width / canvas.height;
+                    let renderW = pageWidthMm;
+                    let renderH = pageWidthMm / imgRatio;
+                    if (renderH > pageHeightMm) {
+                        renderH = pageHeightMm;
+                        renderW = pageHeightMm * imgRatio;
+                    }
+                    const offsetX = (pageWidthMm - renderW) / 2;
+                    const offsetY = 0;
+
+                    pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderW, renderH, undefined, 'FAST');
+                }
+
+                const startDate = document.getElementById('filterStartDate')?.value || '';
+                const endDate = document.getElementById('filterEndDate')?.value || '';
+                const dateSuffix = (startDate && endDate) ? `${startDate}_sd_${endDate}` : new Date().toISOString().slice(0, 10);
+
+                pdf.save(`Rekap_Nota_A4_SBR_${dateSuffix}.pdf`);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'PDF Berhasil Disimpan!',
+                    text: `${sheets.length} halaman rekap nota A4 telah digabung dan diunduh sebagai 1 file PDF.`,
+                    timer: 2200,
+                    showConfirmButton: false
+                });
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Error', 'Gagal membuat dokumen PDF untuk lembar A4.', 'error');
+            } finally {
+                if (wrapper) wrapper.style.zoom = prevZoom;
+            }
+        }
+
+        function openModal(invoiceKey, agenScopeName = null) {
             const inv = groupedInvoices[invoiceKey];
             if(!inv) return;
+
+            const activeAgen = agenScopeName || inv.agen;
+            const agenInvoices = Object.values(groupedInvoices)
+                .filter(item => item.agen === activeAgen)
+                .sort((a, b) => {
+                    const dateDiff = new Date(b.tanggal) - new Date(a.tanggal);
+                    if (dateDiff === 0) return String(b.no_nota).localeCompare(String(a.no_nota));
+                    return dateDiff;
+                });
+
+            let agenNavHtml = '';
+            if (agenInvoices.length > 1) {
+                const currentIdx = agenInvoices.findIndex(item => item.invoiceKey === invoiceKey);
+                const prevKey = currentIdx > 0 ? agenInvoices[currentIdx - 1].invoiceKey : null;
+                const nextKey = currentIdx < agenInvoices.length - 1 ? agenInvoices[currentIdx + 1].invoiceKey : null;
+                const safeAgen = activeAgen.replace(/'/g, "\\'");
+
+                const optionsHtml = agenInvoices.map((item, idx) => {
+                    const tagihan = item.total_kirim - item.total_retur;
+                    const statusTxt = item.is_lunas ? 'LUNAS' : `SISA ${formatRupiah(item.sisa_saldo)}`;
+                    return `<option value="${item.invoiceKey}" ${item.invoiceKey === invoiceKey ? 'selected' : ''}>#${idx + 1} • ${item.no_nota} (${formatTanggalStruk(item.tanggal)}) - ${formatRupiah(tagihan)} [${statusTxt}]</option>`;
+                }).join('');
+
+                agenNavHtml = `
+                    <div class="mb-3 p-2.5 bg-white rounded-lg border border-blue-200 shadow-sm text-gray-800">
+                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                            <span class="text-[11px] font-bold text-blue-700 uppercase tracking-wide truncate">
+                                <i class="fa-solid fa-layer-group mr-1"></i>Daftar Nota ${activeAgen} (${currentIdx + 1} / ${agenInvoices.length})
+                            </span>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button type="button" ${prevKey ? `onclick="openModal('${prevKey}', '${safeAgen}')"` : 'disabled'} class="px-2 py-0.5 rounded text-xs font-bold border ${prevKey ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-600 hover:text-white cursor-pointer' : 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'} transition">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <button type="button" ${nextKey ? `onclick="openModal('${nextKey}', '${safeAgen}')"` : 'disabled'} class="px-2 py-0.5 rounded text-xs font-bold border ${nextKey ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-600 hover:text-white cursor-pointer' : 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'} transition">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <select onchange="openModal(this.value, '${safeAgen}')" class="w-full text-xs bg-gray-50 border border-gray-300 text-gray-800 rounded-md px-2 py-1.5 font-medium outline-none focus:ring-2 focus:ring-blue-500">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                `;
+            }
 
             let itemsHtml = inv.items_kirim.map(i => `
                 <div class="mb-2">
@@ -1522,6 +1718,7 @@
             }
 
             document.getElementById('modalStrukContent').innerHTML = `
+                ${agenNavHtml}
                 <div id="strukPrintArea" class="bg-white p-4 sm:p-5 rounded border border-gray-300 shadow-inner" style="font-family: 'Courier New', Courier, monospace; letter-spacing: -0.3px; color: black !important;">
                     
                     <div class="text-center mb-4 text-black">
