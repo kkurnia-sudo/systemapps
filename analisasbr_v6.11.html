@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Analisa SBR">
+    <title>Analisa Penjualan SBR Putra Food</title>
+    <link rel="manifest" id="pwaManifestLink" href="manifest.json">
+    <link rel="icon" id="appFavicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%232563eb'/%3E%3Cpath fill='%23ffffff' d='M256 96c-88.4 0-160 71.6-160 160s71.6 160 160 160 160-71.6 160-160H256V96zm32-32v160h160c0-88.4-71.6-160-160-160z'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" id="appleTouchIcon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%232563eb'/%3E%3Cpath fill='%23ffffff' d='M256 96c-88.4 0-160 71.6-160 160s71.6 160 160 160 160-71.6 160-160H256V96zm32-32v160h160c0-88.4-71.6-160-160-160z'/%3E%3C/svg%3E">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', }
+    </script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- SweetAlert2 untuk Popup Notifikasi -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Html2Canvas untuk Export PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- SheetJS (xlsx) untuk Export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        .flex-table-container {
+            max-height: 450px; 
+            overflow-y: auto;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Gaya Kertas A4 untuk Pratinjau Rekap Nota (58mm Thermal Style) */
+        .a4-sheet {
+            background: #ffffff;
+            color: #000000 !important;
+            margin: 0 auto 24px auto;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+            box-sizing: border-box;
+            position: relative;
+        }
+        .a4-landscape {
+            width: 297mm;
+            min-height: 210mm;
+            padding: 5mm 6mm;
+        }
+        .a4-portrait {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 5mm 6mm;
+        }
+        .thermal-mini-card {
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: -0.3px;
+            color: #000000 !important;
+            background: #ffffff;
+            border: 1px dashed #9ca3af;
+            border-radius: 4px;
+            padding: 7px 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            font-size: 9.5px;
+            line-height: 1.22;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            html, body {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+            header, main, #strukModal, .no-print {
+                display: none !important;
+            }
+            #rekapA4Modal {
+                position: static !important;
+                display: block !important;
+                height: auto !important;
+                max-height: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+            }
+            #rekapA4ModalInner {
+                display: block !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                max-width: none !important;
+                width: 100% !important;
+                background: transparent !important;
+            }
+            #rekapA4ScrollArea, #a4PrintWrapper {
+                display: block !important;
+                flex: none !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+                zoom: 1 !important;
+                transform: none !important;
+            }
+            .a4-sheet {
+                display: block !important;
+                margin: 0 !important;
+                min-height: 0 !important;
+                height: auto !important;
+                box-shadow: none !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            .a4-sheet:last-child {
+                page-break-after: auto !important;
+                break-after: auto !important;
+            }
+        }
+    </style>
+    <style id="dynamicPrintStyle">
+        @media print {
+            @page { size: A4 landscape; margin: 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen">
+
+    <!-- HEADER (RWD + PWA Install Ready) -->
+    <header class="bg-white/95 dark:bg-gray-800/95 backdrop-blur border-b border-gray-100 dark:border-gray-700/80 sticky top-0 z-50 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex justify-between items-center gap-2">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                    <i class="fa-solid fa-chart-pie text-base sm:text-lg"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-sm sm:text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-300 truncate leading-tight">
+                        Analisa Penjualan SBR Putra Food
+                    </h1>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 hidden sm:block truncate">Dashboard Rekapitulasi Transaksi & Monitoring Piutang Agen</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                <!-- Tombol Install PWA -->
+                <button id="btnInstallPWA" onclick="installPWAApp()" title="Install Aplikasi ke Perangkat (HP / PC)" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-sm shadow-blue-500/20 transition text-[11px] sm:text-xs font-semibold">
+                    <i class="fa-solid fa-download text-[10px] sm:text-[11px]"></i>
+                    <span id="installPWAText">Install App</span>
+                </button>
+
+                <!-- Tombol Status Koneksi & Sync -->
+                <button id="connectionStatus" onclick="fetchData()" title="Klik untuk muat ulang data" class="cursor-pointer flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/70 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 transition text-xs font-medium text-gray-700 dark:text-gray-200">
+                    <span class="relative flex items-center justify-center">
+                        <i id="connectionIcon" class="fa-solid fa-database text-blue-500 text-xs transition-colors"></i>
+                        <span id="connectionDot" class="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 border border-white dark:border-gray-800 rounded-full transition-colors"></span>
+                    </span>
+                    <span id="connectionText" class="hidden md:inline">Sinkron</span>
+                    <i class="fa-solid fa-arrows-rotate text-[10px] text-gray-400"></i>
+                </button>
+
+                <!-- Tombol Tema Gelap/Terang -->
+                <button id="themeToggle" title="Ganti Mode Gelap / Terang" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/70 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 transition">
+                    <i id="themeIcon" class="fa-solid fa-moon text-xs sm:text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-5">
+        
+        <!-- Filter Section (RWD Optimal untuk HP, Tablet & Desktop) -->
+        <section class="bg-white dark:bg-gray-800 p-3.5 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/80 space-y-3.5 sm:space-y-4">
+            <!-- Baris Atas: Filter Cepat Tanggal (Swipeable di HP) & Reset -->
+            <div class="flex items-center justify-between gap-2 pb-2.5 sm:pb-3 border-b border-gray-100 dark:border-gray-700/70">
+                <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 shrink-0 hidden sm:flex items-center gap-1.5 mr-1">
+                        <i class="fa-regular fa-calendar-check text-blue-500"></i> Periode:
+                    </span>
+                    <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-900/90 border border-gray-200/60 dark:border-gray-700/60 overflow-x-auto no-scrollbar max-w-full">
+                        <button type="button" onclick="setQuickDateFilter('today')" id="btnQuick_today" class="quick-date-btn shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Hari Ini</button>
+                        <button type="button" onclick="setQuickDateFilter('yesterday')" id="btnQuick_yesterday" class="quick-date-btn shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Kemarin</button>
+                        <button type="button" onclick="setQuickDateFilter('week')" id="btnQuick_week" class="quick-date-btn shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Minggu Ini</button>
+                        <button type="button" onclick="setQuickDateFilter('month')" id="btnQuick_month" class="quick-date-btn shrink-0 px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-sm transition">Bulan Ini</button>
+                        <button type="button" onclick="setQuickDateFilter('last-month')" id="btnQuick_last-month" class="quick-date-btn shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Bulan Lalu</button>
+                        <button type="button" onclick="setQuickDateFilter('all')" id="btnQuick_all" class="quick-date-btn shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Semua</button>
+                    </div>
+                </div>
+                <button type="button" onclick="resetAllFilters()" class="shrink-0 px-2.5 py-1 rounded-lg text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 font-medium transition flex items-center gap-1">
+                    <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">Reset Filter</span>
+                </button>
+            </div>
+
+            <!-- Baris Bawah: Input Parameter Filter (2 Kolom di HP, 3 di Tablet, 6 di Desktop) -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3.5">
+                <div>
+                    <label class="block text-[10px] sm:text-[11px] font-semibold mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jenis Transaksi</label>
+                    <select id="filterJenis" onchange="fetchData()" class="w-full h-9 sm:h-10 text-xs sm:text-sm bg-gray-50 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-700 rounded-xl px-2.5 sm:px-3 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <option value="all">Semua Jenis</option>
+                        <option value="reguler">Regular</option>
+                        <option value="dp">Khusus</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] sm:text-[11px] font-semibold mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wider">Agen</label>
+                    <select id="filterAgen" onchange="fetchData()" class="w-full h-9 sm:h-10 text-xs sm:text-sm bg-gray-50 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-700 rounded-xl px-2.5 sm:px-3 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <option value="all">Semua Agen</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] sm:text-[11px] font-semibold mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal Mulai</label>
+                    <input type="date" id="filterStartDate" class="w-full h-9 sm:h-10 text-xs sm:text-sm bg-gray-50 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-700 rounded-xl px-2.5 sm:px-3 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] sm:text-[11px] font-semibold mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal Akhir</label>
+                    <input type="date" id="filterEndDate" class="w-full h-9 sm:h-10 text-xs sm:text-sm bg-gray-50 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-700 rounded-xl px-2.5 sm:px-3 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] sm:text-[11px] font-semibold mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kategori Barang</label>
+                    <select id="filterKategori" onchange="fetchData()" class="w-full h-9 sm:h-10 text-xs sm:text-sm bg-gray-50 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-700 rounded-xl px-2.5 sm:px-3 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        <option value="all">Semua Kategori</option>
+                        <option value="aromanis">Aromanis</option>
+                        <option value="barang-lainnya">Barang Lainnya</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="fetchData()" class="w-full h-9 sm:h-10 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white text-xs sm:text-sm font-semibold rounded-xl px-3 sm:px-4 transition shadow-md shadow-blue-600/20 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-filter text-xs"></i> Terapkan
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary Cards (RWD: 2 Kolom di HP, 3 di Tablet, 5 di Desktop) -->
+        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+            <!-- Card 1: Total Penjualan -->
+            <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/80 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between gap-1.5 mb-2">
+                    <span class="text-[11px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 truncate">Total Penjualan</span>
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs sm:text-sm shrink-0">
+                        <i class="fa-solid fa-money-bill-wave"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm sm:text-lg xl:text-xl font-extrabold text-gray-900 dark:text-white tracking-tight truncate" id="summaryTotal">Rp 0</p>
+                    <p class="text-[10px] sm:text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate" id="summaryNetText">Tagihan bersih: Rp 0</p>
+                </div>
+            </div>
+
+            <!-- Card 2: Total Barang (Qty) -->
+            <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/80 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between gap-1.5 mb-2">
+                    <span class="text-[11px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 truncate">Total Barang</span>
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs sm:text-sm shrink-0">
+                        <i class="fa-solid fa-box"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm sm:text-lg xl:text-xl font-extrabold text-gray-900 dark:text-white tracking-tight truncate" id="summaryQty">0</p>
+                    <p class="text-[10px] sm:text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate" id="summaryQtySub">0 jenis barang terjual</p>
+                </div>
+            </div>
+
+            <!-- Card 3: Transaksi (Nota) -->
+            <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/80 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between gap-1.5 mb-2">
+                    <span class="text-[11px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 truncate">Transaksi (Nota)</span>
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xs sm:text-sm shrink-0">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm sm:text-lg xl:text-xl font-extrabold text-gray-900 dark:text-white tracking-tight truncate" id="summaryNota">0</p>
+                    <p class="text-[10px] sm:text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate" id="summaryNotaSub">0 Lunas • 0 Belum Lunas</p>
+                </div>
+            </div>
+
+            <!-- Card 4: Total Retur -->
+            <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/80 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between gap-1.5 mb-2">
+                    <div class="flex items-center gap-1 min-w-0">
+                        <span class="text-[11px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 truncate">Total Retur</span>
+                        <span id="summaryReturPercent" class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hidden shrink-0">0%</span>
+                    </div>
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center text-xs sm:text-sm shrink-0">
+                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm sm:text-lg xl:text-xl font-extrabold text-red-500 tracking-tight truncate" id="summaryRetur">Rp 0</p>
+                    <p class="text-[10px] sm:text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate" id="summaryReturSub">0 item pengembalian</p>
+                </div>
+            </div>
+
+            <!-- Card 5: Piutang (Sisa Nota) - Full width 2 kolom di layar HP -->
+            <div onclick="document.getElementById('filterStatusNota').value='belum-lunas'; renderInvoiceCards(); document.getElementById('transactionFlexContainer').scrollIntoView({behavior:'smooth'});" title="Klik untuk melihat daftar nota yang belum lunas" class="col-span-2 sm:col-span-1 cursor-pointer bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/80 hover:border-amber-400 dark:hover:border-amber-500/60 transition flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between gap-1.5 mb-2">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="text-[11px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 truncate">Piutang (Sisa)</span>
+                        <span id="summaryPiutangCount" class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 hidden shrink-0">0 Nota</span>
+                    </div>
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs sm:text-sm shrink-0">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-base sm:text-lg xl:text-xl font-extrabold text-amber-600 dark:text-amber-400 tracking-tight truncate" id="summaryPiutang">Rp 0</p>
+                    <p class="text-[10px] sm:text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate" id="summaryPiutangSub">Semua nota lunas</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Toolbar Info Periode & Aksi Export (RWD Grid 3 Kolom di HP) -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 bg-white dark:bg-gray-800 px-3.5 sm:px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/80">
+            <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 min-w-0">
+                <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                <span class="font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 shrink-0">Ringkasan</span>
+                <span class="text-gray-300 dark:text-gray-600">|</span>
+                <span id="activePeriodBadge" class="font-medium text-blue-600 dark:text-blue-400 truncate">Semua Periode</span>
+            </div>
+            <div class="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
+                <button onclick="openRekapA4Modal()" class="justify-center px-2.5 sm:px-3.5 py-2 bg-amber-600 hover:bg-amber-700 active:scale-[0.99] text-white text-[11px] sm:text-xs md:text-sm font-semibold rounded-xl shadow-sm shadow-amber-600/20 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> <span class="truncate">Rekap A4</span>
+                </button>
+                <button onclick="exportToPNG()" class="justify-center px-2.5 sm:px-3.5 py-2 bg-indigo-500 hover:bg-indigo-600 active:scale-[0.99] text-white text-[11px] sm:text-xs md:text-sm font-semibold rounded-xl shadow-sm shadow-indigo-500/20 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-image"></i> <span class="truncate">Simpan PNG</span>
+                </button>
+                <button onclick="exportToExcel()" class="justify-center px-2.5 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-[11px] sm:text-xs md:text-sm font-semibold rounded-xl shadow-sm shadow-emerald-600/20 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-excel"></i> <span class="truncate">Simpan Excel</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabel Rekap -->
+        <div id="rekapContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-900">
+            <!-- Tabel Terjual -->
+            <div class="bg-white dark:bg-gray-800 p-3.5 sm:p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-xs sm:text-sm font-semibold mb-3 text-blue-600 dark:text-blue-400 uppercase tracking-wide"><i class="fa-solid fa-boxes-stacked mr-2"></i>Rekap Barang Terjual</h3>
+                <div class="overflow-x-auto -mx-1 px-1">
+                    <table class="w-full text-left border-collapse min-w-[340px]">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-[11px] sm:text-xs uppercase border-b border-gray-100 dark:border-gray-700">
+                                <th class="p-2 font-medium">Nama Barang</th>
+                                <th class="p-2 font-medium text-center">Kategori</th>
+                                <th class="p-2 font-medium text-right">Qty</th>
+                                <th class="p-2 font-medium text-right">Nominal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableTerjualBody" class="text-xs sm:text-sm divide-y divide-gray-100 dark:divide-gray-700">
+                        </tbody>
+                        <tfoot id="tableTerjualFoot">
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabel Retur -->
+            <div class="bg-white dark:bg-gray-800 p-3.5 sm:p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-xs sm:text-sm font-semibold mb-3 text-red-500 uppercase tracking-wide"><i class="fa-solid fa-arrow-rotate-left mr-2"></i>Rekap Barang Retur</h3>
+                <div class="overflow-x-auto -mx-1 px-1">
+                    <table class="w-full text-left border-collapse min-w-[340px]">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-[11px] sm:text-xs uppercase border-b border-gray-100 dark:border-gray-700">
+                                <th class="p-2 font-medium">Nama Barang</th>
+                                <th class="p-2 font-medium text-center">Kategori</th>
+                                <th class="p-2 font-medium text-right">Qty</th>
+                                <th class="p-2 font-medium text-right">Nominal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableReturBody" class="text-xs sm:text-sm divide-y divide-gray-100 dark:divide-gray-700">
+                        </tbody>
+                        <tfoot id="tableReturFoot">
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabel Rekap Per Agen & Ranking Piutang -->
+        <section class="bg-white dark:bg-gray-800 p-3.5 sm:p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xs sm:text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+                        <i class="fa-solid fa-trophy mr-1.5 sm:mr-2"></i>Rekap Per Agen & Status Piutang
+                    </h3>
+                    <span id="agenCountBadge" class="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">0 Agen</span>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <label class="text-xs text-gray-500 dark:text-gray-400 shrink-0">Urutkan:</label>
+                    <select id="sortAgenMode" onchange="renderAgenRecapTable()" class="flex-1 sm:flex-initial text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-amber-500">
+                        <option value="tagihan">Pembelian / Tagihan Tertinggi</option>
+                        <option value="piutang">Sisa Piutang Terbesar</option>
+                        <option value="nota">Jumlah Nota Terbanyak</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto max-h-80 -mx-1 px-1">
+                <table class="w-full text-left border-collapse min-w-[600px]">
+                    <thead class="sticky top-0 bg-gray-50 dark:bg-gray-900 z-10">
+                        <tr class="text-gray-500 dark:text-gray-400 text-[11px] sm:text-xs uppercase border-b border-gray-100 dark:border-gray-700">
+                            <th class="p-2.5 font-medium w-10 text-center">#</th>
+                            <th class="p-2.5 font-medium">Nama Agen</th>
+                            <th class="p-2.5 font-medium text-center">Jml Nota</th>
+                            <th class="p-2.5 font-medium text-right">Total Tagihan</th>
+                            <th class="p-2.5 font-medium text-right">Sudah Dibayar</th>
+                            <th class="p-2.5 font-medium text-right">Sisa Piutang</th>
+                            <th class="p-2.5 font-medium text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableAgenBody" class="text-xs sm:text-sm divide-y divide-gray-100 dark:divide-gray-700">
+                    </tbody>
+                    <tfoot id="tableAgenFoot">
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+
+        <!-- Grafik -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div class="bg-white dark:bg-gray-800 p-3.5 sm:p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-xs sm:text-sm font-semibold mb-3 sm:mb-4 text-gray-700 dark:text-gray-300 uppercase tracking-wide"><i class="fa-solid fa-chart-area mr-2 text-blue-500"></i>Tren Penjualan</h3>
+                <div class="relative h-48 sm:h-56 w-full">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-3.5 sm:p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 class="text-xs sm:text-sm font-semibold mb-3 sm:mb-4 text-center text-gray-700 dark:text-gray-300 uppercase tracking-wide">Proporsi Kategori</h3>
+                <div class="relative h-48 sm:h-56 w-full flex justify-center">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detail Transaksi Flexbox -->
+        <section class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
+            <div class="p-3.5 sm:p-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50 dark:bg-gray-800">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"><i class="fa-solid fa-list mr-2 text-blue-500"></i>Daftar Transaksi Keseluruhan</h3>
+                    <span id="filteredInvoiceBadge" class="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">0 Nota</span>
+                </div>
+                <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <div class="relative col-span-2 sm:w-52">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
+                        <input type="text" id="searchInvoiceInput" oninput="renderInvoiceCards()" placeholder="Cari Nota / Agen / Driver..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <select id="filterStatusNota" onchange="renderInvoiceCards()" class="text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="all">Semua Status</option>
+                        <option value="belum-lunas">Belum Lunas (Sisa)</option>
+                        <option value="lunas">Lunas</option>
+                    </select>
+                    <button onclick="openRekapA4Modal()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-table-cells-large"></i> Cetak Rekap A4
+                    </button>
+                </div>
+            </div>
+            <div class="flex-table-container p-2.5 sm:p-3 flex flex-col gap-2" id="transactionFlexContainer">
+                <!-- Cards -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Pratinjau Struk -->
+    <div id="strukModal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-2.5 sm:p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-[#f0f0f0] w-full max-w-md rounded-xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center bg-gray-800 text-white px-4 py-3">
+                <h3 class="font-bold tracking-wider text-xs sm:text-sm">PREVIEW STRUK THERMAL</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-3 sm:p-6 overflow-y-auto max-h-[82vh] flex flex-col" id="modalStrukContent">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pratinjau Rekap A4 (Struk 58mm per Lembar A4) -->
+    <div id="rekapA4Modal" class="fixed inset-0 bg-black/75 z-[110] hidden flex items-center justify-center p-1.5 sm:p-4 backdrop-blur-sm transition-opacity">
+        <div id="rekapA4ModalInner" class="bg-gray-200 dark:bg-gray-900 w-full max-w-[1250px] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+            <!-- Toolbar Modal (No Print) -->
+            <div class="no-print flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-2.5 bg-gray-800 text-white px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-700">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <i class="fa-solid fa-print text-amber-400 text-base sm:text-lg shrink-0"></i>
+                        <div class="min-w-0">
+                            <h3 class="font-bold tracking-wider text-xs sm:text-sm uppercase truncate">PRATINJAU REKAP NOTA A4 (58MM)</h3>
+                            <p id="rekapA4InfoText" class="text-[10px] sm:text-[11px] text-gray-300 truncate">Memuat daftar nota...</p>
+                        </div>
+                    </div>
+                    <button onclick="closeRekapA4Modal()" class="lg:hidden w-8 h-8 shrink-0 rounded-lg bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white transition flex items-center justify-center">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <!-- Filter Status di dalam Modal A4 -->
+                    <select id="a4FilterStatus" onchange="renderRekapA4Sheets()" class="flex-1 sm:flex-initial text-[11px] sm:text-xs bg-gray-700 text-white border border-gray-600 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-amber-400">
+                        <option value="all">Semua Nota</option>
+                        <option value="belum-lunas">Belum Lunas (Sisa)</option>
+                        <option value="lunas">Hanya Lunas</option>
+                    </select>
+
+                    <!-- Pilihan Layout Kertas A4 -->
+                    <select id="a4LayoutMode" onchange="renderRekapA4Sheets()" class="flex-1 sm:flex-initial max-w-full sm:max-w-[260px] text-[11px] sm:text-xs bg-gray-700 text-white border border-gray-600 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-amber-400">
+                        <option value="landscape-5x1">⭐ 5 Nota / Hal (1 Baris × 5 Kolom — Persis 58mm)</option>
+                        <option value="landscape-4x1">4 Nota / Hal (1 Baris × 4 Kolom — Lebar Lega)</option>
+                        <option value="landscape-6x1">6 Nota / Hal (1 Baris × 6 Kolom — Hemat Kertas)</option>
+                        <option value="landscape-4x2">8 Nota / Hal Landscape (2 Baris Ringkas)</option>
+                        <option value="portrait-4x2">8 Nota / Hal Portrait (2 Baris Berdiri)</option>
+                    </select>
+
+                    <!-- Skala Pratinjau Layar (RWD Mobile Zoom) -->
+                    <select id="a4ZoomMode" onchange="applyA4PreviewZoom()" title="Skala Tampilan di Layar" class="text-[11px] sm:text-xs bg-gray-700 text-amber-300 border border-gray-600 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-amber-400">
+                        <option value="auto">🔍 Fit Layar</option>
+                        <option value="0.5">Zoom 50%</option>
+                        <option value="0.75">Zoom 75%</option>
+                        <option value="1">Zoom 100%</option>
+                    </select>
+
+                    <button onclick="downloadRekapA4PNG()" class="flex-1 sm:flex-initial justify-center px-2.5 sm:px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-[11px] sm:text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-image"></i> <span>PNG A4</span>
+                    </button>
+                    <button onclick="printRekapA4()" class="flex-1 sm:flex-initial justify-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] sm:text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-pdf"></i> <span>Cetak / PDF</span>
+                    </button>
+                    <button onclick="closeRekapA4Modal()" class="hidden lg:flex ml-1 w-8 h-8 rounded-lg bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white transition items-center justify-center">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Area Kanvas Kertas A4 -->
+            <div id="rekapA4ScrollArea" class="p-2 sm:p-6 overflow-auto flex-1 bg-gray-300/80 dark:bg-gray-950">
+                <div id="a4PrintWrapper">
+                    <!-- Lembar-lembar A4 di-render di sini -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://yxcxvkairftqzmptkorr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let dataMapTerjual = [];
+        let dataMapRetur = [];
+        let groupedInvoices = {}; 
+
+        // Toggles & Theme
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            themeIcon.classList.replace('fa-moon', 'fa-sun');
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+            }
+            updateChartColors();
+        });
+
+        const formatRupiah = (angka) => {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+        };
+        const formatTitik = (angka) => {
+            return new Intl.NumberFormat('id-ID').format(angka || 0);
+        };
+
+        const formatTanggalStruk = (dateString) => {
+            if (!dateString || dateString === 'N/A') return '';
+            const d = new Date(dateString);
+            if (isNaN(d)) return dateString;
+            const hariList = ['Mgg', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+            const hari = hariList[d.getDay()];
+            const tgl = String(d.getDate()).padStart(2, '0');
+            const bln = String(d.getMonth() + 1).padStart(2, '0');
+            const thn = String(d.getFullYear()).slice(-2);
+            return `${hari} ${tgl}/${bln}/${thn}`;
+        };
+
+        async function fetchAgentList() {
+            try {
+                const [resReguler, resDP] = await Promise.all([
+                    supabaseClient.from('transaksi').select('nama_agen'),
+                    supabaseClient.from('transaksi_dp').select('nama_agen')
+                ]);
+                
+                let allAgents = [];
+                if (resReguler.data) allAgents = allAgents.concat(resReguler.data.map(i => i.nama_agen));
+                if (resDP.data) allAgents = allAgents.concat(resDP.data.map(i => i.nama_agen));
+
+                const uniqueAgen = [...new Set(allAgents)].filter(a => a && a.trim() !== '');
+                
+                const agenSelect = document.getElementById('filterAgen');
+                const currentVal = agenSelect.value || 'all';
+                agenSelect.innerHTML = `<option value="all">Semua Agen</option>` +
+                    uniqueAgen.sort().map(agen => `<option value="${agen}">${agen}</option>`).join('');
+                agenSelect.value = currentVal;
+            } catch (err) {
+                console.error("Gagal mengambil agen:", err);
+            }
+        }
+
+        async function fetchData() {
+            const connIcon = document.getElementById('connectionIcon');
+            const connDot = document.getElementById('connectionDot');
+            const connText = document.getElementById('connectionText');
+            connIcon.classList.remove('text-blue-500', 'text-red-500');
+            connIcon.classList.add('text-yellow-500', 'fa-beat-fade');
+            connDot.className = 'absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-yellow-400 border border-white dark:border-gray-800 rounded-full transition-colors';
+            if (connText) connText.innerText = 'Memuat...';
+            
+            const jenisFilter = document.getElementById('filterJenis').value;
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+            const agen = document.getElementById('filterAgen').value;
+            const kategori = document.getElementById('filterKategori').value;
+
+            const periodBadge = document.getElementById('activePeriodBadge');
+            if (periodBadge) {
+                if (startDate && endDate) periodBadge.innerText = `${startDate} s/d ${endDate}`;
+                else if (startDate) periodBadge.innerText = `Mulai ${startDate}`;
+                else if (endDate) periodBadge.innerText = `Sampai ${endDate}`;
+                else periodBadge.innerText = 'Semua Tanggal';
+            }
+
+            try {
+                let qHeaderReguler = supabaseClient.from('transaksi').select('*');
+                let qHeaderDP = supabaseClient.from('transaksi_dp').select('*');
+
+                if (startDate) { qHeaderReguler = qHeaderReguler.gte('tanggal', startDate); qHeaderDP = qHeaderDP.gte('tanggal', startDate); }
+                if (endDate) { qHeaderReguler = qHeaderReguler.lte('tanggal', endDate); qHeaderDP = qHeaderDP.lte('tanggal', endDate); }
+                if (agen !== 'all') { qHeaderReguler = qHeaderReguler.eq('nama_agen', agen); qHeaderDP = qHeaderDP.eq('nama_agen', agen); }
+
+                const promises = [];
+                if (jenisFilter === 'all' || jenisFilter === 'reguler') promises.push(qHeaderReguler);
+                else promises.push(Promise.resolve({ data: null }));
+                
+                if (jenisFilter === 'all' || jenisFilter === 'dp') promises.push(qHeaderDP);
+                else promises.push(Promise.resolve({ data: null }));
+
+                const [resHeadReguler, resHeadDP] = await Promise.all(promises);
+                
+                let sumTotalRetur = 0;
+                const headerDict = {};
+                const listNotaReguler = [];
+                const listNotaDP = [];
+
+                if (resHeadReguler.data) {
+                    resHeadReguler.data.forEach(h => {
+                        h.jenis_trx = 'Regular'; 
+                        headerDict[`Reguler_${h.no_nota}`] = h;
+                        sumTotalRetur += Number(h.total_retur || 0); 
+                        listNotaReguler.push(h.no_nota);
+                    });
+                }
+                if (resHeadDP.data) {
+                    resHeadDP.data.forEach(h => {
+                        h.jenis_trx = 'Khusus'; 
+                        headerDict[`DP_${h.no_nota}`] = h;
+                        sumTotalRetur += Number(h.total_retur || 0); 
+                        listNotaDP.push(h.no_nota);
+                    });
+                }
+
+                if (listNotaReguler.length === 0 && listNotaDP.length === 0) {
+                    processData([], kategori, 0);
+                    connIcon.classList.remove('text-yellow-500', 'fa-beat-fade');
+                    connIcon.classList.add('text-blue-500');
+                    connDot.className = 'absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 border border-white dark:border-gray-800 rounded-full transition-colors';
+                    if (connText) connText.innerText = 'Sinkron';
+                    return;
+                }
+
+                let combinedDetails = [];
+                if (listNotaReguler.length > 0) {
+                    const { data: dReguler } = await supabaseClient.from('transaksi_detail').select('*').in('no_nota', listNotaReguler);
+                    if(dReguler) combinedDetails = combinedDetails.concat(dReguler.map(d => ({ ...d, source_table: 'Reguler' })));
+                }
+                if (listNotaDP.length > 0) {
+                    const { data: dDP } = await supabaseClient.from('transaksi_detaildp').select('*').in('no_nota', listNotaDP);
+                    if(dDP) combinedDetails = combinedDetails.concat(dDP.map(d => ({ ...d, source_table: 'DP' })));
+                }
+
+                const mergedData = combinedDetails.map(d => ({
+                    ...d, transaksi: headerDict[`${d.source_table}_${d.no_nota}`] || {}
+                }));
+
+                processData(mergedData, kategori, sumTotalRetur);
+                
+                connIcon.classList.remove('fa-beat-fade', 'text-yellow-500');
+                connIcon.classList.add('text-blue-500');
+                connDot.className = 'absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 border border-white dark:border-gray-800 rounded-full transition-colors';
+                if (connText) connText.innerText = 'Sinkron';
+
+            } catch (err) {
+                console.error("Gagal Loading Data:", err);
+                connIcon.classList.remove('fa-beat-fade', 'text-yellow-500');
+                connIcon.classList.add('text-red-500');
+                connDot.className = 'absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-red-500 border border-white dark:border-gray-800 rounded-full transition-colors';
+                if (connText) connText.innerText = 'Gagal';
+                Swal.fire('Gagal Memuat Data', 'Periksa koneksi internet Anda lalu coba lagi.', 'error');
+            }
+        }
+
+        function processData(rawData, filterKategori, globalRetur) {
+            let dataTerjualRaw = [];
+            let dataReturRaw = [];
+            groupedInvoices = {}; 
+
+            rawData.forEach(item => {
+                if (!item.transaksi.tanggal) return; 
+                
+                const isAromanis = item.nama_barang && item.nama_barang.toLowerCase().includes('aromanis');
+                item.kategori = isAromanis ? 'Aromanis' : 'Barang Lainnya';
+
+                if (filterKategori === 'aromanis' && item.kategori !== 'Aromanis') return;
+                if (filterKategori === 'barang-lainnya' && item.kategori !== 'Barang Lainnya') return;
+
+                const isRetur = (item.tipe && item.tipe.toLowerCase().includes('retur')) || item.qty < 0 || item.subtotal < 0;
+
+                const invoiceKey = `${item.source_table}_${item.no_nota}`;
+                if(!groupedInvoices[invoiceKey]) {
+                    
+                    const tr = item.transaksi || {};
+                    
+                    const d1 = tr.driver_1 && tr.driver_1 !== 'null' ? tr.driver_1 : '';
+                    const d2 = tr.driver_2 && tr.driver_2 !== 'null' ? tr.driver_2 : '';
+                    let gabungDriver = '-';
+                    if (d1 && d2) gabungDriver = `${d1} & ${d2}`;
+                    else if (d1) gabungDriver = d1;
+                    else if (d2) gabungDriver = d2;
+
+                    const namaMobil = tr.mobil || tr.nama_mobil || tr.kendaraan || tr.plat_nomor || tr.nopol || '-';
+
+                    groupedInvoices[invoiceKey] = {
+                        invoiceKey: invoiceKey,
+                        no_nota: item.no_nota, 
+                        tanggal: tr.tanggal, 
+                        agen: tr.nama_agen || '-',
+                        jenis_trx: tr.jenis_trx, 
+                        bayar_cash: Number(tr.bayar_cash || 0),
+                        bayar_transfer: Number(tr.bayar_transfer || 0), 
+                        driver: gabungDriver,
+                        co_driver: '-', 
+                        mobil: (namaMobil !== 'null' && namaMobil !== null && namaMobil !== '') ? namaMobil : '-',
+                        items_kirim: [], 
+                        items_retur: [],
+                        total_kirim: 0, 
+                        total_retur: 0
+                    };
+                }
+
+                if(isRetur) {
+                    dataReturRaw.push(item); groupedInvoices[invoiceKey].items_retur.push(item);
+                    groupedInvoices[invoiceKey].total_retur += Math.abs(Number(item.subtotal));
+                } else {
+                    dataTerjualRaw.push(item); groupedInvoices[invoiceKey].items_kirim.push(item);
+                    groupedInvoices[invoiceKey].total_kirim += Number(item.subtotal);
+                }
+            });
+
+            const totalNominal = dataTerjualRaw.reduce((sum, i) => sum + Number(i.subtotal), 0);
+            const totalQty = dataTerjualRaw.reduce((sum, i) => sum + Number(i.qty), 0);
+            const effectiveRetur = filterKategori === 'all'
+                ? globalRetur
+                : dataReturRaw.reduce((sum, i) => sum + Math.abs(Number(i.subtotal)), 0);
+
+            // Hitung Piutang (Sisa Nota Belum Lunas)
+            let totalPiutang = 0;
+            let countPiutang = 0;
+            let totalDibayarAll = 0;
+            const totalNotaCount = Object.keys(groupedInvoices).length;
+
+            Object.values(groupedInvoices).forEach(inv => {
+                const tagihan = inv.total_kirim - inv.total_retur;
+                const bayar = (inv.bayar_cash || 0) + (inv.bayar_transfer || 0);
+                const sisa = tagihan - bayar;
+                inv.total_tagihan = tagihan;
+                inv.sisa_saldo = sisa > 0 ? sisa : 0;
+                inv.is_lunas = sisa <= 0;
+                totalDibayarAll += bayar;
+                if (sisa > 0) {
+                    totalPiutang += sisa;
+                    countPiutang++;
+                }
+            });
+            
+            document.getElementById('summaryTotal').innerText = formatRupiah(totalNominal);
+            document.getElementById('summaryQty').innerText = formatTitik(totalQty);
+            document.getElementById('summaryNota').innerText = totalNotaCount;
+            document.getElementById('summaryRetur').innerText = formatRupiah(effectiveRetur);
+            document.getElementById('summaryPiutang').innerText = formatRupiah(totalPiutang);
+
+            // Update sub-info pada masing-masing kartu ringkasan
+            const netSales = Math.max(0, totalNominal - effectiveRetur);
+            const uniqueItemsCount = new Set(dataTerjualRaw.map(i => i.nama_barang)).size;
+            const lunasCount = Math.max(0, totalNotaCount - countPiutang);
+
+            const netEl = document.getElementById('summaryNetText');
+            if (netEl) netEl.innerText = `Bersih: ${formatRupiah(netSales)}`;
+            const qtySubEl = document.getElementById('summaryQtySub');
+            if (qtySubEl) qtySubEl.innerText = `${uniqueItemsCount} jenis produk terjual`;
+            const notaSubEl = document.getElementById('summaryNotaSub');
+            if (notaSubEl) notaSubEl.innerText = `${lunasCount} Lunas • ${countPiutang} Belum Lunas`;
+            const returSubEl = document.getElementById('summaryReturSub');
+            if (returSubEl) returSubEl.innerText = `${dataReturRaw.length} item pengembalian`;
+            const piutangSubEl = document.getElementById('summaryPiutangSub');
+            if (piutangSubEl) {
+                piutangSubEl.innerText = countPiutang > 0
+                    ? `Masuk: ${formatRupiah(totalDibayarAll)}`
+                    : `Semua nota sudah lunas`;
+            }
+
+            const piutangCountEl = document.getElementById('summaryPiutangCount');
+            if (countPiutang > 0) {
+                piutangCountEl.innerText = `${countPiutang} Nota`;
+                piutangCountEl.classList.remove('hidden');
+            } else {
+                piutangCountEl.classList.add('hidden');
+            }
+
+            const returPercentEl = document.getElementById('summaryReturPercent');
+            if (totalNominal > 0) {
+                const percent = (effectiveRetur / totalNominal) * 100;
+                returPercentEl.innerText = `${percent.toFixed(1)}%`;
+                returPercentEl.classList.remove('hidden');
+            } else if (effectiveRetur > 0) {
+                returPercentEl.innerText = `100%`;
+                returPercentEl.classList.remove('hidden');
+            } else {
+                returPercentEl.classList.add('hidden');
+            }
+
+            renderTables(dataTerjualRaw, dataReturRaw);
+            renderAgenRecapTable();
+            renderInvoiceCards();
+            renderCharts(dataTerjualRaw);
+        }
+
+        // --- FILTER CEPAT TANGGAL & RESET ---
+        function formatDateYMD(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function setQuickDateFilter(mode) {
+            const today = new Date();
+            let startStr = '';
+            let endStr = formatDateYMD(today);
+
+            if (mode === 'today') {
+                startStr = endStr;
+            } else if (mode === 'yesterday') {
+                const yest = new Date(today);
+                yest.setDate(today.getDate() - 1);
+                startStr = formatDateYMD(yest);
+                endStr = startStr;
+            } else if (mode === 'week') {
+                const firstDayOfWeek = new Date(today);
+                const day = today.getDay() || 7; // Senin sebagai awal minggu
+                firstDayOfWeek.setDate(today.getDate() - day + 1);
+                startStr = formatDateYMD(firstDayOfWeek);
+            } else if (mode === 'month') {
+                const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                startStr = formatDateYMD(firstDayOfMonth);
+            } else if (mode === 'last-month') {
+                const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                startStr = formatDateYMD(firstDayLastMonth);
+                endStr = formatDateYMD(lastDayLastMonth);
+            } else if (mode === 'all') {
+                startStr = '';
+                endStr = '';
+            }
+
+            document.getElementById('filterStartDate').value = startStr;
+            document.getElementById('filterEndDate').value = endStr;
+
+            document.querySelectorAll('.quick-date-btn').forEach(btn => {
+                btn.className = 'quick-date-btn px-2.5 py-1 text-xs font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition';
+            });
+            const activeBtn = document.getElementById(`btnQuick_${mode}`);
+            if (activeBtn) {
+                activeBtn.className = 'quick-date-btn px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-sm transition';
+            }
+
+            fetchData();
+        }
+
+        function resetAllFilters() {
+            document.getElementById('filterJenis').value = 'all';
+            document.getElementById('filterAgen').value = 'all';
+            document.getElementById('filterKategori').value = 'all';
+            if (document.getElementById('searchInvoiceInput')) document.getElementById('searchInvoiceInput').value = '';
+            if (document.getElementById('filterStatusNota')) document.getElementById('filterStatusNota').value = 'all';
+            setQuickDateFilter('month');
+        }
+
+        // --- REKAP PER AGEN & RANKING PIUTANG ---
+        let dataMapAgen = [];
+
+        function getAgenRecapList() {
+            const mapAgen = {};
+            Object.values(groupedInvoices).forEach(inv => {
+                const nama = inv.agen || '-';
+                if (!mapAgen[nama]) {
+                    mapAgen[nama] = {
+                        agen: nama,
+                        jml_nota: 0,
+                        nota_belum_lunas: 0,
+                        total_kirim: 0,
+                        total_retur: 0,
+                        total_tagihan: 0,
+                        total_dibayar: 0,
+                        sisa_piutang: 0
+                    };
+                }
+                const tagihan = inv.total_kirim - inv.total_retur;
+                const dibayar = (inv.bayar_cash || 0) + (inv.bayar_transfer || 0);
+                const sisa = inv.sisa_saldo || 0;
+
+                mapAgen[nama].jml_nota += 1;
+                if (sisa > 0) mapAgen[nama].nota_belum_lunas += 1;
+                mapAgen[nama].total_kirim += inv.total_kirim;
+                mapAgen[nama].total_retur += inv.total_retur;
+                mapAgen[nama].total_tagihan += tagihan;
+                mapAgen[nama].total_dibayar += dibayar;
+                mapAgen[nama].sisa_piutang += sisa;
+            });
+
+            const sortMode = document.getElementById('sortAgenMode')?.value || 'tagihan';
+            return Object.values(mapAgen).sort((a, b) => {
+                if (sortMode === 'piutang') return b.sisa_piutang - a.sisa_piutang || b.total_tagihan - a.total_tagihan;
+                if (sortMode === 'nota') return b.jml_nota - a.jml_nota || b.total_tagihan - a.total_tagihan;
+                return b.total_tagihan - a.total_tagihan;
+            });
+        }
+
+        function renderAgenRecapTable() {
+            dataMapAgen = getAgenRecapList();
+            const badgeEl = document.getElementById('agenCountBadge');
+            if (badgeEl) badgeEl.innerText = `${dataMapAgen.length} Agen`;
+
+            const tbody = document.getElementById('tableAgenBody');
+            const tfoot = document.getElementById('tableAgenFoot');
+            if (!tbody) return;
+
+            tbody.innerHTML = dataMapAgen.map((row, idx) => {
+                const safeAgen = row.agen.replace(/'/g, "\\'");
+                const piutangBadge = row.sisa_piutang > 0
+                    ? `<div class="font-bold text-red-600 dark:text-red-400">${formatRupiah(row.sisa_piutang)}</div>
+                       <div class="text-[10px] text-red-500">${row.nota_belum_lunas} nota belum lunas</div>`
+                    : `<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">LUNAS</span>`;
+
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/60 transition">
+                        <td class="p-2.5 text-center font-bold text-xs text-gray-400">${idx + 1}</td>
+                        <td class="p-2.5 font-semibold whitespace-nowrap">
+                            <button onclick="filterByAgentFromRecap('${safeAgen}')" class="text-left hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-1.5" title="Klik untuk filter transaksi agen ini">
+                                <span>${row.agen}</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-400"></i>
+                            </button>
+                        </td>
+                        <td class="p-2.5 text-center font-semibold">${row.jml_nota}</td>
+                        <td class="p-2.5 text-right font-semibold text-blue-600 dark:text-blue-400">${formatRupiah(row.total_tagihan)}</td>
+                        <td class="p-2.5 text-right font-medium text-emerald-600 dark:text-emerald-400">${formatRupiah(row.total_dibayar)}</td>
+                        <td class="p-2.5 text-right">${piutangBadge}</td>
+                        <td class="p-2.5 text-center whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1.5">
+                                <button onclick="shareAgenPiutangWhatsApp('${safeAgen}')" class="px-2 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-[11px] font-medium transition flex items-center gap-1" title="Kirim Rekap / Tagihan Agen via WhatsApp">
+                                    <i class="fa-brands fa-whatsapp"></i> WA
+                                </button>
+                                <button onclick="filterByAgentFromRecap('${safeAgen}')" class="px-2 py-1 rounded bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-700 dark:bg-gray-700 dark:text-gray-200 text-[11px] font-medium transition" title="Lihat Nota Agen Ini">
+                                    Lihat Nota
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="7" class="p-4 text-center text-gray-500">Tidak ada data agen.</td></tr>`;
+
+            const grandNota = dataMapAgen.reduce((s, r) => s + r.jml_nota, 0);
+            const grandTagihan = dataMapAgen.reduce((s, r) => s + r.total_tagihan, 0);
+            const grandDibayar = dataMapAgen.reduce((s, r) => s + r.total_dibayar, 0);
+            const grandPiutang = dataMapAgen.reduce((s, r) => s + r.sisa_piutang, 0);
+
+            tfoot.innerHTML = dataMapAgen.length > 0 ? `
+                <tr class="bg-amber-50/60 dark:bg-amber-900/10 font-bold border-t-2 border-amber-200 dark:border-amber-800/50 text-sm">
+                    <td colspan="2" class="p-3 text-center text-amber-800 dark:text-amber-300 uppercase tracking-wider">Total Keseluruhan</td>
+                    <td class="p-3 text-center text-amber-800 dark:text-amber-300">${formatTitik(grandNota)}</td>
+                    <td class="p-3 text-right text-blue-700 dark:text-blue-300">${formatRupiah(grandTagihan)}</td>
+                    <td class="p-3 text-right text-emerald-700 dark:text-emerald-300">${formatRupiah(grandDibayar)}</td>
+                    <td class="p-3 text-right text-red-600 dark:text-red-400">${formatRupiah(grandPiutang)}</td>
+                    <td></td>
+                </tr>
+            ` : '';
+        }
+
+        function filterByAgentFromRecap(agenName) {
+            const searchInput = document.getElementById('searchInvoiceInput');
+            if (searchInput) {
+                searchInput.value = agenName;
+                renderInvoiceCards();
+                document.getElementById('transactionFlexContainer')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function renderTables(terjual, retur) {
+            const mapTerjual = {};
+            terjual.forEach(d => {
+                const name = d.nama_barang || '-';
+                if(!mapTerjual[name]) mapTerjual[name] = { nama: name, kategori: d.kategori, qty: 0, satuan: d.satuan, nominal: 0 };
+                mapTerjual[name].qty += Number(d.qty); mapTerjual[name].nominal += Number(d.subtotal);
+            });
+            dataMapTerjual = Object.values(mapTerjual).sort((a,b) => b.qty - a.qty);
+
+            const tbTerjual = document.getElementById('tableTerjualBody');
+            tbTerjual.innerHTML = dataMapTerjual.map(item => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <td class="p-2 font-medium whitespace-nowrap">${item.nama}</td>
+                    <td class="p-2 text-center"><span class="px-2 py-0.5 text-[10px] rounded bg-gray-100 dark:bg-gray-800">${item.kategori}</span></td>
+                    <td class="p-2 text-right font-semibold">${formatTitik(item.qty)} <span class="text-xs text-gray-500">${item.satuan}</span></td>
+                    <td class="p-2 text-right text-blue-600 dark:text-blue-400 font-semibold">${formatRupiah(item.nominal)}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="4" class="p-4 text-center">Tidak ada data.</td></tr>`;
+
+            const totalQtyTerjual = dataMapTerjual.reduce((sum, i) => sum + i.qty, 0);
+            const totalNominalTerjual = dataMapTerjual.reduce((sum, i) => sum + i.nominal, 0);
+            
+            document.getElementById('tableTerjualFoot').innerHTML = dataMapTerjual.length > 0 ? `
+                <tr class="bg-blue-50/50 dark:bg-blue-900/10 font-bold border-t-2 border-blue-200 dark:border-blue-800/50 text-sm">
+                    <td colspan="2" class="p-3 text-center text-blue-800 dark:text-blue-300 uppercase tracking-wider">Grand Total</td>
+                    <td class="p-3 text-right text-blue-800 dark:text-blue-300">${formatTitik(totalQtyTerjual)}</td>
+                    <td class="p-3 text-right text-blue-800 dark:text-blue-300">${formatRupiah(totalNominalTerjual)}</td>
+                </tr>
+            ` : '';
+
+            const mapRetur = {};
+            retur.forEach(d => {
+                const name = d.nama_barang || '-';
+                if(!mapRetur[name]) mapRetur[name] = { nama: name, kategori: d.kategori, qty: 0, satuan: d.satuan, nominal: 0 };
+                mapRetur[name].qty += Math.abs(Number(d.qty)); mapRetur[name].nominal += Math.abs(Number(d.subtotal)); 
+            });
+            dataMapRetur = Object.values(mapRetur).sort((a,b) => b.qty - a.qty);
+
+            const tbRetur = document.getElementById('tableReturBody');
+            tbRetur.innerHTML = dataMapRetur.map(item => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                    <td class="p-2 font-medium whitespace-nowrap">${item.nama}</td>
+                    <td class="p-2 text-center"><span class="px-2 py-0.5 text-[10px] rounded bg-gray-100 dark:bg-gray-800">${item.kategori}</span></td>
+                    <td class="p-2 text-right font-semibold text-red-500">${formatTitik(item.qty)} <span class="text-xs text-gray-500">${item.satuan}</span></td>
+                    <td class="p-2 text-right text-red-600 dark:text-red-400 font-semibold">${formatRupiah(item.nominal)}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="4" class="p-4 text-center">Tidak ada retur.</td></tr>`;
+
+            const totalQtyRetur = dataMapRetur.reduce((sum, i) => sum + i.qty, 0);
+            const totalNominalRetur = dataMapRetur.reduce((sum, i) => sum + i.nominal, 0);
+
+            document.getElementById('tableReturFoot').innerHTML = dataMapRetur.length > 0 ? `
+                <tr class="bg-red-50/50 dark:bg-red-900/10 font-bold border-t-2 border-red-200 dark:border-red-800/50 text-sm">
+                    <td colspan="2" class="p-3 text-center text-red-800 dark:text-red-300 uppercase tracking-wider">Grand Total</td>
+                    <td class="p-3 text-right text-red-800 dark:text-red-300">${formatTitik(totalQtyRetur)}</td>
+                    <td class="p-3 text-right text-red-800 dark:text-red-300">${formatRupiah(totalNominalRetur)}</td>
+                </tr>
+            ` : '';
+        }
+
+        function getFilteredInvoices(statusOverride = null) {
+            const searchQ = (document.getElementById('searchInvoiceInput')?.value || '').trim().toLowerCase();
+            const statusFilter = statusOverride !== null ? statusOverride : (document.getElementById('filterStatusNota')?.value || 'all');
+
+            return Object.values(groupedInvoices)
+                .filter(inv => {
+                    if (statusFilter === 'lunas' && !inv.is_lunas) return false;
+                    if (statusFilter === 'belum-lunas' && inv.is_lunas) return false;
+                    if (searchQ) {
+                        const haystack = `${inv.no_nota} ${inv.agen} ${inv.driver} ${inv.mobil}`.toLowerCase();
+                        if (!haystack.includes(searchQ)) return false;
+                    }
+                    return true;
+                })
+                .sort((a, b) => {
+                    const dateDiff = new Date(b.tanggal) - new Date(a.tanggal);
+                    if (dateDiff === 0) return String(b.no_nota).localeCompare(String(a.no_nota));
+                    return dateDiff;
+                });
+        }
+
+        function renderInvoiceCards() {
+            const container = document.getElementById('transactionFlexContainer');
+            const arrInvoices = getFilteredInvoices();
+            
+            const badgeEl = document.getElementById('filteredInvoiceBadge');
+            if (badgeEl) badgeEl.innerText = `${arrInvoices.length} Nota`;
+            
+            container.innerHTML = arrInvoices.map(inv => {
+                const badgeStyle = inv.jenis_trx === 'Khusus' ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-indigo-100 text-indigo-700 border-indigo-300';
+                const statusBadge = inv.is_lunas
+                    ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-300">LUNAS</span>`
+                    : `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-300">SISA ${formatRupiah(inv.sisa_saldo)}</span>`;
+
+                return `
+                <div onclick="openModal('${inv.invoiceKey}')" class="cursor-pointer flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 transition">
+                    <div class="flex gap-3 items-center min-w-0">
+                        <div class="hidden sm:flex w-8 h-8 shrink-0 bg-gray-50 dark:bg-gray-800 rounded-full items-center justify-center text-gray-500 text-xs border border-gray-100 dark:border-gray-700">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap gap-1.5 items-center mb-0.5">
+                                <span class="font-bold text-sm text-blue-600 dark:text-blue-400">${inv.no_nota}</span>
+                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeStyle}">${inv.jenis_trx}</span>
+                                ${statusBadge}
+                            </div>
+                            <div class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">${inv.agen} <span class="font-normal text-gray-400">• ${inv.driver}</span></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0 ml-2">
+                        <div class="text-right">
+                            <div class="text-[10px] font-medium text-gray-400 mb-0.5"><i class="fa-regular fa-calendar mr-1"></i>${formatTanggalStruk(inv.tanggal)}</div>
+                            <div class="font-bold text-sm text-gray-800 dark:text-gray-100">${formatRupiah(inv.total_kirim - inv.total_retur)}</div>
+                        </div>
+                        <button onclick="shareStrukWhatsApp('${inv.invoiceKey}', event)" title="Kirim Struk / Tagihan via WhatsApp" class="w-8 h-8 rounded-lg bg-green-50 hover:bg-green-600 text-green-600 hover:text-white dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-600 dark:hover:text-white transition flex items-center justify-center border border-green-200 dark:border-green-800">
+                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('') || '<div class="p-4 text-center text-sm text-gray-500">Tidak ada transaksi yang sesuai filter.</div>';
+        }
+
+        // --- PRATINJAU & CETAK REKAP NOTA A4 (FLEKSIBEL 4, 5, 6, ATAU 8 STRUK / LEMBAR) ---
+        function buildThermalMiniStrukHTML(inv, layoutMode = 'landscape-5x1') {
+            const tanggalFormat = formatTanggalStruk(inv.tanggal);
+            const totalTagihan = inv.total_kirim - inv.total_retur;
+            const totalBayar = (inv.bayar_cash || 0) + (inv.bayar_transfer || 0);
+            const sisaSaldo = totalTagihan - totalBayar;
+
+            // Mode 2 baris (8 nota) otomatis memakai format 1 baris per barang agar hemat ruang vertikal 50% dan tidak terpotong
+            const isCompactOneLine = layoutMode === 'landscape-4x2' || layoutMode === 'portrait-4x2';
+            const isNarrow6Col = layoutMode === 'landscape-6x1';
+            const baseFontStyle = isNarrow6Col
+                ? 'font-size: 8.2px; padding: 6px 5px;'
+                : (isCompactOneLine ? 'font-size: 8.5px; padding: 5px 7px;' : 'font-size: 9.5px; padding: 8px 9px;');
+
+            const itemsHtml = inv.items_kirim.map(i => {
+                if (isCompactOneLine) {
+                    return `
+                        <div class="flex justify-between items-baseline gap-1 mb-0.5 text-black leading-tight">
+                            <span class="truncate"><b class="font-bold">${i.nama_barang}</b> <span class="text-[7.5px] text-gray-700">(${i.qty}x${formatTitik(i.harga_satuan)})</span></span>
+                            <span class="font-bold shrink-0">${formatTitik(i.subtotal)}</span>
+                        </div>
+                    `;
+                }
+                return `
+                    <div class="mb-1">
+                        <div class="font-bold text-black leading-tight">${i.nama_barang}</div>
+                        <div class="flex justify-between text-gray-900">
+                            <span>${i.qty} ${i.satuan} x ${formatTitik(i.harga_satuan)}</span>
+                            <span class="font-bold text-black">${formatTitik(i.subtotal)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            let returHtml = '';
+            if (inv.items_retur.length > 0) {
+                returHtml = `
+                    <div class="mt-1 border-t border-dashed border-gray-400 pt-1">
+                        <div class="font-bold text-red-600 mb-0.5 uppercase text-[8px]">PENGEMBALIAN (RETUR)</div>
+                        ${inv.items_retur.map(i => {
+                            if (isCompactOneLine) {
+                                return `
+                                    <div class="flex justify-between items-baseline gap-1 mb-0.5 text-red-600 leading-tight">
+                                        <span class="truncate"><b>${i.nama_barang}</b> <span class="text-[7.5px]">(${Math.abs(i.qty)}x${formatTitik(i.harga_satuan)})</span></span>
+                                        <span class="font-bold shrink-0">-${formatTitik(Math.abs(i.subtotal))}</span>
+                                    </div>
+                                `;
+                            }
+                            return `
+                                <div class="mb-0.5 text-red-600">
+                                    <div class="font-bold leading-tight">${i.nama_barang}</div>
+                                    <div class="flex justify-between">
+                                        <span>${Math.abs(i.qty)} ${i.satuan} x ${formatTitik(i.harga_satuan)}</span>
+                                        <span class="font-bold">-${formatTitik(Math.abs(i.subtotal))}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                        <div class="flex justify-between font-bold text-red-600 mt-0.5">
+                            <span>Total Retur</span>
+                            <span>-Rp ${formatTitik(inv.total_retur)}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const statusHtml = sisaSaldo > 0
+                ? `<div class="mt-1 border-t border-dashed border-gray-400 pt-1 flex justify-between font-extrabold text-red-600 text-[9.5px]">
+                        <span>SISA NOTA</span>
+                        <span>Rp ${formatTitik(sisaSaldo)}</span>
+                   </div>`
+                : `<div class="mt-1 border-t border-dashed border-gray-400 pt-1 flex justify-between font-extrabold text-black text-[9.5px]">
+                        <span>STATUS</span>
+                        <span>LUNAS</span>
+                   </div>`;
+
+            return `
+                <div class="thermal-mini-card" style="${baseFontStyle}">
+                    <div>
+                        <div class="text-center mb-1 text-black">
+                            <div class="text-[10.5px] font-extrabold uppercase tracking-wider leading-tight">SBR PUTRA FOOD</div>
+                            <div class="text-[8px] font-medium text-gray-700">Lembang, Bandung Barat</div>
+                        </div>
+
+                        <div class="flex justify-between text-[8px] text-gray-700 mb-1 font-semibold">
+                            <span>NO: ${inv.no_nota}</span>
+                            <span>${tanggalFormat}</span>
+                        </div>
+
+                        <div class="border-b border-black mb-1"></div>
+
+                        <div class="text-center mb-1 text-black">
+                            <div class="text-[10.5px] font-extrabold uppercase tracking-wide leading-tight">${inv.agen}</div>
+                            <div class="text-[7px] text-gray-600 font-bold uppercase mt-0.5 leading-tight">
+                                DRIVER: ${inv.driver}<br>
+                                MOBIL: ${inv.mobil}
+                            </div>
+                        </div>
+
+                        <div>
+                            ${itemsHtml}
+                        </div>
+                    </div>
+
+                    <div class="mt-1">
+                        <div class="border-t border-gray-400 my-0.5 pt-0.5 flex justify-between font-bold text-black">
+                            <span>Total Kirim</span>
+                            <span>Rp ${formatTitik(inv.total_kirim)}</span>
+                        </div>
+
+                        ${returHtml}
+
+                        <div class="mt-1 border-t-[2.5px] border-double border-black pt-1 flex justify-between text-[10px] font-extrabold text-black">
+                            <span>TOTAL TAGIHAN</span>
+                            <span>Rp ${formatTitik(totalTagihan)}</span>
+                        </div>
+
+                        <div class="mt-0.5 text-[8px] text-gray-700 font-semibold space-y-0.5">
+                            <div class="flex justify-between"><span>Bayar Cash</span><span>Rp ${formatTitik(inv.bayar_cash || 0)}</span></div>
+                            <div class="flex justify-between"><span>Bayar Transfer</span><span>Rp ${formatTitik(inv.bayar_transfer || 0)}</span></div>
+                        </div>
+
+                        ${statusHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function openRekapA4Modal() {
+            const allCount = Object.keys(groupedInvoices).length;
+            if (allCount === 0) {
+                Swal.fire('Data Kosong', 'Tidak ada transaksi nota untuk ditampilkan pada pratinjau A4.', 'info');
+                return;
+            }
+            const mainStatus = document.getElementById('filterStatusNota')?.value || 'all';
+            document.getElementById('a4FilterStatus').value = mainStatus;
+            renderRekapA4Sheets();
+            document.getElementById('rekapA4Modal').classList.remove('hidden');
+            setTimeout(applyA4PreviewZoom, 50);
+        }
+
+        function closeRekapA4Modal() {
+            document.getElementById('rekapA4Modal').classList.add('hidden');
+        }
+
+        function applyA4PreviewZoom() {
+            const wrapper = document.getElementById('a4PrintWrapper');
+            const scrollArea = document.getElementById('rekapA4ScrollArea');
+            const zoomSelect = document.getElementById('a4ZoomMode');
+            if (!wrapper || !scrollArea || !zoomSelect) return;
+
+            const mode = zoomSelect.value;
+            const layoutMode = document.getElementById('a4LayoutMode')?.value || 'landscape-5x1';
+            const isPortrait = layoutMode === 'portrait-4x2';
+            const sheetWidthPx = isPortrait ? 794 : 1123; // 210mm vs 297mm @ 96dpi
+
+            let scale = 1;
+            if (mode === 'auto') {
+                const availWidth = Math.max(280, (scrollArea.clientWidth || window.innerWidth) - 24);
+                scale = availWidth < sheetWidthPx ? Math.max(0.3, Math.min(1, +(availWidth / sheetWidthPx).toFixed(2))) : 1;
+            } else {
+                scale = parseFloat(mode) || 1;
+            }
+
+            wrapper.style.zoom = scale;
+        }
+
+        window.addEventListener('resize', () => {
+            const modal = document.getElementById('rekapA4Modal');
+            if (modal && !modal.classList.contains('hidden')) {
+                applyA4PreviewZoom();
+            }
+        });
+
+        function renderRekapA4Sheets() {
+            const statusFilter = document.getElementById('a4FilterStatus').value;
+            const layoutMode = document.getElementById('a4LayoutMode').value;
+            const invoices = getFilteredInvoices(statusFilter);
+            const wrapper = document.getElementById('a4PrintWrapper');
+            const infoText = document.getElementById('rekapA4InfoText');
+
+            // Konfigurasi per mode layout
+            const layoutConfigMap = {
+                'landscape-5x1': { isLandscape: true, itemsPerPage: 5, gridClass: 'grid-cols-5 grid-rows-1' },
+                'landscape-4x1': { isLandscape: true, itemsPerPage: 4, gridClass: 'grid-cols-4 grid-rows-1' },
+                'landscape-6x1': { isLandscape: true, itemsPerPage: 6, gridClass: 'grid-cols-6 grid-rows-1' },
+                'landscape-4x2': { isLandscape: true, itemsPerPage: 8, gridClass: 'grid-cols-4 grid-rows-2' },
+                'portrait-4x2':  { isLandscape: false, itemsPerPage: 8, gridClass: 'grid-cols-4 grid-rows-2' }
+            };
+            const cfg = layoutConfigMap[layoutMode] || layoutConfigMap['landscape-5x1'];
+
+            // Update CSS @page orientation dynamically
+            const dynStyle = document.getElementById('dynamicPrintStyle');
+            if (dynStyle) {
+                dynStyle.innerHTML = `@media print { @page { size: A4 ${cfg.isLandscape ? 'landscape' : 'portrait'}; margin: 0; } }`;
+            }
+
+            if (invoices.length === 0) {
+                infoText.innerText = '0 Nota ditemukan untuk filter ini';
+                wrapper.innerHTML = `<div class="bg-white text-gray-600 p-8 rounded-xl text-center max-w-md mx-auto my-8 shadow">Tidak ada nota yang sesuai dengan filter status.</div>`;
+                return;
+            }
+
+            const ITEMS_PER_PAGE = cfg.itemsPerPage;
+            const totalPages = Math.ceil(invoices.length / ITEMS_PER_PAGE);
+            const startDate = document.getElementById('filterStartDate').value || '-';
+            const endDate = document.getElementById('filterEndDate').value || '-';
+
+            infoText.innerText = `Menampilkan ${invoices.length} Nota dalam ${totalPages} Lembar A4 (${ITEMS_PER_PAGE} Struk / Lembar)`;
+
+            let sheetsHtml = '';
+            for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
+                const chunk = invoices.slice(pageIdx * ITEMS_PER_PAGE, (pageIdx + 1) * ITEMS_PER_PAGE);
+                const pageTotalTagihan = chunk.reduce((sum, inv) => sum + (inv.total_kirim - inv.total_retur), 0);
+
+                const cardsHtml = chunk.map(inv => buildThermalMiniStrukHTML(inv, layoutMode)).join('');
+
+                sheetsHtml += `
+                    <div class="a4-sheet ${cfg.isLandscape ? 'a4-landscape' : 'a4-portrait'} flex flex-col justify-between" data-page="${pageIdx + 1}">
+                        <div>
+                            <!-- Header Lembar A4 -->
+                            <div class="flex justify-between items-center border-b-2 border-black pb-1.5 mb-2 text-black" style="font-family: 'Courier New', Courier, monospace;">
+                                <div class="text-xs font-extrabold uppercase tracking-wider">
+                                    REKAP NOTA TRANSAKSI SBR PUTRA FOOD <span class="font-normal text-[10px]">(${startDate} s/d ${endDate})</span>
+                                </div>
+                                <div class="text-[10px] font-bold">
+                                    Sub-Total Lembar: ${formatRupiah(pageTotalTagihan)} &nbsp;|&nbsp; Hal ${pageIdx + 1} / ${totalPages}
+                                </div>
+                            </div>
+
+                            <!-- Grid Struk -->
+                            <div class="grid ${cfg.gridClass} gap-2 items-stretch">
+                                ${cardsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            wrapper.innerHTML = sheetsHtml;
+            applyA4PreviewZoom();
+        }
+
+        function printRekapA4() {
+            window.print();
+        }
+
+        async function downloadRekapA4PNG() {
+            const wrapper = document.getElementById('a4PrintWrapper');
+            const sheets = document.querySelectorAll('#a4PrintWrapper .a4-sheet');
+            if (!sheets.length) return;
+
+            const prevZoom = wrapper ? wrapper.style.zoom : '1';
+            if (wrapper) wrapper.style.zoom = 1;
+
+            Swal.fire({
+                title: `Menyiapkan ${sheets.length} Lembar A4...`,
+                text: 'Mohon tunggu sebentar.',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                for (let i = 0; i < sheets.length; i++) {
+                    const canvas = await html2canvas(sheets[i], { scale: 2.5, backgroundColor: '#ffffff' });
+                    const link = document.createElement('a');
+                    link.download = `Rekap_Nota_A4_SBR_Hal_${i + 1}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    if (i < sheets.length - 1) {
+                        await new Promise(r => setTimeout(r, 350));
+                    }
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil Disimpan!',
+                    text: `${sheets.length} lembar rekap nota A4 telah diunduh sebagai gambar PNG.`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Error', 'Gagal membuat gambar PNG untuk lembar A4.', 'error');
+            } finally {
+                if (wrapper) wrapper.style.zoom = prevZoom;
+            }
+        }
+
+        function openModal(invoiceKey) {
+            const inv = groupedInvoices[invoiceKey];
+            if(!inv) return;
+
+            let itemsHtml = inv.items_kirim.map(i => `
+                <div class="mb-2">
+                    <div class="font-bold text-black">${i.nama_barang}</div>
+                    <div class="flex justify-between text-gray-900">
+                        <span>${i.qty} ${i.satuan} x ${formatTitik(i.harga_satuan)}</span>
+                        <span class="font-bold text-black">${formatTitik(i.subtotal)}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            let returHtml = '';
+            if(inv.items_retur.length > 0) {
+                returHtml = `
+                    <div class="mt-4 border-t-[1.5px] border-dashed border-gray-400 pt-3">
+                        <div class="font-bold text-red-600 mb-2 uppercase text-[11px] tracking-wider">PENGEMBALIAN (RETUR)</div>
+                        ${inv.items_retur.map(i => `
+                            <div class="mb-2 text-red-600">
+                                <div class="font-bold">${i.nama_barang}</div>
+                                <div class="flex justify-between">
+                                    <span>${Math.abs(i.qty)} ${i.satuan} x ${formatTitik(i.harga_satuan)}</span>
+                                    <span class="font-bold">-${formatTitik(Math.abs(i.subtotal))}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="flex justify-between font-bold text-red-600 mt-2">
+                        <span>Total Retur</span>
+                        <span>-Rp ${formatTitik(inv.total_retur)}</span>
+                    </div>
+                `;
+            }
+
+            const totalTagihan = inv.total_kirim - inv.total_retur;
+            const tanggalFormat = formatTanggalStruk(inv.tanggal);
+            
+            const totalBayar = (inv.bayar_cash || 0) + (inv.bayar_transfer || 0);
+            const sisaSaldo = totalTagihan - totalBayar;
+            
+            let sisaHtml = '';
+            if (sisaSaldo > 0) {
+                sisaHtml = `
+                    <div class="mt-2 border-t-[1.5px] border-dashed border-gray-400 pt-2 flex justify-between font-extrabold text-black text-sm">
+                        <span>SISA NOTA</span>
+                        <span>Rp ${formatTitik(sisaSaldo)}</span>
+                    </div>
+                `;
+            } else {
+                sisaHtml = `
+                    <div class="mt-2 border-t-[1.5px] border-dashed border-gray-400 pt-2 flex justify-between font-extrabold text-black text-sm">
+                        <span>STATUS</span>
+                        <span>LUNAS</span>
+                    </div>
+                `;
+            }
+
+            document.getElementById('modalStrukContent').innerHTML = `
+                <div id="strukPrintArea" class="bg-white p-4 sm:p-5 rounded border border-gray-300 shadow-inner" style="font-family: 'Courier New', Courier, monospace; letter-spacing: -0.3px; color: black !important;">
+                    
+                    <div class="text-center mb-4 text-black">
+                        <h2 class="text-xl font-extrabold uppercase tracking-widest">SBR PUTRA FOOD</h2>
+                        <p class="text-xs font-medium text-gray-700">Lembang, Bandung Barat</p>
+                    </div>
+                    
+                    <div class="flex justify-between text-xs text-gray-600 mb-2 font-semibold">
+                        <span>NO: ${inv.no_nota}</span>
+                        <span>${tanggalFormat}</span>
+                    </div>
+                    
+                    <div class="border-b-[1.5px] border-black mb-4"></div>
+                    
+                    <div class="text-center mb-4 text-black">
+                        <h3 class="text-xl font-extrabold uppercase tracking-widest">${inv.agen}</h3>
+                        <div class="text-[10px] text-gray-600 font-bold uppercase mt-1">
+                            DRIVER: ${inv.driver}<br>
+                            MOBIL: ${inv.mobil}
+                        </div>
+                    </div>
+                    
+                    <div class="text-sm">
+                        ${itemsHtml}
+                        
+                        <div class="border-t border-gray-400 my-2 pt-2 flex justify-between font-bold text-black">
+                            <span>Total Kirim</span>
+                            <span>Rp ${formatTitik(inv.total_kirim)}</span>
+                        </div>
+
+                        ${returHtml}
+
+                        <div class="mt-4 border-t-[3px] border-double border-black pt-2 flex justify-between text-base font-extrabold text-black">
+                            <span>TOTAL TAGIHAN</span>
+                            <span>Rp ${formatTitik(totalTagihan)}</span>
+                        </div>
+
+                        <div class="mt-4 text-xs text-gray-700 font-semibold space-y-1">
+                            <div class="flex justify-between"><span>Bayar Cash</span><span>Rp ${formatTitik(inv.bayar_cash || 0)}</span></div>
+                            <div class="flex justify-between"><span>Bayar Transfer</span><span>Rp ${formatTitik(inv.bayar_transfer || 0)}</span></div>
+                        </div>
+                        
+                        ${sisaHtml}
+                    </div>
+                </div>
+
+                <div class="mt-5 flex flex-col gap-2.5">
+                    <button onclick="shareStrukWhatsApp('${inv.invoiceKey}', event)" class="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
+                        <i class="fa-brands fa-whatsapp text-base"></i> Kirim Struk / Tagihan via WhatsApp
+                    </button>
+                    <button onclick="downloadStrukPNG('${inv.invoiceKey}')" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-image"></i> Simpan PNG
+                    </button>
+                    <button onclick="printStrukBluetoothWebAPI('${inv.invoiceKey}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
+                        <i class="fa-brands fa-bluetooth-b"></i> Cetak ke Printer Bluetooth
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('strukModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('strukModal').classList.add('hidden');
+        }
+
+        // --- KIRIM STRUK & TAGIHAN VIA WHATSAPP ---
+        function shareStrukWhatsApp(invoiceKey, event) {
+            if (event) event.stopPropagation();
+            const inv = groupedInvoices[invoiceKey];
+            if (!inv) return;
+
+            const totalTagihan = inv.total_kirim - inv.total_retur;
+            const totalBayar = (inv.bayar_cash || 0) + (inv.bayar_transfer || 0);
+            const sisaSaldo = totalTagihan - totalBayar;
+            const tanggalFormat = formatTanggalStruk(inv.tanggal);
+
+            let lines = [];
+            lines.push(`*SBR PUTRA FOOD*`);
+            lines.push(`Lembang, Bandung Barat`);
+            lines.push(`--------------------------------`);
+            lines.push(`*NO:* ${inv.no_nota}  |  ${tanggalFormat}`);
+            lines.push(`*AGEN:* ${inv.agen}`);
+            lines.push(`*DRIVER:* ${inv.driver}`);
+            lines.push(`*MOBIL:* ${inv.mobil}`);
+            lines.push(`--------------------------------`);
+
+            inv.items_kirim.forEach(i => {
+                lines.push(`*${i.nama_barang}*`);
+                lines.push(`${i.qty} ${i.satuan} x ${formatTitik(i.harga_satuan)} = *Rp ${formatTitik(i.subtotal)}*`);
+            });
+
+            lines.push(`--------------------------------`);
+            lines.push(`*Total Kirim:* Rp ${formatTitik(inv.total_kirim)}`);
+
+            if (inv.items_retur.length > 0) {
+                lines.push(`\n*PENGEMBALIAN (RETUR):*`);
+                inv.items_retur.forEach(i => {
+                    lines.push(`- ${i.nama_barang}: ${Math.abs(i.qty)} ${i.satuan} x ${formatTitik(i.harga_satuan)} (-Rp ${formatTitik(Math.abs(i.subtotal))})`);
+                });
+                lines.push(`*Total Retur:* -Rp ${formatTitik(inv.total_retur)}`);
+            }
+
+            lines.push(`================================`);
+            lines.push(`*TOTAL TAGIHAN: Rp ${formatTitik(totalTagihan)}*`);
+            lines.push(`Bayar Cash: Rp ${formatTitik(inv.bayar_cash || 0)}`);
+            lines.push(`Bayar Transfer: Rp ${formatTitik(inv.bayar_transfer || 0)}`);
+            lines.push(`--------------------------------`);
+            if (sisaSaldo > 0) {
+                lines.push(`*SISA NOTA (BELUM LUNAS): Rp ${formatTitik(sisaSaldo)}*`);
+            } else {
+                lines.push(`*STATUS: LUNAS*`);
+            }
+            lines.push(`\n_Terima kasih atas kerja samanya._`);
+
+            const url = `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`;
+            window.open(url, '_blank');
+        }
+
+        function shareAgenPiutangWhatsApp(agenName) {
+            const invList = Object.values(groupedInvoices)
+                .filter(inv => inv.agen === agenName)
+                .sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+
+            if (invList.length === 0) return;
+
+            const startDate = document.getElementById('filterStartDate').value || '-';
+            const endDate = document.getElementById('filterEndDate').value || '-';
+            const unpaidList = invList.filter(i => !i.is_lunas);
+            const totalTagihanAll = invList.reduce((s, i) => s + (i.total_kirim - i.total_retur), 0);
+            const totalBayarAll = invList.reduce((s, i) => s + (i.bayar_cash || 0) + (i.bayar_transfer || 0), 0);
+            const totalSisaAll = invList.reduce((s, i) => s + (i.sisa_saldo || 0), 0);
+
+            let lines = [];
+            lines.push(`*REKAP TRANSAKSI & TAGIHAN SBR PUTRA FOOD*`);
+            lines.push(`*AGEN:* ${agenName}`);
+            lines.push(`*Periode:* ${startDate} s/d ${endDate}`);
+            lines.push(`--------------------------------`);
+            lines.push(`Total Nota: ${invList.length} Nota`);
+            lines.push(`Total Tagihan: Rp ${formatTitik(totalTagihanAll)}`);
+            lines.push(`Sudah Dibayar: Rp ${formatTitik(totalBayarAll)}`);
+            lines.push(`*Total Sisa Piutang: Rp ${formatTitik(totalSisaAll)}*`);
+
+            if (unpaidList.length > 0) {
+                lines.push(`\n*RINCIAN NOTA BELUM LUNAS (${unpaidList.length} Nota):*`);
+                unpaidList.forEach((inv, idx) => {
+                    const tagihan = inv.total_kirim - inv.total_retur;
+                    lines.push(`${idx + 1}. *${inv.no_nota}* (${formatTanggalStruk(inv.tanggal)}) — Tagihan: Rp ${formatTitik(tagihan)} | *Sisa: Rp ${formatTitik(inv.sisa_saldo)}*`);
+                });
+            } else {
+                lines.push(`\n*STATUS KESELURUHAN: LUNAS*`);
+            }
+            lines.push(`\n_Terima kasih atas kerja samanya._`);
+
+            const url = `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`;
+            window.open(url, '_blank');
+        }
+
+        // --- WEB BLUETOOTH PRINTER API ---
+        async function printStrukBluetoothWebAPI(invoiceKey) {
+            const inv = groupedInvoices[invoiceKey];
+            if(!inv) return;
+
+            try {
+                if (!navigator.bluetooth) {
+                    throw new Error("Browser ini tidak mendukung Web Bluetooth. Gunakan Google Chrome versi terbaru di PC atau Android.");
+                }
+
+                Swal.fire({
+                    title: 'Mencari Printer...',
+                    text: 'Silakan pilih Printer Bluetooth Thermal Anda.',
+                    icon: 'info', showConfirmButton: false,
+                });
+
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '49535343-fe7d-4ae5-8fa9-9fafd205e455'] 
+                });
+
+                const server = await device.gatt.connect();
+                
+                let writeCharacteristic;
+                const services = await server.getPrimaryServices();
+                for (const service of services) {
+                    const characteristics = await service.getCharacteristics();
+                    for (const char of characteristics) {
+                        if (char.properties.write || char.properties.writeWithoutResponse) {
+                            writeCharacteristic = char; break;
+                        }
+                    }
+                    if (writeCharacteristic) break;
+                }
+
+                if (!writeCharacteristic) throw new Error("Gagal mengenali protokol cetak printer.");
+
+                const encoder = new TextEncoder();
+                const padLeft = (text, len) => " ".repeat(Math.max(0, len - text.length)) + text;
+
+                const bytes = [];
+                bytes.push(0x1B, 0x40); 
+                bytes.push(0x1B, 0x61, 1); 
+                bytes.push(0x1B, 0x45, 1); 
+                bytes.push(...encoder.encode("SBR PUTRA FOOD\n"));
+                bytes.push(0x1B, 0x45, 0); 
+                bytes.push(...encoder.encode("Lembang, Bandung Barat\n\n"));
+                
+                bytes.push(0x1B, 0x61, 0); 
+                bytes.push(...encoder.encode(`NO: ${inv.no_nota}    ${formatTanggalStruk(inv.tanggal)}\n`));
+                bytes.push(...encoder.encode("--------------------------------\n"));
+                
+                bytes.push(0x1B, 0x61, 1); 
+                bytes.push(0x1B, 0x45, 1); 
+                bytes.push(...encoder.encode(`${inv.agen}\n`));
+                bytes.push(0x1B, 0x45, 0);
+                bytes.push(...encoder.encode(`DRIVER: ${inv.driver}\n`));
+                bytes.push(...encoder.encode(`MOBIL: ${inv.mobil}\n\n`));
+                bytes.push(0x1B, 0x61, 0); 
+
+                inv.items_kirim.forEach(i => {
+                    bytes.push(0x1B, 0x45, 1);
+                    bytes.push(...encoder.encode(`${i.nama_barang}\n`));
+                    bytes.push(0x1B, 0x45, 0);
+                    
+                    const strLeft = `${i.qty} ${i.satuan} x ${formatTitik(i.harga_satuan)}`;
+                    const strRight = formatTitik(i.subtotal);
+                    const spaceLen = 32 - strLeft.length - strRight.length;
+                    bytes.push(...encoder.encode(strLeft + " ".repeat(spaceLen > 0 ? spaceLen : 1) + strRight + "\n"));
+                });
+
+                bytes.push(...encoder.encode("--------------------------------\n"));
+                
+                const totalKrm = formatTitik(inv.total_kirim);
+                bytes.push(0x1B, 0x45, 1);
+                bytes.push(...encoder.encode(`Total Kirim${padLeft("Rp " + totalKrm, 32 - 11)}\n`));
+                bytes.push(0x1B, 0x45, 0);
+
+                if(inv.items_retur.length > 0) {
+                     bytes.push(...encoder.encode("\nPENGEMBALIAN (RETUR)\n"));
+                     inv.items_retur.forEach(i => {
+                         bytes.push(...encoder.encode(`${i.nama_barang}\n`));
+                         const strLeft = `${Math.abs(i.qty)} ${i.satuan} x ${formatTitik(i.harga_satuan)}`;
+                         const strRight = `-${formatTitik(Math.abs(i.subtotal))}`;
+                         const spaceLen = 32 - strLeft.length - strRight.length;
+                         bytes.push(...encoder.encode(strLeft + " ".repeat(spaceLen > 0 ? spaceLen : 1) + strRight + "\n"));
+                     });
+                     const totalRtr = `-${formatTitik(inv.total_retur)}`;
+                     bytes.push(...encoder.encode(`Total Retur${padLeft("Rp " + totalRtr, 32 - 11)}\n`));
+                }
+
+                bytes.push(...encoder.encode("================================\n"));
+                const totalTagihan = inv.total_kirim - inv.total_retur;
+                const grandTtl = formatTitik(totalTagihan);
+                bytes.push(0x1B, 0x45, 1);
+                bytes.push(...encoder.encode(`TOTAL TAGIHAN${padLeft("Rp " + grandTtl, 32 - 13)}\n\n`));
+                bytes.push(0x1B, 0x45, 0);
+
+                bytes.push(...encoder.encode(`Bayar Cash        Rp ${formatTitik(inv.bayar_cash || 0)}\n`));
+                bytes.push(...encoder.encode(`Bayar Transfer    Rp ${formatTitik(inv.bayar_transfer || 0)}\n`));
+                
+                const totalBayar = (inv.bayar_cash || 0) + (inv.bayar_transfer || 0);
+                const sisaSaldo = totalTagihan - totalBayar;
+                
+                bytes.push(...encoder.encode("--------------------------------\n"));
+                bytes.push(0x1B, 0x45, 1); 
+                if(sisaSaldo > 0) {
+                    bytes.push(...encoder.encode(`SISA NOTA${padLeft("Rp " + formatTitik(sisaSaldo), 32 - 9)}\n\n`));
+                } else {
+                    bytes.push(...encoder.encode(`STATUS${padLeft("LUNAS", 32 - 6)}\n\n`));
+                }
+                bytes.push(0x1B, 0x45, 0); 
+                
+                bytes.push(0x0A, 0x0A, 0x0A, 0x0A); 
+                
+                const payload = new Uint8Array(bytes);
+                const chunkSize = 200; 
+                for (let i = 0; i < payload.length; i += chunkSize) {
+                    await writeCharacteristic.writeValue(payload.slice(i, i + chunkSize));
+                }
+
+                device.gatt.disconnect();
+                Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Struk selesai dicetak.', timer: 2000, showConfirmButton: false });
+
+            } catch (error) {
+                console.error(error);
+                let pesan = error.message;
+                if(pesan.includes('User cancelled')) pesan = "Koneksi ke printer dibatalkan.";
+                Swal.fire('Gagal Mencetak', pesan, 'error');
+            }
+        }
+
+        function downloadStrukPNG(invoiceKey) {
+            const inv = groupedInvoices[invoiceKey];
+            const el = document.getElementById('strukPrintArea');
+            Swal.fire({ title: 'Menyiapkan Struk...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+            html2canvas(el, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Struk_SBR_${inv.no_nota}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Struk berhasil disimpan.', timer: 1500, showConfirmButton: false });
+            }).catch(err => { Swal.fire('Error', 'Gagal membuat gambar PNG', 'error'); });
+        }
+
+        // --- EXPORT GLOBAL REKAP ---
+        function exportToPNG() {
+            const el = document.getElementById('rekapContainer');
+            Swal.fire({ title: 'Menyiapkan Gambar...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            html2canvas(el, { scale: 2, backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#f9fafb' }).then(canvas => {
+                const link = document.createElement('a'); link.download = `Rekap_SBR_${new Date().getTime()}.png`;
+                link.href = canvas.toDataURL('image/png'); link.click();
+                Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Gambar rekap barang berhasil disimpan.', confirmButtonColor: '#3b82f6' });
+            }).catch(err => { Swal.fire('Error', 'Gagal membuat gambar PNG', 'error'); });
+        }
+
+        function exportToExcel() {
+            const arrInvoices = getFilteredInvoices();
+            if(dataMapTerjual.length === 0 && dataMapRetur.length === 0 && arrInvoices.length === 0) {
+                Swal.fire('Data Kosong', 'Tidak ada data untuk di ekspor.', 'info');
+                return;
+            }
+            const wb = XLSX.utils.book_new();
+            const formatExcelData = (data) => data.map(i => ({ "Nama Barang": i.nama, "Kategori": i.kategori, "Total Qty": i.qty, "Satuan": i.satuan, "Nominal (Rp)": i.nominal }));
+            const wsTerjual = XLSX.utils.json_to_sheet(formatExcelData(dataMapTerjual));
+            const wsRetur = XLSX.utils.json_to_sheet(formatExcelData(dataMapRetur));
+            const wscols = [{wch: 35}, {wch: 20}, {wch: 15}, {wch: 10}, {wch: 20}];
+            wsTerjual['!cols'] = wscols;
+            wsRetur['!cols'] = wscols;
+
+            const notaRows = arrInvoices.map(inv => ({
+                "No Nota": inv.no_nota,
+                "Tanggal": inv.tanggal,
+                "Jenis": inv.jenis_trx,
+                "Agen": inv.agen,
+                "Driver": inv.driver,
+                "Mobil": inv.mobil,
+                "Total Kirim (Rp)": inv.total_kirim,
+                "Total Retur (Rp)": inv.total_retur,
+                "Total Tagihan (Rp)": inv.total_kirim - inv.total_retur,
+                "Bayar Cash (Rp)": inv.bayar_cash || 0,
+                "Bayar Transfer (Rp)": inv.bayar_transfer || 0,
+                "Sisa Nota (Rp)": inv.sisa_saldo || 0,
+                "Status": inv.is_lunas ? "LUNAS" : "BELUM LUNAS"
+            }));
+            const wsNota = XLSX.utils.json_to_sheet(notaRows);
+            wsNota['!cols'] = [{wch: 16}, {wch: 12}, {wch: 10}, {wch: 24}, {wch: 20}, {wch: 22}, {wch: 16}, {wch: 16}, {wch: 18}, {wch: 16}, {wch: 18}, {wch: 16}, {wch: 14}];
+
+            const agenRows = dataMapAgen.map((a, idx) => ({
+                "Ranking": idx + 1,
+                "Nama Agen": a.agen,
+                "Jumlah Nota": a.jml_nota,
+                "Nota Belum Lunas": a.nota_belum_lunas,
+                "Total Kirim (Rp)": a.total_kirim,
+                "Total Retur (Rp)": a.total_retur,
+                "Total Tagihan (Rp)": a.total_tagihan,
+                "Sudah Dibayar (Rp)": a.total_dibayar,
+                "Sisa Piutang (Rp)": a.sisa_piutang,
+                "Status": a.sisa_piutang > 0 ? "ADA PIUTANG" : "LUNAS"
+            }));
+            const wsAgen = XLSX.utils.json_to_sheet(agenRows);
+            wsAgen['!cols'] = [{wch: 10}, {wch: 26}, {wch: 14}, {wch: 16}, {wch: 18}, {wch: 18}, {wch: 18}, {wch: 18}, {wch: 18}, {wch: 14}];
+
+            XLSX.utils.book_append_sheet(wb, wsTerjual, "Barang Terjual");
+            XLSX.utils.book_append_sheet(wb, wsRetur, "Barang Retur");
+            XLSX.utils.book_append_sheet(wb, wsAgen, "Rekap Per Agen");
+            XLSX.utils.book_append_sheet(wb, wsNota, "Rekap Nota");
+            XLSX.writeFile(wb, `Rekap_SBR_Putra_Food_${new Date().toISOString().slice(0,10)}.xlsx`);
+            Swal.fire({ icon: 'success', title: 'Ekspor Sukses', text: 'File Excel (Terjual, Retur, Rekap Agen & Rekap Nota) berhasil diunduh.', confirmButtonColor: '#10b981' });
+        }
+
+        let trendChartInstance = null; let categoryChartInstance = null;
+        function getChartTextColor() { return document.documentElement.classList.contains('dark') ? '#9ca3af' : '#4b5563'; }
+        function getGridColor() { return document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'; }
+
+        function renderCharts(terjualData) {
+            const textColor = getChartTextColor(); const gridColor = getGridColor();
+            const trendData = {};
+            terjualData.forEach(item => { if(item.transaksi.tanggal) { trendData[item.transaksi.tanggal] = (trendData[item.transaksi.tanggal] || 0) + Number(item.subtotal); } });
+            const labelsTrend = Object.keys(trendData).sort(); const valuesTrend = labelsTrend.map(date => trendData[date]);
+
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            if (trendChartInstance) trendChartInstance.destroy();
+            trendChartInstance = new Chart(ctxTrend, {
+                type: 'line', data: { labels: labelsTrend, datasets: [{ label: 'Penjualan', data: valuesTrend, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 3, tension: 0.4, fill: true, pointBackgroundColor: '#2563eb' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor, drawBorder: false } }, y: { ticks: { color: textColor }, grid: { color: gridColor, drawBorder: false } } } }
+            });
+
+            let tAromanis = 0, tNon = 0;
+            terjualData.forEach(item => { if (item.kategori === 'Aromanis') tAromanis += Number(item.subtotal); else tNon += Number(item.subtotal); });
+
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+            categoryChartInstance = new Chart(ctxCat, {
+                type: 'doughnut', data: { labels: ['Aromanis', 'Barang Lainnya'], datasets: [{ data: [tAromanis, tNon], backgroundColor: ['#ec4899', '#9ca3af'], borderWidth: 0, hoverOffset: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
+            });
+        }
+
+        function updateChartColors() {
+            if (trendChartInstance && categoryChartInstance) {
+                const textColor = getChartTextColor(); const gridColor = getGridColor();
+                trendChartInstance.options.scales.x.ticks.color = textColor; trendChartInstance.options.scales.x.grid.color = gridColor;
+                trendChartInstance.options.scales.y.ticks.color = textColor; trendChartInstance.options.scales.y.grid.color = gridColor;
+                trendChartInstance.update(); categoryChartInstance.options.plugins.legend.labels.color = textColor; categoryChartInstance.update();
+            }
+        }
+
+        // --- PROGRESSIVE WEB APP (PWA) INSTALL ENGINE ---
+        let deferredPWAPrompt = null;
+
+        function generatePWACanvasIcon(size = 192) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createLinearGradient(0, 0, size, size);
+            grad.addColorStop(0, '#2563eb');
+            grad.addColorStop(1, '#4f46e5');
+            ctx.fillStyle = grad;
+
+            const r = size * 0.22;
+            ctx.beginPath();
+            ctx.moveTo(r, 0);
+            ctx.lineTo(size - r, 0);
+            ctx.quadraticCurveTo(size, 0, size, r);
+            ctx.lineTo(size, size - r);
+            ctx.quadraticCurveTo(size, size, size - r, size);
+            ctx.lineTo(r, size);
+            ctx.quadraticCurveTo(0, size, 0, size - r);
+            ctx.lineTo(0, r);
+            ctx.quadraticCurveTo(0, 0, r, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `900 ${Math.round(size * 0.28)}px Inter, Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('SBR', size / 2, size * 0.42);
+
+            ctx.fillStyle = '#93c5fd';
+            ctx.font = `700 ${Math.round(size * 0.12)}px Inter, Arial, sans-serif`;
+            ctx.fillText('ANALISA', size / 2, size * 0.72);
+
+            return canvas.toDataURL('image/png');
+        }
+
+        function isRunningStandalonePWA() {
+            return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        }
+
+        function updatePWAInstallButtonState() {
+            const btn = document.getElementById('btnInstallPWA');
+            const label = document.getElementById('installPWAText');
+            if (!btn) return;
+
+            if (isRunningStandalonePWA()) {
+                btn.classList.add('hidden');
+                return;
+            }
+
+            if (deferredPWAPrompt) {
+                btn.classList.remove('from-blue-600', 'to-indigo-600');
+                btn.classList.add('from-emerald-600', 'to-teal-600', 'ring-2', 'ring-emerald-400/50');
+                if (label) label.innerText = 'Install App';
+            }
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPWAPrompt = e;
+            updatePWAInstallButtonState();
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredPWAPrompt = null;
+            const btn = document.getElementById('btnInstallPWA');
+            if (btn) btn.classList.add('hidden');
+            Swal.fire({
+                icon: 'success',
+                title: 'Aplikasi Terinstal!',
+                text: 'Analisa SBR Putra Food berhasil dipasang di perangkat Anda.',
+                timer: 2500,
+                showConfirmButton: false
+            });
+        });
+
+        function initPWA() {
+            try {
+                const icon192 = generatePWACanvasIcon(192);
+                const appleIcon = document.getElementById('appleTouchIconLink');
+                if (appleIcon) appleIcon.href = icon192;
+            } catch (err) {
+                console.warn('PWA icon generation skipped:', err);
+            }
+
+            updatePWAInstallButtonState();
+
+            if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.protocol === 'http:')) {
+                navigator.serviceWorker.register('./sw.js').catch(err => {
+                    console.warn('Service Worker registration info:', err.message);
+                });
+            }
+        }
+
+        async function installPWAApp() {
+            if (isRunningStandalonePWA()) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Sudah Terinstal',
+                    text: 'Anda sedang membuka Analisa SBR Putra Food dalam mode Aplikasi (Standalone PWA).',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            if (deferredPWAPrompt) {
+                deferredPWAPrompt.prompt();
+                const { outcome } = await deferredPWAPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPWAPrompt = null;
+                }
+                updatePWAInstallButtonState();
+                return;
+            }
+
+            // Deteksi platform untuk panduan instalasi interaktif jika prompt otomatis belum aktif
+            const ua = navigator.userAgent || '';
+            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+            const isAndroid = /Android/.test(ua);
+            const isFileProtocol = location.protocol === 'file:';
+
+            let guideHtml = '';
+            if (isFileProtocol) {
+                guideHtml = `
+                    <div class="text-left text-xs space-y-2.5 text-gray-600 dark:text-gray-300">
+                        <div class="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200">
+                            <i class="fa-solid fa-circle-info mr-1"></i> File saat ini dibuka langsung via <b>file://</b>. Agar tombol <b>Install PWA 1-Klik</b> & mode Offline aktif penuh, jalankan melalui server lokal (mis. <b>Live Server</b> / hosting HTTPS).
+                        </div>
+                        <p class="font-semibold text-gray-800 dark:text-gray-100">Cara Cepat Buat Pintasan Aplikasi Sekarang:</p>
+                        <ol class="list-decimal pl-4 space-y-1">
+                            <li>Klik menu <b>Titik Tiga (⋮)</b> di pojok kanan atas browser Chrome / Edge.</li>
+                            <li>Pilih <b>Simpan dan Bagikan (Save and Share)</b> &rarr; <b>Buat Pintasan (Create Shortcut)</b>.</li>
+                            <li>Centang <b>"Buka sebagai jendela (Open as window)"</b> lalu klik <b>Buat</b>.</li>
+                        </ol>
+                    </div>
+                `;
+            } else if (isIOS) {
+                guideHtml = `
+                    <div class="text-left text-xs space-y-2 text-gray-600 dark:text-gray-300">
+                        <p class="font-semibold text-gray-800 dark:text-gray-100">Cara Install di iPhone / iPad (Safari):</p>
+                        <ol class="list-decimal pl-4 space-y-1.5">
+                            <li>Ketuk tombol <b>Bagikan (Share)</b> <i class="fa-solid fa-arrow-up-from-bracket text-blue-500"></i> di bilah bawah Safari.</li>
+                            <li>Geser ke bawah dan pilih <b>"Tambah ke Layar Utama" (Add to Home Screen)</b> <i class="fa-regular fa-square-plus text-blue-500"></i>.</li>
+                            <li>Ketuk <b>Tambah (Add)</b> di pojok kanan atas.</li>
+                        </ol>
+                    </div>
+                `;
+            } else if (isAndroid) {
+                guideHtml = `
+                    <div class="text-left text-xs space-y-2 text-gray-600 dark:text-gray-300">
+                        <p class="font-semibold text-gray-800 dark:text-gray-100">Cara Install di HP Android (Chrome):</p>
+                        <ol class="list-decimal pl-4 space-y-1.5">
+                            <li>Ketuk ikon <b>Titik Tiga (⋮)</b> di pojok kanan atas Chrome.</li>
+                            <li>Pilih <b>"Instal aplikasi" (Install app)</b> atau <b>"Tambahkan ke Layar utama"</b>.</li>
+                            <li>Konfirmasi dengan mengetuk <b>Instal</b>.</li>
+                        </ol>
+                    </div>
+                `;
+            } else {
+                guideHtml = `
+                    <div class="text-left text-xs space-y-2 text-gray-600 dark:text-gray-300">
+                        <p class="font-semibold text-gray-800 dark:text-gray-100">Cara Install di Komputer / Laptop (Chrome & Edge):</p>
+                        <ol class="list-decimal pl-4 space-y-1.5">
+                            <li>Klik ikon <b>Install <i class="fa-solid fa-download text-blue-500"></i></b> di sisi kanan kolom alamat (Address Bar), <i>atau</i></li>
+                            <li>Klik menu <b>Titik Tiga (⋮)</b> &rarr; <b>Simpan dan Bagikan</b> &rarr; <b>Instal Analisa Penjualan SBR...</b></li>
+                        </ol>
+                    </div>
+                `;
+            }
+
+            Swal.fire({
+                title: 'Install Aplikasi SBR Putra Food',
+                html: guideHtml,
+                icon: 'info',
+                confirmButtonText: 'Mengerti',
+                confirmButtonColor: '#2563eb'
+            });
+        }
+
+        window.onload = async () => { 
+            initPWA();
+            const today = new Date();
+            
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const startYear = firstDay.getFullYear();
+            const startMonth = String(firstDay.getMonth() + 1).padStart(2, '0');
+            const startDate = String(firstDay.getDate()).padStart(2, '0');
+            document.getElementById('filterStartDate').value = `${startYear}-${startMonth}-${startDate}`;
+
+            const endYear = today.getFullYear();
+            const endMonth = String(today.getMonth() + 1).padStart(2, '0');
+            const endDate = String(today.getDate()).padStart(2, '0');
+            document.getElementById('filterEndDate').value = `${endYear}-${endMonth}-${endDate}`;
+
+            await fetchAgentList(); 
+            fetchData(); 
+        };
+    </script>
+</body>
+</html>
