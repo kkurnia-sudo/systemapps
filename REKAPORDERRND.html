@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistem Manajemen Order - SBR Putra Food</title>
+    <title>Sistem Manajemen Order v4.5 - SBR Putra Food</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1555,6 +1555,62 @@
             font-weight: 600;
         }
 
+        .badge-ratio {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--primary-ring);
+            white-space: nowrap;
+        }
+
+        .master-barang-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: var(--input-bg);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px dashed var(--border);
+        }
+
+        .rasio-hint-text {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: 6px;
+            margin-left: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-lock-toggle {
+            height: 38px;
+            width: 36px;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--card-bg);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-lock-toggle:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -1840,7 +1896,7 @@
                 </div>
                 <div class="brand-title-wrap">
                     <h1>Dashboard Order</h1>
-                    <span>SBR Putra Food • Firebase</span>
+                    <span>SBR Putra Food • Firebase (v4.5)</span>
                 </div>
             </div>
 
@@ -2025,16 +2081,22 @@
 
                             <div class="item-builder-inputs">
                                 <div class="qty-wrapper">
-                                    <input type="number" id="inputUnit" class="form-control" placeholder="0"
+                                    <input type="number" id="inputUnit" class="form-control" placeholder="0" min="0" step="any"
                                         oninput="hitungBall()">
                                     <span class="qty-unit-tag" id="labelUnit">Dus</span>
                                 </div>
 
                                 <div class="qty-wrapper">
-                                    <input type="number" id="inputBall" class="form-control" placeholder="0" readonly
-                                        style="background:var(--table-hover); cursor:not-allowed;">
-                                    <span class="qty-unit-tag">Ball</span>
+                                    <input type="number" id="inputBall" class="form-control" placeholder="0" step="any" readonly
+                                        style="background:var(--table-hover); cursor:not-allowed;" title="Dihitung otomatis (klik ikon gembok untuk edit manual)">
+                                    <span class="qty-unit-tag" id="labelBall">Ball</span>
                                 </div>
+
+                                <button type="button" id="btnLockInputBall" class="btn-lock-toggle" 
+                                    onclick="toggleBallInputLock('inputBall', 'btnLockInputBall')" 
+                                    title="Kunci / Buka input Ball manual">
+                                    🔒
+                                </button>
 
                                 <button type="button" class="btn btn-outline" style="padding: 10px 14px;"
                                     onclick="addBarangToList()" title="Tambah Barang">
@@ -2042,6 +2104,7 @@
                                 </button>
                             </div>
                         </div>
+                        <div id="rasioHint" class="rasio-hint-text" style="display: none;"></div>
 
                         <div class="item-list-box" id="listBarangBox">
                             <em style="font-size: 12px; color: var(--text-muted);">Belum ada barang ditambahkan</em>
@@ -2351,6 +2414,38 @@
                             placeholder="Tautan Google Maps default (Opsional, cth: https://maps.app.goo.gl/...)"
                             onkeydown="if(event.key==='Enter') simpanDataMaster()">
                     </div>
+
+                    <!-- Khusus Tab Barang: Pengaturan Satuan & Pengkali -->
+                    <div id="masterBarangRow" style="display: none;">
+                        <div class="master-barang-inputs">
+                            <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-main);">
+                                <span>1</span>
+                                <select id="inputMasterSatuan" class="form-control" style="padding: 4px 8px; font-size: 12px; height: 32px; width: 85px;" onchange="updateMasterPreviewText()">
+                                    <option value="Dus">Dus</option>
+                                    <option value="Krg">Krg</option>
+                                    <option value="Karton">Karton</option>
+                                    <option value="Pack">Pack</option>
+                                    <option value="Bal">Bal</option>
+                                    <option value="Pcs">Pcs</option>
+                                </select>
+                                <span>=</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <input type="number" id="inputMasterMultiplier" class="form-control" value="7" min="1" step="any"
+                                    style="padding: 4px 8px; font-size: 12px; height: 32px; width: 70px;" placeholder="Angka"
+                                    oninput="updateMasterPreviewText()" onkeydown="if(event.key==='Enter') simpanDataMaster()">
+                                <select id="inputMasterSatuanTurunan" class="form-control" style="padding: 4px 8px; font-size: 12px; height: 32px; width: 80px;" onchange="updateMasterPreviewText()">
+                                    <option value="Ball">Ball</option>
+                                    <option value="Pcs">Pcs</option>
+                                    <option value="Bks">Bks</option>
+                                    <option value="Kg">Kg</option>
+                                </select>
+                            </div>
+                            <div id="masterBarangPreview" style="font-size: 11px; color: var(--primary); font-weight: 700; white-space: nowrap; margin-left: auto;">
+                                (1 Dus = 7 Ball)
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; margin-bottom: 2px;">
@@ -2469,21 +2564,28 @@
 
                         <div class="item-builder-inputs">
                             <div class="qty-wrapper">
-                                <input type="number" id="editInputUnit" class="form-control" placeholder="0"
+                                <input type="number" id="editInputUnit" class="form-control" placeholder="0" min="0" step="any"
                                     oninput="hitungEditBall()">
                                 <span class="qty-unit-tag" id="editLabelUnit">Dus</span>
                             </div>
 
                             <div class="qty-wrapper">
-                                <input type="number" id="editInputBall" class="form-control" placeholder="0" readonly
-                                    style="background:var(--table-hover); cursor:not-allowed;">
-                                <span class="qty-unit-tag">Ball</span>
+                                <input type="number" id="editInputBall" class="form-control" placeholder="0" step="any" readonly
+                                    style="background:var(--table-hover); cursor:not-allowed;" title="Dihitung otomatis (klik ikon gembok untuk edit manual)">
+                                <span class="qty-unit-tag" id="editLabelBall">Ball</span>
                             </div>
 
+                            <button type="button" id="btnLockEditBall" class="btn-lock-toggle" 
+                                onclick="toggleBallInputLock('editInputBall', 'btnLockEditBall')" 
+                                title="Kunci / Buka input Ball manual">
+                                🔒
+                            </button>
+
                             <button type="button" class="btn btn-outline" style="padding: 10px 14px;"
-                                onclick="addBarangToEditList()">+</button>
+                                onclick="addBarangToEditList()" title="Tambah Barang">+</button>
                         </div>
                     </div>
+                    <div id="editRasioHint" class="rasio-hint-text" style="display: none;"></div>
 
                     <div class="item-list-box" id="editListBarangBox">
                         <em style="font-size: 11px; color: var(--text-muted);">Belum ada barang</em>
@@ -2588,7 +2690,13 @@
         let masterData = {
             kepada: ["Lampung - Yeyen", "Pontianak - Devin", "Banjarmasin - Mekar Mulia", "Medan - Acc", "Samarinda - Sumber Lancar", "Makassar - Hansen", "Bangka - Acong"],
             lokasi: ["Gudang Utama", "Marunda", "Menunggu Konfirmasi"],
-            barang: ["Aromanis", "Basreng Merah (K)", "Basreng Ori (K)", "Basreng Merah (D)", "Basreng Ori (D)"]
+            barang: [
+                { nama: "Aromanis", satuan: "Dus", multiplier: 7, satuanTurunan: "Ball" },
+                { nama: "Basreng Merah (K)", satuan: "Krg", multiplier: 12, satuanTurunan: "Ball" },
+                { nama: "Basreng Ori (K)", satuan: "Krg", multiplier: 12, satuanTurunan: "Ball" },
+                { nama: "Basreng Merah (D)", satuan: "Dus", multiplier: 7, satuanTurunan: "Ball" },
+                { nama: "Basreng Ori (D)", satuan: "Dus", multiplier: 7, satuanTurunan: "Ball" }
+            ]
         };
         let currentMasterTab = 'kepada';
 
@@ -2877,6 +2985,29 @@
                 return { nama: item.nama || '', maps: item.maps || '' };
             }
             return parseLokasi(item);
+        }
+
+        function getMasterBarangObj(item) {
+            if (!item) return { nama: '', satuan: 'Dus', multiplier: 7, satuanTurunan: 'Ball' };
+            if (typeof item === 'object') {
+                const nama = (item.nama || '').trim();
+                const satuan = (item.satuan || (nama.includes('(K)') ? 'Krg' : 'Dus')).trim();
+                let multiplier = parseFloat(item.multiplier);
+                if (isNaN(multiplier) || multiplier <= 0) {
+                    multiplier = (satuan.toLowerCase() === 'krg' || nama.includes('(K)')) ? 12 : 7;
+                }
+                const satuanTurunan = (item.satuanTurunan || 'Ball').trim();
+                return { nama, satuan, multiplier, satuanTurunan };
+            }
+            // Backward compatibility untuk data lama yang masih berupa string
+            const str = String(item).trim();
+            const isKrg = str.includes('(K)');
+            return {
+                nama: str,
+                satuan: isKrg ? 'Krg' : 'Dus',
+                multiplier: isKrg ? 12 : 7,
+                satuanTurunan: 'Ball'
+            };
         }
 
         function onMapsInputTyped(inputId, testLinkId, iconBtnId) {
@@ -3201,14 +3332,26 @@
                 const nameB = typeof b === 'object' ? b.nama : b;
                 return nameA.localeCompare(nameB);
             });
-            masterData.barang.sort((a, b) => a.localeCompare(b));
+            masterData.barang.sort((a, b) => {
+                const objA = getMasterBarangObj(a);
+                const objB = getMasterBarangObj(b);
+                return objA.nama.localeCompare(objB.nama);
+            });
         }
 
         function loadDataFromLocalStorage() {
             const savedData = localStorage.getItem('sbr_master_data');
             if (savedData) {
                 try {
-                    masterData = JSON.parse(savedData);
+                    const parsed = JSON.parse(savedData);
+                    if (parsed && typeof parsed === 'object') {
+                        if (Array.isArray(parsed.kepada)) masterData.kepada = parsed.kepada;
+                        if (Array.isArray(parsed.lokasi)) masterData.lokasi = parsed.lokasi;
+                        if (Array.isArray(parsed.barang)) {
+                            // Konversi item master barang menjadi format objek
+                            masterData.barang = parsed.barang.map(b => getMasterBarangObj(b));
+                        }
+                    }
                 } catch (e) {
                     console.error("Gagal parse master data:", e);
                 }
@@ -3225,9 +3368,7 @@
         function populateDropdowns() {
             const selectsStandard = [
                 { id: 'inputKepada', data: masterData.kepada, placeholder: '-- Pilih Pembeli --' },
-                { id: 'editKepada', data: masterData.kepada, placeholder: '-- Pembeli --' },
-                { id: 'pilihBarang', data: masterData.barang, placeholder: '-- Pilih Barang --' },
-                { id: 'editPilihBarang', data: masterData.barang, placeholder: '-- Pilih Barang --' }
+                { id: 'editKepada', data: masterData.kepada, placeholder: '-- Pembeli --' }
             ];
 
             selectsStandard.forEach(sel => {
@@ -3262,6 +3403,27 @@
                 }
             });
 
+            const selectsBarang = [
+                { id: 'pilihBarang', placeholder: '-- Pilih Barang --' },
+                { id: 'editPilihBarang', placeholder: '-- Pilih Barang --' }
+            ];
+
+            selectsBarang.forEach(sel => {
+                const el = document.getElementById(sel.id);
+                if (el) {
+                    const currentVal = el.value;
+                    el.innerHTML = `<option value="">${sel.placeholder}</option>`;
+                    masterData.barang.forEach(item => {
+                        const obj = getMasterBarangObj(item);
+                        const displayLabel = `${obj.nama} (1 ${obj.satuan} = ${obj.multiplier} ${obj.satuanTurunan})`;
+                        el.innerHTML += `<option value="${escapeHtml(obj.nama)}" data-satuan="${escapeHtml(obj.satuan)}" data-multiplier="${obj.multiplier}" data-turunan="${escapeHtml(obj.satuanTurunan)}">${escapeHtml(displayLabel)}</option>`;
+                    });
+                    if (currentVal && masterData.barang.some(b => getMasterBarangObj(b).nama === currentVal)) {
+                        el.value = currentVal;
+                    }
+                }
+            });
+
             updateQtyUI();
         }
 
@@ -3278,19 +3440,34 @@
             document.getElementById('tab-' + tabName).classList.add('active');
 
             const mapsRow = document.getElementById('masterMapsRow');
+            const barangRow = document.getElementById('masterBarangRow');
             const inputBaru = document.getElementById('inputMasterBaru');
 
             if (tabName === 'lokasi') {
                 inputBaru.placeholder = 'Nama Lokasi baru (cth: Marunda)...';
                 if (mapsRow) mapsRow.style.display = 'block';
-            } else if (tabName === 'kepada') {
+                if (barangRow) barangRow.style.display = 'none';
+            } else if (tabName === 'barang') {
+                inputBaru.placeholder = 'Nama Barang baru (cth: Aromanis / Basreng Pedas)...';
+                if (mapsRow) mapsRow.style.display = 'none';
+                if (barangRow) barangRow.style.display = 'block';
+                updateMasterPreviewText();
+            } else {
                 inputBaru.placeholder = 'Nama Pembeli baru (cth: Lampung - Yeyen)...';
                 if (mapsRow) mapsRow.style.display = 'none';
-            } else {
-                inputBaru.placeholder = 'Nama Barang baru (cth: Basreng Pedas)...';
-                if (mapsRow) mapsRow.style.display = 'none';
+                if (barangRow) barangRow.style.display = 'none';
             }
             renderMasterList();
+        }
+
+        function updateMasterPreviewText() {
+            const sUtama = document.getElementById('inputMasterSatuan')?.value || 'Dus';
+            const mult = document.getElementById('inputMasterMultiplier')?.value || '1';
+            const sTurun = document.getElementById('inputMasterSatuanTurunan')?.value || 'Ball';
+            const preview = document.getElementById('masterBarangPreview');
+            if (preview) {
+                preview.innerText = `(1 ${sUtama} = ${mult} ${sTurun})`;
+            }
         }
 
         function renderMasterList() {
@@ -3348,9 +3525,57 @@
                                 </div>
                             </li>
                         `;
+                    } else if (currentMasterTab === 'barang') {
+                        const obj = getMasterBarangObj(item);
+                        listEl.innerHTML += `
+                            <li class="master-item-editing" id="masterRowEditing">
+                                <div class="master-inline-edit-wrap">
+                                    <div class="master-inline-edit-header">
+                                        <span>✏️ Revisi Barang & Rasio Pengkali:</span>
+                                        <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">Tekan Enter (Simpan) / Esc (Batal)</span>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <input type="text" id="inlineEditNama" class="form-control" 
+                                               value="${escapeHtml(obj.nama)}" placeholder="Nama Barang..." 
+                                               style="font-size: 13px;"
+                                               onkeydown="handleMasterEditKey(event, ${index})">
+                                        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; background: var(--bg-card); padding: 6px 8px; border-radius: var(--radius-sm); border: 1px dashed var(--border);">
+                                            <span style="font-size: 11.5px; font-weight: 700;">1</span>
+                                            <select id="inlineEditSatuan" class="form-control" style="font-size: 12px; width: 85px; padding: 4px 6px; height: 32px;">
+                                                <option value="Dus" ${obj.satuan === 'Dus' ? 'selected' : ''}>Dus</option>
+                                                <option value="Krg" ${obj.satuan === 'Krg' ? 'selected' : ''}>Krg</option>
+                                                <option value="Karton" ${obj.satuan === 'Karton' ? 'selected' : ''}>Karton</option>
+                                                <option value="Pack" ${obj.satuan === 'Pack' ? 'selected' : ''}>Pack</option>
+                                                <option value="Bal" ${obj.satuan === 'Bal' ? 'selected' : ''}>Bal</option>
+                                                <option value="Pcs" ${obj.satuan === 'Pcs' ? 'selected' : ''}>Pcs</option>
+                                            </select>
+                                            <span style="font-size: 11.5px; font-weight: 700;">=</span>
+                                            <input type="number" id="inlineEditMultiplier" class="form-control" 
+                                                   value="${obj.multiplier}" min="1" step="any"
+                                                   placeholder="Angka" 
+                                                   style="font-size: 12px; width: 70px; padding: 4px 6px; height: 32px;"
+                                                   onkeydown="handleMasterEditKey(event, ${index})">
+                                            <select id="inlineEditSatuanTurunan" class="form-control" style="font-size: 12px; width: 80px; padding: 4px 6px; height: 32px;">
+                                                <option value="Ball" ${obj.satuanTurunan === 'Ball' ? 'selected' : ''}>Ball</option>
+                                                <option value="Pcs" ${obj.satuanTurunan === 'Pcs' ? 'selected' : ''}>Pcs</option>
+                                                <option value="Bks" ${obj.satuanTurunan === 'Bks' ? 'selected' : ''}>Bks</option>
+                                                <option value="Kg" ${obj.satuanTurunan === 'Kg' ? 'selected' : ''}>Kg</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="master-inline-edit-btns">
+                                        <button type="button" class="btn btn-outline btn-xs" onclick="batalEditMaster()">Batal</button>
+                                        <button type="button" class="btn btn-primary btn-xs" onclick="simpanEditMaster(${index})">
+                                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                            Simpan
+                                        </button>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
                     } else {
                         const valText = typeof item === 'object' ? item.nama : item;
-                        const labelTitle = currentMasterTab === 'kepada' ? 'Pembeli' : 'Barang';
+                        const labelTitle = 'Pembeli';
                         listEl.innerHTML += `
                             <li class="master-item-editing" id="masterRowEditing">
                                 <div class="master-inline-edit-wrap">
@@ -3398,6 +3623,27 @@
                                         <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </button>
                                     <button type="button" class="btn-master-action btn-master-delete" onclick="hapusDataMaster(${index})" title="Hapus Lokasi ini">
+                                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </li>
+                        `;
+                    } else if (currentMasterTab === 'barang') {
+                        const obj = getMasterBarangObj(item);
+                        listEl.innerHTML += `
+                            <li>
+                                <div class="master-item-info" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span class="master-item-name">${escapeHtml(obj.nama)}</span>
+                                    <span class="badge-ratio" title="Rasio Pengkali">
+                                        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                        1 ${escapeHtml(obj.satuan)} = ${obj.multiplier} ${escapeHtml(obj.satuanTurunan)}
+                                    </span>
+                                </div>
+                                <div class="master-item-actions">
+                                    <button type="button" class="btn-master-action" onclick="editDataMaster(${index})" title="Edit / Revisi Barang & Pengkali">
+                                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                    <button type="button" class="btn-master-action btn-master-delete" onclick="hapusDataMaster(${index})" title="Hapus Barang ini">
                                         <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </div>
@@ -3484,6 +3730,38 @@
                     nama: newNama,
                     maps: newMaps
                 };
+            } else if (currentMasterTab === 'barang') {
+                const exists = masterData.barang.some((item, idx) => {
+                    if (idx === index) return false;
+                    const obj = getMasterBarangObj(item);
+                    return obj.nama.toLowerCase() === newNama.toLowerCase();
+                });
+                if (exists) {
+                    showToast(`Barang "${newNama}" sudah ada di data master!`, 'warning');
+                    inputNama.focus();
+                    return;
+                }
+
+                const satuanEl = document.getElementById('inlineEditSatuan');
+                const multEl = document.getElementById('inlineEditMultiplier');
+                const turunanEl = document.getElementById('inlineEditSatuanTurunan');
+
+                const editSatuan = satuanEl ? satuanEl.value.trim() : 'Dus';
+                const editMult = multEl ? (parseFloat(multEl.value) || 1) : 7;
+                const editTurunan = turunanEl ? turunanEl.value.trim() : 'Ball';
+
+                if (editMult <= 0) {
+                    showToast('Angka pengkali harus lebih dari 0!', 'warning');
+                    if (multEl) multEl.focus();
+                    return;
+                }
+
+                masterData.barang[index] = {
+                    nama: newNama,
+                    satuan: editSatuan,
+                    multiplier: editMult,
+                    satuanTurunan: editTurunan
+                };
             } else {
                 const exists = masterData[currentMasterTab].some((item, idx) => {
                     if (idx === index) return false;
@@ -3534,6 +3812,41 @@
 
                 input.value = '';
                 mapsInput.value = '';
+            } else if (currentMasterTab === 'barang') {
+                const exists = masterData.barang.some(item => {
+                    const obj = getMasterBarangObj(item);
+                    return obj.nama.toLowerCase() === namaVal.toLowerCase();
+                });
+                if (exists) {
+                    showToast(`Barang "${namaVal}" sudah ada di data master!`, 'warning');
+                    input.focus();
+                    return;
+                }
+
+                const satuanEl = document.getElementById('inputMasterSatuan');
+                const multEl = document.getElementById('inputMasterMultiplier');
+                const turunanEl = document.getElementById('inputMasterSatuanTurunan');
+
+                const satuanVal = satuanEl ? satuanEl.value.trim() : 'Dus';
+                const multVal = multEl ? (parseFloat(multEl.value) || 1) : 7;
+                const turunanVal = turunanEl ? turunanEl.value.trim() : 'Ball';
+
+                if (multVal <= 0) {
+                    showToast('Angka pengkali harus lebih dari 0!', 'warning');
+                    if (multEl) multEl.focus();
+                    return;
+                }
+
+                masterData.barang.push({
+                    nama: namaVal,
+                    satuan: satuanVal,
+                    multiplier: multVal,
+                    satuanTurunan: turunanVal
+                });
+
+                input.value = '';
+                if (multEl) multEl.value = '7';
+                updateMasterPreviewText();
             } else {
                 const exists = masterData[currentMasterTab].some(item => {
                     const text = typeof item === 'object' ? item.nama : item;
@@ -3582,22 +3895,77 @@
         };
 
         function getMultiplierAndUnit(itemName) {
-            if (!itemName) return { unit: 'Dus', multiplier: 0 };
-            if (itemName.includes('(K)')) return { unit: 'Krg', multiplier: 12 };
-            return { unit: 'Dus', multiplier: 7 };
+            if (!itemName) return { unit: 'Dus', multiplier: 0, satuanTurunan: 'Ball' };
+            const found = masterData.barang.find(item => {
+                const obj = getMasterBarangObj(item);
+                return obj.nama.toLowerCase() === itemName.trim().toLowerCase();
+            });
+
+            if (found) {
+                const obj = getMasterBarangObj(found);
+                return {
+                    unit: obj.satuan || 'Dus',
+                    multiplier: obj.multiplier || 7,
+                    satuanTurunan: obj.satuanTurunan || 'Ball'
+                };
+            }
+
+            if (itemName.includes('(K)')) return { unit: 'Krg', multiplier: 12, satuanTurunan: 'Ball' };
+            return { unit: 'Dus', multiplier: 7, satuanTurunan: 'Ball' };
+        }
+
+        function toggleBallInputLock(inputId, btnId) {
+            const el = document.getElementById(inputId);
+            const btn = document.getElementById(btnId);
+            if (!el || !btn) return;
+            if (el.readOnly) {
+                el.readOnly = false;
+                el.style.background = 'var(--card-bg)';
+                el.style.cursor = 'text';
+                btn.innerText = '🔓';
+                btn.title = 'Input Ball manual aktif. Klik untuk mengunci kembali ke hitung otomatis.';
+                showToast('Kolom Ball dapat diedit manual', 'info');
+                el.focus();
+            } else {
+                el.readOnly = true;
+                el.style.background = 'var(--table-hover)';
+                el.style.cursor = 'not-allowed';
+                btn.innerText = '🔒';
+                btn.title = 'Kunci / Buka input Ball manual';
+                if (inputId === 'inputBall') hitungBall();
+                if (inputId === 'editInputBall') hitungEditBall();
+                showToast('Kolom Ball kembali dihitung otomatis', 'info');
+            }
         }
 
         function updateQtyUI() {
-            const info = getMultiplierAndUnit(document.getElementById('pilihBarang').value);
-            document.getElementById('labelUnit').innerText = info.unit;
+            const val = document.getElementById('pilihBarang').value;
+            const info = getMultiplierAndUnit(val);
+            const labelUnit = document.getElementById('labelUnit');
+            const labelBall = document.getElementById('labelBall');
+            if (labelUnit) labelUnit.innerText = info.unit;
+            if (labelBall) labelBall.innerText = info.satuanTurunan || 'Ball';
+
+            const hintEl = document.getElementById('rasioHint');
+            if (hintEl) {
+                if (val && info.multiplier > 0) {
+                    hintEl.innerHTML = `<span>💡 1 ${info.unit} = ${info.multiplier} ${info.satuanTurunan || 'Ball'}</span>`;
+                    hintEl.style.display = 'flex';
+                } else {
+                    hintEl.style.display = 'none';
+                }
+            }
             hitungBall();
         }
 
         function hitungBall() {
+            const elBall = document.getElementById('inputBall');
+            if (elBall && !elBall.readOnly) return;
             const unitVal = parseFloat(document.getElementById('inputUnit').value) || 0;
             const info = getMultiplierAndUnit(document.getElementById('pilihBarang').value);
             const totalBall = unitVal * info.multiplier;
-            document.getElementById('inputBall').value = totalBall > 0 ? totalBall : '';
+            const formatted = Math.round(totalBall * 100) / 100;
+            if (elBall) elBall.value = formatted > 0 ? formatted : '';
         }
 
         function addBarangToList() {
@@ -3611,7 +3979,9 @@
             }
 
             const info = getMultiplierAndUnit(nama);
-            tempItems.push(`${unitVal} ${info.unit} (${ballVal} Ball) - ${nama}`);
+            const turunan = info.satuanTurunan || 'Ball';
+            const displayBall = ballVal ? ballVal : (parseFloat(unitVal) * info.multiplier);
+            tempItems.push(`${unitVal} ${info.unit} (${displayBall} ${turunan}) - ${nama}`);
 
             document.getElementById('pilihBarang').value = '';
             document.getElementById('inputUnit').value = '';
@@ -3643,16 +4013,33 @@
         }
 
         function updateEditQtyUI() {
-            const info = getMultiplierAndUnit(document.getElementById('editPilihBarang').value);
-            document.getElementById('editLabelUnit').innerText = info.unit;
+            const val = document.getElementById('editPilihBarang').value;
+            const info = getMultiplierAndUnit(val);
+            const editLabelUnit = document.getElementById('editLabelUnit');
+            const editLabelBall = document.getElementById('editLabelBall');
+            if (editLabelUnit) editLabelUnit.innerText = info.unit;
+            if (editLabelBall) editLabelBall.innerText = info.satuanTurunan || 'Ball';
+
+            const hintEl = document.getElementById('editRasioHint');
+            if (hintEl) {
+                if (val && info.multiplier > 0) {
+                    hintEl.innerHTML = `<span>💡 1 ${info.unit} = ${info.multiplier} ${info.satuanTurunan || 'Ball'}</span>`;
+                    hintEl.style.display = 'flex';
+                } else {
+                    hintEl.style.display = 'none';
+                }
+            }
             hitungEditBall();
         }
 
         function hitungEditBall() {
+            const elBall = document.getElementById('editInputBall');
+            if (elBall && !elBall.readOnly) return;
             const unitVal = parseFloat(document.getElementById('editInputUnit').value) || 0;
             const info = getMultiplierAndUnit(document.getElementById('editPilihBarang').value);
             const totalBall = unitVal * info.multiplier;
-            document.getElementById('editInputBall').value = totalBall > 0 ? totalBall : '';
+            const formatted = Math.round(totalBall * 100) / 100;
+            if (elBall) elBall.value = formatted > 0 ? formatted : '';
         }
 
         function addBarangToEditList() {
@@ -3666,7 +4053,9 @@
             }
 
             const info = getMultiplierAndUnit(nama);
-            tempEditItems.push(`${unitVal} ${info.unit} (${ballVal} Ball) - ${nama}`);
+            const turunan = info.satuanTurunan || 'Ball';
+            const displayBall = ballVal ? ballVal : (parseFloat(unitVal) * info.multiplier);
+            tempEditItems.push(`${unitVal} ${info.unit} (${displayBall} ${turunan}) - ${nama}`);
 
             document.getElementById('editPilihBarang').value = '';
             document.getElementById('editInputUnit').value = '';
