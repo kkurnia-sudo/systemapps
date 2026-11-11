@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBR Putra Food - Logistik & Gaji V8.3</title>
+    <title>SBR Putra Food - Logistik & Gaji V8.4</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -405,14 +405,16 @@
         html[data-theme="calm"] .bg-rose-50:not(#kertasSlip *) { background-color: #fbf0f0 !important; }
 
         /* ========================================================
-           KERTAS STRUK SLIP GAJI: TETAP PUTIH ASLI STANDAR THERMAL
+           KERTAS STRUK SLIP GAJI & KASBON: TETAP PUTIH ASLI STANDAR THERMAL
            ======================================================== */
-        #kertasSlip {
+        #kertasSlip,
+        #kertasSlipKasbon {
             background-color: #ffffff !important;
             color: #000000 !important;
         }
 
-        #kertasSlip * {
+        #kertasSlip *,
+        #kertasSlipKasbon * {
             color: inherit !important;
             border-color: #9ca3af !important;
         }
@@ -432,7 +434,7 @@
                     </div>
                     <div>
                         <h1 class="text-xl font-extrabold text-gray-900 tracking-tight leading-tight">SBR Putra Food</h1>
-                        <p class="text-xs font-semibold text-indigo-600 tracking-wide uppercase">Distribusi Aromanis V8.3
+                        <p class="text-xs font-semibold text-indigo-600 tracking-wide uppercase">Distribusi Aromanis V8.4
                         </p>
                     </div>
                 </div>
@@ -1050,21 +1052,52 @@
 
             <!-- SUB MENU: RIWAYAT KASBON KARYAWAN -->
             <div id="subRiwayatKasbon" class="hidden">
+                <!-- Banner Ringkasan & Pintasan Kelola Kasbon -->
+                <div class="bg-gradient-to-r from-rose-50 via-white to-pink-50 p-4 rounded-2xl border border-rose-100 shadow-2xs mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                        <div>
+                            <div class="text-[11px] font-extrabold text-rose-700 uppercase tracking-wider">Total Utang Kasbon Aktif (Semua Karyawan)</div>
+                            <div class="flex items-baseline gap-2 mt-0.5">
+                                <span id="kpiTotalSaldoKasbonAktif" class="text-lg font-black text-gray-900">Rp 0</span>
+                                <span id="kpiJumlahKaryawanKasbon" class="text-[11px] font-bold text-rose-600 bg-rose-100/80 px-2 py-0.5 rounded-full border border-rose-200">0 Karyawan</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="bukaModalKelolaKasbon(document.getElementById('riwayatKasbonKaryawan')?.value || null)"
+                        class="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 active:scale-95 text-white font-extrabold rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 transition">
+                        <i class="fa-solid fa-wallet"></i> + Input / Kelola Kasbon
+                    </button>
+                </div>
+
                 <div
-                    class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4 flex flex-col md:flex-row items-end gap-3">
-                    <div class="w-full md:w-64">
+                    class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4 flex flex-col md:flex-row items-end gap-3 flex-wrap">
+                    <div class="w-full md:w-56">
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Pilih
                             Karyawan</label>
                         <select id="riwayatKasbonKaryawan" onchange="loadRiwayatKasbon(1)"
-                            class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none font-bold text-gray-800 bg-gray-50 focus:ring-2 focus:ring-rose-500 text-sm">
+                            class="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none font-bold text-gray-800 bg-gray-50 focus:ring-2 focus:ring-rose-500 text-sm">
                             <option value="">Semua Karyawan</option>
                         </select>
                     </div>
-                    <div class="w-full md:w-56">
+                    <div class="w-full md:w-48">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Jenis
+                            Transaksi</label>
+                        <select id="riwayatKasbonJenis" onchange="loadRiwayatKasbon(1)"
+                            class="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none font-bold text-gray-800 bg-gray-50 focus:ring-2 focus:ring-rose-500 text-sm">
+                            <option value="semua">Semua Transaksi</option>
+                            <option value="pinjam">Pinjaman Baru (+)</option>
+                            <option value="bayar">Bayar / Potong Gaji (-)</option>
+                            <option value="koreksi">Koreksi Saldo (=)</option>
+                        </select>
+                    </div>
+                    <div class="w-full md:w-48">
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Bulan
                             Kasbon</label>
                         <input type="month" id="riwayatKasbonBulan" onchange="loadRiwayatKasbon(1)"
-                            class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none font-medium bg-gray-50 focus:ring-2 focus:ring-rose-500 text-sm">
+                            class="w-full px-3.5 py-2 border border-gray-200 rounded-lg outline-none font-medium bg-gray-50 focus:ring-2 focus:ring-rose-500 text-sm">
                     </div>
                     <div class="flex items-center gap-2 w-full md:w-auto">
                         <button type="button" onclick="loadRiwayatKasbon(1)"
@@ -1073,7 +1106,7 @@
                         </button>
                         <button type="button" onclick="resetFilterRiwayatKasbon()"
                             class="bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold px-3.5 py-2 rounded-lg active:scale-95 smooth-transition h-[42px] flex items-center justify-center text-xs">
-                            Semua
+                            Reset
                         </button>
                     </div>
                 </div>
@@ -1534,7 +1567,7 @@
                         class="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl border border-emerald-200 text-xs flex items-center justify-center gap-1.5 transition shadow-sm active:scale-95">
                         <i class="fa-solid fa-file-arrow-down"></i> Simpan PNG
                     </button>
-                    <button type="button" id="btnCetakSlipKasbon" onclick="cetakSlipKasbonBluetooth()"
+                    <button type="button" id="btnCetakSlipKasbon" onclick="bukaModalPilihanCetakBT('kasbon')"
                         class="px-3 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm active:scale-95">
                         <i class="fa-solid fa-print"></i> Cetak Bluetooth
                     </button>
@@ -1547,25 +1580,180 @@
         </div>
     </div>
 
+    <!-- MODAL PILIHAN MODE CETAK BLUETOOTH (3 UKURAN KERTAS SESUAI STANDAR) -->
+    <div id="modalPilihanCetakKasbonBT" onclick="if(event.target === this) tutupModalPilihanCetakKasbonBT()"
+        class="no-print fixed inset-0 z-[120] hidden bg-black/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-2xl space-y-3 border border-gray-100 animate-fadeIn">
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-full bg-stone-900 text-sky-400 flex items-center justify-center shrink-0 shadow-sm">
+                        <i class="fa-solid fa-print text-sm"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-bold text-sm text-gray-900">Pilih Mode Cetak Bluetooth</h3>
+                        <p class="text-[11px] text-gray-500">Pilih sesuai ukuran kertas &amp; printer yang digunakan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="tutupModalPilihanCetakKasbonBT()"
+                    class="w-7 h-7 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-700 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="space-y-2.5">
+                <!-- Pilihan 1: Kertas 58mm -->
+                <button type="button" onclick="eksekusiPilihanCetakBT('58mm')"
+                    class="w-full p-3 rounded-xl border-2 border-stone-200 hover:border-[#ba5d4f] hover:bg-stone-50 text-left flex items-center justify-between gap-2 transition group">
+                    <div>
+                        <div class="font-bold text-sm text-stone-900 group-hover:text-[#ba5d4f]">1. Kertas 58mm</div>
+                        <div class="text-[11px] text-stone-500">Lebar standar 32 karakter pada printer 58mm</div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg bg-stone-900 text-white text-xs font-bold shrink-0 flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-print text-[11px]"></i>
+                        <span>58mm</span>
+                    </span>
+                </button>
+
+                <!-- Pilihan 2: Kertas 80mm -->
+                <button type="button" onclick="eksekusiPilihanCetakBT('80mm')"
+                    class="w-full p-3 rounded-xl border-2 border-stone-200 hover:border-[#ba5d4f] hover:bg-stone-50 text-left flex items-center justify-between gap-2 transition group">
+                    <div>
+                        <div class="font-bold text-sm text-stone-900 group-hover:text-[#ba5d4f]">2. Kertas 80mm</div>
+                        <div class="text-[11px] text-stone-500">Lebar penuh 48 karakter pada printer 80mm</div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg bg-stone-900 text-white text-xs font-bold shrink-0 flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-print text-[11px]"></i>
+                        <span>80mm</span>
+                    </span>
+                </button>
+
+                <!-- Pilihan 3: Kertas 58mm Admin (di Printer 80mm - Geser Kanan) -->
+                <div class="p-3 rounded-xl border-2 border-amber-300 bg-amber-50/60 space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <div class="font-bold text-sm text-amber-950 flex items-center gap-1.5">
+                                <span>3. Kertas 58mm Admin</span>
+                                <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 font-extrabold">
+                                    <i class="fa-solid fa-scissors text-[9px]"></i> Auto-Cutter
+                                </span>
+                            </div>
+                            <div class="text-[11px] text-amber-800 leading-tight mt-0.5">
+                                Kertas lebar 58mm (32 karakter) dipasang di printer Bluetooth 80mm (posisi cetak digeser ke kanan)
+                            </div>
+                        </div>
+                        <button type="button" onclick="eksekusiPilihanCetakBT('58mm_admin')"
+                            class="px-3 py-2 rounded-lg bg-[#ba5d4f] hover:bg-[#99463a] active:scale-95 text-white text-xs font-bold shrink-0 shadow-sm flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-print text-[11px]"></i>
+                            <span>58mm Admin</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-amber-200/80 text-xs">
+                        <label for="inputAdminOffsetKasbon" class="text-[11px] font-semibold text-amber-900">
+                            Geser Kanan (Spasi/Karakter):
+                        </label>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="adjustAdminOffsetKasbon(-1)"
+                                class="w-6 h-6 rounded bg-white border border-amber-300 font-bold text-amber-900 flex items-center justify-center hover:bg-amber-100 transition active:scale-90">
+                                <i class="fa-solid fa-minus text-[10px]"></i>
+                            </button>
+                            <input id="inputAdminOffsetKasbon" type="number" min="0" max="30" value="15"
+                                onchange="setPrinterAdminOffset(this.value)"
+                                class="w-12 py-0.5 text-center font-mono font-bold bg-white border border-amber-300 rounded text-xs outline-none focus:ring-1 focus:ring-amber-500" />
+                            <button type="button" onclick="adjustAdminOffsetKasbon(1)"
+                                class="w-6 h-6 rounded bg-white border border-amber-300 font-bold text-amber-900 flex items-center justify-center hover:bg-amber-100 transition active:scale-90">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                            </button>
+                            <span class="text-[10px] text-amber-800 font-medium">spasi</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="flex items-center justify-between pt-1 text-[11px] text-stone-500 border-t border-gray-100">
+                <span id="footerTeksDoubleHeightBT">Total Di Terima dicetak <strong>Double Height</strong></span>
+                <button type="button" onclick="tutupModalPilihanCetakKasbonBT(); bukaModalBluetoothKasbon();"
+                    class="flex items-center gap-1 text-sky-700 font-semibold hover:underline">
+                    <i class="fa-solid fa-sliders text-xs"></i>
+                    <span>Pengaturan BLE</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PENGATURAN BLUETOOTH PRINTER (BLE SETUP) -->
+    <div id="modalBluetoothKasbon" onclick="if(event.target === this) tutupModalBluetoothKasbon()"
+        class="no-print fixed inset-0 z-[130] hidden bg-black/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-xl space-y-3 border border-gray-100">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center">
+                        <i class="fa-brands fa-bluetooth-b text-sm"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-bold text-sm text-gray-900">Pengaturan Printer Bluetooth</h3>
+                        <p class="text-[11px] text-gray-500">Web Bluetooth API (ESC/POS Thermal)</p>
+                    </div>
+                </div>
+                <button type="button" onclick="tutupModalBluetoothKasbon()"
+                    class="w-7 h-7 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-700 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="bg-stone-50 rounded-xl p-3 border border-stone-200 text-xs space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-stone-500">Status Koneksi:</span>
+                    <span id="bleStatusKasbon" class="font-bold text-amber-600">Belum Terhubung</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-stone-500">Perangkat:</span>
+                    <span id="bleDeviceNameKasbon" class="font-mono font-semibold text-stone-800">-</span>
+                </div>
+            </div>
+
+            <div class="text-[11px] text-stone-600 bg-amber-50 border border-amber-200 rounded-lg p-2.5 leading-relaxed flex items-start gap-2">
+                <i class="fa-solid fa-lightbulb text-amber-600 shrink-0 mt-0.5 text-xs"></i>
+                <div>
+                    <strong>Tips Bluetooth:</strong> Pastikan Bluetooth printer menyala &amp; dekat dengan HP/Laptop. Disarankan menggunakan <strong>Google Chrome di Android/PC</strong> dengan koneksi HTTPS.
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 pt-1">
+                <button type="button" onclick="hubungkanPrinterBLE()"
+                    class="flex-1 py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    <span>Cari &amp; Hubungkan Printer</span>
+                </button>
+                <button type="button" id="btnPutusBleKasbon" onclick="putuskanPrinterBLE()"
+                    class="hidden py-2.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center gap-1.5 transition border border-rose-200">
+                    <i class="fa-solid fa-power-off text-xs"></i>
+                    <span>Putus</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- MODAL KELOLA KASBON & PINJAMAN KARYAWAN (SIMPLE & ELEGAN) -->
     <div id="modalKelolaKasbon"
         class="fixed inset-0 z-[85] flex items-center justify-center bg-gray-900/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
         <div id="contentKelolaKasbon"
-            class="bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform scale-95 transition-all duration-300 border border-gray-100 flex flex-col max-h-[90vh]">
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform scale-95 transition-all duration-300 border border-gray-100 flex flex-col max-h-[92vh]">
 
             <!-- Header Modal -->
-            <div
+            <div id="kasbonHeaderModal"
                 class="px-5 py-3.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white flex justify-between items-center shrink-0">
                 <div class="flex items-center gap-2.5">
-                    <div
+                    <div id="kasbonIconModal"
                         class="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white text-sm">
                         <i class="fa-solid fa-wallet"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-black tracking-wide leading-tight">Kelola Kasbon Karyawan</h3>
-                        <p class="text-[11px] text-rose-100 font-medium leading-none mt-0.5">Input Pinjaman Baru
-                            Karyawan</p>
+                        <h3 id="kasbonJudulModal" class="text-sm font-black tracking-wide leading-tight">Kelola Kasbon Karyawan</h3>
+                        <p id="kasbonSubJudulModal" class="text-[11px] text-rose-100 font-medium leading-none mt-0.5">Input Pinjaman Baru Karyawan</p>
                     </div>
                 </div>
                 <button type="button" onclick="tutupModalKelolaKasbon()"
@@ -1574,37 +1762,57 @@
                 </button>
             </div>
 
-            <!-- Body Modal (Simpel & Praktis) -->
+            <!-- Body Modal (Simpel, Terstruktur & Cepat) -->
             <div class="p-5 space-y-3.5 overflow-y-auto text-xs">
 
-                <!-- 1. Pilih Karyawan & Status Utang -->
+                <!-- 1. Pilihan Jenis Transaksi Kasbon (Segmented Switch) -->
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-1.5">
+                        Jenis Transaksi Kasbon
+                    </label>
+                    <div class="grid grid-cols-3 gap-1 p-1 bg-gray-100/90 rounded-2xl border border-gray-200/60">
+                        <button type="button" id="tabKasbonPinjam" onclick="pilihJenisTransaksiKasbon('pinjam')"
+                            class="py-2 px-2 rounded-xl text-xs font-black transition text-white bg-rose-600 shadow-xs flex items-center justify-center gap-1 active:scale-95">
+                            <i class="fa-solid fa-plus text-[10px]"></i> Pinjam
+                        </button>
+                        <button type="button" id="tabKasbonBayar" onclick="pilihJenisTransaksiKasbon('bayar')"
+                            class="py-2 px-2 rounded-xl text-xs font-black transition text-gray-600 hover:text-emerald-700 hover:bg-white/60 flex items-center justify-center gap-1 active:scale-95">
+                            <i class="fa-solid fa-minus text-[10px]"></i> Bayar/Cicil
+                        </button>
+                        <button type="button" id="tabKasbonKoreksi" onclick="pilihJenisTransaksiKasbon('koreksi')"
+                            class="py-2 px-2 rounded-xl text-xs font-black transition text-gray-600 hover:text-indigo-700 hover:bg-white/60 flex items-center justify-center gap-1 active:scale-95">
+                            <i class="fa-solid fa-pen-to-square text-[10px]"></i> Koreksi Saldo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Pilih Karyawan & Status Utang -->
                 <div class="bg-gray-50/90 p-3 rounded-2xl border border-gray-200/80 space-y-2">
                     <div class="flex items-center justify-between">
                         <label class="block text-[10px] font-black text-gray-500 uppercase tracking-wider">
                             Pilih Karyawan
                         </label>
                         <span id="kasbonBadgeStatus"
-                            class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-200">
-                            Utang: Rp 0
+                            class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-gray-100 text-gray-500 border border-gray-200">
+                            Belum Dipilih
                         </span>
                     </div>
                     <div class="relative">
                         <select id="kasbonSelectKaryawan" onchange="gantiKaryawanKasbon(this.value)"
                             class="w-full pl-3 pr-9 py-2 bg-white border border-gray-200 rounded-xl font-bold text-gray-800 outline-none focus:ring-2 focus:ring-rose-500 transition text-xs appearance-none cursor-pointer">
-                            <option value="">-- Memuat Karyawan --</option>
+                            <option value="" disabled selected>-- Pilih Karyawan Terlebih Dahulu --</option>
                         </select>
-                        <i
-                            class="fa-solid fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none text-xs"></i>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none text-xs"></i>
                     </div>
                     <div class="flex items-center justify-between text-[11px] pt-1 border-t border-gray-200/60">
                         <span class="text-gray-500 font-medium">Sisa Utang Saat Ini:</span>
-                        <span id="kasbonTeksSaldoLama" class="font-black text-rose-700 text-xs">Rp 0</span>
+                        <span id="kasbonTeksSaldoLama" class="font-black text-gray-400 text-xs">-</span>
                     </div>
                 </div>
 
-                <!-- 2. Nominal Pinjaman Kasbon & Quick Chips -->
+                <!-- 3. Nominal Input & Quick Chips -->
                 <div>
-                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-1">
+                    <label id="lblNominalKasbon" class="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-1">
                         Nominal Pinjaman (Rp)
                     </label>
                     <div class="relative">
@@ -1613,60 +1821,46 @@
                             oninput="formatInputRibuanKasbon(this); hitungSimulasiKasbon();"
                             class="w-full pl-11 pr-3 py-2 bg-white border border-gray-200 rounded-xl font-black text-gray-900 text-base outline-none focus:ring-2 focus:ring-rose-500 transition shadow-xs">
                     </div>
-                    <!-- Quick Nominal Chips (+200rb, +500rb, +1jt, Reset) -->
-                    <div class="flex flex-wrap gap-1.5 mt-2">
-                        <button type="button" onclick="tambahNominalKasbonCepat(200000)"
-                            class="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-[10px] transition active:scale-95 border border-rose-200">+200rb</button>
-                        <button type="button" onclick="tambahNominalKasbonCepat(500000)"
-                            class="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-[10px] transition active:scale-95 border border-rose-200">+500rb</button>
-                        <button type="button" onclick="tambahNominalKasbonCepat(1000000)"
-                            class="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-[10px] transition active:scale-95 border border-rose-200">+1jt</button>
-                        <button type="button" onclick="resetNominalKasbon()"
-                            class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-[10px] transition active:scale-95 border border-gray-200">Reset</button>
+                    <!-- Quick Nominal Chips (dinamis sesuai jenis transaksi) -->
+                    <div id="kasbonQuickChipsNominal" class="flex flex-wrap gap-1.5 mt-2">
+                        <!-- Populated dynamically by updateChipsKasbon() -->
                     </div>
                 </div>
 
-                <!-- 3. Keterangan Pinjaman -->
+                <!-- 4. Keterangan Transaksi -->
                 <div>
                     <label class="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-1">
                         Keterangan (Opsional)
                     </label>
                     <input type="text" id="kasbonInputKeterangan" placeholder="Contoh: Kasbon mingguan / bensin"
                         class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl font-medium text-gray-800 text-xs outline-none focus:ring-2 focus:ring-rose-500 transition">
-                    <!-- Quick Suggestion Chips -->
-                    <div class="flex flex-wrap gap-1.5 mt-1.5">
-                        <button type="button" onclick="setKetKasbonCepat('Kasbon Mingguan')"
-                            class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-600 hover:text-rose-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Kasbon
-                            Mingguan</button>
-                        <button type="button" onclick="setKetKasbonCepat('Keperluan Mendesak')"
-                            class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-600 hover:text-rose-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Keperluan
-                            Mendesak</button>
-                        <button type="button" onclick="setKetKasbonCepat('Bensin / Operasional')"
-                            class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-600 hover:text-rose-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Bensin/Ops</button>
+                    <!-- Quick Suggestion Chips (dinamis sesuai jenis transaksi) -->
+                    <div id="kasbonQuickChipsKet" class="flex flex-wrap gap-1.5 mt-1.5">
+                        <!-- Populated dynamically by updateChipsKasbon() -->
                     </div>
                 </div>
 
                 <!-- Hidden Input Tanggal -->
                 <input type="hidden" id="kasbonInputTanggal">
 
-                <!-- 4. Estimasi Saldo Baru -->
-                <div
+                <!-- 5. Estimasi Saldo Baru -->
+                <div id="kasbonBoxEstimasi"
                     class="p-2.5 bg-rose-50/60 rounded-xl border border-rose-100 flex items-center justify-between text-[11px]">
-                    <span class="text-rose-900 font-medium">Estimasi Saldo Setelah Pinjaman:</span>
+                    <span id="kasbonLabelEstimasi" class="text-rose-900 font-medium">Estimasi Saldo Setelah Pinjaman:</span>
                     <span id="kasbonEstimasiSaldoBaru" class="font-black text-sm text-rose-700">Rp 0</span>
                 </div>
 
-                <!-- 5. Riwayat 3 Transaksi Kasbon Terakhir (Ringkas) -->
+                <!-- 6. Riwayat 3 Transaksi Kasbon Terakhir (Ringkas & Bisa Batal / Cetak Ulang) -->
                 <div class="pt-1">
                     <div class="flex items-center justify-between mb-1.5">
                         <span class="text-[10px] font-black text-gray-400 uppercase tracking-wider">
-                            <i class="fa-solid fa-clock-rotate-left mr-1"></i> 3 Transaksi Terakhir
+                            <i class="fa-solid fa-clock-rotate-left mr-1"></i> 3 Transaksi Terakhir (Bisa Cetak / Koreksi Batal)
                         </span>
                         <span id="kasbonLoadingRiwayat" class="text-[10px] text-gray-400 hidden">
                             <i class="fa-solid fa-circle-notch fa-spin mr-1"></i>
                         </span>
                     </div>
-                    <div id="kasbonContainerRiwayat" class="space-y-1 max-h-24 overflow-y-auto pr-0.5 text-xs">
+                    <div id="kasbonContainerRiwayat" class="space-y-1.5 max-h-36 overflow-y-auto pr-0.5 text-xs">
                         <div class="text-center py-2 text-gray-400 text-[11px]">Belum ada riwayat transaksi.</div>
                     </div>
                 </div>
@@ -2428,6 +2622,7 @@
                     });
                     selectRiwayatKasbon.value = nilaiLama;
                 }
+                updateKpiKasbonAktif();
             }
         }
 
@@ -4649,7 +4844,7 @@
             }
         }
 
-        async function bukaModalKelolaKasbon(karyawanId = null) {
+        async function bukaModalKelolaKasbon(karyawanId = null, tipeAwal = 'pinjam') {
             const modal = document.getElementById('modalKelolaKasbon');
             const content = document.getElementById('contentKelolaKasbon');
             const select = document.getElementById('kasbonSelectKaryawan');
@@ -4659,24 +4854,18 @@
 
             if (!modal) return;
 
-            // 1. Isi daftar karyawan
+            // 1. Tentukan karyawan yang dipilih (jika null, biarkan belum terpilih agar harus pilih manual)
+            idKaryawanKasbonAktif = karyawanId ? String(karyawanId) : null;
+
+            // 2. Isi daftar karyawan dengan opsi placeholder disabled & selected
             if (select) {
-                select.innerHTML = '';
+                select.innerHTML = `<option value="" disabled ${!idKaryawanKasbonAktif ? 'selected' : ''}>-- Pilih Karyawan Terlebih Dahulu --</option>`;
                 const listSorted = [...daftarKaryawanGlobal].sort((a, b) => a.nama.localeCompare(b.nama));
                 listSorted.forEach(k => {
-                    select.innerHTML += `<option value="${k.id}">${k.nama.toUpperCase()}</option>`;
+                    const isSelected = idKaryawanKasbonAktif && String(k.id) === String(idKaryawanKasbonAktif);
+                    select.innerHTML += `<option value="${k.id}" ${isSelected ? 'selected' : ''}>${k.nama.toUpperCase()}</option>`;
                 });
-            }
-
-            // 2. Tentukan karyawan yang dipilih
-            if (karyawanId) {
-                idKaryawanKasbonAktif = String(karyawanId);
-            } else if (daftarKaryawanGlobal.length > 0) {
-                idKaryawanKasbonAktif = String(daftarKaryawanGlobal[0].id);
-            }
-
-            if (select && idKaryawanKasbonAktif) {
-                select.value = idKaryawanKasbonAktif;
+                select.value = idKaryawanKasbonAktif || '';
             }
 
             // 3. Reset form
@@ -4688,14 +4877,14 @@
             if (inputNom) inputNom.value = '';
             if (inputKet) inputKet.value = '';
 
-            pilihJenisTransaksiKasbon('pinjam');
+            pilihJenisTransaksiKasbon(tipeAwal || 'pinjam');
             gantiKaryawanKasbon(idKaryawanKasbonAktif);
 
             // 4. Buka modal
             modal.classList.remove('opacity-0', 'pointer-events-none');
             if (content) content.classList.remove('scale-95');
 
-            // 5. Ambil data saldo kasbon terbaru langsung dari Supabase untuk multi-device
+            // 5. Ambil data saldo kasbon terbaru langsung dari Supabase untuk multi-device (bila ada karyawan aktif)
             if (idKaryawanKasbonAktif) {
                 try {
                     const { data: karDb } = await supabaseClient
@@ -4719,6 +4908,7 @@
                                 elBadge.innerText = "Bersih / Tidak Ada Utang";
                             }
                         }
+                        updateChipsKasbon();
                         hitungSimulasiKasbon();
                     }
                 } catch (eDb) {
@@ -4745,13 +4935,40 @@
         }
 
         async function gantiKaryawanKasbon(kid) {
-            idKaryawanKasbonAktif = String(kid);
-            let saldo = getSaldoKasbonKaryawan(kid);
+            idKaryawanKasbonAktif = kid ? String(kid) : null;
 
             const elSaldo = document.getElementById('kasbonTeksSaldoLama');
             const elBadge = document.getElementById('kasbonBadgeStatus');
+            const containerRiwayat = document.getElementById('kasbonContainerRiwayat');
+            const elSimulasi = document.getElementById('kasbonEstimasiSaldoBaru');
 
-            if (elSaldo) elSaldo.innerText = formatRp(saldo);
+            if (!idKaryawanKasbonAktif) {
+                if (elSaldo) {
+                    elSaldo.innerText = '-';
+                    elSaldo.className = "font-black text-gray-400 text-xs";
+                }
+                if (elBadge) {
+                    elBadge.className = "px-2 py-0.5 rounded-lg text-[10px] font-bold bg-gray-100 text-gray-500 border border-gray-200";
+                    elBadge.innerText = "Belum Dipilih";
+                }
+                if (elSimulasi) {
+                    elSimulasi.innerText = 'Rp 0';
+                    elSimulasi.className = "font-black text-sm text-gray-400";
+                }
+                if (containerRiwayat) {
+                    containerRiwayat.innerHTML = '<div class="text-center py-2.5 text-gray-400 text-[11px] font-medium">Pilih karyawan terlebih dahulu untuk melihat riwayat kasbon.</div>';
+                }
+                listRiwayatModalAktif = [];
+                updateChipsKasbon();
+                return;
+            }
+
+            let saldo = getSaldoKasbonKaryawan(idKaryawanKasbonAktif);
+
+            if (elSaldo) {
+                elSaldo.innerText = formatRp(saldo);
+                elSaldo.className = "font-black text-rose-700 text-xs";
+            }
             if (elBadge) {
                 if (saldo > 0) {
                     elBadge.className = "px-2.5 py-1 rounded-xl text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-300";
@@ -4763,19 +4980,20 @@
             }
 
             hitungSimulasiKasbon();
-            muatRiwayatKasbonKaryawan(kid);
+            updateChipsKasbon();
+            muatRiwayatKasbonKaryawan(idKaryawanKasbonAktif);
 
             // Fetch realtime dari database Supabase (Multi-Device)
             try {
                 const { data: karDb } = await supabaseClient
                     .from('karyawan')
                     .select('id, saldo_kasbon')
-                    .eq('id', parseInt(kid))
+                    .eq('id', parseInt(idKaryawanKasbonAktif))
                     .single();
                 if (karDb && String(idKaryawanKasbonAktif) === String(kid)) {
                     saldo = (karDb.saldo_kasbon !== null && karDb.saldo_kasbon !== undefined) ? Number(karDb.saldo_kasbon) : 0;
-                    if (karyawanMap[kid]) karyawanMap[kid].saldo_kasbon = saldo;
-                    simpanSaldoKasbonLokal(kid, saldo);
+                    if (karyawanMap[idKaryawanKasbonAktif]) karyawanMap[idKaryawanKasbonAktif].saldo_kasbon = saldo;
+                    simpanSaldoKasbonLokal(idKaryawanKasbonAktif, saldo);
                     if (elSaldo) elSaldo.innerText = formatRp(saldo);
                     if (elBadge) {
                         if (saldo > 0) {
@@ -4786,13 +5004,160 @@
                             elBadge.innerText = "Bersih / Tidak Ada Utang";
                         }
                     }
+                    updateChipsKasbon();
                     hitungSimulasiKasbon();
                 }
             } catch (e) { }
         }
 
+        let listRiwayatModalAktif = [];
+
+        function updateKpiKasbonAktif() {
+            const elTotal = document.getElementById('kpiTotalSaldoKasbonAktif');
+            const elJml = document.getElementById('kpiJumlahKaryawanKasbon');
+            if (!elTotal && !elJml) return;
+
+            let totalUtang = 0;
+            let totalOrang = 0;
+            const daftar = (daftarKaryawanGlobal && daftarKaryawanGlobal.length > 0)
+                ? daftarKaryawanGlobal
+                : (semuaKaryawanList || []);
+
+            daftar.forEach(k => {
+                const s = Number(k.saldo_kasbon || 0);
+                if (s > 0) {
+                    totalUtang += s;
+                    totalOrang++;
+                }
+            });
+
+            if (elTotal) elTotal.innerText = formatRp(totalUtang);
+            if (elJml) elJml.innerText = `${totalOrang} Karyawan`;
+        }
+
         function pilihJenisTransaksiKasbon(tipe = 'pinjam') {
-            jenisTransaksiKasbonDipilih = 'pinjam';
+            jenisTransaksiKasbonDipilih = (tipe === 'bayar' || tipe === 'koreksi') ? tipe : 'pinjam';
+
+            const btnPinjam = document.getElementById('tabKasbonPinjam');
+            const btnBayar = document.getElementById('tabKasbonBayar');
+            const btnKoreksi = document.getElementById('tabKasbonKoreksi');
+            const header = document.getElementById('kasbonHeaderModal');
+            const subJudul = document.getElementById('kasbonSubJudulModal');
+            const lblNominal = document.getElementById('lblNominalKasbon');
+            const boxEstimasi = document.getElementById('kasbonBoxEstimasi');
+            const labelEstimasi = document.getElementById('kasbonLabelEstimasi');
+            const btnSimpan = document.getElementById('btnSimpanTransaksiKasbon');
+            const inputNom = document.getElementById('kasbonInputNominal');
+
+            const kelasAktif = "py-2 px-2 rounded-xl text-xs font-black transition text-white shadow-xs flex items-center justify-center gap-1 active:scale-95";
+            const kelasNonaktif = "py-2 px-2 rounded-xl text-xs font-black transition text-gray-600 hover:bg-white/60 flex items-center justify-center gap-1 active:scale-95";
+
+            if (btnPinjam) {
+                btnPinjam.className = (jenisTransaksiKasbonDipilih === 'pinjam')
+                    ? `${kelasAktif} bg-rose-600`
+                    : `${kelasNonaktif} hover:text-rose-700`;
+            }
+            if (btnBayar) {
+                btnBayar.className = (jenisTransaksiKasbonDipilih === 'bayar')
+                    ? `${kelasAktif} bg-emerald-600`
+                    : `${kelasNonaktif} hover:text-emerald-700`;
+            }
+            if (btnKoreksi) {
+                btnKoreksi.className = (jenisTransaksiKasbonDipilih === 'koreksi')
+                    ? `${kelasAktif} bg-indigo-600`
+                    : `${kelasNonaktif} hover:text-indigo-700`;
+            }
+
+            if (jenisTransaksiKasbonDipilih === 'pinjam') {
+                if (header) header.className = "px-5 py-3.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white flex justify-between items-center shrink-0";
+                if (subJudul) subJudul.innerText = "Input Pinjaman Baru Karyawan";
+                if (lblNominal) lblNominal.innerText = "Nominal Pinjaman (Rp)";
+                if (inputNom) inputNom.placeholder = "0";
+                if (boxEstimasi) boxEstimasi.className = "p-2.5 bg-rose-50/60 rounded-xl border border-rose-100 flex items-center justify-between text-[11px]";
+                if (labelEstimasi) labelEstimasi.innerText = "Estimasi Saldo Setelah Pinjaman:";
+                if (btnSimpan) {
+                    btnSimpan.className = "px-5 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black rounded-xl text-xs transition shadow-sm shadow-rose-200 flex items-center gap-1.5 active:scale-95";
+                    btnSimpan.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Pinjaman Kasbon';
+                }
+            } else if (jenisTransaksiKasbonDipilih === 'bayar') {
+                if (header) header.className = "px-5 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex justify-between items-center shrink-0";
+                if (subJudul) subJudul.innerText = "Input Pembayaran / Setoran Kasbon Tunai";
+                if (lblNominal) lblNominal.innerText = "Nominal Pembayaran / Setoran (Rp)";
+                if (inputNom) inputNom.placeholder = "0";
+                if (boxEstimasi) boxEstimasi.className = "p-2.5 bg-emerald-50/60 rounded-xl border border-emerald-100 flex items-center justify-between text-[11px]";
+                if (labelEstimasi) labelEstimasi.innerText = "Estimasi Sisa Utang Setelah Bayar:";
+                if (btnSimpan) {
+                    btnSimpan.className = "px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-xl text-xs transition shadow-sm shadow-emerald-200 flex items-center gap-1.5 active:scale-95";
+                    btnSimpan.innerHTML = '<i class="fa-solid fa-check-double"></i> Simpan Pembayaran Kasbon';
+                }
+            } else if (jenisTransaksiKasbonDipilih === 'koreksi') {
+                if (header) header.className = "px-5 py-3.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white flex justify-between items-center shrink-0";
+                if (subJudul) subJudul.innerText = "Koreksi / Penyesuaian Saldo Kasbon Riil";
+                if (lblNominal) lblNominal.innerText = "Saldo Kasbon Riil / Target Baru (Rp)";
+                if (inputNom) inputNom.placeholder = "0";
+                if (boxEstimasi) boxEstimasi.className = "p-2.5 bg-indigo-50/60 rounded-xl border border-indigo-100 flex items-center justify-between text-[11px]";
+                if (labelEstimasi) labelEstimasi.innerText = "Estimasi Saldo Baru Hasil Koreksi:";
+                if (btnSimpan) {
+                    btnSimpan.className = "px-5 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black rounded-xl text-xs transition shadow-sm shadow-indigo-200 flex items-center gap-1.5 active:scale-95";
+                    btnSimpan.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Simpan Koreksi Saldo';
+                }
+            }
+
+            updateChipsKasbon();
+            hitungSimulasiKasbon();
+        }
+
+        function updateChipsKasbon() {
+            const containerChipsNominal = document.getElementById('kasbonQuickChipsNominal');
+            const containerChipsKet = document.getElementById('kasbonQuickChipsKet');
+            if (!containerChipsNominal || !containerChipsKet) return;
+
+            const saldoLama = getSaldoKasbonKaryawan(idKaryawanKasbonAktif);
+
+            if (jenisTransaksiKasbonDipilih === 'pinjam') {
+                containerChipsNominal.innerHTML = `
+                    <button type="button" onclick="tambahNominalKasbonCepat(200000)" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-[10px] transition active:scale-95 border border-rose-200">+200rb</button>
+                    <button type="button" onclick="tambahNominalKasbonCepat(500000)" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-[10px] transition active:scale-95 border border-rose-200">+500rb</button>
+                    <button type="button" onclick="tambahNominalKasbonCepat(1000000)" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-[10px] transition active:scale-95 border border-rose-200">+1jt</button>
+                    <button type="button" onclick="resetNominalKasbon()" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-[10px] transition active:scale-95 border border-gray-200">Reset</button>
+                `;
+                containerChipsKet.innerHTML = `
+                    <button type="button" onclick="setKetKasbonCepat('Kasbon Mingguan')" class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-600 hover:text-rose-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Kasbon Mingguan</button>
+                    <button type="button" onclick="setKetKasbonCepat('Keperluan Mendesak')" class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-600 hover:text-rose-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Keperluan Mendesak</button>
+                    <button type="button" onclick="setKetKasbonCepat('Bensin / Operasional')" class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-600 hover:text-rose-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Bensin/Ops</button>
+                `;
+            } else if (jenisTransaksiKasbonDipilih === 'bayar') {
+                containerChipsNominal.innerHTML = `
+                    <button type="button" onclick="tambahNominalKasbonCepat(50000)" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-[10px] transition active:scale-95 border border-emerald-200">+50rb</button>
+                    <button type="button" onclick="tambahNominalKasbonCepat(100000)" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-[10px] transition active:scale-95 border border-emerald-200">+100rb</button>
+                    <button type="button" onclick="tambahNominalKasbonCepat(200000)" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-[10px] transition active:scale-95 border border-emerald-200">+200rb</button>
+                    <button type="button" onclick="setNominalKasbonLangsung(${saldoLama})" class="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-black text-[10px] transition active:scale-95 border border-emerald-300">Lunasi Semua (${formatRp(saldoLama)})</button>
+                    <button type="button" onclick="resetNominalKasbon()" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-[10px] transition active:scale-95 border border-gray-200">Reset</button>
+                `;
+                containerChipsKet.innerHTML = `
+                    <button type="button" onclick="setKetKasbonCepat('Setor Cicilan Tunai')" class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Cicil Tunai</button>
+                    <button type="button" onclick="setKetKasbonCepat('Pelunasan Kasbon Tunai')" class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Pelunasan Tunai</button>
+                    <button type="button" onclick="setKetKasbonCepat('Potong Kasbon Luar Gaji')" class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Potong Luar Gaji</button>
+                `;
+            } else if (jenisTransaksiKasbonDipilih === 'koreksi') {
+                containerChipsNominal.innerHTML = `
+                    <button type="button" onclick="setNominalKasbonLangsung(0)" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold text-[10px] transition active:scale-95 border border-indigo-200">Set Rp 0 (Lunas)</button>
+                    <button type="button" onclick="setNominalKasbonLangsung(${saldoLama})" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Tetap (${formatRp(saldoLama)})</button>
+                    <button type="button" onclick="resetNominalKasbon()" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-[10px] transition active:scale-95 border border-gray-200">Reset</button>
+                `;
+                containerChipsKet.innerHTML = `
+                    <button type="button" onclick="setKetKasbonCepat('Koreksi Salah Ketik')" class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Salah Ketik</button>
+                    <button type="button" onclick="setKetKasbonCepat('Penyesuaian Saldo Riil')" class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Saldo Riil</button>
+                    <button type="button" onclick="setKetKasbonCepat('Rekonsiliasi Buku Kas')" class="px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 font-bold text-[10px] transition active:scale-95 border border-gray-200">Rekonsiliasi Buku</button>
+                `;
+            }
+        }
+
+        function setNominalKasbonLangsung(amount) {
+            const inputNom = document.getElementById('kasbonInputNominal');
+            if (!inputNom) return;
+            const val = Math.max(0, parseInt(amount, 10) || 0);
+            inputNom.value = val > 0 ? val.toLocaleString('id-ID') : '0';
             hitungSimulasiKasbon();
         }
 
@@ -4815,19 +5180,41 @@
         function hitungSimulasiKasbon() {
             const inputNom = document.getElementById('kasbonInputNominal');
             const elSimulasi = document.getElementById('kasbonEstimasiSaldoBaru');
-            if (!elSimulasi || !idKaryawanKasbonAktif) return;
+            const labelEstimasi = document.getElementById('kasbonLabelEstimasi');
+            if (!elSimulasi) return;
+
+            if (!idKaryawanKasbonAktif) {
+                if (labelEstimasi) labelEstimasi.innerText = "Pilih Karyawan Terlebih Dahulu:";
+                elSimulasi.innerText = "Rp 0";
+                elSimulasi.className = "font-black text-sm text-gray-400";
+                return;
+            }
 
             const saldoLama = getSaldoKasbonKaryawan(idKaryawanKasbonAktif);
             const rawNom = (inputNom?.value || '').replace(/\./g, '').replace(/\D/g, '');
             const nominal = parseInt(rawNom, 10) || 0;
 
-            const saldoBaru = saldoLama + nominal;
-
-            elSimulasi.innerText = formatRp(saldoBaru);
-            if (saldoBaru > 0) {
-                elSimulasi.className = "font-black text-sm text-rose-700";
-            } else {
-                elSimulasi.className = "font-black text-sm text-emerald-600";
+            if (jenisTransaksiKasbonDipilih === 'pinjam') {
+                const saldoBaru = saldoLama + nominal;
+                if (labelEstimasi) labelEstimasi.innerText = "Estimasi Saldo Setelah Pinjaman:";
+                elSimulasi.innerText = formatRp(saldoBaru);
+                elSimulasi.className = saldoBaru > 0 ? "font-black text-sm text-rose-700" : "font-black text-sm text-emerald-600";
+            } else if (jenisTransaksiKasbonDipilih === 'bayar') {
+                const sisa = Math.max(0, saldoLama - nominal);
+                if (labelEstimasi) {
+                    labelEstimasi.innerText = nominal > saldoLama
+                        ? "Nominal melebihi utang (Lunas Rp 0):"
+                        : "Estimasi Sisa Utang Setelah Bayar:";
+                }
+                elSimulasi.innerText = formatRp(sisa);
+                elSimulasi.className = sisa === 0 ? "font-black text-sm text-emerald-600" : "font-black text-sm text-rose-700";
+            } else if (jenisTransaksiKasbonDipilih === 'koreksi') {
+                const saldoBaru = nominal;
+                const selisih = saldoBaru - saldoLama;
+                const tandaSelisih = selisih > 0 ? `+${formatRp(selisih)}` : (selisih < 0 ? `-${formatRp(Math.abs(selisih))}` : 'Sama');
+                if (labelEstimasi) labelEstimasi.innerText = `Saldo Target (Selisih: ${tandaSelisih}):`;
+                elSimulasi.innerText = formatRp(saldoBaru);
+                elSimulasi.className = "font-black text-sm text-indigo-700";
             }
         }
 
@@ -4853,6 +5240,25 @@
             return hasil;
         }
 
+        function hapusRiwayatKasbonLokal(kid, item) {
+            if (!kid) return;
+            try {
+                const map = JSON.parse(localStorage.getItem('sbr_riwayat_kasbon') || '{}');
+                const list = Array.isArray(map[String(kid)]) ? map[String(kid)] : [];
+                const filtered = list.filter(x => {
+                    if (item.id && x.id && String(x.id) === String(item.id)) return false;
+                    const tglX = tglLokalDariISO(x.tgl);
+                    const tglItem = tglLokalDariISO(item.tgl);
+                    const match = tglX === tglItem && Number(x.nominal) === Number(item.nominal) && (x.jenis || 'pinjam') === (item.jenis || 'pinjam');
+                    return !match;
+                });
+                map[String(kid)] = filtered;
+                localStorage.setItem('sbr_riwayat_kasbon', JSON.stringify(map));
+            } catch (e) {
+                console.warn("Gagal hapus riwayat kasbon lokal:", e);
+            }
+        }
+
         async function muatRiwayatKasbonKaryawan(kid) {
             const container = document.getElementById('kasbonContainerRiwayat');
             const loading = document.getElementById('kasbonLoadingRiwayat');
@@ -4870,7 +5276,7 @@
                     .select('*')
                     .eq('id_kar', parseInt(kid))
                     .order('tgl', { ascending: false })
-                    .limit(5);
+                    .limit(10);
 
                 if (error) {
                     console.warn("Info riwayat_kasbon remote:", error?.message);
@@ -4884,17 +5290,34 @@
             }
 
             if (!listRiwayat || listRiwayat.length === 0) {
+                listRiwayatModalAktif = [];
                 container.innerHTML = '<div class="text-center py-2.5 text-gray-400 text-[11px] font-medium">Belum ada riwayat transaksi kasbon untuk karyawan ini.</div>';
                 return;
             }
 
-            // Tampilkan maksimal 3 transaksi terakhir
+            // Normalisasi & simpan 3 transaksi terakhir untuk aksi cepat di modal
             const itemRender = listRiwayat.slice(0, 3);
-            container.innerHTML = itemRender.map(item => {
-                const isPinjam = item.jenis === 'pinjam';
-                const icon = isPinjam ? 'fa-arrow-up text-rose-600' : 'fa-arrow-down text-emerald-600';
-                const badgeClass = isPinjam ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                const tanda = isPinjam ? '+' : '-';
+            listRiwayatModalAktif = itemRender.map(item => normalisasiRiwayatKasbon(item, lokal));
+
+            container.innerHTML = listRiwayatModalAktif.map((item, idx) => {
+                const j = item.jenis || 'pinjam';
+                let icon = 'fa-arrow-up text-rose-600';
+                let badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+                let tanda = '+';
+                let warnaNominal = 'text-rose-700';
+
+                if (j === 'bayar') {
+                    icon = 'fa-arrow-down text-emerald-600';
+                    badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    tanda = '-';
+                    warnaNominal = 'text-emerald-700';
+                } else if (j === 'koreksi') {
+                    icon = 'fa-pen-to-square text-indigo-600';
+                    badgeClass = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                    tanda = '=';
+                    warnaNominal = 'text-indigo-700';
+                }
+
                 let tglFormat = '-';
                 if (item.tgl) {
                     try {
@@ -4905,22 +5328,171 @@
                 }
 
                 return `
-                    <div class="p-2 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between text-xs hover:bg-gray-100 transition">
-                        <div class="flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-lg ${badgeClass} border flex items-center justify-center text-[10px]">
+                    <div class="p-2 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between text-xs hover:bg-gray-100 transition gap-2">
+                        <div class="flex items-center gap-2 min-w-0 flex-1">
+                            <span class="w-7 h-7 rounded-lg ${badgeClass} border flex items-center justify-center text-[10px] shrink-0">
                                 <i class="fa-solid ${icon}"></i>
                             </span>
-                            <div>
-                                <div class="font-bold text-gray-800 text-[11px] leading-tight">${item.keterangan || (isPinjam ? 'Pinjam Kasbon' : 'Bayar Kasbon')}</div>
-                                <div class="text-[9px] text-gray-400 mt-0.5">${tglFormat}</div>
+                            <div class="min-w-0">
+                                <div class="font-bold text-gray-800 text-[11px] leading-tight truncate">${item.keterangan || (j === 'pinjam' ? 'Pinjam Kasbon' : (j === 'bayar' ? 'Bayar Kasbon' : 'Koreksi'))}</div>
+                                <div class="text-[9px] text-gray-400 mt-0.5">${tglFormat}${item.jam ? ` · ${item.jam}` : ''}</div>
                             </div>
                         </div>
-                        <div class="font-black text-right ${isPinjam ? 'text-rose-700' : 'text-emerald-600'} text-xs">
-                            ${tanda}${formatRp(item.nominal || 0)}
+                        <div class="flex items-center gap-2 shrink-0">
+                            <div class="font-black text-right ${warnaNominal} text-xs">
+                                ${tanda}${formatRp(item.nominal || 0)}
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="bukaSlipKasbonDariModal(${idx})" title="Cetak Ulang Slip Transaksi Ini"
+                                    class="w-6 h-6 rounded-lg bg-white border border-gray-200 hover:border-gray-400 text-gray-600 flex items-center justify-center text-[10px] active:scale-95 transition">
+                                    <i class="fa-solid fa-print"></i>
+                                </button>
+                                <button type="button" onclick="batalkanTransaksiKasbonDariModal(${idx})" title="Koreksi / Batalkan Transaksi Ini (Rollback Saldo)"
+                                    class="w-6 h-6 rounded-lg bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 flex items-center justify-center text-[10px] active:scale-95 transition">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function bukaSlipKasbonDariModal(idx) {
+            const data = listRiwayatModalAktif[idx];
+            if (!data) return;
+            bukaPratinjauSlipKasbon({ ...data });
+        }
+
+        async function batalkanTransaksiKasbonDariModal(idx) {
+            const data = listRiwayatModalAktif[idx];
+            if (!data) return;
+            await batalkanTransaksiKasbonData(data);
+        }
+
+        async function batalkanTransaksiKasbonDariRiwayat(idx) {
+            const data = dataRiwayatKasbonHalaman[idx];
+            if (!data) return;
+            await batalkanTransaksiKasbonData(data);
+        }
+
+        // ========================================================
+        // FITUR KOREKSI / BATALKAN TRANSAKSI KASBON (AUTO ROLLBACK)
+        // Mengembalikan saldo kasbon karyawan secara presisi di database
+        // Supabase dan local cache serta menghapus riwayat yang keliru.
+        // ========================================================
+        async function batalkanTransaksiKasbonData(r) {
+            if (!r || !r.karyawanId) return;
+
+            const kid = String(r.karyawanId);
+            const nama = r.nama || namaKaryawanById(kid);
+            const jenis = r.jenis || 'pinjam';
+            const nominal = Number(r.nominal) || 0;
+            const saldoLamaKaryawan = getSaldoKasbonKaryawan(kid);
+
+            let saldoRollback = saldoLamaKaryawan;
+            let labelJenis = 'Pinjaman Baru';
+            let efekTeks = '';
+
+            if (jenis === 'pinjam') {
+                labelJenis = 'Pinjaman Baru (+)';
+                saldoRollback = Math.max(0, saldoLamaKaryawan - nominal);
+                efekTeks = `Saldo utang kasbon ${nama} akan DIKURANGI dari ${formatRp(saldoLamaKaryawan)} menjadi ${formatRp(saldoRollback)}.`;
+            } else if (jenis === 'bayar') {
+                labelJenis = 'Pembayaran / Cicilan (-)';
+                saldoRollback = saldoLamaKaryawan + nominal;
+                efekTeks = `Saldo utang kasbon ${nama} akan DIKEMBALIKAN BERTAMBAH dari ${formatRp(saldoLamaKaryawan)} menjadi ${formatRp(saldoRollback)}.`;
+            } else if (jenis === 'koreksi') {
+                labelJenis = 'Koreksi Saldo (=)';
+                if (r.saldoLama !== null && r.saldoLama !== undefined) {
+                    saldoRollback = Number(r.saldoLama);
+                }
+                efekTeks = `Saldo kasbon ${nama} akan DIKEMBALIKAN ke saldo sebelum koreksi: ${formatRp(saldoRollback)}.`;
+            }
+
+            const tglTeks = r.tgl ? formatTglIndo(r.tgl) : '-';
+            const jamTeks = r.jam ? ` (Jam ${r.jam})` : '';
+
+            const konfirmasi = await showConfirm(
+                `Batalkan & Hapus Transaksi Kasbon Ini?\n\n` +
+                `• Karyawan: ${nama}\n` +
+                `• Jenis: ${labelJenis}\n` +
+                `• Nominal: ${formatRp(nominal)}\n` +
+                `• Tanggal: ${tglTeks}${jamTeks}\n` +
+                `• Keterangan: ${r.keterangan || '-'}\n\n` +
+                `${efekTeks}\n\n` +
+                `Transaksi ini akan dihapus dari riwayat dan saldo kasbon di cloud akan di-rollback otomatis. Lanjutkan?`,
+                "Konfirmasi Pembatalan Transaksi Kasbon"
+            );
+            if (!konfirmasi) return;
+
+            try {
+                // 1. Update saldo kasbon di Supabase (Multi-Device)
+                const { error: errUpdate } = await supabaseClient
+                    .from('karyawan')
+                    .update({ saldo_kasbon: saldoRollback })
+                    .eq('id', parseInt(kid));
+
+                if (errUpdate) {
+                    console.error("Gagal rollback saldo kasbon di Supabase:", errUpdate);
+                    throw new Error("Gagal mengupdate saldo di database Supabase: " + errUpdate.message);
+                }
+
+                // 2. Hapus catatan dari riwayat_kasbon di Supabase
+                if (r.id) {
+                    const { error: errDel } = await supabaseClient
+                        .from('riwayat_kasbon')
+                        .delete()
+                        .eq('id', r.id);
+                    if (errDel) console.warn("Peringatan hapus riwayat_kasbon by ID:", errDel.message);
+                } else {
+                    let qDel = supabaseClient
+                        .from('riwayat_kasbon')
+                        .delete()
+                        .eq('id_kar', parseInt(kid))
+                        .eq('nominal', nominal);
+                    if (r.tgl) {
+                        const tglISOStart = new Date(r.tgl + 'T00:00:00').toISOString();
+                        const tglISOEnd = new Date(new Date(r.tgl + 'T00:00:00').getTime() + 86400000).toISOString();
+                        qDel = qDel.gte('tgl', tglISOStart).lt('tgl', tglISOEnd);
+                    }
+                    const { error: errDel2 } = await qDel;
+                    if (errDel2) console.warn("Peringatan hapus riwayat_kasbon by match:", errDel2.message);
+                }
+
+                // 3. Update local cache
+                hapusRiwayatKasbonLokal(kid, r);
+                simpanSaldoKasbonLokal(kid, saldoRollback);
+
+                // 4. Update memory cache
+                if (karyawanMap[kid]) karyawanMap[kid].saldo_kasbon = saldoRollback;
+                const karObj = semuaKaryawanList.find(k => String(k.id) === String(kid));
+                if (karObj) karObj.saldo_kasbon = saldoRollback;
+                const karGlob = daftarKaryawanGlobal.find(k => String(k.id) === String(kid));
+                if (karGlob) karGlob.saldo_kasbon = saldoRollback;
+                if (globalRekapData[kid]) globalRekapData[kid].saldoKasbon = saldoRollback;
+
+                // 5. Update slip aktif bila terbuka
+                if (slipAktif && String(slipAktif.karyawanId) === String(kid)) {
+                    slipAktif.saldoKasbon = saldoRollback;
+                    updatePenyesuaianSlip();
+                }
+
+                // 6. Refresh UI
+                renderTabelRekap();
+                updateKpiKasbonAktif();
+                if (idKaryawanKasbonAktif === String(kid)) {
+                    gantiKaryawanKasbon(kid);
+                }
+                if (window.subTabRiwayatAktif === 'kasbon') {
+                    loadRiwayatKasbon(halamanRiwayatKasbon);
+                }
+
+                await showSuccess(`Transaksi kasbon berhasil dibatalkan!\nSaldo kasbon ${nama} kini menjadi ${formatRp(saldoRollback)}.`);
+            } catch (err) {
+                console.error("Gagal membatalkan transaksi kasbon:", err);
+                await showError("Gagal membatalkan transaksi: " + err.message);
+            }
         }
 
         async function simpanTransaksiKasbon() {
@@ -4936,32 +5508,60 @@
 
             const rawNom = (inputNom?.value || '').replace(/\./g, '').replace(/\D/g, '');
             const nominal = parseInt(rawNom, 10) || 0;
-            if (nominal <= 0) {
-                await showError("Masukkan nominal pinjaman kasbon yang valid!");
+
+            if (jenisTransaksiKasbonDipilih !== 'koreksi' && nominal <= 0) {
+                await showError("Masukkan nominal transaksi kasbon yang valid!");
                 return;
             }
 
             const kInfo = karyawanMap[idKaryawanKasbonAktif] || semuaKaryawanList.find(k => String(k.id) === String(idKaryawanKasbonAktif));
             const namaKar = kInfo?.nama || 'Karyawan';
             const saldoLama = getSaldoKasbonKaryawan(idKaryawanKasbonAktif);
-            const saldoBaru = saldoLama + nominal;
+
+            let saldoBaru = saldoLama;
+            let nominalTercatat = nominal;
+            let labelTipe = 'Pinjaman Baru';
+            let ketDefault = 'Pinjaman Kasbon Baru';
+            let infoPesan = '';
+
+            if (jenisTransaksiKasbonDipilih === 'pinjam') {
+                saldoBaru = saldoLama + nominal;
+                labelTipe = 'Pinjaman Baru';
+                ketDefault = 'Pinjaman Kasbon Baru';
+                infoPesan = `Saldo utang kasbon ${namaKar} akan bertambah dari ${formatRp(saldoLama)} menjadi ${formatRp(saldoBaru)}.`;
+            } else if (jenisTransaksiKasbonDipilih === 'bayar') {
+                if (saldoLama <= 0) {
+                    await showError(`${namaKar} saat ini TIDAK memiliki utang kasbon (Saldo Rp 0)!`);
+                    return;
+                }
+                saldoBaru = Math.max(0, saldoLama - nominal);
+                labelTipe = 'Pembayaran / Cicilan Kasbon';
+                ketDefault = 'Pembayaran Kasbon Tunai';
+                infoPesan = `Saldo utang kasbon ${namaKar} akan berkurang dari ${formatRp(saldoLama)} menjadi ${formatRp(saldoBaru)}.`;
+            } else if (jenisTransaksiKasbonDipilih === 'koreksi') {
+                saldoBaru = nominal;
+                nominalTercatat = Math.abs(saldoBaru - saldoLama);
+                labelTipe = 'Koreksi Saldo Kasbon';
+                ketDefault = 'Koreksi Saldo Kasbon Riil';
+                infoPesan = `Saldo kasbon ${namaKar} akan DIUBAH LANGSUNG dari ${formatRp(saldoLama)} menjadi ${formatRp(saldoBaru)} (Selisih: ${saldoBaru >= saldoLama ? '+' : '-'}${formatRp(nominalTercatat)}).`;
+            }
 
             const ketUser = (inputKet?.value || '').trim();
-            const ketFinal = ketUser || 'Pinjaman Kasbon Baru';
+            const ketFinal = ketUser || ketDefault;
             const tglPilih = inputTgl?.value || new Date().toISOString().split('T')[0];
             const tglISO = new Date(tglPilih + 'T12:00:00').toISOString();
 
             const konfirmasi = await showConfirm(
-                `Simpan pinjaman kasbon untuk ${namaKar}?\n\n` +
-                `• Nominal: ${formatRp(nominal)}\n` +
+                `Simpan transaksi ${labelTipe} untuk ${namaKar}?\n\n` +
+                `• Nominal Transaksi: ${formatRp(nominal)}\n` +
                 `• Keterangan: ${ketFinal}\n\n` +
-                `Saldo utang kasbon ${namaKar} akan bertambah dari ${formatRp(saldoLama)} menjadi ${formatRp(saldoBaru)}.\n` +
+                `${infoPesan}\n\n` +
                 `Data akan langsung disimpan ke database Supabase (Multi-Device).`,
-                "Konfirmasi Pinjaman Kasbon"
+                `Konfirmasi ${labelTipe}`
             );
             if (!konfirmasi) return;
 
-            const teksAsli = btnSimpan ? btnSimpan.innerHTML : 'Simpan Pinjaman Kasbon';
+            const teksAsli = btnSimpan ? btnSimpan.innerHTML : 'Simpan Transaksi Kasbon';
             if (btnSimpan) {
                 btnSimpan.disabled = true;
                 btnSimpan.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Menyimpan ke Cloud...';
@@ -4981,30 +5581,23 @@
                     throw new Error("Gagal menyimpan ke database Supabase: " + errKar.message);
                 }
 
-                // 2. Simpan riwayat transaksi ke Supabase (dicek via .error, bukan try/catch saja)
-                await simpanRiwayatKasbonCloud({
+                // 2. Simpan riwayat transaksi ke Supabase
+                const payloadRiwayat = {
                     id_kar: parseInt(idKaryawanKasbonAktif),
-                    jenis: 'pinjam',
-                    nominal: nominal,
+                    jenis: jenisTransaksiKasbonDipilih,
+                    nominal: nominalTercatat,
                     keterangan: ketFinal,
                     tgl: tglISO,
                     jam: jamInput,
                     saldo_sebelum: saldoLama,
                     saldo_sesudah: saldoBaru
-                }, 'simpanTransaksiKasbon');
+                };
 
-                // 3. Simpan cache lokal cadangan (fallback bila cloud gagal)
+                await simpanRiwayatKasbonCloud(payloadRiwayat, 'simpanTransaksiKasbon');
+
+                // 3. Simpan cache lokal cadangan (fallback)
                 simpanSaldoKasbonLokal(idKaryawanKasbonAktif, saldoBaru);
-                tambahRiwayatKasbonLokal(idKaryawanKasbonAktif, {
-                    id_kar: parseInt(idKaryawanKasbonAktif),
-                    jenis: 'pinjam',
-                    nominal: nominal,
-                    keterangan: ketFinal,
-                    tgl: tglISO,
-                    jam: jamInput,
-                    saldo_sebelum: saldoLama,
-                    saldo_sesudah: saldoBaru
-                });
+                tambahRiwayatKasbonLokal(idKaryawanKasbonAktif, payloadRiwayat);
 
                 // 4. Update data di memori aplikasi
                 if (karyawanMap[idKaryawanKasbonAktif]) {
@@ -5012,12 +5605,14 @@
                 }
                 const karObj = semuaKaryawanList.find(k => String(k.id) === String(idKaryawanKasbonAktif));
                 if (karObj) karObj.saldo_kasbon = saldoBaru;
+                const karGlob = daftarKaryawanGlobal.find(k => String(k.id) === String(idKaryawanKasbonAktif));
+                if (karGlob) karGlob.saldo_kasbon = saldoBaru;
 
                 if (globalRekapData[idKaryawanKasbonAktif]) {
                     globalRekapData[idKaryawanKasbonAktif].saldoKasbon = saldoBaru;
                 }
 
-                // 4. Sinkronkan dengan slip aktif jika sedang terbuka
+                // 5. Sinkronkan dengan slip aktif jika sedang terbuka
                 if (slipAktif && String(slipAktif.karyawanId) === String(idKaryawanKasbonAktif)) {
                     slipAktif.saldoKasbon = saldoBaru;
                     const badgeKasbon = document.getElementById('badgeInfoKasbonWorker');
@@ -5029,19 +5624,21 @@
                 }
 
                 renderTabelRekap();
+                updateKpiKasbonAktif();
                 gantiKaryawanKasbon(idKaryawanKasbonAktif);
                 if (inputNom) inputNom.value = '';
                 if (inputKet) inputKet.value = '';
 
                 tutupModalKelolaKasbon();
 
-                // 5. Tampilkan pratinjau slip kasbon (siap cetak Bluetooth / PNG)
+                // 6. Tampilkan pratinjau slip kasbon (siap cetak Bluetooth 3 opsi kertas / PNG)
                 bukaPratinjauSlipKasbon({
                     karyawanId: idKaryawanKasbonAktif,
                     nama: namaKar,
                     tgl: tglPilih,
                     jam: jamInput,
-                    nominal: nominal,
+                    jenis: jenisTransaksiKasbonDipilih,
+                    nominal: nominalTercatat,
                     keterangan: ketFinal,
                     saldoLama: saldoLama,
                     saldoBaru: saldoBaru
@@ -5049,7 +5646,7 @@
 
             } catch (err) {
                 console.error(err);
-                await showError("Gagal menyimpan pinjaman kasbon: " + err.message);
+                await showError("Gagal menyimpan transaksi kasbon: " + err.message);
             } finally {
                 if (btnSimpan) {
                     btnSimpan.disabled = false;
@@ -5323,7 +5920,7 @@
         function getSemuaRiwayatKasbonLokal() {
             try {
                 const map = JSON.parse(localStorage.getItem('sbr_riwayat_kasbon') || '{}');
-                return Object.values(map).flat().filter(x => x && x.jenis === 'pinjam');
+                return Object.values(map).flat().filter(Boolean);
             } catch (e) {
                 return [];
             }
@@ -5336,11 +5933,12 @@
 
         // Cek catatan lokal yang TIDAK ada di cloud (insert pernah gagal).
         // Dicek lewat query rentang tanggal terpisah agar tidak muncul dobel.
-        async function ambilLokalYangBelumTersinkron(daftarLokal, kid, bulan) {
+        async function ambilLokalYangBelumTersinkron(daftarLokal, kid, bulan, filterJenis = 'semua') {
             try {
                 const kandidat = (daftarLokal || []).filter(x => {
                     if (kid && String(x.id_kar) !== String(kid)) return false;
                     if (bulan && !tglLokalDariISO(x.tgl).startsWith(bulan)) return false;
+                    if (filterJenis && filterJenis !== 'semua' && (x.jenis || 'pinjam') !== filterJenis) return false;
                     return true;
                 });
                 if (kandidat.length === 0) return [];
@@ -5352,6 +5950,7 @@
                     .gte('tgl', new Date(tanggal[0] + 'T00:00:00').toISOString())
                     .lt('tgl', new Date(new Date(tanggal[tanggal.length - 1] + 'T00:00:00').getTime() + 86400000).toISOString());
                 if (kid) q = q.eq('id_kar', parseInt(kid));
+                if (filterJenis && filterJenis !== 'semua') q = q.eq('jenis', filterJenis);
 
                 const { data: barisCloud, error } = await q;
                 if (error || !Array.isArray(barisCloud)) return [];
@@ -5387,12 +5986,14 @@
             const sLama = ambil('saldo_sebelum');
             const sBaru = ambil('saldo_sesudah');
             return {
+                id: item.id || null,
                 karyawanId: item.id_kar,
                 nama: namaKaryawanById(item.id_kar),
                 tgl: tglLokalDariISO(item.tgl),
                 jam: ambil('jam') || '',
+                jenis: item.jenis || 'pinjam',
                 nominal: Number(item.nominal) || 0,
-                keterangan: item.keterangan || 'Pinjaman Kasbon',
+                keterangan: item.keterangan || (item.jenis === 'bayar' ? 'Bayar Kasbon' : (item.jenis === 'koreksi' ? 'Koreksi Saldo' : 'Pinjaman Kasbon')),
                 saldoLama: (sLama === null || sLama === undefined) ? null : Number(sLama),
                 saldoBaru: (sBaru === null || sBaru === undefined) ? null : Number(sBaru),
                 dariRiwayat: true
@@ -5407,8 +6008,11 @@
             halamanRiwayatKasbon = Math.max(1, page);
             const kid = document.getElementById('riwayatKasbonKaryawan')?.value || '';
             const bulan = document.getElementById('riwayatKasbonBulan')?.value || '';
+            const filterJenis = document.getElementById('riwayatKasbonJenis')?.value || 'semua';
             const dari = (halamanRiwayatKasbon - 1) * PER_HALAMAN_RIWAYAT_KASBON;
             const sampai = dari + PER_HALAMAN_RIWAYAT_KASBON - 1;
+
+            updateKpiKasbonAktif();
 
             container.innerHTML = `<div class="md:col-span-2 p-8 text-center text-gray-400 bg-white rounded-2xl border"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Memuat riwayat kasbon...</div>`;
 
@@ -5418,13 +6022,14 @@
             let sumber = 'cloud';
 
             try {
-                // Query dibangun ulang tiap percobaan karena builder Supabase
-                // bersifat mutable (method order/limit menempel pada objek yang sama).
+                // Query dibangun ulang tiap percobaan karena builder Supabase bersifat mutable
                 const bangunQuery = () => {
                     let q = supabaseClient
                         .from('riwayat_kasbon')
-                        .select('*', { count: 'exact' })
-                        .eq('jenis', 'pinjam');
+                        .select('*', { count: 'exact' });
+                    if (filterJenis && filterJenis !== 'semua') {
+                        q = q.eq('jenis', filterJenis);
+                    }
                     if (kid) q = q.eq('id_kar', parseInt(kid));
                     if (bulan) {
                         const [y, m] = bulan.split('-').map(Number);
@@ -5433,16 +6038,11 @@
                     return q;
                 };
 
-                // Ambil baris cloud dari awal s/d akhir halaman ini, gabungkan dengan
-                // catatan lokal yang belum tersinkron, lalu slice di sisi klien —
-                // penomoran halaman tetap konsisten dan tidak muncul dobel.
                 let res = await bangunQuery()
                     .order('tgl', { ascending: false })
                     .order('jam', { ascending: false, nullsFirst: false })
                     .limit(sampai + 1);
 
-                // Bila kolom "jam" belum ada, ulangi tanpa pengurutan jam agar
-                // riwayat tetap bisa dimuat dari cloud.
                 if (res.error && /jam/i.test(res.error.message || '') &&
                     (String(res.error.code) === 'PGRST204' || /does not exist/i.test(res.error.message || ''))) {
                     console.warn("Kolom jam belum ada di riwayat_kasbon, memuat tanpa pengurutan jam:", res.error.message);
@@ -5455,7 +6055,7 @@
                 const cloudSebagian = res.data || [];
                 const cloudTotal = (res.count !== null && res.count !== undefined) ? res.count : cloudSebagian.length;
 
-                const lokalBelum = await ambilLokalYangBelumTersinkron(daftarLokal, kid, bulan);
+                const lokalBelum = await ambilLokalYangBelumTersinkron(daftarLokal, kid, bulan, filterJenis);
                 const gabungan = [...cloudSebagian, ...lokalBelum];
                 gabungan.sort((a, b) => {
                     const ka = tglLokalDariISO(a.tgl) + ' ' + (a.jam || '');
@@ -5469,6 +6069,9 @@
                 console.warn("Riwayat kasbon cloud tidak tersedia, pakai data lokal:", e?.message);
                 sumber = 'lokal';
                 let semua = daftarLokal.slice();
+                if (filterJenis && filterJenis !== 'semua') {
+                    semua = semua.filter(x => (x.jenis || 'pinjam') === filterJenis);
+                }
                 if (kid) semua = semua.filter(x => String(x.id_kar) === String(kid));
                 if (bulan) semua = semua.filter(x => tglLokalDariISO(x.tgl).startsWith(bulan));
                 semua.sort((a, b) => {
@@ -5512,7 +6115,7 @@
 
             if (!dataRiwayatKasbonHalaman.length) {
                 if (info) info.innerText = 'Tidak ada transaksi kasbon';
-                container.innerHTML = `<div class="md:col-span-2 p-8 text-center text-gray-400 bg-white rounded-2xl border"><i class="fa-solid fa-receipt text-2xl mb-2 block text-gray-300"></i>Belum ada riwayat kasbon yang sesuai.</div>`;
+                container.innerHTML = `<div class="md:col-span-2 p-8 text-center text-gray-400 bg-white rounded-2xl border"><i class="fa-solid fa-receipt text-2xl mb-2 block text-gray-300"></i>Belum ada riwayat transaksi kasbon yang sesuai.</div>`;
                 return;
             }
 
@@ -5523,24 +6126,55 @@
             container.innerHTML = dataRiwayatKasbonHalaman.map((r, idx) => {
                 const inisial = (r.nama || '?').trim().charAt(0).toUpperCase();
                 const adaSaldo = adaSaldoSlipKasbon(r);
+                const j = r.jenis || 'pinjam';
+
+                let bgAvatar = 'from-rose-500 to-pink-600';
+                let warnaNominal = 'text-rose-700';
+                let tandaNom = '+';
+                let badgeJenisTeks = 'Pinjam Baru';
+                let badgeJenisClass = 'bg-rose-50 text-rose-700 border-rose-200';
+
+                if (j === 'bayar') {
+                    bgAvatar = 'from-emerald-500 to-teal-600';
+                    warnaNominal = 'text-emerald-700';
+                    tandaNom = '-';
+                    badgeJenisTeks = 'Bayar / Potong';
+                    badgeJenisClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                } else if (j === 'koreksi') {
+                    bgAvatar = 'from-indigo-500 to-blue-600';
+                    warnaNominal = 'text-indigo-700';
+                    tandaNom = '=';
+                    badgeJenisTeks = 'Koreksi Saldo';
+                    badgeJenisClass = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                }
+
                 return `
-                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-rose-200 transition-all flex items-center gap-3">
-                        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white font-black flex items-center justify-center shrink-0 shadow-sm">${esc(inisial)}</div>
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-rose-200 transition-all flex items-start sm:items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-gradient-to-br ${bgAvatar} text-white font-black flex items-center justify-center shrink-0 shadow-sm">${esc(inisial)}</div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-2">
-                                <div class="font-black text-gray-800 text-sm uppercase truncate">${esc(r.nama)}</div>
-                                <div class="font-black text-rose-700 text-sm whitespace-nowrap">+${formatRp(r.nominal)}</div>
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <div class="font-black text-gray-800 text-sm uppercase truncate">${esc(r.nama)}</div>
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold border ${badgeJenisClass} shrink-0">${badgeJenisTeks}</span>
+                                </div>
+                                <div class="font-black ${warnaNominal} text-sm whitespace-nowrap">${tandaNom}${formatRp(r.nominal)}</div>
                             </div>
-                            <div class="text-[11px] text-gray-500 truncate">${esc(r.keterangan)}</div>
-                            <div class="flex items-center justify-between gap-2 mt-1">
+                            <div class="text-[11px] text-gray-500 truncate mt-0.5">${esc(r.keterangan)}</div>
+                            <div class="flex flex-wrap items-center justify-between gap-2 mt-2 pt-1 border-t border-gray-50">
                                 <div class="text-[10px] text-gray-400 font-semibold">
                                     <i class="fa-regular fa-calendar mr-0.5"></i> ${formatTglIndo(r.tgl)}${r.jam ? ` · ${esc(r.jam)}` : ''}
-                                    ${adaSaldo ? `<span class="ml-1 text-gray-500">· Total: ${formatRp(r.saldoBaru)}</span>` : ''}
+                                    ${adaSaldo ? `<span class="ml-1 text-gray-600 font-bold">· Sisa: ${formatRp(r.saldoBaru)}</span>` : ''}
                                 </div>
-                                <button type="button" onclick="bukaSlipKasbonDariRiwayat(${idx})"
-                                    class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-black flex items-center gap-1 active:scale-95 transition whitespace-nowrap">
-                                    <i class="fa-solid fa-print"></i> Lihat / Cetak
-                                </button>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="bukaSlipKasbonDariRiwayat(${idx})"
+                                        class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-black flex items-center gap-1 active:scale-95 transition whitespace-nowrap">
+                                        <i class="fa-solid fa-print"></i> Lihat / Cetak
+                                    </button>
+                                    <button type="button" onclick="batalkanTransaksiKasbonDariRiwayat(${idx})" title="Batalkan Transaksi (Rollback Saldo)"
+                                        class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-black flex items-center gap-1 active:scale-95 transition whitespace-nowrap">
+                                        <i class="fa-solid fa-trash-can"></i> Batal
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5563,8 +6197,10 @@
         function resetFilterRiwayatKasbon() {
             const sel = document.getElementById('riwayatKasbonKaryawan');
             const bln = document.getElementById('riwayatKasbonBulan');
+            const jns = document.getElementById('riwayatKasbonJenis');
             if (sel) sel.value = '';
             if (bln) bln.value = '';
+            if (jns) jns.value = 'semua';
             loadRiwayatKasbon(1);
         }
 
@@ -5573,16 +6209,37 @@
             if (!s) return;
             const esc = escHtmlKasbon;
             const adaSaldo = adaSaldoSlipKasbon(s);
+            const jenis = s.jenis || 'pinjam';
+
+            let judulSlip = 'Bukti Kasbon Karyawan';
+            let labelNominal = 'Pinjaman Baru';
+            let tandaNominal = '+';
+            let warnaNominal = 'text-rose-700';
+            let labelTotal = 'TOTAL UTANG KASBON';
+
+            if (jenis === 'bayar') {
+                judulSlip = 'Bukti Pembayaran Kasbon';
+                labelNominal = 'Bayar / Cicil Kasbon';
+                tandaNominal = '-';
+                warnaNominal = 'text-emerald-700';
+                labelTotal = 'SISA UTANG KASBON';
+            } else if (jenis === 'koreksi') {
+                judulSlip = 'Bukti Koreksi Kasbon';
+                labelNominal = 'Penyesuaian Saldo';
+                tandaNominal = '=';
+                warnaNominal = 'text-indigo-700';
+                labelTotal = 'SALDO HASIL KOREKSI';
+            }
 
             document.getElementById('kertasSlipKasbon').innerHTML = `
                 <div class="text-center pb-2 border-b border-dashed border-gray-400">
                     <div class="font-extrabold text-sm tracking-wider">SBR PUTRA FOOD</div>
-                    <div class="text-[10px] text-gray-500 uppercase">Bukti Kasbon Karyawan</div>
+                    <div class="text-[10px] text-gray-500 uppercase">${judulSlip}</div>
                 </div>
 
                 <div class="py-2 border-b border-dashed border-gray-400 space-y-1 text-[11px]">
                     <div class="flex justify-between">
-                        <span class="text-gray-500">Nama:</span>
+                        <span class="text-gray-500">Karyawan:</span>
                         <span class="font-black uppercase">${esc(s.nama)}</span>
                     </div>
                     <div class="flex justify-between">
@@ -5591,7 +6248,7 @@
                     </div>
                     ${s.jam ? `
                     <div class="flex justify-between">
-                        <span class="text-gray-500">Jam Input:</span>
+                        <span class="text-gray-500">Waktu:</span>
                         <span>${esc(s.jam)}</span>
                     </div>` : ''}
                 </div>
@@ -5606,15 +6263,15 @@
                         <span>Saldo Kasbon Awal</span>
                         <span class="text-gray-700">${formatRpStruk(s.saldoLama)}</span>
                     </div>` : ''}
-                    <div class="flex justify-between text-rose-700 font-bold">
-                        <span>Pinjaman Baru</span>
-                        <span class="font-black">+${formatRpStruk(s.nominal)}</span>
+                    <div class="flex justify-between ${warnaNominal} font-bold">
+                        <span>${labelNominal}</span>
+                        <span class="font-black">${tandaNominal}${formatRpStruk(s.nominal)}</span>
                     </div>
                 </div>
 
                 <div class="py-2 border-b border-dashed border-gray-400 flex justify-between items-center text-xs font-black">
-                    <span>${adaSaldo ? 'TOTAL UTANG' : 'NOMINAL KASBON'}</span>
-                    <span class="text-rose-700 text-sm font-black">${formatRpStruk(adaSaldo ? s.saldoBaru : s.nominal)}</span>
+                    <span>${adaSaldo ? labelTotal : 'NOMINAL'}</span>
+                    <span class="${warnaNominal} text-sm font-black">${formatRpStruk(adaSaldo ? s.saldoBaru : s.nominal)}</span>
                 </div>
 
                 <div class="pt-1 text-center text-[10px] text-gray-500 font-medium">Harap Simpan Bukti Ini</div>
@@ -5636,7 +6293,115 @@
             }
         }
 
+        // ========================================================
+        // FITUR 3 OPSI KERTAS CETAK BLUETOOTH & BLE MANAGEMENT
+        // 1. Kertas 58mm (32 Karakter)
+        // 2. Kertas 80mm (48 Karakter)
+        // 3. Kertas 58mm Admin (32 Karakter + Offset Spasi + Auto-Cutter)
+        // ========================================================
+        let konteksCetakBT = 'kasbon'; // 'kasbon' atau 'gaji'
+        let bleDevice = null;
+
+        function getPrinterAdminOffset() {
+            const val = parseInt(localStorage.getItem('sbr_printer_offset'), 10);
+            return isNaN(val) ? 15 : Math.max(0, Math.min(30, val));
+        }
+
+        function setPrinterAdminOffset(val) {
+            const safe = Math.max(0, Math.min(30, parseInt(val, 10) || 0));
+            localStorage.setItem('sbr_printer_offset', safe);
+            const inp = document.getElementById('inputAdminOffsetKasbon');
+            if (inp) inp.value = safe;
+        }
+
+        function adjustAdminOffsetKasbon(delta) {
+            const cur = getPrinterAdminOffset();
+            setPrinterAdminOffset(cur + delta);
+        }
+
+        function bukaModalPilihanCetakBT(konteks = 'kasbon') {
+            konteksCetakBT = konteks;
+            const modal = document.getElementById('modalPilihanCetakKasbonBT');
+            const footerTeks = document.getElementById('footerTeksDoubleHeightBT');
+            const inputOffset = document.getElementById('inputAdminOffsetKasbon');
+
+            if (inputOffset) inputOffset.value = getPrinterAdminOffset();
+
+            if (footerTeks) {
+                if (konteks === 'gaji') {
+                    footerTeks.innerHTML = "Total Gaji Bersih dicetak <strong>Double Height</strong>";
+                } else {
+                    footerTeks.innerHTML = "Total Di Terima dicetak <strong>Double Height</strong>";
+                }
+            }
+
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function tutupModalPilihanCetakKasbonBT() {
+            const modal = document.getElementById('modalPilihanCetakKasbonBT');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function bukaModalBluetoothKasbon() {
+            const modal = document.getElementById('modalBluetoothKasbon');
+            if (modal) modal.classList.remove('hidden');
+            updateBleStatusUI(!!(printCharacteristic && bleDevice?.gatt?.connected), bleDevice?.name);
+        }
+
+        function tutupModalBluetoothKasbon() {
+            const modal = document.getElementById('modalBluetoothKasbon');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function updateBleStatusUI(connected, deviceName) {
+            const elStatus = document.getElementById('bleStatusKasbon');
+            const elDevice = document.getElementById('bleDeviceNameKasbon');
+            const btnPutus = document.getElementById('btnPutusBleKasbon');
+
+            if (connected) {
+                if (elStatus) {
+                    elStatus.innerText = "Terhubung (Siap Cetak)";
+                    elStatus.className = "font-bold text-emerald-600";
+                }
+                if (elDevice) elDevice.innerText = deviceName || "Printer Bluetooth";
+                if (btnPutus) btnPutus.classList.remove('hidden');
+            } else {
+                if (elStatus) {
+                    elStatus.innerText = "Belum Terhubung";
+                    elStatus.className = "font-bold text-amber-600";
+                }
+                if (elDevice) elDevice.innerText = "-";
+                if (btnPutus) btnPutus.classList.add('hidden');
+            }
+        }
+
+        function resolveModeParamsKasbon(modeKey) {
+            const adminOffset = getPrinterAdminOffset();
+            if (modeKey === '80mm' || modeKey === 48) {
+                return { charWidth: 48, leftPad: 0, autoCut: false, modeLabel: 'Kertas 80mm' };
+            }
+            if (modeKey === '58mm_admin' || modeKey === '58_admin') {
+                return { charWidth: 32, leftPad: adminOffset, autoCut: true, modeLabel: `Kertas 58mm Admin (+${adminOffset} spasi & Auto-Cutter)` };
+            }
+            // Default: 58mm standar
+            return { charWidth: 32, leftPad: 0, autoCut: false, modeLabel: 'Kertas 58mm' };
+        }
+
+        async function eksekusiPilihanCetakBT(modeKey) {
+            tutupModalPilihanCetakKasbonBT();
+            if (konteksCetakBT === 'gaji') {
+                await eksekusiPrintGajiDenganMode(modeKey);
+            } else {
+                await eksekusiCetakKasbonBluetooth(modeKey);
+            }
+        }
+
         async function cetakSlipKasbonBluetooth() {
+            bukaModalPilihanCetakBT('kasbon');
+        }
+
+        async function eksekusiCetakKasbonBluetooth(modeKey = '58mm') {
             const s = slipKasbonAktif;
             if (!s) return;
             const btn = document.getElementById('btnCetakSlipKasbon');
@@ -5649,10 +6414,9 @@
             try {
                 await sambungkanPrinterBluetooth();
 
-                // Setelan kertas mengikuti slip gaji
-                const OFFSET_SPASI = 16;
-                const LEBAR_KERTAS = 30;
-                const PAD = " ".repeat(OFFSET_SPASI);
+                const params = resolveModeParamsKasbon(modeKey);
+                const LEBAR_KERTAS = params.charWidth;
+                const PAD = " ".repeat(params.leftPad);
 
                 const barisTeks = (teks) => PAD + teks + "\n";
                 const barisTengah = (teks) => {
@@ -5696,37 +6460,60 @@
                 const normalSize = GS + "!" + "\x00";
                 const cutPaper = GS + "V" + "\x00";
                 const garisPemisah = "-".repeat(LEBAR_KERTAS);
+                const doubleDivider = "=".repeat(LEBAR_KERTAS);
 
                 const p = String(s.tgl || '').split('-');
                 const tglRingkas = p.length === 3 ? `${p[2].padStart(2, '0')}/${p[1].padStart(2, '0')}/${p[0].slice(-2)}` : (s.tgl || '-');
 
+                const j = s.jenis || 'pinjam';
+                let judulStruk = "Bukti Kasbon Karyawan";
+                let labelNominal = "Pinjaman Baru";
+                let tandaNominal = "+";
+                let labelTotal = "TOTAL UTANG KASBON:";
+                const adaSaldo = adaSaldoSlipKasbon(s);
+                let nilaiTotal = adaSaldo ? s.saldoBaru : s.nominal;
+
+                if (j === 'bayar') {
+                    judulStruk = "Bukti Bayar Kasbon";
+                    labelNominal = "Bayar / Cicilan";
+                    tandaNominal = "-";
+                    labelTotal = "SISA UTANG KASBON:";
+                } else if (j === 'koreksi') {
+                    judulStruk = "Bukti Koreksi Kasbon";
+                    labelNominal = "Koreksi Saldo";
+                    tandaNominal = "=";
+                    labelTotal = "SALDO HASIL KOREKSI:";
+                }
+
                 let struk = init;
                 struk += barisTengah(boldOn + "SBR PUTRA FOOD" + boldOff);
-                struk += barisTengah("Bukti Kasbon Karyawan");
-                struk += barisTeks(garisPemisah);
+                struk += barisTengah(judulStruk);
+                struk += barisTeks(doubleDivider);
 
                 struk += barisTeks(`Karyawan : ${String(s.nama).toUpperCase()}`);
                 struk += barisTeks(`Tanggal  : ${tglRingkas}`);
                 if (s.jam) struk += barisTeks(`Jam      : ${s.jam}`);
                 struk += barisTeks(garisPemisah);
 
-                const adaSaldo = adaSaldoSlipKasbon(s);
                 struk += barisTeks("Keterangan:");
                 bungkusTeks(s.keterangan, LEBAR_KERTAS).forEach(b => { struk += barisTeks(b); });
+
                 if (adaSaldo) struk += barisKiriKanan("Saldo Awal", formatRpStruk(s.saldoLama));
-                struk += barisKiriKanan("Pinjaman Baru", `+${formatRpStruk(s.nominal)}`);
+                struk += barisKiriKanan(labelNominal, `${tandaNominal}${formatRpStruk(s.nominal)}`);
 
                 struk += barisTeks(garisPemisah);
-                struk += barisTeks(boldOn + (adaSaldo ? "TOTAL UTANG KASBON:" : "NOMINAL KASBON:") + boldOff);
-                struk += barisKiriKanan("", boldOn + doubleHeight + formatRpStruk(adaSaldo ? s.saldoBaru : s.nominal) + normalSize + boldOff);
+                struk += barisTeks(boldOn + labelTotal + boldOff);
+                struk += barisKiriKanan("", boldOn + doubleHeight + formatRpStruk(nilaiTotal) + normalSize + boldOff);
                 struk += barisTeks(garisPemisah);
                 struk += barisTengah("Harap Simpan Bukti Ini");
 
                 struk += "\n\n\n\n";
-                struk += cutPaper;
+                if (params.autoCut) {
+                    struk += cutPaper;
+                }
 
                 await kirimDataKePrinter(struk);
-                await showSuccess(`Slip kasbon untuk ${s.nama} berhasil dicetak!`);
+                await showSuccess(`Slip kasbon untuk ${s.nama} berhasil dicetak (${params.modeLabel})!`);
             } catch (error) {
                 console.error("Kesalahan Print Slip Kasbon:", error);
                 printCharacteristic = null;
@@ -5739,47 +6526,97 @@
             }
         }
 
-        // Helper bersama: sambungkan printer Bluetooth (dipakai slip gaji & slip kasbon)
+        // Helper bersama: sambungkan printer Bluetooth
         async function sambungkanPrinterBluetooth() {
             if (!navigator.bluetooth) {
-                throw new Error("Fitur Web Bluetooth tidak didukung pada browser ini.");
+                throw new Error("Fitur Web Bluetooth tidak didukung pada browser ini. Disarankan menggunakan Google Chrome di Android atau Laptop (HTTPS).");
             }
-            if (printCharacteristic) return printCharacteristic;
+            if (printCharacteristic && bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
+                return printCharacteristic;
+            }
 
-            const device = await navigator.bluetooth.requestDevice({
+            const OPTIONAL_SERVICES = [
+                '000018f0-0000-1000-8000-00805f9b34fb',
+                '0000fee7-0000-1000-8000-00805f9b34fb',
+                'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+                '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+                '0000ff00-0000-1000-8000-00805f9b34fb',
+                '0000ffe0-0000-1000-8000-00805f9b34fb'
+            ];
+
+            bleDevice = await navigator.bluetooth.requestDevice({
                 acceptAllDevices: true,
-                optionalServices: [
-                    '000018f0-0000-1000-8000-00805f9b34fb',
-                    '0000fee7-0000-1000-8000-00805f9b34fb',
-                    'e7810a71-73ae-499d-8c15-faa9aef0c3f2'
-                ]
+                optionalServices: OPTIONAL_SERVICES
             });
 
-            device.addEventListener('gattserverdisconnected', () => {
+            bleDevice.addEventListener('gattserverdisconnected', () => {
                 printCharacteristic = null;
+                updateBleStatusUI(false, '');
             });
 
-            const server = await device.gatt.connect();
+            const server = await bleDevice.gatt.connect();
             const services = await server.getPrimaryServices();
-            const selectedService = services.find(s => s.uuid.includes('18f0') || s.uuid.includes('fee7') || s.uuid.includes('e781')) || services[0];
-            const characteristics = await selectedService.getCharacteristics();
-            printCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
 
-            if (!printCharacteristic) throw new Error("Karakteristik Bluetooth printer tidak ditemukan.");
+            let foundChar = null;
+            for (let s of services) {
+                try {
+                    const characteristics = await s.getCharacteristics();
+                    for (let c of characteristics) {
+                        if (c.properties.write || c.properties.writeWithoutResponse) {
+                            foundChar = c;
+                            break;
+                        }
+                    }
+                    if (foundChar) break;
+                } catch (eChar) { }
+            }
+
+            if (!foundChar) throw new Error("Karakteristik Bluetooth printer (write) tidak ditemukan.");
+            printCharacteristic = foundChar;
+            updateBleStatusUI(true, bleDevice.name || 'Printer Bluetooth');
             return printCharacteristic;
+        }
+
+        async function hubungkanPrinterBLE() {
+            try {
+                await sambungkanPrinterBluetooth();
+                await showSuccess(`Printer ${bleDevice?.name || 'Bluetooth'} berhasil terhubung!`);
+            } catch (e) {
+                if (e.name !== 'NotFoundError') {
+                    await showError("Gagal menghubungkan printer: " + e.message);
+                }
+            }
+        }
+
+        function putuskanPrinterBLE() {
+            if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
+                bleDevice.gatt.disconnect();
+            }
+            printCharacteristic = null;
+            updateBleStatusUI(false, '');
+            showNotice("Printer Bluetooth berhasil diputuskan.", "Informasi");
         }
 
         // Helper bersama: kirim teks ESC/POS ke printer dalam potongan kecil
         async function kirimDataKePrinter(struk) {
             const data = new TextEncoder().encode(struk);
-            const chunkSize = 100;
+            const chunkSize = 64;
             for (let i = 0; i < data.length; i += chunkSize) {
-                await printCharacteristic.writeValue(data.slice(i, i + chunkSize));
-                await new Promise(resolve => setTimeout(resolve, 30));
+                const slice = data.slice(i, i + chunkSize);
+                if (printCharacteristic.properties.writeWithoutResponse) {
+                    await printCharacteristic.writeValueWithoutResponse(slice);
+                } else {
+                    await printCharacteristic.writeValue(slice);
+                }
+                await new Promise(resolve => setTimeout(resolve, 25));
             }
         }
 
         async function eksekusiPrintBluetooth() {
+            bukaModalPilihanCetakBT('gaji');
+        }
+
+        async function eksekusiPrintGajiDenganMode(modeKey = '58mm_admin') {
             if (!slipAktif) return;
             const berhasil = await kirimPerintahCetakBluetooth(
                 slipAktif.nama,
@@ -5797,7 +6634,8 @@
                 slipAktif.bonus || 0,
                 slipAktif.ketBonus || '',
                 slipAktif.potongKasbon || 0,
-                slipAktif.sisaKasbon || 0
+                slipAktif.sisaKasbon || 0,
+                modeKey
             );
 
             const btnLunas = document.getElementById('btnTandaiLunas');
@@ -5835,14 +6673,14 @@
         async function kirimPerintahCetakBluetooth(
             nama, b12, b10, oleholeh, totalGaji, gantung, totalKirimMurni, dapatUangMakan,
             start, end, totalDenda = 0, rincianPotong = [], bonus = 0, ketBonus = '',
-            potongKasbon = 0, sisaKasbon = 0
+            potongKasbon = 0, sisaKasbon = 0, modeOrWidth = null
         ) {
             try {
                 await sambungkanPrinterBluetooth();
 
-                const OFFSET_SPASI = 16;
-                const LEBAR_KERTAS = 30;
-                const PAD = " ".repeat(OFFSET_SPASI);
+                const params = resolveModeParamsKasbon(modeOrWidth || '58mm_admin');
+                const LEBAR_KERTAS = params.charWidth;
+                const PAD = " ".repeat(params.leftPad);
 
                 const barisTeks = (teks) => PAD + teks + "\n";
                 const barisTengah = (teks) => {
@@ -5939,7 +6777,9 @@
                 }
 
                 struk += "\n\n\n\n";
-                struk += cutPaper;
+                if (params.autoCut) {
+                    struk += cutPaper;
+                }
 
                 await kirimDataKePrinter(struk);
 
@@ -7096,6 +7936,7 @@
         document.addEventListener("DOMContentLoaded", async () => {
             initTema();
             await loadKaryawan();
+            updateKpiKasbonAktif();
             loadDataLogistik();
         });
     </script>
