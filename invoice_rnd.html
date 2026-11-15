@@ -1067,9 +1067,10 @@
             }
 
             .top-actions .btn-theme-toggle {
-                grid-column: span 2;
+                grid-column: span 1;
                 width: 100%;
-                height: 38px;
+                height: 100%;
+                min-height: 40px;
                 border-radius: 10px;
             }
 
@@ -1296,11 +1297,22 @@
             }
 
             .top-actions {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .top-actions .btn {
+                padding: 10px 8px;
+                font-size: 12px;
+                justify-content: center;
+                white-space: nowrap;
             }
 
             .top-actions .btn-theme-toggle {
                 grid-column: span 1;
+                width: 100%;
+                height: 100%;
+                min-height: 38px;
             }
 
             .card {
@@ -1923,7 +1935,7 @@
             </div>
         </div>
 
-        <p style="margin-bottom: 12px; font-size: 12.5px; color: var(--text-muted);">Menampilkan maksimal 10 data per pemuatan demi performa optimal. Klik <b>No Invoice</b> untuk pratinjau atau edit.</p>
+        <p style="margin-bottom: 12px; font-size: 12.5px; color: var(--text-muted);">Klik <b>No Invoice</b> untuk pratinjau atau edit. Gunakan navigasi halaman di bawah tabel untuk melihat seluruh riwayat.</p>
         
         <div class="table-wrapper" id="historyTableContainer" style="margin: 0; max-height: 380px; overflow-y: auto;">
             <table style="width: 100%; min-width: 640px;">
@@ -1944,8 +1956,20 @@
             </table>
         </div>
 
+        <div id="paginationControls" style="display: none; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 13px; flex-wrap: wrap; gap: 10px;">
+            <div id="pageInfo" style="font-weight: 600; color: var(--text-muted);">Halaman 1 dari 1</div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="historyItemsPerPage" onchange="changeHistoryPageSize()" style="padding: 6px 10px; font-size: 12.5px; width: auto;" title="Jumlah data per halaman">
+                    <option value="10" selected>10 / hal</option>
+                    <option value="25">25 / hal</option>
+                    <option value="50">50 / hal</option>
+                </select>
+                <button class="btn btn-outline" id="btnPrevPage" onclick="changeHistoryPage(-1)" style="padding: 7px 14px; font-size: 12.5px;">← Sebelumnya</button>
+                <button class="btn btn-outline" id="btnNextPage" onclick="changeHistoryPage(1)" style="padding: 7px 14px; font-size: 12.5px;">Selanjutnya →</button>
+            </div>
+        </div>
+
         <div style="margin-top: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <button class="btn btn-outline" id="btnLoadMore" onclick="loadMoreHistory()" style="font-size: 12.5px; display: none;">↓ Muat 10 Data Lagi</button>
             <button class="btn btn-outline" onclick="openPurgeModal()" style="font-size: 12.5px; color: var(--danger); border-color: rgba(239, 68, 68, 0.4);" title="Hapus invoice lama untuk meringankan database">🗑️ Bersihkan Data Lama (&gt;6 Bulan)</button>
             <button class="btn btn-outline" onclick="toggleModal('historyModal')" style="margin-left: auto;">Kembali</button>
         </div>
@@ -2144,6 +2168,16 @@
             <div class="form-group" style="margin-top: 12px;">
                 <label>Keterangan (Opsional)</label>
                 <input type="text" id="qpKet" placeholder="Cth: Transfer BCA, Cash, dsb...">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                    <button type="button" class="btn btn-outline" onclick="qpIsiKeterangan('Trf')"
+                        style="justify-content: center; font-size: 12px; padding: 8px 10px; border-style: dashed; border-color: var(--primary); color: var(--primary);">
+                        🏦 Trf : Tgl Sekarang
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="qpIsiKeterangan('Titip Cash')"
+                        style="justify-content: center; font-size: 12px; padding: 8px 10px; border-style: dashed; border-color: var(--primary); color: var(--primary);">
+                        💵 Titip Cash : Tgl Sekarang
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -2505,7 +2539,9 @@
     let agentPrices = [];
     let customerBalances = {};
     let allHistoryData = [];
-    let currentHistoryLimit = 50; 
+    let filteredHistoryData = [];
+    let historyCurrentPage = 1;
+    let historyItemsPerPage = 10;
 
     let currentCustomerId = null; 
     let activeTabType = 'customer'; 
@@ -2888,10 +2924,34 @@
     function toggleModal(id) { document.getElementById(id).classList.toggle('active'); }
     
     async function openHistoryModal() {
-        toggleModal('historyModal');
-        document.getElementById('filterGlobal').value = '';
-        currentHistoryLimit = 10; 
+        const modal = document.getElementById('historyModal');
+        if (modal) modal.classList.add('active');
+
+        const filterGlobalEl = document.getElementById('filterGlobal');
+        if (filterGlobalEl) filterGlobalEl.value = '';
+        historyCurrentPage = 1;
         populateMonthDropdown();
+
+        const paginationControls = document.getElementById('paginationControls');
+        if (paginationControls) paginationControls.style.display = 'none';
+
+        const tbody = document.getElementById('historyTableBody');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center" style="padding: 40px 0;">
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
+                            <div class="spinner" style="width: 32px; height: 32px; border-width: 3px; margin: 0; border-top-color: var(--primary);"></div>
+                            <span style="font-weight: 600; font-size: 13px; color: var(--primary); animation: blinkEffect 1.5s infinite;">Menyegarkan &amp; Memuat Data Riwayat...</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        await fetchDataFromSupabase();
+        renderDropdownCustomers();
+        renderDataManagement();
         await fetchHistoryDataSilent();
     }
     
@@ -2927,14 +2987,13 @@
         monthSelect.innerHTML = options;
     }
     
-    let historyHasMore = false;
-    let historySearchTimer = null;
-
-    async function fetchHistoryDataSilent(fetchAllForSearch = false) {
+    async function fetchHistoryDataSilent() {
         const tbody = document.getElementById('historyTableBody');
+        const paginationControls = document.getElementById('paginationControls');
         const selectedMonth = document.getElementById('filterMonth') ? document.getElementById('filterMonth').value : 'ALL';
         const keyword = (document.getElementById('filterGlobal')?.value || '').toLowerCase().trim();
         
+        if (paginationControls) paginationControls.style.display = 'none';
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center" style="padding: 40px 0;">
@@ -2969,34 +3028,11 @@
                 query = query.gte('created_at', startDate).lte('created_at', endDate);
             }
 
-            const useUnlimited = fetchAllForSearch || keyword.length > 0;
-            if (!useUnlimited) {
-                query = query.limit(currentHistoryLimit + 1);
-            } else {
-                query = query.limit(500);
-            }
-
             const { data, error } = await query;
             if (error) throw error;
-            
-            let rawData = data || [];
-            const btnLoadMore = document.getElementById('btnLoadMore');
 
-            if (!useUnlimited && rawData.length > currentHistoryLimit) {
-                rawData.pop(); 
-                historyHasMore = true;
-                if (btnLoadMore) btnLoadMore.style.display = 'inline-flex';
-            } else {
-                historyHasMore = false;
-                if (btnLoadMore) btnLoadMore.style.display = 'none';
-            }
-
-            allHistoryData = rawData;
-            if (keyword.length > 0) {
-                applyHistoryKeywordFilter(keyword);
-            } else {
-                renderHistoryTable(allHistoryData);
-            }
+            allHistoryData = data || [];
+            applyHistoryKeywordFilter(keyword);
 
         } catch (err) { 
             tbody.innerHTML = `
@@ -3009,14 +3045,24 @@
         }
     }
 
-    function renderHistoryTable(data) {
+    function renderHistoryTable() {
         const tbody = document.getElementById('historyTableBody');
-        if (!data || data.length === 0) { 
+        const paginationControls = document.getElementById('paginationControls');
+
+        if (!filteredHistoryData || filteredHistoryData.length === 0) { 
             tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding: 28px; color: var(--text-muted);">Belum ada riwayat invoice yang sesuai.</td></tr>'; 
+            if (paginationControls) paginationControls.style.display = 'none';
             return; 
         }
 
-        tbody.innerHTML = data.map(inv => {
+        const totalPages = Math.ceil(filteredHistoryData.length / historyItemsPerPage);
+        if (historyCurrentPage < 1) historyCurrentPage = 1;
+        if (historyCurrentPage > totalPages) historyCurrentPage = totalPages;
+
+        const startIndex = (historyCurrentPage - 1) * historyItemsPerPage;
+        const pageData = filteredHistoryData.slice(startIndex, startIndex + historyItemsPerPage);
+
+        tbody.innerHTML = pageData.map(inv => {
             const bal = parseFloat(inv.balance_due) || 0;
             const isLunas = bal === 0;
             const balanceDisplay = isLunas ? 'LUNAS' : (bal < 0 ? `Deposit: ${formatMoney(Math.abs(bal))}` : formatMoney(bal));
@@ -3032,35 +3078,62 @@
                 <td class="text-center"><button class="btn-icon-action btn-icon-danger" onclick="deleteInvoice('${inv.invoice_no}')" title="Hapus Invoice">🗑️</button></td>
             </tr>`;
         }).join('');
+
+        if (paginationControls) {
+            paginationControls.style.display = 'flex';
+            const pageInfo = document.getElementById('pageInfo');
+            if (pageInfo) pageInfo.innerText = `Halaman ${historyCurrentPage} dari ${totalPages} (${filteredHistoryData.length} Invoice)`;
+
+            const btnPrev = document.getElementById('btnPrevPage');
+            const btnNext = document.getElementById('btnNextPage');
+            if (btnPrev) {
+                btnPrev.disabled = historyCurrentPage === 1;
+                btnPrev.style.opacity = historyCurrentPage === 1 ? '0.5' : '1';
+            }
+            if (btnNext) {
+                btnNext.disabled = historyCurrentPage === totalPages;
+                btnNext.style.opacity = historyCurrentPage === totalPages ? '0.5' : '1';
+            }
+        }
+    }
+
+    function changeHistoryPage(direction) {
+        historyCurrentPage += direction;
+        renderHistoryTable();
+        const container = document.getElementById('historyTableContainer');
+        if (container) container.scrollTop = 0;
+    }
+
+    function changeHistoryPageSize() {
+        const sel = document.getElementById('historyItemsPerPage');
+        historyItemsPerPage = sel ? (parseInt(sel.value, 10) || 10) : 10;
+        historyCurrentPage = 1;
+        renderHistoryTable();
+        const container = document.getElementById('historyTableContainer');
+        if (container) container.scrollTop = 0;
     }
 
     function applyHistoryKeywordFilter(keyword) {
-        const filtered = allHistoryData.filter(inv => {
-            const invNoMatch = (inv.invoice_no || '').toLowerCase().includes(keyword);
-            const dateFormatted = formatCustomDate(inv.created_at).toLowerCase();
-            const rawDate = (inv.created_at || '').toLowerCase();
-            const dateMatch = dateFormatted.includes(keyword) || rawDate.includes(keyword);
-            const nameMatch = (inv.customer_name || '').toLowerCase().includes(keyword);
-            
-            return invNoMatch || dateMatch || nameMatch;
-        });
-        renderHistoryTable(filtered);
+        if (!keyword) {
+            filteredHistoryData = [...allHistoryData];
+        } else {
+            filteredHistoryData = allHistoryData.filter(inv => {
+                const invNoMatch = (inv.invoice_no || '').toLowerCase().includes(keyword);
+                const dateFormatted = formatCustomDate(inv.created_at).toLowerCase();
+                const rawDate = (inv.created_at || '').toLowerCase();
+                const dateMatch = dateFormatted.includes(keyword) || rawDate.includes(keyword);
+                const nameMatch = (inv.customer_name || '').toLowerCase().includes(keyword);
+                
+                return invNoMatch || dateMatch || nameMatch;
+            });
+        }
+        historyCurrentPage = 1;
+        renderHistoryTable();
     }
 
     function filterHistoryTable() {
-        const keyword = document.getElementById('filterGlobal').value.toLowerCase().trim();
+        const keyword = (document.getElementById('filterGlobal')?.value || '').toLowerCase().trim();
         applyHistoryKeywordFilter(keyword);
-
-        if (historySearchTimer) clearTimeout(historySearchTimer);
-        if (keyword.length > 0 && historyHasMore && isSupabaseConnected) {
-            historySearchTimer = setTimeout(() => {
-                fetchHistoryDataSilent(true);
-            }, 300);
-        } else if (keyword.length === 0 && !historyHasMore && allHistoryData.length > currentHistoryLimit) {
-            historySearchTimer = setTimeout(() => {
-                fetchHistoryDataSilent(false);
-            }, 250);
-        }
     }
 
     async function loadInvoiceForEdit(invoiceNo) {
@@ -4972,6 +5045,25 @@
         qpNominal.select();
     }
 
+    // Shortcut: isi otomatis keterangan Quick Pay dengan format "Prefix : DD/MM/YY" (WIB)
+    function qpIsiKeterangan(prefix) {
+        const now = new Date();
+        const parts = new Intl.DateTimeFormat('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit'
+        }).formatToParts(now);
+        const dd = parts.find(p => p.type === 'day')?.value || String(now.getDate()).padStart(2, '0');
+        const mm = parts.find(p => p.type === 'month')?.value || String(now.getMonth() + 1).padStart(2, '0');
+        const yy = parts.find(p => p.type === 'year')?.value || String(now.getFullYear()).slice(-2);
+        const ketInput = document.getElementById('qpKet');
+        if (ketInput) {
+            ketInput.value = `${prefix} : ${dd}/${mm}/${yy}`;
+            ketInput.focus();
+        }
+    }
+
     async function onQPCustomerChange() {
         const custName = document.getElementById('qpCustomer').value;
         if (!custName) {
@@ -5088,11 +5180,7 @@
         }
     }
 
-    function loadMoreHistory() {
-        currentHistoryLimit += 10; 
-        fetchHistoryDataSilent(); 
-    }
-    
+
     async function exportHistoryToCSV() {
         showLoadingPopup("Mengambil Seluruh Rincian Riwayat & Menyiapkan CSV...");
 
