@@ -316,6 +316,48 @@
             color: #60a5fa;
         }
 
+        .label-action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .label-action-row label {
+            margin-bottom: 0;
+        }
+
+        .btn-quick-fill {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(37, 99, 235, 0.25);
+            border-radius: 6px;
+            padding: 2px 7px;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.3;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: transform 0.1s, opacity 0.2s, background 0.2s;
+            touch-action: manipulation;
+        }
+
+        .btn-quick-fill:active {
+            transform: scale(0.95);
+        }
+
+        .btn-quick-fill:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        [data-theme="dark"] .btn-quick-fill {
+            background: rgba(96, 165, 250, 0.15);
+            color: #60a5fa;
+            border-color: rgba(96, 165, 250, 0.3);
+        }
+
         /* BUTTONS */
         .btn {
             padding: 12px 16px;
@@ -899,6 +941,85 @@
             background: #fff;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
+
+        /* --- KERTAS 58MM ADMIN STYLES --- */
+        .badge-autocutter {
+            background: #fef08a;
+            border: 1px solid #facc15;
+            color: #854d0e;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-58admin-unit {
+            font-size: 12px;
+            font-weight: 600;
+            color: #78350f;
+        }
+
+        .btn-step {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1.5px solid #facc15;
+            background: #ffffff;
+            color: #78350f;
+            font-size: 16px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.15s ease;
+        }
+
+        .btn-step:active {
+            transform: scale(0.92);
+            background: #fef3c7;
+        }
+
+        .input-step {
+            width: 52px;
+            height: 32px;
+            text-align: center;
+            font-weight: 800;
+            font-size: 14px;
+            border-radius: 8px;
+            border: 1.5px solid #facc15;
+            background: #ffffff;
+            color: #78350f;
+            padding: 0;
+            outline: none;
+        }
+
+        [data-theme="dark"] .badge-autocutter {
+            background: #78350f;
+            border-color: #a16207;
+            color: #fef08a;
+        }
+
+        [data-theme="dark"] .card-58admin-unit {
+            color: #fde047;
+        }
+
+        [data-theme="dark"] .btn-step,
+        [data-theme="dark"] .input-step {
+            background: #1e1e1e;
+            border-color: #854d0e;
+            color: #fde047;
+        }
+
+        [data-theme="dark"] #quickShift58Admin,
+        [data-theme="dark"] #previewShift58Admin {
+            background: #241a0d !important;
+            border-color: #854d0e !important;
+        }
     </style>
 </head>
 
@@ -1020,7 +1141,8 @@
                         <div class="form-group full" id="boxBonLama">
                             <label id="labelBonUI">Bon Lama (Historis Nota Ini)</label>
                             <input type="text" id="inputBonLama" inputmode="numeric" class="input-money" value="0"
-                                oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+                                oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"
+                                onblur="restoreZero(this)">
                         </div>
                     </div>
                 </div>
@@ -1044,19 +1166,32 @@
                     <div class="form-group full" id="boxOngkir" style="display:none; margin-bottom: 12px;">
                         <label>Nominal Ongkos Kirim</label>
                         <input type="text" id="inputOngkir" inputmode="numeric" class="input-money" value="0"
-                            oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+                            oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"
+                            onblur="restoreZero(this)">
                     </div>
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Tunai (Cash)</label>
+                            <div class="label-action-row">
+                                <label>Tunai (Cash)</label>
+                                <button type="button" id="btnQuickCash" class="btn-quick-fill"
+                                    onclick="isiNominalFullSisa('cash')"
+                                    title="Isi nominal full atau sisa tagihan">Full/Sisa</button>
+                            </div>
                             <input type="text" id="inputCash" inputmode="numeric" class="input-money" value="0"
-                                oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+                                oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"
+                                onblur="restoreZero(this)">
                         </div>
                         <div class="form-group">
-                            <label>Transfer</label>
+                            <div class="label-action-row">
+                                <label>Transfer</label>
+                                <button type="button" id="btnQuickTrf" class="btn-quick-fill"
+                                    onclick="isiNominalFullSisa('trf')"
+                                    title="Isi nominal full atau sisa tagihan">Full/Sisa</button>
+                            </div>
                             <input type="text" id="inputTrf" inputmode="numeric" class="input-money" value="0"
-                                oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+                                oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"
+                                onblur="restoreZero(this)">
                         </div>
                     </div>
                 </div>
@@ -1084,7 +1219,31 @@
                         <select id="ukuranKertasBottom" class="quick-select" onchange="syncKertas(this.value)">
                             <option value="48" selected>80mm (Besar)</option>
                             <option value="32">58mm (Kecil)</option>
+                            <option value="58admin">58mm Admin</option>
                         </select>
+                    </div>
+
+                    <!-- Bar Penyesuaian Geser Cepat Saat Kertas 58mm Admin Dipilih -->
+                    <div id="quickShift58Admin"
+                        style="display: none; background: #fffdf5; border: 1.5px solid #fde68a; border-radius: 10px; padding: 6px 10px; margin-bottom: 8px; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span class="badge-autocutter" style="font-size: 10px; padding: 1px 5px;"><i
+                                    class="ph-bold ph-scissors"></i> Auto-Cut</span>
+                            <span style="font-size: 11px; font-weight: 700; color: #78350f;">58mm Admin:</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 11px; color: #78350f; font-weight: 600;">Geser:</span>
+                            <button type="button" class="btn-step"
+                                style="width: 26px; height: 26px; font-size: 14px; border-radius: 6px;"
+                                onclick="ubahGeserKanan(-1)">−</button>
+                            <input type="number" id="shiftRightQuick" class="input-step"
+                                style="width: 38px; height: 26px; font-size: 13px; border-radius: 6px;" value="15"
+                                min="0" max="35" oninput="syncGeserKanan(this.value)">
+                            <button type="button" class="btn-step"
+                                style="width: 26px; height: 26px; font-size: 14px; border-radius: 6px;"
+                                onclick="ubahGeserKanan(1)">+</button>
+                            <span style="font-size: 11px; color: #78350f; font-weight: 600;">spasi</span>
+                        </div>
                     </div>
 
                     <div class="action-grid">
@@ -1264,7 +1423,20 @@
             <select id="ukuranKertasPreview" onchange="syncKertas(this.value)">
                 <option value="48" selected>Kertas 80mm (Besar - 48 Karakter)</option>
                 <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
+                <option value="58admin">Kertas 58mm Admin (Printer 80mm + Auto-Cutter)</option>
             </select>
+        </div>
+        <div id="previewShift58Admin"
+            style="display: none; background: #fffdf5; border: 1.5px solid #fde68a; border-radius: 10px; padding: 8px 12px; margin-top: -8px; margin-bottom: 16px; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; font-weight: 700; color: #78350f;"><i class="ph-bold ph-scissors"></i> Geser
+                Kanan (Spasi):</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <button type="button" class="btn-step" onclick="ubahGeserKanan(-1)">−</button>
+                <input type="number" id="shiftRightPreview" class="input-step" value="15" min="0" max="35"
+                    oninput="syncGeserKanan(this.value)">
+                <button type="button" class="btn-step" onclick="ubahGeserKanan(1)">+</button>
+                <span class="card-58admin-unit">spasi</span>
+            </div>
         </div>
         <div class="form-grid">
             <button class="btn btn-outline" style="height: 44px;" onclick="closeSheet('sheetPreview')">Kembali</button>
@@ -1434,20 +1606,106 @@
         let lastPrintText = ""; let lastDataStruk = null; let isDeposit = false; let isInitialLoad = true;
 
         function clearZero(el) { if (el.value === "0" || el.value === 0) el.value = ""; }
+        function restoreZero(el) { if (el.value.trim() === "") el.value = "0"; }
         function togglePembayaran(isUserAction = false) {
             if (isUserAction) triggerHaptic(30);
             const isChecked = document.getElementById('cbTidakTitip').checked;
             const inputCash = document.getElementById('inputCash'); const inputTrf = document.getElementById('inputTrf');
-            if (isChecked) { inputCash.value = "0"; inputTrf.value = "0"; inputCash.disabled = true; inputTrf.disabled = true; inputCash.style.opacity = "0.5"; inputTrf.style.opacity = "0.5"; }
-            else { inputCash.disabled = false; inputTrf.disabled = false; inputCash.style.opacity = "1"; inputTrf.style.opacity = "1"; }
+            const btnQuickCash = document.getElementById('btnQuickCash'); const btnQuickTrf = document.getElementById('btnQuickTrf');
+            if (isChecked) {
+                inputCash.value = "0"; inputTrf.value = "0";
+                inputCash.disabled = true; inputTrf.disabled = true;
+                inputCash.style.opacity = "0.5"; inputTrf.style.opacity = "0.5";
+                if (btnQuickCash) btnQuickCash.disabled = true;
+                if (btnQuickTrf) btnQuickTrf.disabled = true;
+            }
+            else {
+                inputCash.disabled = false; inputTrf.disabled = false;
+                inputCash.style.opacity = "1"; inputTrf.style.opacity = "1";
+                if (btnQuickCash) btnQuickCash.disabled = false;
+                if (btnQuickTrf) btnQuickTrf.disabled = false;
+            }
             hitungTotal();
+        }
+
+        function isiNominalFullSisa(target) {
+            triggerHaptic(25);
+            if (document.getElementById('cbTidakTitip')?.checked) return;
+
+            const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
+            const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+            const bl_input = getAngka('inputBonLama');
+            const bl_actual = isDeposit ? -bl_input : bl_input;
+            const ongkir = getAngka('inputOngkir');
+            const tagihanBersih = tk - tr - ongkir + bl_actual;
+
+            const isCash = target === 'cash';
+            const targetInput = document.getElementById(isCash ? 'inputCash' : 'inputTrf');
+            const otherVal = getAngka(isCash ? 'inputTrf' : 'inputCash');
+            const nominal = Math.max(0, Math.round(tagihanBersih - otherVal));
+
+            if (targetInput) {
+                targetInput.value = nominal.toLocaleString('id-ID');
+            }
+            hitungTotal();
+        }
+
+        let lastKertasPilihan = localStorage.getItem('sbr_kertas_edit') || "48";
+
+        function getGeserKanan() {
+            const saved = localStorage.getItem('sbr_shift_right_58admin');
+            if (saved !== null && !isNaN(parseInt(saved))) {
+                return Math.max(0, parseInt(saved));
+            }
+            return 15;
+        }
+
+        function muatGeserKanan() {
+            syncSemuaInputGeser(getGeserKanan());
+        }
+
+        function syncSemuaInputGeser(val) {
+            val = Math.max(0, parseInt(val) || 0);
+            const inQuick = document.getElementById('shiftRightQuick');
+            const inPreview = document.getElementById('shiftRightPreview');
+            if (inQuick) inQuick.value = val;
+            if (inPreview) inPreview.value = val;
+            localStorage.setItem('sbr_shift_right_58admin', val);
+        }
+
+        function syncGeserKanan(val) {
+            syncSemuaInputGeser(val);
+        }
+
+        function ubahGeserKanan(delta) {
+            triggerHaptic(25);
+            syncSemuaInputGeser(Math.max(0, getGeserKanan() + delta));
         }
 
         function syncKertas(val) {
             if (val) localStorage.setItem('sbr_kertas_edit', val);
             const savedVal = val || localStorage.getItem('sbr_kertas_edit') || "48";
+            lastKertasPilihan = savedVal;
             if (document.getElementById('ukuranKertasBottom')) document.getElementById('ukuranKertasBottom').value = savedVal;
             if (document.getElementById('ukuranKertasPreview')) document.getElementById('ukuranKertasPreview').value = savedVal;
+
+            const is58Admin = (savedVal === '58admin');
+            const quickShift = document.getElementById('quickShift58Admin');
+            if (quickShift) quickShift.style.display = is58Admin ? 'flex' : 'none';
+            const previewShift = document.getElementById('previewShift58Admin');
+            if (previewShift) previewShift.style.display = is58Admin ? 'flex' : 'none';
+        }
+
+        function siapkanTeksCetak(template, judul) {
+            if (!template) return "";
+            if (lastKertasPilihan === '58admin') {
+                const shiftSpaces = getGeserKanan();
+                const indentStr = ' '.repeat(shiftSpaces);
+                const pad = Math.max(0, Math.floor((32 - judul.length) / 2));
+                const centered = indentStr + ' '.repeat(pad) + judul;
+                return template.replace('[JENIS_CETAKAN]', centered);
+            }
+            return template.replace('[JENIS_CETAKAN]', judul);
         }
 
         async function initEdit() {
@@ -1506,8 +1764,14 @@
                 document.getElementById('driver2').value = trxData.driver_2 || "";
                 document.getElementById('pilihMobil').value = trxData.plat_nomor === "-" ? "" : trxData.plat_nomor;
 
-                document.getElementById('inputCash').value = trxData.bayar_cash.toLocaleString('id-ID');
-                document.getElementById('inputTrf').value = trxData.bayar_transfer.toLocaleString('id-ID');
+                const loadedCash = Number(trxData.bayar_cash) || 0;
+                const loadedTrf = Number(trxData.bayar_transfer) || 0;
+                document.getElementById('inputCash').value = loadedCash.toLocaleString('id-ID');
+                document.getElementById('inputTrf').value = loadedTrf.toLocaleString('id-ID');
+                if (loadedCash === 0 && loadedTrf === 0) {
+                    document.getElementById('cbTidakTitip').checked = true;
+                    togglePembayaran(false);
+                }
 
                 if (trxData.ongkir > 0) {
                     document.getElementById('cbOngkir').checked = true; toggleOngkir(false);
@@ -1524,6 +1788,7 @@
                     itemsRetur = detailData.filter(d => d.tipe === 'Retur').map(d => parseItemDB(d));
                 }
 
+                muatGeserKanan();
                 syncKertas("");
                 render(); hitungTotal();
                 isInitialLoad = false;
@@ -1678,6 +1943,18 @@
             closeSheet('sheetBTScanner');
         }
 
+        function handleBTDisconnected() {
+            btCharacteristic = null;
+            connectedDeviceId = null;
+
+            const btnQuick = document.getElementById('btnQuickBT');
+            const lblQuick = document.getElementById('labelQuickBT');
+            if (btnQuick && lblQuick) {
+                btnQuick.classList.remove('bt-connected-pulse');
+                lblQuick.innerText = "Hubungkan BT";
+            }
+        }
+
         async function connectBT() {
             try {
                 const device = await navigator.bluetooth.requestDevice({
@@ -1691,7 +1968,12 @@
                 const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
                 const characteristics = await service.getCharacteristics();
                 btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+                if (!btCharacteristic) {
+                    throw new Error("Karakteristik cetak tidak ditemukan pada perangkat Bluetooth ini.");
+                }
                 connectedDeviceId = device.id;
+                device.removeEventListener('gattserverdisconnected', handleBTDisconnected);
+                device.addEventListener('gattserverdisconnected', handleBTDisconnected);
 
                 // Update status tombol cepat di panel bawah
                 const btnQuick = document.getElementById('btnQuickBT');
@@ -1715,7 +1997,7 @@
                 }
 
                 if (e.name !== 'NotFoundError') {
-                    showCustomAlert("Koneksi Gagal", "Tidak dapat menyambungkan ke printer: " + e.message, "danger");
+                    showCustomAlert("Koneksi Gagal", "Tidak dapat menyambungkan ke printer: " + (e.message || e), "danger");
                 }
             }
         }
@@ -1780,7 +2062,7 @@
                     btn.innerHTML = '<i class="ph ph-printer ph-spin"></i> MENCETAK ULANG...';
                     btn.disabled = true;
                 }
-                let cetakReprint = lastPrintText.replace('[JENIS_CETAKAN]', '*** REPRINT REVISI NOTA ***');
+                let cetakReprint = siapkanTeksCetak(lastPrintText, '*** REPRINT REVISI NOTA ***');
                 await printToBT(cetakReprint);
                 showCustomAlert("Sukses", "Berhasil Cetak Ulang Nota!", "success");
             } catch (e) {
@@ -1832,26 +2114,37 @@
                 htmlContent += `<div class="garis"></div><div class="flex-row" style="font-weight: bold; color: #000;"><span>TOTAL RETUR:</span><span style="color: red;">-Rp ${dataStruk.tr.toLocaleString('id-ID')}</span></div>`;
             }
 
-            htmlContent += `<div class="garis"></div>`;
-            if (dataStruk.ongkir > 0) htmlContent += `<div class="flex-row"><span>ONGKIR:</span><span>-Rp ${dataStruk.ongkir.toLocaleString('id-ID')}</span></div>`;
+            if (dataStruk.ongkir > 0 || dataStruk.bl_input > 0) {
+                htmlContent += `<div class="garis"></div>`;
+                if (dataStruk.ongkir > 0) htmlContent += `<div class="flex-row"><span>ONGKIR:</span><span>-Rp ${dataStruk.ongkir.toLocaleString('id-ID')}</span></div>`;
+                if (dataStruk.bl_input > 0) {
+                    const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
+                    const valBonPrint = isDeposit ? `-Rp ${dataStruk.bl_input.toLocaleString('id-ID')}` : `Rp ${dataStruk.bl_input.toLocaleString('id-ID')}`;
+                    htmlContent += `<div class="flex-row"><span>${labelBonPrint}</span><span>${valBonPrint}</span></div>`;
+                }
+            }
 
-            const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
-            const valBonPrint = isDeposit ? `-Rp ${dataStruk.bl_input.toLocaleString('id-ID')}` : `Rp ${dataStruk.bl_input.toLocaleString('id-ID')}`;
-            htmlContent += `<div class="flex-row"><span>${labelBonPrint}</span><span>${valBonPrint}</span></div>`;
+            const showTotalTagihanPreview = dataStruk.itemsRetur.length > 0 || dataStruk.ongkir > 0 || dataStruk.bl_input > 0 || (Math.round(dataStruk.tagihanBersih) !== Math.round(dataStruk.tk));
+            if (showTotalTagihanPreview) {
+                htmlContent += `<div class="garis-tebal"></div>`;
+                htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px;"><span>TOTAL TAGIHAN:</span><span>Rp ${dataStruk.tagihanBersih.toLocaleString('id-ID')}</span></div>`;
+            }
 
-            htmlContent += `<div class="garis-tebal"></div>`;
-            htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px;"><span>TOTAL TAGIHAN:</span><span>Rp ${dataStruk.tagihanBersih.toLocaleString('id-ID')}</span></div>`;
-            htmlContent += `<div class="garis"></div>`;
-            htmlContent += `<div class="flex-row"><span>Bayar CASH:</span><span>Rp ${dataStruk.cash.toLocaleString('id-ID')}</span></div>`;
-            htmlContent += `<div class="flex-row"><span>Bayar TRF:</span><span>Rp ${dataStruk.trf.toLocaleString('id-ID')}</span></div>`;
-            htmlContent += `<div class="garis"></div>`;
+            if (dataStruk.cash > 0 || dataStruk.trf > 0) {
+                htmlContent += `<div class="garis"></div>`;
+                if (dataStruk.cash > 0) htmlContent += `<div class="flex-row"><span>Bayar CASH:</span><span>Rp ${dataStruk.cash.toLocaleString('id-ID')}</span></div>`;
+                if (dataStruk.trf > 0) htmlContent += `<div class="flex-row"><span>Bayar TRF:</span><span>Rp ${dataStruk.trf.toLocaleString('id-ID')}</span></div>`;
+            }
 
             let sisaAkhir = Math.round(dataStruk.sisa); let labelSisa = "SISA BON:"; let colorSisa = "#000";
             if (sisaAkhir > 0) { labelSisa = "SISA BON:"; colorSisa = "red"; }
             else if (sisaAkhir === 0) { labelSisa = "LUNAS:"; colorSisa = "green"; }
             else { labelSisa = "DEPOSIT:"; colorSisa = "green"; }
 
-            htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px; color: ${colorSisa};"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+            if (dataStruk.cash > 0 || dataStruk.trf > 0 || sisaAkhir !== Math.round(dataStruk.tk)) {
+                htmlContent += `<div class="garis"></div>`;
+                htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px; color: ${colorSisa};"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+            }
             htmlContent += `<div class="garis"></div><div style="text-align: center; margin-top: 30px; font-weight: bold;">SBR PUTRA FOOD SYSTEM</div>`;
             area.innerHTML = htmlContent;
 
@@ -1958,14 +2251,14 @@
                     } else {
                         if (doCetakTagihan) {
                             if (btnEksekusi) btnEksekusi.innerHTML = '<i class="ph ph-printer ph-spin"></i> MENCETAK TAGIHAN...';
-                            let cetakCustomer = lastPrintText.replace('[JENIS_CETAKAN]', '=== REVISI LEMBAR CUSTOMER ===');
+                            let cetakCustomer = siapkanTeksCetak(lastPrintText, '=== REVISI LEMBAR CUSTOMER ===');
                             await printToBT(cetakCustomer);
                             await new Promise(r => setTimeout(r, 600));
                         }
 
                         if (doCetakAdmin) {
                             if (btnEksekusi) btnEksekusi.innerHTML = '<i class="ph ph-printer ph-spin"></i> MENCETAK ADMIN...';
-                            let cetakAdmin = lastPrintText.replace('[JENIS_CETAKAN]', '=== REVISI LEMBAR ADMIN ===');
+                            let cetakAdmin = siapkanTeksCetak(lastPrintText, '=== REVISI LEMBAR ADMIN ===');
                             await printToBT(cetakAdmin);
                             await new Promise(r => setTimeout(r, 600));
                         }
@@ -2076,62 +2369,144 @@
             const ongkir = getAngka('inputOngkir');
             const tagihanBersih = tk - tr - ongkir + bl_actual;
             const sisa = tagihanBersih - cash - trf;
-            const lebar = parseInt(kertasPilihan) || 48;
+            lastKertasPilihan = kertasPilihan;
+            const is58Admin = (kertasPilihan === '58admin');
+            const lebar = is58Admin ? 32 : (parseInt(kertasPilihan) || 48);
+            const shiftSpaces = is58Admin ? getGeserKanan() : 0;
+            const indentStr = ' '.repeat(shiftSpaces);
 
-            const buatBaris = (l, r) => { let space = lebar - l.length - String(r).length; return l + " ".repeat(Math.max(1, space)) + r + "\n"; };
-            const garisStrip = "-".repeat(lebar) + "\n";
-            const garisSamaDengan = "=".repeat(lebar) + "\n";
+            const buatBaris = (l, r) => { let space = lebar - l.length - String(r).length; return indentStr + l + " ".repeat(Math.max(1, space)) + r + "\n"; };
+            const buatBarisDoubleHeight = (l, r) => `\x1B\x45\x01\x1B\x21\x10` + buatBaris(l, r) + `\x1B\x45\x00\x1B\x21\x00`;
+            const garisStrip = indentStr + "-".repeat(lebar) + "\n";
+            const garisSamaDengan = indentStr + "=".repeat(lebar) + "\n";
 
-            let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01[JENIS_CETAKAN]\n\x1B\x45\x00\n`;
-            p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n${garisStrip}`;
+            function buatCenter(text) {
+                text = String(text || '').trim();
+                if (is58Admin) {
+                    const pad = Math.max(0, Math.floor((32 - text.length) / 2));
+                    return indentStr + ' '.repeat(pad) + text + '\n';
+                }
+                return `\x1B\x61\x01${text}\n\x1B\x61\x00`;
+            }
+
+            let p = `\x1B\x40`;
+            if (is58Admin) {
+                p += `\x1B\x61\x00`;
+                p += `\x1B\x45\x01[JENIS_CETAKAN]\x1B\x45\x00\n\n`;
+                const padStore = Math.max(0, Math.floor((32 - "SBR PUTRA FOOD".length) / 2));
+                p += `\x1B\x45\x01\x1B\x21\x10` + indentStr + ' '.repeat(padStore) + `SBR PUTRA FOOD\n\x1B\x21\x00\x1B\x45\x00`;
+                p += buatCenter("Lembang, Bandung Barat");
+                p += garisStrip;
+            } else {
+                p += `\x1B\x61\x01\x1B\x45\x01[JENIS_CETAKAN]\n\x1B\x45\x00\n`;
+                p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n${garisStrip}`;
+            }
+
             const stringTglSimple = tglIndo.split(', ')[1] || tglInput;
-            p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${stringTglSimple}`);
-            p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil || '-'} ]\n${garisStrip}\x1B\x61\x00\x1B\x21\x00`;
+            if (!is58Admin) p += `\x1B\x61\x00`;
+            p += buatBaris(`NO: ${noNota}`, `TGL: ${stringTglSimple}`);
+
+            if (is58Admin) {
+                const agUpper = ag.toUpperCase();
+                const padAg = Math.max(0, Math.floor((32 - agUpper.length) / 2));
+                p += `\x1B\x45\x01\x1B\x21\x10` + indentStr + ' '.repeat(padAg) + `${agUpper}\n\x1B\x21\x00\x1B\x45\x00`;
+                p += buatCenter(`DRV: ${drvGabung} [ ${mobil || '-'} ]`);
+                p += garisStrip;
+            } else {
+                p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil || '-'} ]\n${garisStrip}\x1B\x61\x00`;
+            }
+            p += `\x1B\x21\x00`;
+
+            const hasRetur = itemsRetur.length > 0;
+            const hasBiaya = ongkir > 0 || bl_input > 0;
+            const hasBayar = cash > 0 || trf > 0;
+            const showTotalTagihan = hasRetur || hasBiaya || (Math.round(tagihanBersih) !== Math.round(tk));
+            const showSisaBon = hasBayar || (Math.round(sisa) !== Math.round(tk));
+            const isTotalKirimPalingBawah = !showTotalTagihan && !hasBayar && !showSisaBon;
 
             itemsKirim.forEach(i => {
-                p += `${i.barang}\n`; if (i.keterangan) p += `  Ket: ${i.keterangan}\n`;
+                p += indentStr + `${i.barang}\n`; if (i.keterangan) p += indentStr + `  Ket: ${i.keterangan}\n`;
                 p += buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}`, i.total.toLocaleString('id-ID'));
             });
-            p += garisStrip + buatBaris(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString('id-ID')}`);
+            if (isTotalKirimPalingBawah) {
+                p += garisStrip + buatBarisDoubleHeight(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString('id-ID')}`) + `\n\n`;
+            } else {
+                p += garisStrip + buatBaris(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString('id-ID')}`);
+            }
 
-            if (itemsRetur.length > 0) {
-                p += `\n\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
+            if (hasRetur) {
+                p += `\n` + indentStr + `\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
                 itemsRetur.forEach(i => {
-                    p += `[RETUR] ${i.barang}\n`; if (i.keterangan) p += `  Ket: ${i.keterangan}\n`;
+                    p += indentStr + `[RETUR] ${i.barang}\n`; if (i.keterangan) p += indentStr + `  Ket: ${i.keterangan}\n`;
                     p += buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}`, `-${i.total.toLocaleString('id-ID')}`);
                 });
                 p += garisStrip + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString('id-ID')}`);
             }
-            p += garisStrip;
-            if (ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString('id-ID')}`);
 
-            const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
-            const valBonPrint = isDeposit ? `-Rp ${bl_input.toLocaleString('id-ID')}` : `Rp ${bl_input.toLocaleString('id-ID')}`;
-            p += buatBaris(labelBonPrint, valBonPrint) + garisSamaDengan;
-            p += `\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString('id-ID')}`) + `\x1B\x45\x00` + garisStrip;
-            p += buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString('id-ID')}`) + buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString('id-ID')}`) + garisStrip;
+            if (hasBiaya) {
+                p += garisStrip;
+                if (ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString('id-ID')}`);
+                if (bl_input > 0) {
+                    const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
+                    const valBonPrint = isDeposit ? `-Rp ${bl_input.toLocaleString('id-ID')}` : `Rp ${bl_input.toLocaleString('id-ID')}`;
+                    p += buatBaris(labelBonPrint, valBonPrint);
+                }
+            }
 
-            const labelSisaBluetooth = sisa < 0 ? "DEPOSIT:" : "SISA BON:";
-            p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`${labelSisaBluetooth}`, `Rp ${Math.abs(sisa).toLocaleString('id-ID')}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
-            p += `\x1B\x61\x01\x1B\x21\x00\n\n\n( ............................ )\n` + garisStrip + `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
+            if (showTotalTagihan) {
+                p += garisSamaDengan;
+                if (!hasBayar && !showSisaBon) {
+                    p += buatBarisDoubleHeight(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString('id-ID')}`) + `\n\n`;
+                } else {
+                    p += `\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString('id-ID')}`) + `\x1B\x45\x00`;
+                }
+            }
+
+            if (hasBayar) {
+                p += garisStrip;
+                if (cash > 0) p += buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString('id-ID')}`);
+                if (trf > 0) p += buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString('id-ID')}`);
+            }
+
+            const labelSisaBluetooth = sisa < 0 ? "DEPOSIT:" : (sisa === 0 ? "LUNAS:" : "SISA BON:");
+            if (showSisaBon) {
+                p += garisStrip;
+                p += buatBarisDoubleHeight(`${labelSisaBluetooth}`, `Rp ${Math.abs(sisa).toLocaleString('id-ID')}`) + `\n\n`;
+            }
+
+            if (is58Admin) {
+                p += `\n\n` + buatCenter("( ............................ )") + garisStrip;
+                p += `\x1B\x45\x01` + buatCenter("TERIMA KASIH") + `\x1B\x45\x00`;
+                p += buatCenter("SBR PUTRA FOOD - Order System") + `\n\n\n\n\n`;
+                p += `\x1D\x56\x42\x00`;
+            } else {
+                p += `\x1B\x61\x01\x1B\x21\x00\n\n\n( ............................ )\n` + garisStrip + `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
+            }
 
             let isDbSaved = false;
 
             try {
-                await clientSupabase.from(masterTable).update({
+                const { error: errTrx } = await clientSupabase.from(masterTable).update({
                     tanggal: tglInput, driver_1: drv1, driver_2: drv2, plat_nomor: mobil || '-',
                     total_kirim: tk, total_retur: tr, bon_lama: bl_actual, ongkir: ongkir,
                     bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
                 }).eq('no_nota', noNota);
+                if (errTrx) throw errTrx;
 
-                await clientSupabase.from(detailTable).delete().eq('no_nota', noNota);
+                const { error: errDel } = await clientSupabase.from(detailTable).delete().eq('no_nota', noNota);
+                if (errDel) throw errDel;
 
                 const details = [
                     ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.keterangan ? `${i.barang} - (${i.keterangan})` : i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
                     ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.keterangan ? `${i.barang} - (${i.keterangan})` : i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
                 ];
-                await clientSupabase.from(detailTable).insert(details);
-                await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
+                if (details.length > 0) {
+                    const { error: errDetail } = await clientSupabase.from(detailTable).insert(details);
+                    if (errDetail) throw errDetail;
+                }
+
+                const { error: errAgen } = await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
+                if (errAgen) throw errAgen;
 
                 isDbSaved = true;
                 lastPrintText = p;
