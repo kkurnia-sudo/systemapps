@@ -789,6 +789,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 6px;
+            flex-wrap: wrap;
             font-size: 11px;
             font-weight: 800;
             color: #b45309;
@@ -800,6 +801,23 @@
 
         [data-theme="dark"] .fifo-header {
             color: #fbbf24;
+        }
+
+        .btn-fifo-reset {
+            padding: 2px 7px;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 999px;
+            border: 1px solid rgba(37, 99, 235, 0.35);
+            background: var(--primary-soft);
+            color: var(--primary);
+            cursor: pointer;
+            text-transform: none;
+            touch-action: manipulation;
+        }
+
+        [data-theme="dark"] .btn-fifo-reset {
+            color: #60a5fa;
         }
 
         .fifo-list {
@@ -818,14 +836,29 @@
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
 
         .fifo-item.is-old {
             border-left: 3px solid var(--warning);
         }
 
+        .fifo-item.is-gantung {
+            border-left: 3px solid var(--danger);
+        }
+
         .fifo-item.is-new {
             border-left: 3px solid var(--primary);
+        }
+
+        .fifo-item.is-target {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-soft);
+        }
+
+        .fifo-item.is-paid-first {
+            border-left: 3px solid var(--success);
+            opacity: 0.78;
         }
 
         .fifo-item-left {
@@ -874,6 +907,21 @@
         .fifo-tag.partial {
             background: rgba(239, 68, 68, 0.12);
             color: var(--danger);
+        }
+
+        .fifo-tag.gantung {
+            background: rgba(239, 68, 68, 0.14);
+            color: var(--danger);
+        }
+
+        .fifo-tag.target {
+            background: var(--success-soft);
+            color: var(--success);
+        }
+
+        .fifo-tag.paid {
+            background: var(--success-soft);
+            color: var(--success);
         }
 
         .fifo-sub {
@@ -925,6 +973,19 @@
             background: var(--success-soft);
             color: var(--success);
             border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-fifo-mini.target-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border-style: dashed;
+        }
+
+        .btn-fifo-mini.target-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            border-style: solid;
         }
 
         .btn-fifo-mini:active {
@@ -1014,6 +1075,12 @@
 
         [data-theme="dark"] .live-alloc-row.partial {
             color: #fbbf24;
+        }
+
+        .live-alloc-row.gantung {
+            border-color: rgba(239, 68, 68, 0.35);
+            background: rgba(239, 68, 68, 0.08);
+            color: var(--danger);
         }
 
         .live-alloc-row.deposit {
@@ -1448,7 +1515,7 @@
             <div class="brand"><i class="ph-fill ph-receipt"></i> SBR Admin <span>Bayar Nota Reg</span></div>
             <div class="header-actions">
                 <button class="icon-btn" id="btnRefreshHeader" onclick="refreshDataSaldo()"
-                    title="Sinkronkan Saldo Terbaru"><i class="ph-bold ph-arrows-clockwise"></i></button>
+                    title="Reset Form, Sinkronkan Saldo &amp; Riwayat Terbaru"><i class="ph-bold ph-arrows-clockwise"></i></button>
                 <button class="icon-btn" id="btnPrinterIcon" onclick="bukaModalPrinter()"
                     title="Pengaturan Printer BT"><i class="ph-bold ph-printer"></i></button>
                 <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Tema"><i
@@ -1744,6 +1811,7 @@
         let riwayatLimit = 5;
         let currentAgentLastNota = null;
         let currentAgentFifo = null;
+        let selectedTargetNota = null;
         let modalNotaStack = [];
         let userCustomKet = false;
         let lastAutoCatatanTag = '';
@@ -1757,11 +1825,24 @@
 
         // === HELPERS ===
         function parseKeteranganRetur(ket) {
-            const raw = String(ket || '').trim();
-            const m = raw.match(/^\[Retur(?:\s+Non-Nota)?:\s*Rp\s*([0-9.]+)\]\s*(.*)$/i);
-            if (!m) return { returNominal: 0, ketBersih: raw };
-            const returNominal = parseInt(m[1].replace(/\./g, ''), 10) || 0;
-            return { returNominal, ketBersih: (m[2] || '').trim() };
+            let text = String(ket || '').trim();
+            let returNominal = 0;
+            let targetNota = null;
+
+            const mRetur = text.match(/\[Retur(?:\s+Non-Nota)?:\s*Rp\s*([0-9.]+)\]/i);
+            if (mRetur) {
+                returNominal = parseInt(mRetur[1].replace(/\./g, ''), 10) || 0;
+                text = text.replace(mRetur[0], ' ');
+            }
+
+            const mTarget = text.match(/\[Bayar:\s*([^\]\s]+)\]/i);
+            if (mTarget) {
+                targetNota = mTarget[1].trim();
+                text = text.replace(mTarget[0], ' ');
+            }
+
+            const ketBersih = text.replace(/\s+/g, ' ').trim();
+            return { returNominal, targetNota, ketBersih };
         }
 
         function escapeHtml(str) {
@@ -1965,12 +2046,14 @@
         }
 
         async function refreshDataSaldo() {
+            if (isSubmitting) return;
             const btn = document.getElementById('btnRefreshHeader');
             const icon = btn ? btn.querySelector('i') : null;
             if (icon) icon.classList.add('spinning');
             try {
-                await initHalaman(true);
-                showToast('Saldo & riwayat terbaru tersinkron');
+                resetForm();
+                await initHalaman(false);
+                showToast('Form direset, saldo & riwayat terbaru tersinkron');
             } finally {
                 if (icon) icon.classList.remove('spinning');
             }
@@ -2094,12 +2177,15 @@
 
                 const cashVal = Number(r.bayar_cash || 0);
                 const trfVal = Number(r.bayar_transfer || 0);
-                const { returNominal, ketBersih } = parseKeteranganRetur(r.keterangan);
+                const { returNominal, targetNota, ketBersih } = parseKeteranganRetur(r.keterangan);
 
                 let bayarBadges = '';
                 if (cashVal > 0) bayarBadges += `<span class="badge-pay cash">Cash ${cashVal.toLocaleString('id-ID')}</span>`;
                 if (trfVal > 0) bayarBadges += `<span class="badge-pay trf">Trf ${trfVal.toLocaleString('id-ID')}</span>`;
                 if (returNominal > 0) bayarBadges += `<span class="badge-pay retur">Retur ${returNominal.toLocaleString('id-ID')}</span>`;
+                if (targetNota && !ketBersih.toLowerCase().includes(targetNota.toLowerCase())) {
+                    bayarBadges += `<span class="badge-pay trf">Target ${escapeHtml(targetNota)}</span>`;
+                }
                 if (!bayarBadges) bayarBadges = `<span class="badge-pay cash">Rp 0</span>`;
 
                 const sisaVal = Number(r.sisa_bon_akhir || 0);
@@ -2247,8 +2333,39 @@
             }
         }
 
-        function hitungAlokasiBonFIFO(trxNewestFirst, saldoAktif) {
+        function hitungUmurHari(tglStr) {
+            if (!tglStr) return null;
+            const m = String(tglStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (!m) return null;
+            const dNota = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+            const now = new Date();
+            const dToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const diff = Math.round((dToday - dNota) / 86400000);
+            return Math.max(0, diff);
+        }
+
+        function hitungAlokasiBonFIFO(trxNewestFirst, saldoAktif, payNewestFirst = []) {
             const list = Array.isArray(trxNewestFirst) ? trxNewestFirst : [];
+            const payList = Array.isArray(payNewestFirst) ? payNewestFirst : [];
+
+            // Batas siklus bon: hentikan pelacakan pembayaran target pada transaksi terakhir yang melunasi semua bon (<= 0)
+            const activePays = [];
+            for (const p of payList) {
+                if (Number(p.sisa_bon_akhir || 0) <= 0) break;
+                activePays.push(p);
+            }
+
+            // Akumulasi pembayaran yang secara eksplisit menarget nota tertentu pada siklus bon aktif
+            const targetedPaidMap = {};
+            activePays.forEach(p => {
+                const { returNominal, targetNota } = parseKeteranganRetur(p.keterangan);
+                if (!targetNota || targetNota === 'BON-AWAL') return;
+                const amt = Number(p.bayar_cash || 0) + Number(p.bayar_transfer || 0) + returNominal;
+                if (amt > 0) {
+                    targetedPaidMap[targetNota] = (targetedPaidMap[targetNota] || 0) + amt;
+                }
+            });
+
             let remaining = Math.max(0, Math.round(Number(saldoAktif || 0)));
 
             const items = list.map(t => {
@@ -2258,7 +2375,10 @@
                 const bayarPotongNotaIni = Math.max(0, bayarDiNota - bonLamaDiNota);
                 const tagihanMurni = Math.max(0, Math.round(kirimBersih - bayarPotongNotaIni));
 
-                const sisaNota = remaining > 0 ? Math.min(remaining, tagihanMurni) : 0;
+                const paidTargeted = targetedPaidMap[t.no_nota] || 0;
+                const effectiveCap = Math.max(0, tagihanMurni - paidTargeted);
+
+                const sisaNota = remaining > 0 ? Math.min(remaining, effectiveCap) : 0;
                 remaining = Math.max(0, remaining - sisaNota);
 
                 let status = 'LUNAS';
@@ -2269,8 +2389,11 @@
                 return {
                     ...t,
                     tagihanMurni,
+                    paidTargeted,
                     sisaNota,
                     status,
+                    umurHari: hitungUmurHari(t.tanggal),
+                    isGantung: false,
                     isOpening: false
                 };
             });
@@ -2281,36 +2404,59 @@
                     no_nota: 'BON-AWAL',
                     tanggal: null,
                     tagihanMurni: remaining,
+                    paidTargeted: 0,
                     sisaNota: remaining,
                     status: 'BELUM LUNAS',
+                    umurHari: null,
+                    isGantung: false,
                     isOpening: true
                 });
+            }
+
+            // Tandai nota lama sebagai "Gantung" bila masih tersisa namun ada nota lebih baru yang sudah dibayar duluan
+            for (let i = 1; i < items.length; i++) {
+                if (items[i].sisaNota <= 0) continue;
+                const adaNotaBaruTerbayar = items.slice(0, i).some(newer =>
+                    (newer.sisaNota === 0 && newer.tagihanMurni > 0) || newer.paidTargeted > 0
+                );
+                if (adaNotaBaruTerbayar) {
+                    items[i].isGantung = true;
+                }
             }
 
             const notaTerbaru = items.length > 0 && !items[0].isOpening ? items[0] : null;
             const notaLamaList = notaTerbaru ? items.slice(1) : items;
             const notaLamaBelumLunas = notaLamaList.filter(x => x.sisaNota > 0);
+            const allUnpaidNewestFirst = items.filter(x => x.sisaNota > 0);
             const totalNotaLama = notaLamaBelumLunas.reduce((sum, x) => sum + x.sisaNota, 0);
             const realOldUnpaid = notaLamaBelumLunas.filter(x => !x.isOpening);
             const notaLamaTertua = realOldUnpaid.length > 0 ? realOldUnpaid[realOldUnpaid.length - 1] : null;
+            const hasGantung = notaLamaBelumLunas.some(x => x.isGantung);
 
             return {
                 items,
                 notaTerbaru,
                 notaLamaBelumLunas,
+                allUnpaidNewestFirst,
                 totalNotaLama,
                 notaLamaTertua,
+                hasGantung,
                 sisaTakTeralokasi: remaining
             };
         }
 
-        function buildSimulasiAlokasiBayar(fifoResult, bonLama, totalPengurang, lastNota) {
+        function getItemKeyNota(item) {
+            if (!item) return '';
+            return item.isOpening ? 'BON-AWAL' : String(item.no_nota || '');
+        }
+
+        function buildSimulasiAlokasiBayar(fifoResult, bonLama, totalPengurang, lastNota, targetNota = null) {
             const rows = [];
             let autoTag = '';
             let shouldAutoTag = false;
 
             if (!totalPengurang || totalPengurang <= 0) {
-                return { rows, autoTag, shouldAutoTag };
+                return { rows, autoTag, shouldAutoTag, targetMode: false, targetNama: '' };
             }
 
             const bon = Number(bonLama || 0);
@@ -2323,9 +2469,140 @@
                 });
                 autoTag = `Deposit Nota Baru (Rp ${totalPengurang.toLocaleString('id-ID')})`;
                 shouldAutoTag = true;
-                return { rows, autoTag, shouldAutoTag };
+                return { rows, autoTag, shouldAutoTag, targetMode: false, targetNama: '' };
             }
 
+            const allUnpaidOldestFirst = fifoResult && fifoResult.allUnpaidNewestFirst
+                ? [...fifoResult.allUnpaidNewestFirst].reverse()
+                : [];
+            const tb = fifoResult ? fifoResult.notaTerbaru : null;
+
+            const targetItem = targetNota
+                ? allUnpaidOldestFirst.find(x => getItemKeyNota(x) === targetNota)
+                : null;
+            const isTargetOverride = Boolean(
+                targetItem &&
+                allUnpaidOldestFirst.length > 1 &&
+                getItemKeyNota(targetItem) !== getItemKeyNota(allUnpaidOldestFirst[0])
+            );
+
+            // Mode Target (user memilih membayar Nota Baru atau nota tertentu di luar urutan FIFO)
+            if (isTargetOverride && targetItem) {
+                const targetNama = targetItem.isOpening ? 'Bon Awal' : targetItem.no_nota;
+                const isTargetNew = Boolean(tb && targetItem === tb);
+                const queue = [targetItem, ...allUnpaidOldestFirst.filter(x => x !== targetItem)];
+
+                let sisaUang = totalPengurang;
+                const targetIndexInChrono = allUnpaidOldestFirst.indexOf(targetItem);
+
+                const bayarTarget = Math.min(sisaUang, targetItem.sisaNota);
+                const sisaTargetAfter = targetItem.sisaNota - bayarTarget;
+                sisaUang -= bayarTarget;
+
+                if (sisaTargetAfter === 0) {
+                    rows.push({
+                        cls: 'lunas',
+                        label: `✓ ${targetNama} (${isTargetNew ? 'Target Nota Baru' : 'Target Pilihan'})`,
+                        valueText: `LUNAS (${formatRp(bayarTarget)})`
+                    });
+                } else {
+                    rows.push({
+                        cls: 'partial',
+                        label: `• Cicil ${targetNama} (${isTargetNew ? 'Nota Baru' : 'Target Pilihan'})`,
+                        valueText: `${formatRp(bayarTarget)} · Sisa ${formatRp(sisaTargetAfter)}`
+                    });
+                }
+
+                // Aturan user: kelebihan di atas nota target otomatis masuk cicilan ke nota lain yang belum lunas (bukan deposit)
+                const spillLunasNames = [];
+                const spillPartialList = [];
+                let spillTotal = 0;
+                const skippedOlderNames = [];
+                let anyOtherRemaining = 0;
+
+                queue.slice(1).forEach(item => {
+                    const namaNota = item.isOpening ? 'Bon Awal' : item.no_nota;
+                    const idxChrono = allUnpaidOldestFirst.indexOf(item);
+                    const bayarItem = sisaUang > 0 ? Math.min(sisaUang, item.sisaNota) : 0;
+                    const sisaItem = item.sisaNota - bayarItem;
+                    sisaUang -= bayarItem;
+
+                    if (bayarItem > 0) {
+                        spillTotal += bayarItem;
+                        if (sisaItem === 0) {
+                            spillLunasNames.push(namaNota);
+                            rows.push({
+                                cls: 'dp',
+                                label: `↘ Kelebihan → Lunasi ${namaNota}`,
+                                valueText: `LUNAS (${formatRp(bayarItem)})`
+                            });
+                        } else {
+                            anyOtherRemaining++;
+                            spillPartialList.push({ namaNota, bayarItem });
+                            rows.push({
+                                cls: 'dp',
+                                label: `↘ Kelebihan → Cicil ${namaNota}`,
+                                valueText: `${formatRp(bayarItem)} · Sisa ${formatRp(sisaItem)}`
+                            });
+                        }
+                    } else {
+                        anyOtherRemaining++;
+                        if (idxChrono < targetIndexInChrono || item.isGantung) {
+                            skippedOlderNames.push(namaNota);
+                            rows.push({
+                                cls: 'gantung',
+                                label: `⏸ ${namaNota} (Tetap Digantung)`,
+                                valueText: `Sisa ${formatRp(item.sisaNota)}`
+                            });
+                        } else {
+                            rows.push({
+                                cls: 'partial',
+                                label: `• ${namaNota} (Belum Terbayar)`,
+                                valueText: `Sisa ${formatRp(item.sisaNota)}`
+                            });
+                        }
+                    }
+                });
+
+                const depositLebih = sisaUang > 0 ? sisaUang : 0;
+                if (depositLebih > 0) {
+                    rows.push({
+                        cls: 'deposit',
+                        label: '💰 Kelebihan → Deposit nota berikutnya',
+                        valueText: `Deposit ${formatRp(depositLebih)}`
+                    });
+                }
+
+                if (sisaTargetAfter === 0) {
+                    if (depositLebih > 0) {
+                        autoTag = `Pelunasan Semua Bon + Deposit (Rp ${depositLebih.toLocaleString('id-ID')})`;
+                    } else if (spillTotal > 0) {
+                        if (anyOtherRemaining === 0 && spillLunasNames.length === 1) {
+                            autoTag = `Pelunasan ${targetNama} & ${spillLunasNames[0]}`;
+                        } else if (anyOtherRemaining === 0) {
+                            autoTag = 'Pelunasan Semua Bon';
+                        } else if (spillPartialList.length === 1 && spillLunasNames.length === 0) {
+                            autoTag = `Pelunasan ${targetNama} + Cicil ${spillPartialList[0].namaNota} (Rp ${spillPartialList[0].bayarItem.toLocaleString('id-ID')})`;
+                        } else {
+                            autoTag = `Pelunasan ${targetNama} + Cicil Nota Lain (Rp ${spillTotal.toLocaleString('id-ID')})`;
+                        }
+                    } else if (skippedOlderNames.length === 1) {
+                        autoTag = `Pelunasan ${targetNama} (${skippedOlderNames[0]} Gantung)`;
+                    } else if (skippedOlderNames.length > 1) {
+                        autoTag = `Pelunasan ${targetNama} (${skippedOlderNames.length} Nota Lama Gantung)`;
+                    } else {
+                        autoTag = isTargetNew ? `Pelunasan Nota Baru ${targetNama}` : `Pelunasan ${targetNama}`;
+                    }
+                } else {
+                    autoTag = skippedOlderNames.length > 0
+                        ? `Cicil ${targetNama} (${skippedOlderNames.length} Nota Lama Gantung)`
+                        : `Cicil ${targetNama}`;
+                }
+                shouldAutoTag = true;
+                return { rows, autoTag, shouldAutoTag, targetMode: true, targetNama };
+            }
+
+            // Mode Standar FIFO (terdapat Nota Lama / Nota Gantung)
             if (fifoResult && fifoResult.notaLamaBelumLunas.length > 0) {
                 const oldOldestFirst = [...fifoResult.notaLamaBelumLunas].reverse();
                 let sisaUang = totalPengurang;
@@ -2339,20 +2616,21 @@
                     const sisaItem = item.sisaNota - bayarItem;
                     sisaUang -= bayarItem;
                     const namaNota = item.isOpening ? 'Bon Awal' : item.no_nota;
+                    const jenisNota = item.isGantung ? 'Nota Gantung' : 'Nota Lama';
 
                     if (sisaItem === 0) {
                         lunasOldCount++;
                         if (!item.isOpening) lunasOldNotas.push(item.no_nota);
                         rows.push({
                             cls: 'lunas',
-                            label: `✓ ${namaNota} (Nota Lama)`,
+                            label: `✓ ${namaNota} (${jenisNota})`,
                             valueText: `LUNAS (${formatRp(bayarItem)})`
                         });
                     } else {
                         partialOldItem = item;
                         rows.push({
                             cls: 'partial',
-                            label: `• ${namaNota} (Cicil Nota Lama)`,
+                            label: `• ${namaNota} (Cicil ${jenisNota})`,
                             valueText: `${formatRp(bayarItem)} · Sisa ${formatRp(sisaItem)}`
                         });
                     }
@@ -2360,7 +2638,6 @@
 
                 let dpKeNotaBaru = 0;
                 let notaBaruLunas = false;
-                const tb = fifoResult.notaTerbaru;
                 if (sisaUang > 0 && tb && tb.sisaNota > 0) {
                     const potongBaru = Math.min(sisaUang, tb.sisaNota);
                     const sisaBaru = tb.sisaNota - potongBaru;
@@ -2377,7 +2654,7 @@
                         dpKeNotaBaru = potongBaru;
                         rows.push({
                             cls: 'dp',
-                            label: `↘ Lebih → DP/Potong ${tb.no_nota}`,
+                            label: `↘ Kelebihan → Cicil ${tb.no_nota}`,
                             valueText: `${formatRp(potongBaru)} · Sisa ${formatRp(sisaBaru)}`
                         });
                     }
@@ -2403,7 +2680,7 @@
                             ? `Pelunasan ${lunasOldNotas[0]} & ${tb.no_nota}`
                             : 'Pelunasan Semua Bon';
                     } else if (dpKeNotaBaru > 0 && tb) {
-                        autoTag = `${oldLabel} + DP ${tb.no_nota} (Rp ${dpKeNotaBaru.toLocaleString('id-ID')})`;
+                        autoTag = `${oldLabel} + Cicil ${tb.no_nota} (Rp ${dpKeNotaBaru.toLocaleString('id-ID')})`;
                     } else if (depositLebih > 0) {
                         autoTag = `${oldLabel} + Deposit (Rp ${depositLebih.toLocaleString('id-ID')})`;
                     } else {
@@ -2416,7 +2693,7 @@
                         : `Cicil Nota Lama ${partialOldItem.no_nota}`;
                     shouldAutoTag = autoCatatanActive;
                 }
-                return { rows, autoTag, shouldAutoTag };
+                return { rows, autoTag, shouldAutoTag, targetMode: false, targetNama: '' };
             }
 
             // Hanya 1 nota aktif (tidak ada nota lama)
@@ -2452,7 +2729,7 @@
                     valueText: `${formatRp(totalPengurang)} · Sisa ${formatRp(bon - totalPengurang)}`
                 });
             }
-            return { rows, autoTag, shouldAutoTag };
+            return { rows, autoTag, shouldAutoTag, targetMode: false, targetNama: '' };
         }
 
         function syncAutoCatatanCerdas(autoTag, shouldApply) {
@@ -2465,7 +2742,7 @@
                 cur = cur.replace(lastAutoCatatanTag, '').replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ',').trim();
             }
             // Bersihkan sisa tag pelunasan nota lama versi sebelumnya bila ada
-            cur = cur.replace(/(?:,\s*)?Pelunasan (?:Nota Lama [^\s,]+|Bon Lama)(?:\s*\+\s*(?:DP [^\s,]+\s*\([^)]+\)|Deposit\s*\([^)]+\)))?/gi, '').replace(/^,\s*|,\s*$/g, '').trim();
+            cur = cur.replace(/(?:,\s*)?(?:Pelunasan|Cicil) [^\s,]+(?:\s*\([^)]+\))?(?:\s*\+\s*(?:(?:DP|Cicil) [^\s,]+\s*\([^)]+\)|Deposit\s*\([^)]+\)))?/gi, '').replace(/^,\s*|,\s*$/g, '').trim();
 
             if (shouldApply && autoTag) {
                 input.value = cur ? `${cur}, ${autoTag}` : autoTag;
@@ -2491,11 +2768,14 @@
             }
 
             const bonLama = Number(listAgen[ag] || 0);
-            const sim = buildSimulasiAlokasiBayar(currentAgentFifo, bonLama, totalPengurang, currentAgentLastNota);
+            const sim = buildSimulasiAlokasiBayar(currentAgentFifo, bonLama, totalPengurang, currentAgentLastNota, selectedTargetNota);
 
             if (box) {
                 if (sim.rows.length > 0) {
-                    box.innerHTML = `<div class="live-alloc-title">📊 Simulasi Alokasi Pembayaran (FIFO)</div>
+                    const titleText = sim.targetMode
+                        ? `🎯 Simulasi Alokasi (Target: ${escapeHtml(sim.targetNama)})`
+                        : '📊 Simulasi Alokasi Pembayaran (FIFO)';
+                    box.innerHTML = `<div class="live-alloc-title">${titleText}</div>
                     <div class="live-alloc-list">
                         ${sim.rows.map(r => `<div class="live-alloc-row ${r.cls}">
                             <span>${escapeHtml(r.label)}</span>
@@ -2512,15 +2792,52 @@
             syncAutoCatatanCerdas(sim.autoTag, sim.shouldAutoTag);
         }
 
+        function pilihTargetNota(noNota) {
+            if (!noNota) return;
+            if (selectedTargetNota === noNota) {
+                resetTargetNota();
+                return;
+            }
+            selectedTargetNota = noNota;
+            autoCatatanActive = true;
+            userCustomKet = false;
+            renderBoxFifo(currentAgentFifo);
+            renderLiveAlokasiDanAutoCatatan();
+            const labelRef = noNota === 'BON-AWAL' ? 'Bon Awal' : noNota;
+            showToast(`Mode Target: ${labelRef} (kelebihan cicil nota lain)`);
+        }
+
+        function resetTargetNota() {
+            selectedTargetNota = null;
+            userCustomKet = false;
+            renderBoxFifo(currentAgentFifo);
+            renderLiveAlokasiDanAutoCatatan();
+            showToast('Kembali ke urutan standar FIFO (nota tertua dulu)');
+        }
+
+        function isiNominalSemuaNotaLama(channel, amount) {
+            const val = Math.max(0, Math.round(Number(amount) || 0));
+            if (val <= 0) return;
+            selectedTargetNota = null;
+            autoCatatanActive = true;
+            userCustomKet = false;
+            renderBoxFifo(currentAgentFifo);
+            setNominalInput(channel, val);
+            const labelChan = channel === 'cash' ? 'CASH' : 'TRANSFER';
+            showToast(`Diisi ${formatRp(val)} ke ${labelChan} (Semua Nota Lama · FIFO)`);
+        }
+
         function isiNominalNotaLama(channel, amount, noNota) {
             const val = Math.max(0, Math.round(Number(amount) || 0));
             if (val <= 0) return;
+            selectedTargetNota = noNota || null;
             autoCatatanActive = true;
             userCustomKet = false;
+            renderBoxFifo(currentAgentFifo);
             setNominalInput(channel, val);
             const labelChan = channel === 'cash' ? 'CASH' : 'TRANSFER';
             const refTxt = (noNota && noNota !== 'BON-AWAL') ? noNota : 'Bon Lama';
-            showToast(`Diisi ${formatRp(val)} ke ${labelChan} (${refTxt})`);
+            showToast(`Diisi ${formatRp(val)} ke ${labelChan} (Target ${refTxt})`);
         }
 
         function renderBoxFifo(fifoResult) {
@@ -2535,77 +2852,136 @@
 
             // Tampilkan urut dari nota terlama (prioritas bayar FIFO) -> nota terbaru
             const oldOldestFirst = [...fifoResult.notaLamaBelumLunas].reverse();
-            const showPerRowPay = oldOldestFirst.length > 1;
+
+            // Nota terbaru yg sudah dibayar duluan (bila ada nota lama yg masih digantung)
+            let lastUnpaidIdx = -1;
+            fifoResult.items.forEach((x, idx) => {
+                if (x.sisaNota > 0) lastUnpaidIdx = idx;
+            });
+            const paidAheadNewer = fifoResult.hasGantung && lastUnpaidIdx > 0
+                ? [...fifoResult.items.slice(0, lastUnpaidIdx)].filter(x =>
+                    !x.isOpening && x.sisaNota === 0 && (x.paidTargeted > 0 || x.tagihanMurni > 0)
+                ).reverse()
+                : [];
 
             let listHtml = '';
             oldOldestFirst.forEach(item => {
+                const keyNota = getItemKeyNota(item);
+                const keySafe = escapeHtml(keyNota);
                 const notaSafe = escapeHtml(item.no_nota);
+                const isTarget = Boolean(selectedTargetNota && selectedTargetNota === keyNota);
                 const tglSafe = item.tanggal ? escapeHtml(formatTanggalSingkat(item.tanggal)) : 'Saldo Terdahulu';
-                const statusTag = item.status === 'SEBAGIAN'
-                    ? `<span class="fifo-tag partial">Sisa</span>`
-                    : `<span class="fifo-tag old">Nota Lama</span>`;
-                const notaTitleHtml = item.isOpening
-                    ? `<span>Saldo Awal / Nota &gt;12</span>`
-                    : `<span class="nota-link" data-nota="${notaSafe}" onclick="bukaStrukNota(this.dataset.nota)">${notaSafe}</span>`;
 
-                const rowPayBtns = showPerRowPay
-                    ? `<button type="button" class="btn-fifo-mini cash" data-amt="${item.sisaNota}" data-nota="${notaSafe}" onclick="isiNominalNotaLama('cash', Number(this.dataset.amt), this.dataset.nota)">Cash</button>
-                   <button type="button" class="btn-fifo-mini trf" data-amt="${item.sisaNota}" data-nota="${notaSafe}" onclick="isiNominalNotaLama('trf', Number(this.dataset.amt), this.dataset.nota)">Trf</button>`
-                    : '';
+                let statusTag = '';
+                if (item.isGantung) {
+                    statusTag += `<span class="fifo-tag gantung">⏸ Gantung${item.umurHari !== null ? ` · ${item.umurHari} hr` : ''}</span>`;
+                } else {
+                    statusTag += `<span class="fifo-tag old">Nota Lama${item.umurHari !== null ? ` · ${item.umurHari} hr` : ''}</span>`;
+                }
+                if (item.status === 'SEBAGIAN') {
+                    statusTag += ` <span class="fifo-tag partial">Sisa</span>`;
+                }
+                if (isTarget) {
+                    statusTag += ` <span class="fifo-tag target">Dipilih</span>`;
+                }
+
+                const notaTitleHtml = item.isOpening
+                    ? `<span>Saldo Awal / Nota Lama</span>`
+                    : `<span class="nota-link" data-nota="${notaSafe}" onclick="bukaStrukNota(this.dataset.nota)">${notaSafe}</span>`;
 
                 const detailBtn = !item.isOpening
                     ? `<button type="button" class="btn-fifo-mini" data-nota="${notaSafe}" onclick="bukaStrukNota(this.dataset.nota)">Lihat</button>`
                     : '';
+                const paidInfo = !item.isOpening && item.paidTargeted > 0
+                    ? ` (Terbayar ${formatRp(item.paidTargeted)})`
+                    : '';
 
-                listHtml += `<div class="fifo-item is-old">
+                listHtml += `<div class="fifo-item ${item.isGantung ? 'is-gantung' : 'is-old'}${isTarget ? ' is-target' : ''}">
                 <div class="fifo-item-left">
                     <div class="fifo-nota-title">${notaTitleHtml} ${statusTag}</div>
-                    <div class="fifo-sub">${tglSafe}${!item.isOpening ? ` · Tagihan murni ${formatRp(item.tagihanMurni)}` : ''}</div>
+                    <div class="fifo-sub">${tglSafe}${!item.isOpening ? ` · Tagihan ${formatRp(item.tagihanMurni)}${paidInfo}` : ''}</div>
                 </div>
                 <div class="fifo-item-right">
                     <span class="fifo-amt">${formatRp(item.sisaNota)}</span>
                     ${detailBtn}
-                    ${rowPayBtns}
+                    <button type="button" class="btn-fifo-mini target-btn ${isTarget ? 'active' : ''}" data-nota="${keySafe}" onclick="pilihTargetNota(this.dataset.nota)">${isTarget ? '✓ Dipilih' : 'Pilih'}</button>
+                    <button type="button" class="btn-fifo-mini cash" data-amt="${item.sisaNota}" data-nota="${keySafe}" onclick="isiNominalNotaLama('cash', Number(this.dataset.amt), this.dataset.nota)">Cash</button>
+                    <button type="button" class="btn-fifo-mini trf" data-amt="${item.sisaNota}" data-nota="${keySafe}" onclick="isiNominalNotaLama('trf', Number(this.dataset.amt), this.dataset.nota)">Trf</button>
+                </div>
+            </div>`;
+            });
+
+            paidAheadNewer.forEach(item => {
+                const notaSafe = escapeHtml(item.no_nota);
+                listHtml += `<div class="fifo-item is-paid-first">
+                <div class="fifo-item-left">
+                    <div class="fifo-nota-title">
+                        <span class="nota-link" data-nota="${notaSafe}" onclick="bukaStrukNota(this.dataset.nota)">${notaSafe}</span>
+                        <span class="fifo-tag paid">✓ Lunas Duluan</span>
+                    </div>
+                    <div class="fifo-sub">${escapeHtml(formatTanggalSingkat(item.tanggal))} · Tagihan ${formatRp(item.tagihanMurni)}</div>
+                </div>
+                <div class="fifo-item-right">
+                    <span style="font-size:11px; font-weight:800; color:var(--success);">LUNAS</span>
+                    <button type="button" class="btn-fifo-mini" data-nota="${notaSafe}" onclick="bukaStrukNota(this.dataset.nota)">Lihat</button>
                 </div>
             </div>`;
             });
 
             if (fifoResult.notaTerbaru && fifoResult.notaTerbaru.sisaNota > 0) {
                 const tb = fifoResult.notaTerbaru;
+                const keyNew = getItemKeyNota(tb);
+                const isTargetNew = Boolean(selectedTargetNota && selectedTargetNota === keyNew);
                 const notaSafe = escapeHtml(tb.no_nota);
-                listHtml += `<div class="fifo-item is-new">
+                listHtml += `<div class="fifo-item is-new${isTargetNew ? ' is-target' : ''}">
                 <div class="fifo-item-left">
                     <div class="fifo-nota-title">
                         <span class="nota-link" data-nota="${notaSafe}" onclick="bukaStrukNota(this.dataset.nota)">${notaSafe}</span>
-                        <span class="fifo-tag new">Nota Baru</span>
+                        <span class="fifo-tag new">Nota Baru${tb.umurHari !== null ? ` · ${tb.umurHari} hr` : ''}</span>
+                        ${tb.status === 'SEBAGIAN' ? `<span class="fifo-tag partial">Sisa</span>` : ''}
+                        ${isTargetNew ? `<span class="fifo-tag target">Dipilih</span>` : ''}
                     </div>
-                    <div class="fifo-sub">${escapeHtml(formatTanggalSingkat(tb.tanggal))} · Kirim bersih ${formatRp(tb.tagihanMurni)}</div>
+                    <div class="fifo-sub">${escapeHtml(formatTanggalSingkat(tb.tanggal))} · Kirim bersih ${formatRp(tb.tagihanMurni)}${tb.paidTargeted > 0 ? ` (Terbayar ${formatRp(tb.paidTargeted)})` : ''}</div>
                 </div>
                 <div class="fifo-item-right">
                     <span class="fifo-amt" style="color:var(--primary);">${formatRp(tb.sisaNota)}</span>
                     <button type="button" class="btn-fifo-mini" data-nota="${notaSafe}" onclick="bukaStrukNota(this.dataset.nota)">Lihat</button>
+                    <button type="button" class="btn-fifo-mini target-btn ${isTargetNew ? 'active' : ''}" data-nota="${notaSafe}" onclick="pilihTargetNota(this.dataset.nota)">${isTargetNew ? '✓ Dipilih' : 'Pilih'}</button>
+                    <button type="button" class="btn-fifo-mini cash" data-amt="${tb.sisaNota}" data-nota="${notaSafe}" onclick="isiNominalNotaLama('cash', Number(this.dataset.amt), this.dataset.nota)">Cash</button>
+                    <button type="button" class="btn-fifo-mini trf" data-amt="${tb.sisaNota}" data-nota="${notaSafe}" onclick="isiNominalNotaLama('trf', Number(this.dataset.amt), this.dataset.nota)">Trf</button>
                 </div>
             </div>`;
             }
 
-            const refNotaLama = oldOldestFirst.length === 1 && !oldOldestFirst[0].isOpening
-                ? oldOldestFirst[0].no_nota
-                : (fifoResult.notaLamaTertua ? fifoResult.notaLamaTertua.no_nota : '');
-            const refNotaSafe = escapeHtml(refNotaLama);
+            const gantungCount = oldOldestFirst.filter(x => x.isGantung).length;
+            const totalUnpaidCount = fifoResult.allUnpaidNewestFirst ? fifoResult.allUnpaidNewestFirst.length : oldOldestFirst.length;
+            const headerLeft = gantungCount > 0
+                ? `📋 Pilih Nota (${gantungCount} Gantung · ${totalUnpaidCount} Aktif)`
+                : `📋 Pilih Nota Pembayaran (${totalUnpaidCount} Nota)`;
+            const targetDisp = selectedTargetNota === 'BON-AWAL' ? 'Bon Awal' : selectedTargetNota;
+            const headerRight = selectedTargetNota
+                ? `<button type="button" class="btn-fifo-reset" onclick="resetTargetNota()">Target: ${escapeHtml(targetDisp)} · × Reset FIFO</button>`
+                : `<span style="font-size:10px; font-weight:700;">Default: FIFO</span>`;
+
+            const quickBarHtml = oldOldestFirst.length > 1
+                ? `<div class="fifo-quick-bar">
+                <span class="fifo-quick-label">Semua Nota Lama (${oldOldestFirst.length}): <strong>${formatRp(fifoResult.totalNotaLama)}</strong></span>
+                <div class="fifo-quick-actions">
+                    <button type="button" class="btn-fifo-mini cash" data-amt="${fifoResult.totalNotaLama}" onclick="isiNominalSemuaNotaLama('cash', Number(this.dataset.amt))">Cash</button>
+                    <button type="button" class="btn-fifo-mini trf" data-amt="${fifoResult.totalNotaLama}" onclick="isiNominalSemuaNotaLama('trf', Number(this.dataset.amt))">Transfer</button>
+                </div>
+            </div>`
+                : `<div class="fifo-quick-bar">
+                <span style="font-size:10.5px; color:var(--text-muted); font-weight:600;">💡 Klik <strong>Pilih</strong> / <strong>Cash</strong> / <strong>Trf</strong> di nota yg dibayar. Kelebihan otomatis mencicil nota lain.</span>
+            </div>`;
 
             box.innerHTML = `
             <div class="fifo-header">
-                <span>📋 Rincian Bon Lama &amp; Baru (FIFO)</span>
-                <span>${oldOldestFirst.length} Nota Lama</span>
+                <span>${headerLeft}</span>
+                ${headerRight}
             </div>
             <div class="fifo-list">${listHtml}</div>
-            <div class="fifo-quick-bar">
-                <span class="fifo-quick-label">Pelunasan Nota Lama: <strong>${formatRp(fifoResult.totalNotaLama)}</strong></span>
-                <div class="fifo-quick-actions">
-                    <button type="button" class="btn-fifo-mini cash" data-amt="${fifoResult.totalNotaLama}" data-nota="${refNotaSafe}" onclick="isiNominalNotaLama('cash', Number(this.dataset.amt), this.dataset.nota)">Cash</button>
-                    <button type="button" class="btn-fifo-mini trf" data-amt="${fifoResult.totalNotaLama}" data-nota="${refNotaSafe}" onclick="isiNominalNotaLama('trf', Number(this.dataset.amt), this.dataset.nota)">Transfer</button>
-                </div>
-            </div>
+            ${quickBarHtml}
         `;
             box.style.display = 'block';
         }
@@ -2677,6 +3053,7 @@
             const ag = document.getElementById('pilihAgen').value;
             currentAgentLastNota = null;
             currentAgentFifo = null;
+            selectedTargetNota = null;
             const ketEl = document.getElementById('inputKeterangan');
             if (ketEl && !userCustomKet) {
                 let curKet = ketEl.value.trim();
@@ -2710,14 +3087,19 @@
                 : "ℹ️ PENGIRIMAN TERAKHIR:";
             infoNotaBox.style.display = "block";
 
-            const [resAgenFresh, resTrx] = await Promise.all([
+            const [resAgenFresh, resTrx, resPayAgen] = await Promise.all([
                 clientSupabase.from('agen').select('saldo_bon').eq('nama_agen', ag).maybeSingle(),
                 clientSupabase.from('transaksi')
                     .select('id, no_nota, tanggal, driver_1, driver_2, total_kirim, total_retur, ongkir, bon_lama, bayar_cash, bayar_transfer, sisa_akhir, created_at')
                     .eq('nama_agen', ag)
                     .order('created_at', { ascending: false })
                     .order('id', { ascending: false })
-                    .limit(12)
+                    .limit(15),
+                clientSupabase.from('pembayaran_bon')
+                    .select('id, tanggal, bayar_cash, bayar_transfer, sisa_bon_akhir, keterangan')
+                    .eq('nama_agen', ag)
+                    .order('id', { ascending: false })
+                    .limit(30)
             ]);
 
             // Cegah race condition bila user sudah berpindah ke agen lain
@@ -2749,7 +3131,8 @@
                 document.getElementById('txtTglKirim').innerText = formatTanggalSingkat(t.tanggal) || '-';
                 document.getElementById('txtDriverKirim').innerText = drvGabung;
 
-                currentAgentFifo = hitungAlokasiBonFIFO(resTrx.data, saldoAktif);
+                const payAgenList = (!resPayAgen.error && resPayAgen.data) ? resPayAgen.data : [];
+                currentAgentFifo = hitungAlokasiBonFIFO(resTrx.data, saldoAktif, payAgenList);
                 renderBoxFifo(currentAgentFifo);
             } else {
                 currentAgentLastNota = null;
@@ -2818,6 +3201,7 @@
             document.getElementById('pilihAgen').value = "";
             currentAgentLastNota = null;
             currentAgentFifo = null;
+            selectedTargetNota = null;
             userCustomKet = false;
             lastAutoCatatanTag = '';
             autoCatatanActive = false;
@@ -2928,11 +3312,16 @@
 
                 const noKuitansi = "KWT-" + Date.now().toString().slice(-6) + Math.floor(10 + Math.random() * 90);
                 const ketInput = document.getElementById('inputKeterangan').value.trim();
-                const ketUntukPay = retur > 0
-                    ? (`[Retur${hasNotaRef ? '' : ' Non-Nota'}: Rp ${retur.toLocaleString('id-ID')}]` + (ketInput ? ` ${ketInput}` : ''))
+                const targetValid = selectedTargetNota && selectedTargetNota !== 'BON-AWAL' && currentAgentFifo &&
+                    currentAgentFifo.items.some(x => x.no_nota === selectedTargetNota && x.sisaNota > 0);
+                const metaTags = [];
+                if (retur > 0) metaTags.push(`[Retur${hasNotaRef ? '' : ' Non-Nota'}: Rp ${retur.toLocaleString('id-ID')}]`);
+                if (targetValid) metaTags.push(`[Bayar: ${selectedTargetNota}]`);
+                const ketUntukPay = metaTags.length > 0
+                    ? metaTags.join(' ') + (ketInput ? ` ${ketInput}` : '')
                     : ketInput;
 
-                // 4. Simpan ke riwayat pembayaran_bon (Zero-Schema Change: tag retur di kolom keterangan)
+                // 4. Simpan ke riwayat pembayaran_bon (Zero-Schema Change: tag retur & target nota di kolom keterangan)
                 const { data: insertedPay, error: errPay } = await clientSupabase
                     .from('pembayaran_bon')
                     .insert([{
@@ -3149,18 +3538,29 @@
                 let bonLamaRefsHtml = '';
                 const bonLamaNominal = Number(trx.bon_lama || 0);
                 if (bonLamaNominal > 0 && trx.nama_agen) {
-                    const { data: poolNotas } = await clientSupabase
-                        .from('transaksi')
-                        .select('id, no_nota, tanggal, total_kirim, total_retur, ongkir, bon_lama, bayar_cash, bayar_transfer, created_at')
-                        .eq('nama_agen', trx.nama_agen)
-                        .order('created_at', { ascending: false })
-                        .order('id', { ascending: false })
-                        .limit(15);
+                    const [resPool, resPayOld] = await Promise.all([
+                        clientSupabase
+                            .from('transaksi')
+                            .select('id, no_nota, tanggal, total_kirim, total_retur, ongkir, bon_lama, bayar_cash, bayar_transfer, created_at')
+                            .eq('nama_agen', trx.nama_agen)
+                            .order('created_at', { ascending: false })
+                            .order('id', { ascending: false })
+                            .limit(15),
+                        clientSupabase
+                            .from('pembayaran_bon')
+                            .select('id, no_nota_referensi, bayar_cash, bayar_transfer, sisa_bon_akhir, keterangan')
+                            .eq('nama_agen', trx.nama_agen)
+                            .order('id', { ascending: false })
+                            .limit(30)
+                    ]);
+                    const poolNotas = resPool.data || [];
 
-                    if (poolNotas && poolNotas.length > 0) {
+                    if (poolNotas.length > 0) {
                         const idxCurr = poolNotas.findIndex(x => x.no_nota === trx.no_nota || x.id === trx.id);
                         const olderNotes = idxCurr >= 0 ? poolNotas.slice(idxCurr + 1) : poolNotas.filter(x => x.id < trx.id);
-                        const allocOld = hitungAlokasiBonFIFO(olderNotes, bonLamaNominal);
+                        const olderNoteNos = new Set(olderNotes.map(n => n.no_nota));
+                        const paysBeforeTrx = (resPayOld.data || []).filter(p => olderNoteNos.has(p.no_nota_referensi));
+                        const allocOld = hitungAlokasiBonFIFO(olderNotes, bonLamaNominal, paysBeforeTrx);
                         const unpaidOld = allocOld.items.filter(x => x.sisaNota > 0);
                         if (unpaidOld.length > 0) {
                             const rowsRef = [...unpaidOld].reverse().map(item => {
