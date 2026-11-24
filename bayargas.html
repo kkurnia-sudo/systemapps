@@ -508,11 +508,23 @@
             border-radius: 8px
         }
 
+        .btn-sm svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
         .btn-icon {
             width: 33px;
             height: 33px;
             padding: 0;
             border-radius: 8px
+        }
+
+        .btn-icon svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
         }
 
         .btn:disabled {
@@ -1093,7 +1105,8 @@
             display: none;
             flex-direction: column;
             gap: 3px;
-            min-width: 265px;
+            min-width: 250px;
+            max-width: calc(100vw - 32px);
             animation: dropPop .18s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -1854,6 +1867,56 @@
             stroke-width: 2.2
         }
 
+        .unsaved-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 11px;
+            border-radius: 99px;
+            font-size: .76rem;
+            font-weight: 700;
+            background: rgba(245, 158, 11, .14);
+            color: #b45309;
+            border: 1px solid rgba(245, 158, 11, .35);
+            white-space: nowrap;
+        }
+
+        body.dark-mode .unsaved-badge {
+            background: rgba(245, 158, 11, .16);
+            color: #fbbf24;
+            border-color: rgba(251, 191, 36, .35);
+        }
+
+        .hist-sisa-chip {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 7px;
+            border-radius: 99px;
+            font-size: .7rem;
+            font-weight: 700;
+            background: rgba(245, 158, 11, .12);
+            color: #b45309;
+        }
+
+        body.dark-mode .hist-sisa-chip {
+            background: rgba(245, 158, 11, .18);
+            color: #fbbf24;
+        }
+
+        .btn-ble .dot-ble {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .45);
+            flex-shrink: 0;
+            transition: background-color .2s, box-shadow .2s;
+        }
+
+        .btn-ble .dot-ble.connected {
+            background: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, .28);
+        }
+
         /* Tablet (769px - 1024px) */
         @media (min-width:769px) and (max-width:1024px) {
             .sidebar {
@@ -2132,11 +2195,36 @@
                 width: 100% !important
             }
 
+            #view-riwayat .card:has(#histList) {
+                background: transparent;
+                border: none;
+                box-shadow: none;
+            }
+
+            #histList {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
             .hist-row {
-                padding: 14px 16px;
+                background: var(--bg-card);
+                border: 1px solid var(--border-light) !important;
+                border-radius: 14px;
+                padding: 14px 15px;
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 12px
+                gap: 12px;
+                box-shadow: var(--shadow-card);
+            }
+
+            .hist-l {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 8px;
+                flex-wrap: wrap;
             }
 
             .hist-c {
@@ -2148,7 +2236,10 @@
 
             .hist-stat {
                 text-align: left;
-                min-width: 0
+                min-width: 0;
+                background: var(--bg-sunken);
+                padding: 7px 9px;
+                border-radius: 9px;
             }
 
             .hist-stat:last-child {
@@ -2157,8 +2248,22 @@
 
             .hist-a {
                 width: 100%;
-                justify-content: flex-end;
-                flex-wrap: wrap
+                display: grid;
+                grid-template-columns: 1fr auto auto auto;
+                gap: 6px;
+                padding-top: 2px;
+            }
+
+            .hist-a .btn {
+                height: 36px;
+                justify-content: center;
+            }
+
+            #histPager {
+                background: var(--bg-card);
+                border: 1px solid var(--border-light);
+                border-radius: 14px;
+                margin-top: 10px;
             }
 
             .kpi-row {
@@ -2753,27 +2858,82 @@
             color: #334155
         }
 
-        /* ============ CETAK STRUK ============ */
+        /* ============ CETAK STRUK (FORMAT A5 PADA KERTAS A4 + GARIS POTONG) ============ */
         @media print {
-            body {
-                background: #fff !important;
-                color: #000 !important;
-                padding: 0;
+            @page {
+                size: A4 portrait;
                 margin: 0;
-                font-family: Arial, Helvetica, sans-serif
             }
 
+            html,
+            body {
+                width: 210mm;
+                height: 297mm;
+                background: #fff !important;
+                color: #000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+
+            body > *:not(#printArea),
+            .mobile-topbar,
+            .mobile-nav,
             .app,
             #toastBox,
             .modal-bg {
-                display: none !important
+                display: none !important;
             }
 
             #printArea {
                 display: block !important;
+                width: 210mm;
+                margin: 0;
+                padding: 0;
+            }
+
+            .print-a5-sheet {
+                width: 210mm;
+                height: 148.5mm;
+                max-height: 148.5mm;
+                position: relative;
+                box-sizing: border-box;
+                padding: 11mm 16mm 12mm;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                overflow: hidden;
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            .print-a5-inner {
                 width: 100%;
-                max-width: 12cm;
-                margin: 0
+                max-width: 178mm;
+                margin: 0 auto;
+            }
+
+            .print-cut-line {
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: 0;
+                border-bottom: 1.5px dashed #475569 !important;
+            }
+
+            .print-cut-line span {
+                position: relative;
+                top: -8px;
+                left: 14mm;
+                display: inline-block;
+                background: #fff !important;
+                color: #475569 !important;
+                padding: 0 7px;
+                font-size: 9px;
+                font-weight: 700;
+                letter-spacing: .08em;
+                text-transform: uppercase;
             }
 
             /* buang semua background — cetak tetap putih walau "Background graphics" aktif */
@@ -2781,14 +2941,74 @@
             .print-wrap * {
                 background: transparent !important;
                 color: #000 !important;
-                box-shadow: none !important
+                box-shadow: none !important;
             }
 
             .print-wrap {
                 border: none !important;
                 border-radius: 0 !important;
                 padding: 0 !important;
-                max-width: none !important
+                max-width: none !important;
+                width: 100% !important;
+            }
+
+            .print-header {
+                padding-bottom: 8px;
+                margin-bottom: 10px;
+            }
+
+            .print-header h2 {
+                font-size: 18px;
+                letter-spacing: .08em;
+                margin-bottom: 4px;
+            }
+
+            .print-header p {
+                font-size: 12.5px;
+            }
+
+            .print-table {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+
+            .print-table thead th {
+                font-size: 11px;
+                padding: 8px 6px;
+            }
+
+            .print-table td {
+                padding: 9px 6px;
+            }
+
+            .print-summary .ps-row {
+                font-size: 13px;
+                padding: 6px 0;
+            }
+
+            .print-summary .ps-row.grand {
+                font-size: 16px;
+                padding: 9px 0;
+            }
+
+            .print-summary .ps-row.grand .k {
+                font-size: 12.5px;
+            }
+
+            .print-sisa {
+                width: 44%;
+                margin: 12px 0 0 auto;
+                font-size: 12.5px;
+            }
+
+            .print-close {
+                margin-top: 12px;
+            }
+
+            .print-foot {
+                font-size: 12px;
+                padding-top: 6px;
+                color: #333 !important;
             }
 
             .print-header,
@@ -2796,23 +3016,12 @@
             .print-table tbody tr:last-child td,
             .print-summary .ps-row.grand,
             .print-close {
-                border-color: #000 !important
+                border-color: #000 !important;
             }
 
             .print-table td,
             .print-sisa-row {
-                border-bottom-color: #b0b0b0 !important
-            }
-
-            .print-foot {
-                color: #333 !important
-            }
-
-            @page {
-                margin-top: 10mm;
-                margin-right: 5mm;
-                margin-bottom: 8mm;
-                margin-left: 10mm
+                border-bottom-color: #b0b0b0 !important;
             }
         }
     </style>
@@ -2928,6 +3137,7 @@
                         <p class="page-sub" id="txPageSub">Isi qty, cek totalnya, lalu simpan ke arsip Firebase.</p>
                     </div>
                     <div class="head-actions">
+                        <span class="unsaved-badge" id="unsavedBadge" style="display:none">● Belum disimpan</span>
                         <span class="date-badge" id="dateDisplay">Memuat tanggal…</span>
                     </div>
                 </div>
@@ -2952,7 +3162,8 @@
                                 <div class="field">
                                     <label class="label" for="namaPelanggan">Nama Pelanggan</label>
                                     <input class="input" type="text" id="namaPelanggan" value="Mas Puji"
-                                        placeholder="Nama pelanggan">
+                                        placeholder="Nama pelanggan" list="customerSuggestions" autocomplete="off">
+                                    <datalist id="customerSuggestions"></datalist>
                                 </div>
                                 <div class="field field-d">
                                     <label class="label" for="tanggalBerlaku">Tanggal</label>
@@ -3068,7 +3279,7 @@
                                 <span id="saveMainBtnLabel">Simpan ke Firebase</span>
                             </button>
 
-                            <button type="button" class="btn btn-ble" onclick="openBlePrintDialog()">
+                            <button type="button" class="btn btn-ble" id="bleQuickBtn" onclick="openBlePrintDialog()">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                                     stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="6 9 6 2 18 2 18 9" />
@@ -3076,6 +3287,7 @@
                                     <rect x="6" y="14" width="12" height="8" />
                                 </svg>
                                 <span>Print Bluetooth</span>
+                                <span class="dot-ble" id="bleQuickDot" title="Status printer Bluetooth"></span>
                             </button>
 
                             <!-- Menu Dropdown Cetak / Pratinjau Lainnya -->
@@ -3103,7 +3315,7 @@
                                         </div>
                                         <div class="item-text">
                                             <span class="item-title">Print Bluetooth Thermal</span>
-                                            <span class="item-sub">Pilihan 58mm, 80mm &amp; 58mm Admin (Auto-Cut)</span>
+                                            <span class="item-sub" id="bleMenuSubtext">Belum terhubung · Pilihan 58mm, 80mm &amp; Admin</span>
                                         </div>
                                     </button>
                                     <button type="button" class="dropdown-item" onclick="selectPrintSubmenu('nota')">
@@ -3158,7 +3370,7 @@
                                     <div class="kotret-right">
                                         <span class="kotret-sum" id="sum12Label">Total: 0</span>
                                         <button type="button" class="btn-clear"
-                                            onclick="event.stopPropagation();clearKotret('12')">✕ Reset</button>
+                                            onclick="event.stopPropagation();confirmClearKotret('12')">✕ Reset</button>
                                     </div>
                                 </div>
                                 <div class="kotret-body">
@@ -3172,7 +3384,7 @@
                                     <div class="kotret-right">
                                         <span class="kotret-sum" id="sum5Label">Total: 0</span>
                                         <button type="button" class="btn-clear"
-                                            onclick="event.stopPropagation();clearKotret('5')">✕ Reset</button>
+                                            onclick="event.stopPropagation();confirmClearKotret('5')">✕ Reset</button>
                                     </div>
                                 </div>
                                 <div class="kotret-body">
@@ -3402,16 +3614,27 @@
             </div>
             <div class="modal-body" id="modalBody"></div>
             <div class="modal-foot" style="flex-wrap:wrap">
-                <button class="btn btn-warn" onclick="editFromDetailModal()">✎ Koreksi</button>
+                <button class="btn btn-warn" onclick="editFromDetailModal()">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    Koreksi
+                </button>
                 <button class="btn btn-ble" onclick="printBleRecordModal()">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="6 9 6 2 18 2 18 9" />
                         <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                         <rect x="6" y="14" width="12" height="8" />
                     </svg>
                     Bluetooth
                 </button>
-                <button class="btn btn-ghost" onclick="printRecordModal()">Print Browser</button>
+                <button class="btn btn-ghost" onclick="printRecordModal()">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    Print Browser
+                </button>
                 <button class="btn btn-primary" onclick="closeModal()">Tutup</button>
             </div>
         </div>
@@ -3778,7 +4001,67 @@
         /* ==========================================================
            4. LOGIKA PERHITUNGAN TRANSAKSI  (dipertahankan)
            ========================================================== */
-        function calculateMain() {
+        let formSaved = false;
+        const customerNames = new Set(['Mas Puji']);
+
+        function isFormUnsaved() {
+            const q12 = parseFormatted($('qty12').value);
+            const q5 = parseFormatted($('qty5').value);
+            return (q12 + q5 > 0) && !formSaved;
+        }
+        function updateUnsavedState() {
+            const badge = $('unsavedBadge');
+            if (!badge) return;
+            const unsaved = isFormUnsaved();
+            badge.style.display = unsaved ? 'inline-flex' : 'none';
+            badge.textContent = editingRec ? '● Koreksi belum disimpan' : '● Belum disimpan';
+        }
+        function markFormDirty() {
+            formSaved = false;
+            updateUnsavedState();
+        }
+
+        function renderCustomerSuggestions() {
+            const dl = $('customerSuggestions');
+            if (!dl) return;
+            const sorted = Array.from(customerNames).filter(Boolean).sort((a, b) => a.localeCompare(b, 'id'));
+            dl.innerHTML = sorted.map(n => `<option value="${esc(n)}"></option>`).join('');
+        }
+        function addCustomerNames(rows) {
+            if (!Array.isArray(rows)) return;
+            let changed = false;
+            rows.forEach(r => {
+                const n = String((r && r.nama_pelanggan) || '').trim();
+                if (n && n !== 'Tanpa Nama' && !customerNames.has(n)) {
+                    customerNames.add(n);
+                    changed = true;
+                }
+            });
+            if (changed) renderCustomerSuggestions();
+        }
+        async function prefetchCustomers() {
+            if (!isConfigured()) return;
+            try {
+                const query = {
+                    from: [{ collectionId: FB_COLLECTION }],
+                    orderBy: [{ field: { fieldPath: 'tanggal' }, direction: 'DESCENDING' }],
+                    limit: 50
+                };
+                const rows = await fbRunQuery(query);
+                addCustomerNames(rows);
+            } catch (_) { /* abaikan error silent prefetch */ }
+        }
+
+        window.addEventListener('beforeunload', (e) => {
+            if (isFormUnsaved()) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+        $('namaPelanggan').addEventListener('input', markFormDirty);
+        dateInput.addEventListener('change', markFormDirty);
+
+        function calculateMain(keepSaved) {
             const qty12 = parseFormatted($('qty12').value);
             const harga12 = parseFormatted($('harga12').value);
             const qty5 = parseFormatted($('qty5').value);
@@ -3797,6 +4080,8 @@
 
             $('totalTabungLabel').textContent = fmtRp(totalTabung);
             $('grandTotalLabel').textContent = grandTotal > 0 ? fmtRp(grandTotal) : '–';
+            if (!keepSaved) formSaved = false;
+            updateUnsavedState();
         }
 
         function syncQty(tipe) {
@@ -3817,6 +4102,8 @@
                 if (resultQty < 0) resultQty = 0;
                 $('qty' + tipe).value = fmtRp(resultQty);
                 calculateMain();
+            } else {
+                markFormDirty();
             }
         }
 
@@ -3874,6 +4161,13 @@
             kotretState[tipe] = { total: 0, used: 0 };
             $('sum' + tipe + 'Label').textContent = 'Total: 0';
         }
+        function confirmClearKotret(tipe) {
+            const qtyVal = parseFormatted($('qty' + tipe).value);
+            if ((kotretState[tipe].total > 0 || qtyVal > 0) && !formSaved) {
+                if (!confirm('Reset isi kotretan & qty ' + tipe + 'KG yang belum disimpan?')) return;
+            }
+            clearKotret(tipe);
+        }
         function clearKotret(tipe) {
             clearKotretBoxesOnly(tipe);
             const qtyInput = $('qty' + tipe);
@@ -3894,6 +4188,8 @@
             updateDateDisplay();
             $('group12').classList.remove('collapsed');
             $('group5').classList.add('collapsed');
+            formSaved = true;
+            updateUnsavedState();
         }
 
         /* ==========================================================
@@ -4303,7 +4599,10 @@
 
                 savedRec = record;
                 editingRec = null;
+                formSaved = true;
                 updateEditModeUI();
+                updateUnsavedState();
+                addCustomerNames([record]);
 
                 toast((isEdit ? 'Koreksi tersimpan ✓ ' : 'Tersimpan ke arsip ✓ ') + fmtRp(rec.qty_12 * rec.harga_12 + rec.qty_5 * rec.harga_5));
                 histWindow = null; histWindowKey = '';
@@ -4458,6 +4757,7 @@
         }
 
         function renderHistory(rows, filters) {
+            addCustomerNames(rows);
             const box = $('histList');
             if (!rows.length) {
                 box.innerHTML = `<div class="empty">
@@ -4477,10 +4777,14 @@
                     + (r.total_5 != null ? +r.total_5 : r.qty_5 * r.harga_5);
                 const tabung = (r.total_tabung != null ? +r.total_tabung : r.qty_12 + r.qty_5);
                 const d = parseISO(r.tanggal);
+                const s12 = r.sisa_12 || 0, s5 = r.sisa_5 || 0;
+                const sisaChip = (s12 > 0 || s5 > 0)
+                    ? `<span class="hist-sisa-chip">Sisa: ${s12}/${s5}</span>`
+                    : '';
                 return `<div class="hist-row">
             <div class="hist-l">
                 <div class="hist-name">${esc(r.nama_pelanggan)}</div>
-                <div class="hist-meta">${HARI[d.getDay()] + ', ' + d.getDate() + ' ' + BULAN[d.getMonth()] + ' ' + d.getFullYear()}</div>
+                <div class="hist-meta">${HARI[d.getDay()] + ', ' + d.getDate() + ' ' + BULAN[d.getMonth()] + ' ' + d.getFullYear()}${sisaChip}</div>
             </div>
             <div class="hist-c">
                 <div class="hist-stat"><div class="k">12KG</div><div class="v">${r.qty_12 || 0}</div></div>
@@ -4489,10 +4793,21 @@
                 <div class="hist-stat"><div class="k">Grand Total</div><div class="v big">Rp ${fmtRp(grand)}</div></div>
             </div>
             <div class="hist-a">
-                <button class="btn btn-warn btn-sm" onclick="editRecordById('${esc(r.id)}')" title="Koreksi / Edit Transaksi">✎ Koreksi</button>
-                <button class="btn btn-ghost btn-sm" onclick="printBleById('${esc(r.id)}')" title="Print Bluetooth">🖨</button>
-                <button class="btn btn-ghost btn-sm" onclick="openDetail('${esc(r.id)}')">Detail</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteRecord('${esc(r.fb_name)}', this)">Hapus</button>
+                <button class="btn btn-warn btn-sm" onclick="editRecordById('${esc(r.id)}')" title="Koreksi / Edit Transaksi">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <span>Koreksi</span>
+                </button>
+                <button class="btn btn-ghost btn-sm btn-icon" onclick="printBleById('${esc(r.id)}')" title="Print Bluetooth" aria-label="Print Bluetooth">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="openDetail('${esc(r.id)}')" title="Lihat Detail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Detail</span>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteRecord('${esc(r.fb_name)}', this)" title="Hapus Transaksi">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    <span>Hapus</span>
+                </button>
             </div>
         </div>`;
             }).join('');
@@ -4684,6 +4999,7 @@
         }
 
         function renderDashboard(rows, start) {
+            addCustomerNames(rows);
             const cur = rows.filter(r => r.tanggal >= start);
             const prev = rows.filter(r => r.tanggal < start);
             const a = agg(cur), b = agg(prev);
@@ -4715,74 +5031,50 @@
             <div class="kpi-delta ${d4.cls}">${d4.txt}</div>
         </div>`;
 
-            /* --- bucket sesuai rentang --- */
-            const bucket = periodDays <= 31 ? 'hari' : (periodDays <= 120 ? 'minggu' : 'bulan');
-            const labelA = bucket === 'hari' ? 'Pemasukan per Hari'
-                : bucket === 'minggu' ? 'Pemasukan per Minggu' : 'Pemasukan per Bulan';
+            /* --- seri sesuai pembayaran (bukan per hari kosong) --- */
+            const labelA = 'Pemasukan per Pembayaran';
             $('chartATitle').textContent = labelA;
-            $('chartANote').textContent = `${periodDays} hari terakhir · ${cur.length} transaksi`;
-            $('chartBNote').textContent = `Akumulasi ${periodDays} hari terakhir`;
+            $('chartANote').textContent = `${periodDays} hari terakhir · ${cur.length} pembayaran`;
+            $('chartBNote').textContent = `Akumulasi ${cur.length} pembayaran (${periodDays} hari terakhir)`;
 
-            chartAData = buildSeries(cur, start, bucket);
+            chartAData = buildSeries(cur, start);
             chartBData = cumulative(chartAData);
 
             renderBarChart('a', chartAData);
             renderLineChart('b', chartBData);
-            chartATableHTML = tableFor(labelA, chartAData, bucket);
-            chartBTableHTML = tableFor('Pemasukan Kumulatif', chartBData, bucket, true);
+            chartATableHTML = tableFor(labelA, chartAData, false);
+            chartBTableHTML = tableFor('Pemasukan Kumulatif', chartBData, true);
             applyTableVisibility();
         }
 
-        function buildSeries(rows, start, bucket) {
-            const map = new Map();
+        function buildSeries(rows, start) {
             const today = todayISO();
-
-            const keyOf = iso => {
-                if (bucket === 'hari') return iso;
+            const labelOf = iso => {
                 const d = parseISO(iso);
-                if (bucket === 'minggu') {
-                    const day = (d.getDay() + 6) % 7;          // Senin = 0
-                    d.setDate(d.getDate() - day);
-                    return toISO(d);
-                }
-                return iso.slice(0, 7) + '-01';                  // bulan
-            };
-            const labelOf = key => {
-                const d = parseISO(key);
-                if (bucket === 'bulan') return BULAN[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2);
                 return d.getDate() + ' ' + BULAN[d.getMonth()];
             };
 
-            rows.forEach(r => {
-                if (r.tanggal < start || r.tanggal > today) return;
-                const k = keyOf(r.tanggal);
-                map.set(k, (map.get(k) || 0) + grandOf(r));
-            });
-
-            // isi hari/minggu/bulan kosong agar sumbu tidak melompat
-            const out = [];
-            let cursor = start;
-            let guard = 0;
-            while (cursor <= today && guard++ < 4000) {
-                const k = keyOf(cursor);
-                if (!out.length || out[out.length - 1].key !== k) {
-                    out.push({ key: k, label: labelOf(k), value: map.get(k) || 0 });
-                }
-                cursor = bucket === 'hari' ? addDays(cursor, 1)
-                    : bucket === 'minggu' ? addDays(cursor, 7)
-                        : nextMonth(cursor);
-            }
-            return out;
-        }
-        function nextMonth(iso) {
-            const [y, m] = iso.split('-').map(Number);
-            const ny = m === 12 ? y + 1 : y;
-            const nm = m === 12 ? 1 : m + 1;
-            return ny + '-' + String(nm).padStart(2, '0') + '-01';
+            return rows
+                .filter(r => r.tanggal >= start && r.tanggal <= today)
+                .slice()
+                .sort((a, b) => {
+                    if (a.tanggal !== b.tanggal) return a.tanggal < b.tanggal ? -1 : 1;
+                    return String(a.created_at || '').localeCompare(String(b.created_at || ''));
+                })
+                .map(r => ({
+                    key: r.id || r.tanggal,
+                    tanggal: r.tanggal,
+                    label: labelOf(r.tanggal),
+                    pelanggan: r.nama_pelanggan || 'Pelanggan',
+                    value: grandOf(r)
+                }));
         }
         function cumulative(series) {
             let run = 0;
-            return series.map(s => { run += s.value; return { key: s.key, label: s.label, value: run }; });
+            return series.map(s => {
+                run += s.value;
+                return { key: s.key, tanggal: s.tanggal, label: s.label, pelanggan: s.pelanggan, value: run };
+            });
         }
 
         /* ---------- renderer grafik ---------- */
@@ -4806,13 +5098,14 @@
             }
             return s;
         }
-        function xLabels(data, padL, band, innerH, padT) {
-            const maxLabels = 9;
+        function xLabels(data, xAt, innerH, padT) {
+            const maxLabels = 7;
             const step = Math.max(1, Math.ceil(data.length / maxLabels));
             let s = '';
             data.forEach((d, i) => {
-                if (i % step !== 0 && i !== data.length - 1) return;
-                const x = padL + i * band + band / 2;
+                const isLast = i === data.length - 1;
+                if (!isLast && (i % step !== 0 || (data.length - 1 - i) < Math.max(1, step * 0.55))) return;
+                const x = xAt(i);
                 s += `<text x="${x}" y="${padT + innerH + 19}" text-anchor="middle" font-size="10.5" font-weight="600" fill="${cssVar('--text-faint')}">${esc(d.label)}</text>`;
             });
             return s;
@@ -4859,7 +5152,7 @@
             const svg = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Grafik batang pemasukan">
         ${gridLines(max, padL, innerW, innerH, padT, ticks)}
         <line x1="${padL}" y1="${padT + innerH}" x2="${padL + innerW}" y2="${padT + innerH}" stroke="${cssVar('--axis')}" stroke-width="1"/>
-        ${xLabels(data, padL, band, innerH, padT)}
+        ${xLabels(data, i => padL + i * band + band / 2, innerH, padT)}
         <line id="crossA" x1="0" y1="${padT}" x2="0" y2="${padT + innerH}" stroke="${cssVar('--axis')}" stroke-width="1" opacity="0"/>
         ${bars}${hits}
     </svg>`;
@@ -4874,7 +5167,7 @@
                     const i = +r.dataset.i, d = data[i];
                     const cx = padL + i * band + band / 2;
                     cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.setAttribute('opacity', '1');
-                    tip.innerHTML = `<div class="t-lab">${esc(d.label)}</div><div class="t-val">Rp ${fmtRp(d.value)}</div>`;
+                    tip.innerHTML = `<div class="t-lab">${esc(d.label)} · ${esc(d.pelanggan)}</div><div class="t-val">Rp ${fmtRp(d.value)}</div>`;
                     tip.style.opacity = '1';
                     const tw = tip.offsetWidth;
                     const bw = body.clientWidth;
@@ -4923,7 +5216,7 @@
             const svg = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Grafik garis pemasukan kumulatif">
         ${gridLines(max, padL, innerW, innerH, padT, ticks)}
         <line x1="${padL}" y1="${padT + innerH}" x2="${padL + innerW}" y2="${padT + innerH}" stroke="${cssVar('--axis')}" stroke-width="1"/>
-        ${xLabels(data, padL, data.length > 1 ? innerW / data.length : innerW, innerH, padT)}
+        ${xLabels(data, px, innerH, padT)}
         <path d="${area}" fill="${color}" opacity="0.10"/>
         <path d="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
         <line id="crossB" x1="0" y1="${padT}" x2="0" y2="${padT + innerH}" stroke="${cssVar('--axis')}" stroke-width="1" opacity="0"/>
@@ -4944,7 +5237,7 @@
                     const x = px(i), y = py(d.value);
                     cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.setAttribute('opacity', '1');
                     dot.setAttribute('cx', x); dot.setAttribute('cy', y); dot.setAttribute('opacity', '1');
-                    tip.innerHTML = `<div class="t-lab">${esc(d.label)}</div><div class="t-val">Rp ${fmtRp(d.value)}</div>`;
+                    tip.innerHTML = `<div class="t-lab">${esc(d.label)} · ${esc(d.pelanggan)}</div><div class="t-val">Rp ${fmtRp(d.value)}</div>`;
                     tip.style.opacity = '1';
                     const tw = tip.offsetWidth;
                     const bw = body.clientWidth;
@@ -4970,13 +5263,17 @@
             $('chartBTable').innerHTML = '';
         }
 
-        function tableFor(title, data, bucket, isCum) {
+        function tableFor(title, data, isCum) {
             const head = isCum ? 'Kumulatif' : 'Pemasukan';
+            if (!data.length) {
+                return `<div class="chart-empty" style="padding:18px 0">Belum ada pembayaran pada rentang ini.</div>`;
+            }
             return `<div class="tbl-wrap" style="border-radius:11px">
         <table>
-            <thead><tr><th style="text-align:left">Periode</th><th class="ta-r">${head} (Rp)</th></tr></thead>
+            <thead><tr><th style="text-align:left">Tanggal</th><th style="text-align:left">Pelanggan</th><th class="ta-r">${head} (Rp)</th></tr></thead>
             <tbody>${data.map(d => `<tr>
-                <td style="text-align:left;font-weight:600">${esc(d.label)}</td>
+                <td style="text-align:left;font-weight:600;white-space:nowrap">${esc(d.label)}</td>
+                <td style="text-align:left">${esc(d.pelanggan || '–')}</td>
                 <td class="ta-r fw7" style="font-variant-numeric:tabular-nums">${fmtRp(d.value)}</td>
             </tr>`).join('')}</tbody>
         </table>
@@ -5153,7 +5450,15 @@
         /* printReceipt(rec) → pakai baris arsip; printReceipt() → pakai form saat ini;
            onDone opsional → dipanggil setelah dialog print DITUTUP (mis. reset form) */
         function printReceipt(rec, onDone) {
-            $('printArea').innerHTML = buildReceiptHTML(rec);
+            $('printArea').innerHTML = `
+                <div class="print-a5-sheet">
+                    <div class="print-a5-inner">
+                        ${buildReceiptHTML(rec)}
+                    </div>
+                    <div class="print-cut-line">
+                        <span>&#9986; POTONG DI SINI</span>
+                    </div>
+                </div>`;
             doPrint(onDone || null);
         }
 
@@ -5178,16 +5483,30 @@
                 toast('Belum ada qty untuk dicetak atau dipratinjau.', 'warn');
                 return;
             }
-            if (action === 'preview') {
+            if (action === 'nota' || action === 'preview') {
                 openNotaPreview();
-            } else if (action === 'pdf') {
+            } else if (action === 'browser' || action === 'pdf') {
                 printReceipt(null, () => showPostPrintPrompt());
-            } else if (action === 'bluetooth') {
+            } else if (action === 'ble' || action === 'bluetooth') {
                 openBlePrintDialog(null, () => showPostPrintPrompt());
             }
         }
 
         function showPostPrintPrompt() {
+            const rec = collectForm();
+            const nama = esc(rec.nama_pelanggan || 'Tanpa Nama');
+            const grand = fmtRp(rec.grand_total || 0);
+            $('postPrintBody').innerHTML = `
+                <div class="status-box ok" style="margin-top:0;margin-bottom:12px">
+                    <b>Struk selesai dicetak!</b> Transaksi <b>${nama}</b> (Rp ${grand}).
+                </div>
+                <p style="font-size:.88rem;color:var(--text-muted);line-height:1.5;margin:0">
+                    Apakah Anda ingin menyimpan data transaksi ini ke Firebase dan mengosongkan form untuk transaksi berikutnya?
+                </p>`;
+            $('postPrintFoot').innerHTML = `
+                <button class="btn btn-primary" onclick="postPrintSaveAndReset()" style="width:100%">Ya, Simpan ke Firebase &amp; Kosongkan Form</button>
+                <button class="btn btn-ghost" onclick="postPrintResetOnly()" style="width:100%">Kosongkan Form Saja (Tanpa Simpan)</button>
+                <button class="btn btn-ghost" onclick="closePostPrintModal()" style="width:100%;font-size:.82rem;color:var(--text-muted)">Biarkan Form</button>`;
             $('postPrintModalBg').classList.add('open');
         }
         function closePostPrintModal() {
@@ -5254,6 +5573,19 @@
             }
             if ($('bleConnectBtn')) {
                 $('bleConnectBtn').textContent = isConnected ? 'Ganti Printer' : 'Cari & Hubungkan Printer';
+            }
+            if ($('bleQuickDot')) {
+                $('bleQuickDot').classList.toggle('connected', isConnected);
+                $('bleQuickDot').title = isConnected ? ('Terhubung: ' + name) : 'Printer belum terhubung';
+            }
+            if ($('bleStatusDot')) {
+                $('bleStatusDot').classList.toggle('connected', isConnected);
+            }
+            if ($('bleMenuSubtext')) {
+                $('bleMenuSubtext').textContent = isConnected
+                    ? ('Terhubung: ' + name + ' · 58mm / 80mm')
+                    : 'Belum terhubung · Pilihan 58mm, 80mm & Admin';
+                $('bleMenuSubtext').style.color = isConnected ? 'var(--ok)' : '';
             }
         }
 
@@ -5528,6 +5860,8 @@
                     const cb = blePrintOnDone;
                     blePrintOnDone = null;
                     cb();
+                } else if (!blePrintRec) {
+                    setTimeout(() => showPostPrintPrompt(), 250);
                 }
             } catch (err) {
                 if (err.name !== 'NotFoundError') {
@@ -5562,11 +5896,13 @@
            9. INIT
            ========================================================== */
         applyTheme();
-        calculateMain();
+        calculateMain(true);
         initKotretan();
+        renderCustomerSuggestions();
         loadFirebaseForm();
         initBlePrint();
         loadCloudPrices();
+        prefetchCustomers();
     </script>
 </body>
 
