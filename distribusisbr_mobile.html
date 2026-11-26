@@ -23,11 +23,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="application-name" content="SBR Distribusi">
 
-    <!-- Ikon Layar Utama & Favicon -->
-    <link rel="icon" type="image/png"
-        href="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/23d977fa5dbdb0df5a7e6d2fb2fb132cc9caacae/icon-192.png">
-    <link rel="apple-touch-icon"
-        href="https://raw.githubusercontent.com/kkurnia-sudo/systemapps/23d977fa5dbdb0df5a7e6d2fb2fb132cc9caacae/icon-192.png">
+    <!-- Ikon Layar Utama & Favicon (Aset Lokal) -->
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
 
     <!-- Tailwind CSS & Konfigurasi Mode Gelap Manual -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -271,9 +269,10 @@
             </div>
             <div class="flex items-center gap-1.5">
                 <button type="button" onclick="sinkronRealtimeManual()"
-                    class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs transition active:scale-90 border border-slate-200/60 text-indigo-600 dark:text-indigo-400"
-                    title="Sinkron Data Realtime">
+                    class="relative w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs transition active:scale-90 border border-slate-200/60 text-indigo-600 dark:text-indigo-400"
+                    title="Sinkron Data Realtime (Live Sync Aktif)">
                     <i class="fa-solid fa-arrows-rotate" id="iconSyncHeader"></i>
+                    <span id="dotRealtimeMobile" class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-800"></span>
                 </button>
                 <!--<button type="button" onclick="bukaModalKelolaKasbon()"
                     class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xs transition active:scale-90 border border-rose-200/60"
@@ -568,11 +567,37 @@
                 <!-- SUB-PANEL 1: REKAP PACKING -->
                 <div id="subPanelRekap" class="space-y-3">
                     <div class="flex items-center justify-between px-1">
-                        <div class="text-[11px] font-bold text-slate-400">Daftar packing & rincian pengiriman</div>
+                        <div class="text-[11px] font-bold text-slate-400">Daftar packing &amp; rincian pengiriman</div>
                         <button onclick="loadRekapPacking()"
                             class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-xl transition active:scale-95">
                             <i class="fa-solid fa-rotate-right"></i> Segarkan
                         </button>
+                    </div>
+
+                    <!-- RINGKASAN PERFORMA KURIR & LEADERBOARD PACKING (COMPACT ACCORDION) -->
+                    <div id="cardPerformaTimMobile"
+                        class="bg-white dark:bg-slate-800 rounded-2xl border border-indigo-100 dark:border-slate-700 shadow-2xs overflow-hidden">
+                        <button type="button" onclick="togglePerformaTimMobile()"
+                            class="w-full px-3.5 py-2.5 flex items-center justify-between text-left bg-indigo-50/50 dark:bg-slate-800/80">
+                            <span class="text-xs font-black text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-ranking-star text-amber-500"></i>
+                                <span>Performa Kurir &amp; Top Packing</span>
+                            </span>
+                            <span class="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                                <span id="txtTogglePerformaMobile">Lihat</span>
+                                <i id="iconTogglePerformaMobile" class="fa-solid fa-chevron-down transition-transform"></i>
+                            </span>
+                        </button>
+                        <div id="bodyPerformaTimMobile" class="hidden p-3 space-y-3 border-t border-slate-100 dark:border-slate-700 text-xs">
+                            <div>
+                                <div class="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 mb-1.5">🚚 Performa Kurir (Aktif)</div>
+                                <div id="listPerformaKurirMobile" class="space-y-1.5"></div>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-700">
+                                <div class="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 mb-1.5">🏆 Top Produktivitas Packing</div>
+                                <div id="listTopPackingMobile" class="space-y-1.5"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div
@@ -1350,8 +1375,8 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        const supabaseUrl = 'https://uocvuddqhviorebinpva.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvY3Z1ZGRxaHZpb3JlYmlucHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2OTQ0NDAsImV4cCI6MjEwMTI3MDQ0MH0.mWGTOTfHG4Q62S3P4LQi-5bGviMPWgMzo2p2AECquL8';
+        const supabaseUrl = 'https://tmpspumqdhhzhbtkcdor.supabase.co';
+        const supabaseKey = 'sb_publishable_8hAvfCnr8tis4mESYDAohw_vwhMYK8U';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 
@@ -1576,29 +1601,23 @@
             localStorage.setItem(storageKey, JSON.stringify(listKloter));
         }
 
-        function getDaftarMuatanKloterAktif() {
-            if (!userKurirAktif) return [];
-            const tglHariIni = new Date().toISOString().split('T')[0];
-            const storageKey = `sbr_kloter_kurir_${userKurirAktif.id}_${tglHariIni}`;
-            return JSON.parse(localStorage.getItem(storageKey) || '[]');
-        }
-
-        function tandaiMuatanKloterSudahLapor(idsTerpilih) {
-            if (!userKurirAktif) return;
-            const tglHariIni = new Date().toISOString().split('T')[0];
-            const storageKey = `sbr_kloter_kurir_${userKurirAktif.id}_${tglHariIni}`;
-            let listKloter = JSON.parse(localStorage.getItem(storageKey) || '[]');
-
-            listKloter.forEach(item => {
-                if (idsTerpilih.includes(item.id)) {
-                    item.sudahLapor = true;
-                }
-            });
-            localStorage.setItem(storageKey, JSON.stringify(listKloter));
+        // Helper paginasi universal agar tidak terpotong batas 1.000 baris PostgREST
+        async function fetchAllPaginatedMobile(buildQuery, pageSize = 1000) {
+            let allRows = [];
+            let from = 0;
+            while (true) {
+                const { data, error } = await buildQuery().range(from, from + pageSize - 1);
+                if (error) return { data: null, error };
+                const batch = data || [];
+                allRows = allRows.concat(batch);
+                if (batch.length < pageSize) break;
+                from += pageSize;
+            }
+            return { data: allRows, error: null };
         }
 
         // ==============================================================
-        // SISTEM TEMA MULTI-DEVICE (LIGHT, DARK, CALM) - PERSIS V8.3
+        // SISTEM TEMA MULTI-DEVICE (LIGHT, DARK, CALM) - SINKRON DASHBOARD
         // ==============================================================
         const TEMA_LIST = ['light', 'dark', 'calm'];
 
@@ -1615,6 +1634,7 @@
 
             try {
                 localStorage.setItem('sbr_tema', tema);
+                localStorage.setItem('sbr-theme', tema === 'dark' ? 'dark' : 'light');
             } catch (e) {
                 console.warn('Gagal menyimpan preferensi tema:', e);
             }
@@ -1648,7 +1668,7 @@
         function inisialisasiTema() {
             let savedTema = 'light';
             try {
-                savedTema = localStorage.getItem('sbr_tema') || 'light';
+                savedTema = localStorage.getItem('sbr_tema') || localStorage.getItem('sbr-theme') || 'light';
             } catch (e) {
                 console.warn('Gagal membaca tema lokal:', e);
             }
@@ -1658,7 +1678,8 @@
         inisialisasiTema();
 
         function inisialisasiPWA() {
-            const urlIkonRaw = "https://raw.githubusercontent.com/kkurnia-sudo/systemapps/23d977fa5dbdb0df5a7e6d2fb2fb132cc9caacae/icon-192.png";
+            const urlIkon192 = new URL('icon-192.png', window.location.href).href;
+            const urlIkon512 = new URL('icon-512.png', window.location.href).href;
             const manifestData = {
                 name: "SBR Distribusi",
                 short_name: "SBR Distribusi",
@@ -1667,8 +1688,8 @@
                 background_color: "#f8fafc",
                 theme_color: "#4f46e5",
                 icons: [
-                    { src: urlIkonRaw, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-                    { src: urlIkonRaw, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+                    { src: urlIkon192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+                    { src: urlIkon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
                 ]
             };
             const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
@@ -2155,7 +2176,19 @@
             }
 
             const isPinjam = jenisTransaksiKasbonDipilih === 'pinjam';
-            const saldoLama = getSaldoKasbonKaryawan(idKaryawanKasbonAktif);
+
+            // Baca saldo live dari Supabase agar tidak menimpa perubahan perangkat lain
+            let saldoLama = getSaldoKasbonKaryawan(idKaryawanKasbonAktif);
+            try {
+                const { data: freshKar } = await supabaseClient
+                    .from('karyawan')
+                    .select('saldo_kasbon')
+                    .eq('id', parseInt(idKaryawanKasbonAktif))
+                    .single();
+                if (freshKar && freshKar.saldo_kasbon !== undefined && freshKar.saldo_kasbon !== null) {
+                    saldoLama = Number(freshKar.saldo_kasbon) || 0;
+                }
+            } catch (_) {}
             const saldoBaru = isPinjam ? (saldoLama + nominal) : Math.max(0, saldoLama - nominal);
 
             const karObj = (semuaKaryawanAdmin || []).find(k => String(k.id) === String(idKaryawanKasbonAktif));
@@ -2163,8 +2196,9 @@
 
             const defaultKet = isPinjam ? 'Pinjaman Kasbon Kurir' : 'Pembayaran Kasbon via Kurir';
             const ketFinal = (inputKet?.value || '').trim() || defaultKet;
-            const tglPilih = (inputTgl?.value) || new Date().toISOString().split('T')[0];
+            const tglPilih = (inputTgl?.value) || getTanggalHariIniLocal();
             const tglISO = new Date(tglPilih + 'T12:00:00').toISOString();
+            const jamInput = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
 
             const pesanKonfirmasi = isPinjam
                 ? `Simpan pinjaman kasbon untuk ${namaKar}?\n\n• Nominal: ${formatRp(nominal)}\n• Keterangan: ${ketFinal}\n\nSaldo utang kasbon akan bertambah dari ${formatRp(saldoLama)} menjadi ${formatRp(saldoBaru)}.\nData tersinkron langsung ke Supabase (Desktop & Mobile).`
@@ -2191,29 +2225,26 @@
                     throw new Error("Gagal menyimpan ke Supabase: " + errKar.message);
                 }
 
-                // 2. Simpan cache lokal & riwayat transaksi
-                simpanSaldoKasbonLokal(idKaryawanKasbonAktif, saldoBaru);
-                tambahRiwayatKasbonLokal(idKaryawanKasbonAktif, {
+                const payloadRiwayat = {
                     id_kar: parseInt(idKaryawanKasbonAktif),
                     jenis: jenisTransaksiKasbonDipilih,
                     nominal: nominal,
                     keterangan: ketFinal,
-                    tgl: tglISO
-                });
+                    tgl: tglISO,
+                    jam: jamInput,
+                    saldo_sebelum: saldoLama,
+                    saldo_sesudah: saldoBaru
+                };
 
-                // Coba simpan ke tabel riwayat_kasbon di Supabase jika ada
-                try {
-                    await supabaseClient
-                        .from('riwayat_kasbon')
-                        .insert([{
-                            id_kar: parseInt(idKaryawanKasbonAktif),
-                            jenis: jenisTransaksiKasbonDipilih,
-                            nominal: nominal,
-                            keterangan: ketFinal,
-                            tgl: tglISO
-                        }]);
-                } catch (eLog) {
-                    // Abaikan jika tabel riwayat_kasbon belum dibuat
+                // 2. Simpan cache lokal & riwayat transaksi ke cloud dengan cek error
+                simpanSaldoKasbonLokal(idKaryawanKasbonAktif, saldoBaru);
+                tambahRiwayatKasbonLokal(idKaryawanKasbonAktif, payloadRiwayat);
+
+                const { error: errLog } = await supabaseClient
+                    .from('riwayat_kasbon')
+                    .insert([payloadRiwayat]);
+                if (errLog) {
+                    console.warn("Peringatan insert riwayat_kasbon:", errLog.message);
                 }
 
                 // 3. Update objek di memori aplikasi
@@ -2329,6 +2360,7 @@
             const savedKurir = localStorage.getItem('sbr_kurir_session');
             // ... sisa kode login dan inisialisasi Anda di bawahnya tetap sama ...
             await loadDropdownKaryawan();
+            initRealtimeDistribusiMobile();
 
             if (savedKurir) {
                 userKurirAktif = JSON.parse(savedKurir);
@@ -2845,6 +2877,132 @@
             });
 
             renderDaftarRekap(dataSemuaPackingRekap);
+            renderPerformaTimMobile(data || [], dataSemuaPackingRekap);
+        }
+
+        // ==============================================================
+        // IDE 4 & 5 (MOBILE): LIVE REALTIME SYNC + PERFORMA KURIR & TOP PACKING
+        // ==============================================================
+        let realtimeChannelMobile = null;
+        let realtimeTimerMobile = null;
+
+        function initRealtimeDistribusiMobile() {
+            if (!supabaseClient || realtimeChannelMobile) return;
+            try {
+                realtimeChannelMobile = supabaseClient
+                    .channel('distribusi-mobile-live')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'distribusi_packing' }, () => {
+                        if (!userKurirAktif) return;
+                        clearTimeout(realtimeTimerMobile);
+                        realtimeTimerMobile = setTimeout(() => {
+                            const dot = document.getElementById('dotRealtimeMobile');
+                            if (dot) {
+                                dot.classList.add('animate-ping');
+                                setTimeout(() => dot.classList.remove('animate-ping'), 1800);
+                            }
+                            // Refresh hanya tab aktif yang tidak mengganggu form input Kirim
+                            if (!document.getElementById('tabTarik')?.classList.contains('hidden')) {
+                                loadFormSetorCepat();
+                            }
+                            if (!document.getElementById('tabRiwayatSaya')?.classList.contains('hidden')) {
+                                if (!document.getElementById('subPanelRekap')?.classList.contains('hidden')) loadRekapPacking();
+                                else loadRiwayatTugasSaya();
+                            }
+                        }, 1500);
+                    })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'karyawan' }, () => {
+                        if (!userKurirAktif) return;
+                        clearTimeout(realtimeTimerMobile);
+                        realtimeTimerMobile = setTimeout(() => {
+                            loadDropdownKaryawan();
+                            if (!document.getElementById('tabKaryawan')?.classList.contains('hidden')) loadManajemenKaryawan();
+                        }, 1500);
+                    })
+                    .subscribe();
+            } catch (e) {
+                console.warn('Realtime Mobile tidak aktif:', e);
+            }
+        }
+
+        function togglePerformaTimMobile() {
+            const body = document.getElementById('bodyPerformaTimMobile');
+            const txt = document.getElementById('txtTogglePerformaMobile');
+            const icon = document.getElementById('iconTogglePerformaMobile');
+            if (!body) return;
+            const isHidden = body.classList.toggle('hidden');
+            if (txt) txt.innerText = isHidden ? 'Lihat' : 'Tutup';
+            if (icon) icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function renderPerformaTimMobile(rowsAktif = [], listRekap = []) {
+            const boxKurir = document.getElementById('listPerformaKurirMobile');
+            const boxPack = document.getElementById('listTopPackingMobile');
+            if (!boxKurir || !boxPack) return;
+
+            const kurirMap = {};
+            const ensureK = (namaRaw) => {
+                const clean = String(namaRaw || '').trim();
+                if (!clean || clean === '-' || clean.toLowerCase() === 'sistem' || clean.toLowerCase().includes('gantungan')) return null;
+                const key = clean.toLowerCase();
+                if (!kurirMap[key]) kurirMap[key] = { nama: clean, kirim: 0, tarik: 0 };
+                return kurirMap[key];
+            };
+
+            (rowsAktif || []).forEach(row => {
+                const kQty = parseFloat(row.kirim_produksi) || 0;
+                if (row.pengirim?.nama && kQty > 0) {
+                    const km = ensureK(row.pengirim.nama);
+                    if (km) km.kirim += kQty;
+                }
+                if (row.riwayat_cicilan) {
+                    parseRiwayatCicilan(row.riwayat_cicilan).forEach(c => {
+                        if (!c.isGantungan && (parseFloat(c.qty) || 0) > 0 && c.waktu !== 'Sistem') {
+                            const km = ensureK(c.nama);
+                            if (km) km.tarik += (parseFloat(c.qty) || 0);
+                        }
+                    });
+                } else if (row.penarik?.nama && (parseFloat(row.tarik_jadi) || 0) > 0) {
+                    const km = ensureK(row.penarik.nama);
+                    if (km) km.tarik += (parseFloat(row.tarik_jadi) || 0);
+                }
+            });
+
+            const kurirList = Object.values(kurirMap).sort((a, b) => (b.kirim + b.tarik) - (a.kirim + a.tarik));
+            boxKurir.innerHTML = kurirList.length === 0
+                ? `<div class="text-[11px] text-slate-400 text-center py-2">Belum ada aktivitas kurir aktif.</div>`
+                : kurirList.map((k, idx) => `
+                    <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700">
+                        <span class="font-extrabold text-slate-800 dark:text-slate-100">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '#' + (idx + 1)} ${k.nama.toUpperCase()}</span>
+                        <span class="text-[10px] font-bold flex items-center gap-1.5">
+                            <span class="text-blue-600 dark:text-blue-400">K:${Math.round(k.kirim)}</span>
+                            <span class="text-slate-300">|</span>
+                            <span class="text-emerald-600 dark:text-emerald-400">T:${Math.round(k.tarik)}</span>
+                        </span>
+                    </div>
+                `).join('');
+
+            const topPack = (listRekap || [])
+                .filter(p => p.totalTarget > 0 || p.totalSetor > 0)
+                .map(p => ({
+                    nama: p.nama,
+                    setor: p.totalSetor,
+                    target: p.totalTarget,
+                    rasio: p.totalTarget > 0 ? Math.min(100, Math.round((p.totalSetor / p.totalTarget) * 100)) : 100,
+                    kurang: p.netGap < 0 ? Math.abs(p.netGap) : 0
+                }))
+                .sort((a, b) => (b.setor - a.setor) || (b.rasio - a.rasio))
+                .slice(0, 5);
+
+            boxPack.innerHTML = topPack.length === 0
+                ? `<div class="text-[11px] text-slate-400 text-center py-2">Belum ada data produktivitas packing.</div>`
+                : topPack.map((p, idx) => `
+                    <div class="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700">
+                        <span class="font-extrabold text-slate-800 dark:text-slate-100 truncate pr-2">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '#' + (idx + 1)} ${p.nama.toUpperCase()}</span>
+                        <span class="text-[10px] font-extrabold shrink-0 ${p.kurang === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}">
+                            ${p.setor}/${p.target} (${p.rasio}%)
+                        </span>
+                    </div>
+                `).join('');
         }
 
         // ==============================================================
@@ -3716,9 +3874,29 @@
                 return;
             }
 
-            // 3. Perhitungan target dan log penarikan
-            const rowTarget = hitungTargetProduk(itemTarget.kirim_produksi, itemTarget.jenis_produk);
-            const tarikLama = itemTarget.tarik_jadi || 0;
+            // 3. Re-fetch baris live dari Supabase agar tidak menimpa tarikan kurir lain (Anti Race-Condition)
+            const { data: liveRow, error: errLive } = await supabaseClient
+                .from('distribusi_packing')
+                .select('id, kirim_produksi, jenis_produk, tarik_jadi, riwayat_cicilan, is_lunas')
+                .eq('id', itemTarget.id)
+                .single();
+
+            if (errLive || !liveRow) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> SIMPAN SETORAN';
+                await showError("Gagal membaca data terbaru dari server: " + (errLive?.message || 'Data tidak ditemukan.'));
+                return;
+            }
+            if (liveRow.is_lunas) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> SIMPAN SETORAN';
+                await showNotice("Nota kiriman ini baru saja ditandai LUNAS oleh Admin. Silakan segarkan daftar.", "Sudah Lunas");
+                await loadFormSetorCepat();
+                return;
+            }
+
+            const rowTarget = hitungTargetProduk(liveRow.kirim_produksi, liveRow.jenis_produk);
+            const tarikLama = parseFloat(liveRow.tarik_jadi) || 0;
             const totalTarikBaru = tarikLama + inputBaru;
             const koreksiBaru = totalTarikBaru - rowTarget;
 
@@ -3726,8 +3904,8 @@
             const jamMenit = getJamMenitSekarang();
 
             const logBaru = `${kurirNama}: +${inputBaru} ${satuan} (${sesiWaktu} • ${jamMenit} • ${tglHariIni})`;
-            const logGabungan = itemTarget.riwayat_cicilan
-                ? `${itemTarget.riwayat_cicilan}, ${logBaru}`
+            const logGabungan = liveRow.riwayat_cicilan
+                ? `${liveRow.riwayat_cicilan}, ${logBaru}`
                 : logBaru;
 
             // 4. Update data ke Supabase
@@ -4024,42 +4202,8 @@
         }
 
         // ==============================================================
-        // ANTREAN TARIK
+        // ANTREAN TARIK (DITANGANI OLEH loadAntreanTarik -> loadRekapPacking DI ATAS)
         // ==============================================================
-        async function loadAntreanTarik() {
-            const containerBelum = document.getElementById('containerAntreanTarik');
-            const sectionSelesai = document.getElementById('sectionSelesaiTarik');
-
-            if (!containerBelum) return;
-
-            containerBelum.innerHTML = `
-				<div class="p-8 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-3">
-					<div class="w-10 h-10 mx-auto bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-lg shadow-inner">
-						<i class="fa-solid fa-circle-notch fa-spin"></i>
-					</div>
-					<div class="text-xs font-bold text-slate-600 dark:text-slate-300">Memuat antrean barang...</div>
-				</div>
-			`;
-            if (sectionSelesai) sectionSelesai.classList.add('hidden');
-
-            const { data, error } = await supabaseClient
-                .from('distribusi_packing')
-                .select(`
-					*,
-					karyawan!karyawan_id(nama, saldo_kasbon),
-					pengirim:karyawan!dikirim_oleh(nama),
-					penarik:karyawan!ditarik_oleh(nama)
-				`)
-                .eq('is_lunas', false) // <-- TAMBAHKAN INI
-                .order('tanggal', { ascending: false });
-            if (error) {
-                containerBelum.innerHTML = `<div class="p-4 text-center text-xs text-red-500 font-bold bg-white dark:bg-slate-800 rounded-2xl border border-red-200 dark:border-red-900">Error: ${error.message}</div>`;
-                return;
-            }
-
-            antreanDataGlobal = data || [];
-            renderAntreanTarik(antreanDataGlobal);
-        }
 
         function renderAntreanTarik(data) {
             const containerBelum = document.getElementById('containerAntreanTarik');
@@ -4618,10 +4762,10 @@
 
         async function sinkronkanPerubahanCicilanKeDatabase() {
             const stringRiwayatBaru = listCicilanAktif.length > 0
-                ? listCicilanAktif.map(c => `${c.nama}: ${c.qty} ${c.satuan} (${c.waktu})`).join(', ')
+                ? listCicilanAktif.map(c => (c.isGantungan || (c.qty === 0 && c.waktu === 'Sistem')) ? c.nama : `${c.nama}: +${c.qty} ${c.satuan} (${c.waktu})`).join(', ')
                 : null;
 
-            const totalTarikBaru = listCicilanAktif.reduce((total, c) => total + c.qty, 0);
+            const totalTarikBaru = listCicilanAktif.reduce((total, c) => total + (c.isGantungan ? 0 : (parseFloat(c.qty) || 0)), 0);
             const target = hitungTargetProduk(itemTransaksiSedangDiedit.kirim_produksi, itemTransaksiSedangDiedit.jenis_produk);
             const koreksiBaru = totalTarikBaru > 0 ? (totalTarikBaru - target) : 0;
 
@@ -4775,8 +4919,32 @@
 
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Menyimpan...';
 
-            const totalBaru = tarikLama + inputBaru;
-            const koreksiBaru = totalBaru - target;
+            // Re-fetch baris live dari Supabase agar tidak menimpa tarikan kurir lain
+            const { data: liveRow, error: errLive } = await supabaseClient
+                .from('distribusi_packing')
+                .select('id, kirim_produksi, jenis_produk, tarik_jadi, riwayat_cicilan, is_lunas')
+                .eq('id', id)
+                .single();
+
+            if (errLive || !liveRow) {
+                await showError("Gagal membaca data terbaru dari server: " + (errLive?.message || 'Data tidak ditemukan.'));
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> SIMPAN PENARIKAN INI';
+                return;
+            }
+            if (liveRow.is_lunas) {
+                await showNotice("Nota kiriman ini baru saja ditandai LUNAS oleh Admin.", "Sudah Lunas");
+                tutupModalTarikKurir();
+                loadAntreanTarik();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> SIMPAN PENARIKAN INI';
+                return;
+            }
+
+            const targetLive = hitungTargetProduk(liveRow.kirim_produksi, liveRow.jenis_produk);
+            const tarikLamaLive = parseFloat(liveRow.tarik_jadi) || 0;
+            const totalBaru = tarikLamaLive + inputBaru;
+            const koreksiBaru = totalBaru - targetLive;
             const sesiWaktu = getSesiWaktuOtomatis();
             const tglHariIni = typeof getTanggalOperasionalTarik === 'function'
                 ? getTanggalOperasionalTarik()
@@ -4787,7 +4955,7 @@
             const jamMenit = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 
             const logBaru = `${userKurirAktif.nama}: +${inputBaru} ${satuan} (${sesiWaktu} • ${jamMenit} • ${tglHariIni})`;
-            const logGabungan = riwayatLama ? `${riwayatLama}, ${logBaru}` : logBaru;
+            const logGabungan = liveRow.riwayat_cicilan ? `${liveRow.riwayat_cicilan}, ${logBaru}` : logBaru;
 
             const payload = {
                 tarik_jadi: totalBaru,
@@ -5045,16 +5213,18 @@
                 </div>
             `;
 
-            const { data, error } = await supabaseClient
-                .from('distribusi_packing')
-                .select(`
-                    *,
-                    karyawan!karyawan_id(nama, saldo_kasbon),
-                    pengirim:karyawan!dikirim_oleh(nama),
-                    penarik:karyawan!ditarik_oleh(nama)
-                `)
-                .order('tanggal', { ascending: false })
-                .order('id', { ascending: false });
+            const { data, error } = await fetchAllPaginatedMobile(() =>
+                supabaseClient
+                    .from('distribusi_packing')
+                    .select(`
+                        *,
+                        karyawan!karyawan_id(nama, saldo_kasbon),
+                        pengirim:karyawan!dikirim_oleh(nama),
+                        penarik:karyawan!ditarik_oleh(nama)
+                    `)
+                    .order('tanggal', { ascending: false })
+                    .order('id', { ascending: false })
+            );
 
             if (error) {
                 container.innerHTML = `<div class="p-4 text-center text-xs text-red-500 font-bold bg-white dark:bg-slate-800 rounded-2xl border border-red-200 dark:border-red-900">Gagal memuat tugas: ${error.message}</div>`;
@@ -5353,6 +5523,7 @@
             }
         }
     </script>
+    <script src="sbr-nav.js"></script>
 </body>
 
 </html>
